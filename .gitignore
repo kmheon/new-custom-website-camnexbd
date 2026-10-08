@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# SQLite Database
+*.db
+*.db-wal
+*.db-shm
+camnex.db
+backups/
+
+# User Uploads
+public/uploads/
+
+# Logs & Diagnostics
+logs/
+*.log
+
+# Scratch scripts & temporary data
+scratch/
+
+# OS metadata
+.DS_Store
+Thumbs.db

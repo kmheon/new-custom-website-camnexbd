@@ -1,0 +1,753 @@
+import {
+  SiteSettings,
+  HomepageSection,
+  Category,
+  Brand,
+  SpecTemplate,
+  Product,
+  SecurityPackage,
+  BlogPost,
+  ProjectCaseStudy,
+  Testimonial,
+  FaqItem,
+  HeroSlide
+} from '../types';
+
+export const INITIAL_SITE_SETTINGS: SiteSettings = {
+  companyName: 'CamneX Bangladesh',
+  phone: '+880 1540-535150',
+  email: 'contact@camnexbd.com',
+  secondaryEmail: 'camnexbd@gmail.com',
+  website: 'https://camnexbd.com',
+  facebookUrl: 'https://facebook.com/camnexbd',
+  youtubeUrl: 'https://youtube.com/@camnexbd',
+  linkedinUrl: 'https://linkedin.com/company/camnexbd',
+  whatsappNumber: '8801540535150',
+  address: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207',
+  credentials: [
+    'Hikvision Authorized Partner',
+    'ZKTeco Authorized Installer'
+  ],
+  services: [
+    'CCTV/video surveillance',
+    'Wi-Fi cameras',
+    'Networking',
+    'IT support and maintenance',
+    'Access control',
+    'Biometrics',
+    'Smart security',
+    'Installation',
+    'Maintenance',
+    'Site survey',
+    'Configuration',
+    'Network deployment',
+    'IT infrastructure'
+  ],
+  businessHours: 'Sat-Thu 9:30 AM - 7:30 PM, Friday on-call',
+  enableStockBadges: true,
+  sampleDataBanner: true,
+  footer: {
+    description: 'Security, surveillance, enterprise networking and IT infrastructure engineering in Dhaka, Bangladesh.',
+    quickLinks: [
+      { label: 'Home', route: 'home' },
+      { label: 'Shop', route: 'catalog' },
+      { label: 'Solutions', route: 'solutions' },
+      { label: 'Services', route: 'services' },
+      { label: 'Installations', route: 'projects' },
+      { label: 'About Us', route: 'about' },
+      { label: 'Contact', route: 'contact' }
+    ],
+    products: [
+      { label: 'CCTV Cameras', route: 'category', param: 'cctv-cameras' },
+      { label: 'IP Cameras', route: 'category', param: 'cctv-cameras' },
+      { label: 'Network Equipment', route: 'category', param: 'network-switches' },
+      { label: 'Access Control', route: 'category', param: 'biometrics-access-control' },
+      { label: 'Time Attendance', route: 'category', param: 'biometrics-access-control' },
+      { label: 'Smart Home', route: 'category', param: 'cctv-cameras' },
+      { label: 'Accessories', route: 'category', param: 'cctv-accessories' }
+    ],
+    customerSupport: [
+      { label: 'Warranty Policy', route: 'warranty' },
+      { label: 'Technical Support', route: 'contact' },
+      { label: 'FAQs', route: 'faq' },
+      { label: 'Track Order', route: 'tracking' },
+      { label: 'Privacy Policy', route: 'privacy' },
+      { label: 'Terms & Conditions', route: 'terms' },
+      { label: 'Refund Policy', route: 'refund' }
+    ],
+    newsletterText: 'Subscribe for engineering updates, new product releases, and security advisories.',
+    copyrightText: '© 2026 CamneX Bangladesh. All Rights Reserved.',
+    developerCredit: 'Designed & Developed by CamneX'
+  },
+  // Real Financial & Policy Settings (EMPTY by default until configured by admin)
+  bkashMerchantNumber: '',
+  nagadMerchantNumber: '',
+  bankDetails: null,
+  deliveryFeeInsideDhaka: null,
+  deliveryFeeOutsideDhaka: null,
+  installationBaseFee: null,
+  warrantyPolicyText: '',
+  returnPolicyText: '',
+  termsPolicyText: '',
+  privacyPolicyText: ''
+};
+
+export const INITIAL_CTA_DATA = {
+  eyebrow: 'Ready to get started',
+  heading: 'Need Help Choosing the Right Security Solution?',
+  subtext: 'Our specialists are ready to help you choose the perfect CCTV, networking, access control or smart security solution for your home or business.',
+  cards: [
+    {
+      id: 'cta-wa',
+      type: 'whatsapp' as const,
+      title: 'WhatsApp Us',
+      description: 'Chat directly with our Dhaka engineering support desk',
+      actionUrl: 'https://wa.me/8801540535150?text=Hello%20CamneX%20Bangladesh,%20I%20would%20like%20to%20discuss%20a%20security%20solution'
+    },
+    {
+      id: 'cta-call',
+      type: 'call' as const,
+      title: 'Call Now',
+      phoneDisplay: '+880 1540-535150',
+      description: 'Speak directly with a certified security consultant',
+      actionUrl: 'tel:+8801540535150'
+    },
+    {
+      id: 'cta-survey',
+      type: 'survey' as const,
+      title: 'Book Free Site Visit',
+      description: 'Schedule an on-site physical premise and cable audit',
+      actionUrl: '/quote'
+    }
+  ],
+  reassurances: [
+    { id: 'reassure-1', label: 'Free Consultation', enabled: true },
+    { id: 'reassure-2', label: 'Fast Response', enabled: true },
+    { id: 'reassure-3', label: 'Nationwide Service', enabled: true },
+    { id: 'reassure-4', label: 'Genuine Products', enabled: true }
+  ]
+};
+
+export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [
+  { id: 'sec-hero', type: 'hero', title: 'Enterprise Hero Banner', enabled: true, order: 1 },
+  { id: 'sec-cred', type: 'credentials', title: 'Official Partner Credentials', enabled: true, order: 2 },
+  { id: 'sec-cats', type: 'categories', title: 'Shop by Engineering Category', enabled: true, order: 3 },
+  { id: 'sec-feat', type: 'featured_products', title: 'Featured Surveillance & IT Hardware', enabled: true, order: 4 },
+  { id: 'sec-pkgs', type: 'packages', title: 'Turnkey CCTV Security Packages', enabled: true, order: 5 },
+  { id: 'sec-brands', type: 'brands', title: 'Authorized Manufacturer Brands', enabled: true, order: 6 },
+  { id: 'sec-sol', type: 'solutions', title: 'Engineering & Deployment Solutions', enabled: true, order: 7 },
+  {
+    id: 'sec-cta',
+    type: 'quote_cta',
+    title: 'Need Help Choosing the Right Security Solution?',
+    enabled: true,
+    order: 8,
+    ctaData: INITIAL_CTA_DATA
+  }
+];
+
+export const INITIAL_SPEC_TEMPLATES: SpecTemplate[] = [
+  {
+    id: 'tpl-cctv',
+    name: 'CCTV Camera',
+    categorySlug: 'cctv-cameras',
+    fields: [
+      { id: 'f-res', name: 'Resolution', key: 'resolution', type: 'enum', options: ['2MP (1080p)', '4MP (2K)', '5MP Super HD', '8MP (4K)'], filterable: true, comparable: true, showInHighlights: true, order: 1 },
+      { id: 'f-form', name: 'Form Factor', key: 'form_factor', type: 'enum', options: ['Bullet', 'Dome', 'Turret', 'PTZ'], filterable: true, comparable: true, order: 2 },
+      { id: 'f-nv', name: 'Night Vision', key: 'night_vision', type: 'enum', options: ['IR Night Vision (up to 20m)', 'IR Night Vision (up to 40m)', 'ColorVu 24/7 Full Color', 'Smart Hybrid Light'], filterable: true, comparable: true, showInHighlights: true, order: 3 },
+      { id: 'f-lens', name: 'Lens', key: 'lens', type: 'enum', options: ['2.8mm (Wide Angle)', '3.6mm (Standard)', '6mm (Long Range)', 'Motorized Varifocal'], filterable: true, comparable: true, showInHighlights: true, order: 4 },
+      { id: 'f-ip', name: 'Ingress Protection', key: 'ip_rating', type: 'enum', options: ['IP66 Weatherproof', 'IP67 Weatherproof', 'Indoor Use'], filterable: true, comparable: true, showInHighlights: true, order: 5 },
+      { id: 'f-aud', name: 'Audio Support', key: 'audio_support', type: 'boolean', filterable: true, comparable: true, order: 6 }
+    ]
+  },
+  {
+    id: 'tpl-dvr',
+    name: 'NVR / DVR Recorder',
+    categorySlug: 'dvr-nvr-recorders',
+    fields: [
+      { id: 'f-ch', name: 'Channels', key: 'channels', type: 'enum', options: ['4 Channels', '8 Channels', '16 Channels', '32 Channels'], filterable: true, comparable: true, showInHighlights: true, order: 1 },
+      { id: 'f-tech', name: 'Technology', key: 'technology', type: 'enum', options: ['Turbo HD / HD-TVI', 'IP / NVR', 'Hybrid (AcuSense)'], filterable: true, comparable: true, showInHighlights: true, order: 2 },
+      { id: 'f-hdd', name: 'Max HDD Capacity', key: 'max_hdd_capacity', type: 'unit', unit: 'TB', filterable: false, comparable: true, showInHighlights: true, order: 3 },
+      { id: 'f-comp', name: 'Compression', key: 'compression', type: 'text', filterable: false, comparable: true, showInHighlights: true, order: 4 }
+    ]
+  },
+  {
+    id: 'tpl-switch',
+    name: 'Network Switch',
+    categorySlug: 'network-switches',
+    fields: [
+      { id: 'f-ports', name: 'Port Count', key: 'port_count', type: 'enum', options: ['5 Ports', '8 Ports', '16 Ports', '24 Ports'], filterable: true, comparable: true, showInHighlights: true, order: 1 },
+      { id: 'f-poe', name: 'PoE Support', key: 'poe_support', type: 'boolean', filterable: true, comparable: true, showInHighlights: true, order: 2 },
+      { id: 'f-poebudget', name: 'PoE Power Budget', key: 'poe_budget', type: 'unit', unit: 'W', filterable: false, comparable: true, showInHighlights: true, order: 3 },
+      { id: 'f-mgmt', name: 'Management', key: 'management_type', type: 'enum', options: ['Unmanaged', 'Smart Cloud Managed', 'L2/L3 Managed'], filterable: true, comparable: true, showInHighlights: true, order: 4 }
+    ]
+  },
+  {
+    id: 'tpl-wifi',
+    name: 'Access Point & Wi-Fi',
+    categorySlug: 'access-points-wifi',
+    fields: [
+      { id: 'f-wifistd', name: 'Wi-Fi Standard', key: 'wifi_standard', type: 'enum', options: ['Wi-Fi 5 (802.11ac)', 'Wi-Fi 6 (802.11ax)'], filterable: true, comparable: true, showInHighlights: true, order: 1 },
+      { id: 'f-speed', name: 'Throughput', key: 'max_speed', type: 'unit', unit: 'Mbps', filterable: false, comparable: true, showInHighlights: true, order: 2 },
+      { id: 'f-mount', name: 'Mounting', key: 'mount_type', type: 'enum', options: ['Ceiling / Wall Mount', 'Outdoor Pole Mount', 'Desktop'], filterable: true, comparable: true, showInHighlights: true, order: 3 }
+    ]
+  },
+  {
+    id: 'tpl-biometric',
+    name: 'Biometric & Access Control',
+    categorySlug: 'biometrics-access-control',
+    fields: [
+      { id: 'f-bio', name: 'Biometric Type', key: 'biometric_type', type: 'enum', options: ['Face Recognition + Fingerprint', 'Fingerprint + RFID Card', 'RFID Only'], filterable: true, comparable: true, showInHighlights: true, order: 1 },
+      { id: 'f-usercap', name: 'User Capacity', key: 'user_capacity', type: 'number', filterable: false, comparable: true, showInHighlights: true, order: 2 },
+      { id: 'f-conn', name: 'Connectivity', key: 'connectivity', type: 'enum', options: ['TCP/IP + Wi-Fi', 'TCP/IP + USB', 'Standalone'], filterable: true, comparable: true, showInHighlights: true, order: 3 }
+    ]
+  }
+];
+
+export const INITIAL_BRANDS: Brand[] = [
+  {
+    id: 'b-hikvision',
+    name: 'Hikvision',
+    slug: 'hikvision',
+    description: 'World-leading provider of security products and solutions. CamneX is an Authorized Partner in Bangladesh.',
+    website: 'https://www.hikvision.com',
+    featured: true
+  },
+  {
+    id: 'b-zkteco',
+    name: 'ZKTeco',
+    slug: 'zkteco',
+    description: 'Globally renowned biometric verification and smart access control solutions. CamneX is an Authorized Installer.',
+    website: 'https://www.zkteco.com',
+    featured: true
+  },
+  {
+    id: 'b-dahua',
+    name: 'Dahua Technology',
+    slug: 'dahua',
+    description: 'World-leading video-centric smart IoT solution and service provider.',
+    website: 'https://www.dahuasecurity.com',
+    featured: true
+  },
+  {
+    id: 'b-ruijie',
+    name: 'Ruijie Reyee',
+    slug: 'ruijie-reyee',
+    description: 'Enterprise networking, cloud-managed switches and commercial Wi-Fi 6 solutions.',
+    website: 'https://www.ruijienetworks.com',
+    featured: true
+  },
+  {
+    id: 'b-wd',
+    name: 'Western Digital',
+    slug: 'western-digital',
+    description: 'WD Purple surveillance-grade continuous write hard disk drives.',
+    website: 'https://www.westerndigital.com',
+    featured: false
+  }
+];
+
+export const INITIAL_CATEGORIES: Category[] = [
+  {
+    id: 'cat-cctv',
+    name: 'CCTV Cameras',
+    slug: 'cctv-cameras',
+    description: 'High-definition bullet, dome and turret cameras for residential and commercial security.',
+    image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=600&q=80',
+    specTemplateId: 'tpl-cctv',
+    featured: true,
+    order: 1
+  },
+  {
+    id: 'cat-recorders',
+    name: 'DVR & NVR Recorders',
+    slug: 'dvr-nvr-recorders',
+    description: 'Digital Video Recorders and Network Video Recorders with H.265+ compression and cloud app support.',
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    specTemplateId: 'tpl-dvr',
+    featured: true,
+    order: 2
+  },
+  {
+    id: 'cat-access',
+    name: 'Access Control & Biometrics',
+    slug: 'biometrics-access-control',
+    description: 'ZKTeco facial recognition terminals, biometric fingerprint time-attendance, and electronic door locks.',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80',
+    specTemplateId: 'tpl-biometric',
+    featured: true,
+    order: 3
+  },
+  {
+    id: 'cat-networking',
+    name: 'Network Switches',
+    slug: 'network-switches',
+    description: 'PoE surveillance switches and gigabit enterprise managed distribution switches.',
+    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+    specTemplateId: 'tpl-switch',
+    featured: true,
+    order: 4
+  },
+  {
+    id: 'cat-wifi',
+    name: 'Access Points & Wi-Fi',
+    slug: 'access-points-wifi',
+    description: 'Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.',
+    image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+    specTemplateId: 'tpl-wifi',
+    featured: true,
+    order: 5
+  }
+];
+
+export const INITIAL_PRODUCTS: Product[] = [
+  {
+    id: 'prod-hik-irpf-2mp',
+    name: 'Hikvision 2MP Outdoor Bullet Camera',
+    brand: 'Hikvision',
+    brandId: 'b-hikvision',
+    modelNumber: 'DS-2CE1AD0T-IRPF',
+    sku: 'HIK-CAM-IRPF-2MP',
+    category: 'CCTV Cameras',
+    categoryId: 'cat-cctv',
+    productType: 'physical',
+    status: 'active',
+    websiteVisible: true,
+    posAvailable: true,
+    images: [
+      'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80'
+    ],
+    primaryImage: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80',
+    shortDescription: 'Reliable 1080p Full HD infrared bullet camera with Smart IR up to 20m and IP67 weather resistance.',
+    description: 'The Hikvision DS-2CE1AD0T-IRPF is an industry-standard 2MP analog bullet surveillance camera engineered for residential gates, retail storefronts, and perimeter monitoring. Features Smart IR technology to avoid overexposure in dark conditions and 4-in-1 switchable video output.',
+    keyFeatures: [
+      '2 MP high performance CMOS sensor (1920 × 1080)',
+      'Smart IR: up to 20 m infrared night vision distance',
+      '4 in 1 video output (switchable TVI/AHD/CVI/CVBS)',
+      'IP67 dust and water resistance'
+    ],
+    specifications: {
+      resolution: '2MP (1080p)',
+      form_factor: 'Bullet',
+      night_vision: 'IR Night Vision (up to 20m)',
+      lens: '3.6mm (Standard)',
+      ip_rating: 'IP67 Weatherproof',
+      audio_support: false
+    },
+    pricing: {
+      regularPrice: 2450,
+      salePrice: 2350,
+      currency: 'BDT'
+    },
+    inventory: {
+      available: 48,
+      status: 'in_stock'
+    },
+    unit: 'Piece',
+    warrantyMonths: 12,
+    warrantyText: '1-Year Official Manufacturer Warranty with verified serial number',
+    documents: [
+      { id: 'doc-1', title: 'Official Hikvision Datasheet (PDF)', type: 'datasheet', url: 'https://www.hikvision.com/datasheet-sample.pdf', size: '1.2 MB' }
+    ],
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-02-01T12:00:00Z',
+    isFeatured: true,
+    isPopular: true,
+    isDemo: true
+  },
+  {
+    id: 'prod-hik-dome-2mp',
+    name: 'Hikvision 2MP Indoor Dome Camera',
+    brand: 'Hikvision',
+    brandId: 'b-hikvision',
+    modelNumber: 'DS-2CE7AD0T-MMFP',
+    sku: 'HIK-CAM-DOME-2MP',
+    category: 'CCTV Cameras',
+    categoryId: 'cat-cctv',
+    productType: 'physical',
+    status: 'active',
+    websiteVisible: true,
+    posAvailable: true,
+    images: [
+      'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
+    ],
+    primaryImage: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+    shortDescription: 'Compact 2MP dome camera for clean indoor ceiling installations in offices and apartments.',
+    description: 'Designed for discreet indoor surveillance, the DS-2CE7AD0T-MMFP dome blends seamlessly into ceiling tiles while providing crisp 1080p video with 20m infrared night vision.',
+    keyFeatures: [
+      '2 MP indoor turret/dome camera',
+      'Smart IR night illumination up to 20 m',
+      'Compact aesthetic housing for false ceilings',
+      '4-in-1 switchable output'
+    ],
+    specifications: {
+      resolution: '2MP (1080p)',
+      form_factor: 'Dome',
+      night_vision: 'IR Night Vision (up to 20m)',
+      lens: '2.8mm (Wide Angle)',
+      ip_rating: 'Indoor Use',
+      audio_support: false
+    },
+    pricing: {
+      regularPrice: 2700,
+      currency: 'BDT'
+    },
+    inventory: {
+      available: 35,
+      status: 'in_stock'
+    },
+    unit: 'Piece',
+    warrantyMonths: 12,
+    warrantyText: '1-Year Official Warranty',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-02-01T12:00:00Z',
+    isFeatured: true,
+    isDemo: true
+  },
+  {
+    id: 'prod-hik-dvr-4ch',
+    name: 'Hikvision 4-Channel Turbo HD DVR',
+    brand: 'Hikvision',
+    brandId: 'b-hikvision',
+    modelNumber: 'DS-7104HQHI-K1',
+    sku: 'HIK-DVR-4CH-HQHI',
+    category: 'DVR & NVR Recorders',
+    categoryId: 'cat-recorders',
+    productType: 'physical',
+    status: 'active',
+    websiteVisible: true,
+    posAvailable: true,
+    images: [
+      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80'
+    ],
+    primaryImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
+    shortDescription: '4-channel 1080p Turbo HD DVR with H.265 Pro+ compression and free Hik-Connect mobile live view.',
+    description: 'High-performance 4-channel digital video recorder with advanced video encoding, HDMI/VGA simultaneous outputs, and seamless smartphone remote monitoring without static IP configuration.',
+    keyFeatures: [
+      '4 channels and 1 HDD mini size DVR',
+      'Efficient H.265 pro+ compression technology',
+      'Encoding ability up to 1080p @ 15 fps',
+      'Hik-Connect cloud mobile viewing'
+    ],
+    specifications: {
+      channels: '4 Channels',
+      technology: 'Turbo HD / HD-TVI',
+      max_hdd_capacity: 6,
+      compression: 'H.265 Pro+ / H.265'
+    },
+    pricing: {
+      regularPrice: 5800,
+      currency: 'BDT'
+    },
+    inventory: {
+      available: 20,
+      status: 'in_stock'
+    },
+    unit: 'Piece',
+    warrantyMonths: 12,
+    warrantyText: '1-Year Official Warranty',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-02-01T12:00:00Z',
+    isFeatured: true,
+    isDemo: true
+  },
+  {
+    id: 'prod-zkteco-mb20',
+    name: 'ZKTeco MB20 Face & Fingerprint Time Attendance',
+    brand: 'ZKTeco',
+    brandId: 'b-zkteco',
+    modelNumber: 'MB20',
+    sku: 'ZK-MB20-BIO',
+    category: 'Access Control & Biometrics',
+    categoryId: 'cat-access',
+    productType: 'physical',
+    status: 'active',
+    websiteVisible: true,
+    posAvailable: true,
+    images: [
+      'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80'
+    ],
+    primaryImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80',
+    shortDescription: 'Multi-biometric identification terminal with high-speed facial recognition and optical fingerprint sensor.',
+    description: 'ZKTeco MB20 integrates face, fingerprint, and RFID card identification for office time-attendance and electromagnetic door lock control. Includes Excel automated shift report generation.',
+    keyFeatures: [
+      'Multi-biometric verification: Face, Fingerprint, RFID',
+      'Fast facial verification in under 1 second',
+      'TCP/IP and USB host communication',
+      'Access control interface for 3rd party electric locks'
+    ],
+    specifications: {
+      biometric_type: 'Face Recognition + Fingerprint',
+      user_capacity: 1000,
+      connectivity: 'TCP/IP + USB'
+    },
+    pricing: {
+      regularPrice: 9500,
+      currency: 'BDT'
+    },
+    inventory: {
+      available: 15,
+      status: 'in_stock'
+    },
+    unit: 'Piece',
+    warrantyMonths: 12,
+    warrantyText: '1-Year Official Warranty & Free Software Setup',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-02-01T12:00:00Z',
+    isFeatured: true,
+    isPopular: true,
+    isDemo: true
+  },
+  {
+    id: 'prod-ruijie-rap2200e',
+    name: 'Ruijie Reyee RG-RAP2200(E) Wi-Fi 5 Ceiling AP',
+    brand: 'Ruijie Reyee',
+    brandId: 'b-ruijie',
+    modelNumber: 'RG-RAP2200(E)',
+    sku: 'RUI-AP-RAP2200E',
+    category: 'Access Points & Wi-Fi',
+    categoryId: 'cat-wifi',
+    productType: 'physical',
+    status: 'active',
+    websiteVisible: true,
+    posAvailable: true,
+    images: [
+      'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80'
+    ],
+    primaryImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80',
+    shortDescription: 'Dual-band Gigabit ceiling-mount access point with enterprise mesh and Ruijie Cloud management.',
+    description: 'High-density commercial access point delivering seamless Wi-Fi roaming across multi-story offices and restaurants. Managed via mobile app with zero licensing fees.',
+    keyFeatures: [
+      'Dual-radio performance up to 1267 Mbps',
+      'Reyee Mesh technology for wireless expansion',
+      'Free lifetime Ruijie Cloud remote management',
+      'Standard 802.3af/at PoE power support'
+    ],
+    specifications: {
+      wifi_standard: 'Wi-Fi 5 (802.11ac)',
+      max_speed: 1267,
+      mount_type: 'Ceiling / Wall Mount'
+    },
+    pricing: {
+      regularPrice: 8200,
+      currency: 'BDT'
+    },
+    inventory: {
+      available: 22,
+      status: 'in_stock'
+    },
+    unit: 'Piece',
+    warrantyMonths: 36,
+    warrantyText: '3-Year Official Manufacturer Warranty',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-02-01T12:00:00Z',
+    isFeatured: true,
+    isDemo: true
+  },
+  {
+    id: 'prod-enterprise-switch-req',
+    name: 'Ruijie Reyee 24-Port Gigabit Smart Managed PoE Switch',
+    brand: 'Ruijie Reyee',
+    brandId: 'b-ruijie',
+    modelNumber: 'RG-ES226GS-P',
+    sku: 'RUI-SW-24P-POE',
+    category: 'Network Switches',
+    categoryId: 'cat-networking',
+    productType: 'physical',
+    status: 'active',
+    websiteVisible: true,
+    posAvailable: true,
+    images: [
+      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80'
+    ],
+    primaryImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
+    shortDescription: 'Enterprise 24-port PoE+ smart managed switch with 370W power budget and optical SFP uplinks.',
+    description: 'Designed for enterprise IP camera systems and wireless networks with centralized cloud monitoring, automatic CCTV loop prevention, and 250m long-distance PoE transmission.',
+    keyFeatures: [
+      '24 x 10/100/1000Base-T PoE+ Ports with 370W budget',
+      '2 x Gigabit SFP optical uplink slots',
+      'IP camera auto-reboot and cable diagnosis',
+      'Ruijie Cloud app topology visualization'
+    ],
+    specifications: {
+      port_count: '24 Ports',
+      poe_support: true,
+      poe_budget: 370,
+      management_type: 'Smart Cloud Managed'
+    },
+    pricing: {
+      // Intentionally undefined regularPrice to test "Request quotation" behavior!
+      currency: 'BDT'
+    },
+    inventory: {
+      available: 5,
+      status: 'request_quote'
+    },
+    unit: 'Piece',
+    warrantyMonths: 36,
+    warrantyText: '3-Year Warranty',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-02-01T12:00:00Z',
+    isFeatured: false,
+    isDemo: true
+  }
+];
+
+export const INITIAL_PACKAGES: SecurityPackage[] = [
+  {
+    id: 'pkg-cctv-night-vision',
+    name: 'Complete Night Vision Turnkey CCTV Package',
+    slug: 'night-vision-cctv-package',
+    badge: 'Standard IR Security',
+    description: 'Professional analog HD surveillance engineered with Hikvision IRPF infrared cameras. Note: This package utilizes pure infrared night vision without false color or audio claims.',
+    cameraCountsSupported: [2, 4, 8, 16],
+    defaultCameraCount: 4,
+    supportedFormFactors: ['bullet', 'dome', 'turret'],
+    isNightVisionIrOnly: true,
+    basePrice: 8500,
+    rules: [
+      {
+        role: 'camera',
+        defaultModelId: 'prod-hik-irpf-2mp',
+        name: 'Hikvision 2MP IRPF IR Camera',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 1
+      },
+      {
+        role: 'recorder',
+        defaultModelId: 'prod-hik-dvr-4ch',
+        name: 'Hikvision Turbo HD DVR',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      },
+      {
+        role: 'storage',
+        defaultModelId: 'prod-wd-purple',
+        name: 'Surveillance HDD',
+        quantityFormula: 'lookup_camera_count',
+        storageLookup: {
+          2: { capacity: '500GB', modelId: 'hdd-500gb' },
+          4: { capacity: '500GB', modelId: 'hdd-500gb' },
+          8: { capacity: '1TB', modelId: 'hdd-1tb' },
+          16: { capacity: '2TB', modelId: 'hdd-2tb' }
+        }
+      },
+      {
+        role: 'cable',
+        defaultModelId: 'cable-cat6',
+        name: 'Pure Copper Cat6 Cable (10m per camera)',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 10
+      },
+      {
+        role: 'connectors',
+        defaultModelId: 'acc-balun',
+        name: 'Video Baluns & DC Power Pins',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 1
+      },
+      {
+        role: 'power',
+        defaultModelId: 'acc-power',
+        name: 'Centralized 12V Regulated Power Supply',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      }
+    ],
+    isFeatured: true,
+    isDemo: true
+  }
+];
+
+export const INITIAL_BLOG_POSTS: BlogPost[] = [
+  {
+    id: 'post-1',
+    title: 'How to Choose Between Analog HD and IP Surveillance in Bangladesh',
+    slug: 'analog-hd-vs-ip-surveillance-bangladesh',
+    author: 'CamneX Technical Team',
+    publishedAt: '2026-02-10',
+    excerpt: 'An objective engineering breakdown comparing cost, cable distance, image clarity, and long-term expandability.',
+    content: '<p>When planning a surveillance deployment in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>',
+    featuredImage: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80',
+    tags: ['CCTV', 'Hikvision', 'Installation Guide'],
+    readTime: '4 min read',
+    isDemo: true
+  }
+];
+
+export const INITIAL_PROJECTS: ProjectCaseStudy[] = [];
+
+export const INITIAL_TESTIMONIALS: Testimonial[] = [];
+
+export const INITIAL_FAQS: FaqItem[] = [
+  {
+    id: 'faq-1',
+    question: 'Are all Hikvision and ZKTeco products 100% genuine?',
+    answer: 'Yes. Every device supplied by CamneX Bangladesh carries an authentic factory serial number verifiable through official manufacturer partner verification channels, accompanied by warranty documentation.',
+    category: 'Hardware & Authenticity'
+  },
+  {
+    id: 'faq-2',
+    question: 'Can I view surveillance streams on my smartphone outside Bangladesh?',
+    answer: 'Yes. We configure encrypted cloud P2P (Hik-Connect / DMSS) on your smartphones and laptops, allowing live streaming and playback review globally without static IP requirements.',
+    category: 'App & Remote Access'
+  },
+  {
+    id: 'faq-3',
+    question: 'Do you offer on-site surveys in Dhaka?',
+    answer: 'Yes. A qualified engineer can visit your premises anywhere in Dhaka to assess blind spots, measure cable lengths, and formulate an itemized bill of materials.',
+    category: 'Installation & Survey'
+  }
+];
+
+// ----------------------------------------------------------------------------
+// Initial Hero Slides (Phase 1 Master Slider Seeds)
+// ----------------------------------------------------------------------------
+export const INITIAL_HERO_SLIDES: HeroSlide[] = [
+  {
+    id: 'slide-1',
+    title: 'Hikvision 4K Smart Hybrid Bullet (Mode 1 - Manual Demo)',
+    enabled: true,
+    order: 1,
+    sourceMode: 'manual',
+    badge: 'New',
+    headline: 'Hikvision Smart Hybrid Light 4K Bullet',
+    description: 'Enterprise 4K Ultra HD surveillance featuring dual smart lighting, AcuSense AI vehicle classification, and IP67 weather-sealed all-metal housing.',
+    image: '/images/hero/hikvision-bullet.jpg',
+    priceText: '৳4,850',
+    buttonText: 'View Product',
+    buttonLink: '/product/prod-hik-irpf-2mp',
+    secondaryText: 'Request quotation',
+    secondaryLink: '/quote',
+    highlights: [
+      { icon: 'camera', value: '4K Ultra HD', label: 'Resolution' },
+      { icon: 'eye', value: '40m Dual-Light', label: 'Smart Hybrid IR' },
+      { icon: 'shield', value: 'IP67 Rating', label: 'Weatherproof' },
+      { icon: 'cpu', value: 'AcuSense AI', label: 'Human & Vehicle' }
+    ]
+  },
+  {
+    id: 'slide-2',
+    title: 'Ruijie Wi-Fi 6 AP (Mode 2 - Live Product Demo)',
+    enabled: true,
+    order: 2,
+    sourceMode: 'product',
+    productId: 'prod-rui-rap2200e',
+    badge: 'Featured',
+    image: '/images/hero/ruijie-wifi6.jpg',
+    buttonText: 'View Product',
+    buttonLink: '/product/prod-rui-rap2200e',
+    secondaryText: 'Add to cart',
+    secondaryLink: '/cart'
+  },
+  {
+    id: 'slide-3',
+    title: 'Enterprise Hardware Collection (Mode 3 - Auto Collection Demo)',
+    enabled: true,
+    order: 3,
+    sourceMode: 'collection',
+    collectionRule: 'featured',
+    collectionCount: 3
+  }
+];
+

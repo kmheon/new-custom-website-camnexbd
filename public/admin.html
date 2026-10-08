@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | CamneX Bangladesh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              orange: '#F15A24',
+              dark: '#111827',
+              hover: '#D94D1C'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-gray-50 text-brand-dark min-h-screen flex flex-col" x-data="{
+  activeTab: 'dashboard',
+  stats: { counters: {}, recentOrders: [], recentQuotes: [], recentRequests: [] },
+  products: [],
+  categories: [],
+  brands: [],
+  quotes: [],
+  services: [],
+  researchModel: '',
+  researchBrand: 'Hikvision',
+  researchResult: null,
+  researching: false,
+  adminMsg: '',
+  loadDashboard() {
+    fetch('/api/admin/stats').then(res => res.json()).then(data => this.stats = data);
+    fetch('/api/admin/products').then(res => res.json()).then(data => this.products = data);
+    fetch('/api/categories').then(res => res.json()).then(data => this.categories = data);
+    fetch('/api/brands').then(res => res.json()).then(data => this.brands = data);
+    fetch('/api/admin/quotes').then(res => res.json()).then(data => this.quotes = data);
+    fetch('/api/admin/services').then(res => res.json()).then(data => this.services = data);
+  },
+  runResearch() {
+    if(!this.researchModel) return;
+    this.researching = true;
+    this.adminMsg = '';
+    fetch(`/api/admin/research?model=${encodeURIComponent(this.researchModel)}&brand=${encodeURIComponent(this.researchBrand)}`)
+      .then(res => res.json())
+      .then(data => {
+        this.researchResult = data;
+        this.researching = false;
+      });
+  },
+  saveResearchProduct() {
+    if(!this.researchResult) return;
+    fetch('/api/admin/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: this.researchResult.name,
+        model: this.researchResult.model,
+        sku: 'SKU-' + Math.floor(100000 + Math.random() * 900000),
+        category_id: this.researchResult.category_id || 1,
+        brand_id: 1,
+        price: 3500,
+        compare_price: 4000,
+        stock_quantity: 100,
+        short_description: this.researchResult.short_description,
+        description: this.researchResult.description,
+        specs: this.researchResult.specs,
+        warranty: '1 Year Official Warranty'
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        this.adminMsg = 'Product published from research review successfully!';
+        this.researchResult = null;
+        this.researchModel = '';
+        this.loadDashboard();
+        this.activeTab = 'products';
+      }
+    });
+  },
+  updateOrderStatus(orderId, status) {
+    fetch(`/api/admin/orders/${orderId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, text: 'Order status updated by administrator to ' + status })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        this.loadDashboard();
+        this.adminMsg = 'Order status updated successfully.';
+      }
+    });
+  }
+}" x-init="loadDashboard()">
+
+  <!-- HEADER -->
+  <header class="bg-brand-dark text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <a href="/" class="flex items-center space-x-3">
+          <div class="bg-brand-orange text-white font-extrabold text-2xl px-4 py-2 rounded-lg tracking-wider transform -skew-x-12">
+            CamneX
+          </div>
+          <span class="text-sm tracking-widest text-gray-400 font-semibold hidden sm:inline uppercase">Admin Backoffice</span>
+        </a>
+        <a href="/" class="text-xs text-gray-400 hover:text-white transition uppercase font-bold tracking-wider">Return to Storefront &rarr;</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 flex-grow flex flex-col lg:flex-row gap-8">
+    <!-- ADMIN SIDEBAR -->
+    <aside class="w-full lg:w-64 flex-shrink-0 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-2">
+      <button @click="activeTab = 'dashboard'; adminMsg = ''" :class="activeTab === 'dashboard' ? 'bg-brand-orange text-white' : 'text-gray-600 hover:bg-gray-50'" class="w-full text-left px-4 py-3 rounded-xl font-bold text-sm transition flex items-center space-x-3">
+        <span>Dashboard Stats</span>
+      </button>
+      <button @click="activeTab = 'products'; adminMsg = ''" :class="activeTab === 'products' ? 'bg-brand-orange text-white' : 'text-gray-600 hover:bg-gray-50'" class="w-full text-left px-4 py-3 rounded-xl font-bold text-sm transition flex items-center space-x-3">
+        <span>Products & Research AI</span>
+      </button>
+      <button @click="activeTab = 'orders'; adminMsg = ''" :class="activeTab === 'orders' ? 'bg-brand-orange text-white' : 'text-gray-600 hover:bg-gray-50'" class="w-full text-left px-4 py-3 rounded-xl font-bold text-sm transition flex items-center space-x-3">
+        <span>Orders Management</span>
+      </button>
+      <button @click="activeTab = 'quotes'; adminMsg = ''" :class="activeTab === 'quotes' ? 'bg-brand-orange text-white' : 'text-gray-600 hover:bg-gray-50'" class="w-full text-left px-4 py-3 rounded-xl font-bold text-sm transition flex items-center space-x-3">
+        <span>Quotes & Services</span>
+      </button>
+    </aside>
+
+    <!-- ADMIN CONTENT -->
+    <main class="flex-grow space-y-8">
+      <!-- Notification Banner -->
+      <div x-show="adminMsg" class="bg-blue-50 border border-blue-200 text-blue-800 px-6 py-4 rounded-2xl font-bold text-sm flex items-center justify-between" x-text="adminMsg">
+        <button @click="adminMsg = ''" class="text-blue-500 hover:text-blue-700">&times;</button>
+      </div>
+
+      <!-- DASHBOARD STATS -->
+      <div x-show="activeTab === 'dashboard'" class="space-y-8">
+        <h2 class="text-2xl font-extrabold text-brand-dark tracking-tight">Business & Store Analytics</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block">Total Products</span>
+            <span class="text-3xl font-extrabold text-brand-dark mt-2 block" x-text="stats.counters.products"></span>
+          </div>
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block">Total Orders</span>
+            <span class="text-3xl font-extrabold text-brand-orange mt-2 block" x-text="stats.counters.orders"></span>
+          </div>
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block">Gross Revenue</span>
+            <span class="text-3xl font-extrabold text-brand-dark mt-2 block" x-text="'৳' + (stats.counters.revenue || 0).toLocaleString()"></span>
+          </div>
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block">Quote Requests</span>
+            <span class="text-3xl font-extrabold text-brand-orange mt-2 block" x-text="stats.counters.quotes"></span>
+          </div>
+        </div>
+
+        <!-- Recent Orders table -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 class="font-extrabold text-brand-dark mb-4">Recent E-Commerce Orders</h3>
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-gray-100 text-gray-400 uppercase text-xs">
+                <th class="pb-3">Order Number</th>
+                <th class="pb-3">Customer</th>
+                <th class="pb-3">Amount</th>
+                <th class="pb-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="ord in stats.recentOrders" :key="ord.id">
+                <tr class="border-b border-gray-50">
+                  <td class="py-3 font-mono font-bold text-brand-orange" x-text="ord.order_number"></td>
+                  <td class="py-3" x-text="ord.customer_name"></td>
+                  <td class="py-3 font-semibold" x-text="'৳' + ord.total_amount.toLocaleString()"></td>
+                  <td class="py-3"><span class="bg-brand-dark text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase" x-text="ord.order_status"></span></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PRODUCTS & RESEARCH ASSISTANT -->
+      <div x-show="activeTab === 'products'" class="space-y-8" style="display: none;">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-extrabold text-brand-dark tracking-tight">Product Management & AI Research Assistant</h2>
+        </div>
+
+        <!-- PRODUCT RESEARCH ASSISTANT CARD -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+          <h3 class="font-bold text-brand-dark">Mode A: Automated Research Assistant</h3>
+          <p class="text-xs text-gray-500">Enter a branded model (e.g. Hikvision DS-2CD..., Ruijie RG-RAP...) to retrieve verified manufacturer specifications and review before publishing.</p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <select x-model="researchBrand" class="text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange font-semibold">
+              <option value="Hikvision">Hikvision</option>
+              <option value="Ruijie / Reyee">Ruijie / Reyee</option>
+              <option value="ZKTeco">ZKTeco</option>
+            </select>
+            <input type="text" x-model="researchModel" placeholder="e.g. DS-2CD2043G2-I or RG-RAP2200" class="flex-grow text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange">
+            <button @click="runResearch()" :disabled="researching" class="bg-brand-orange hover:bg-brand-hover text-white px-6 py-3 rounded-lg font-bold text-sm transition uppercase">Search & Fetch</button>
+          </div>
+
+          <!-- Research Review Modal / Box -->
+          <template x-if="researchResult">
+            <div class="mt-6 border-2 border-brand-orange border-opacity-30 bg-orange-50 rounded-2xl p-6 space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="bg-brand-orange text-white text-xs font-bold px-3 py-1 rounded">Review Before Publishing</span>
+                <span class="text-xs text-gray-500 font-semibold" x-text="'Confidence: ' + researchResult.confidence"></span>
+              </div>
+              <h4 class="text-lg font-bold text-brand-dark" x-text="researchResult.name"></h4>
+              <p class="text-xs text-gray-600" x-text="researchResult.short_description"></p>
+
+              <!-- Specs Table -->
+              <div class="bg-white rounded-xl p-4 border border-gray-200">
+                <h5 class="text-xs font-bold uppercase text-gray-400 mb-2">Retrieved Technical Specifications</h5>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <template x-for="(v, k) in researchResult.specs" :key="k">
+                    <div class="border-b border-gray-50 py-1"><span class="font-bold text-gray-500" x-text="k + ': '"></span><span x-text="v"></span></div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Provenance Sources -->
+              <div>
+                <h5 class="text-xs font-bold uppercase text-gray-400 mb-1">Source Provenance</h5>
+                <template x-for="src in researchResult.sources" :key="src.name">
+                  <a :href="src.url" target="_blank" class="text-xs text-brand-orange underline block" x-text="src.name + ' (' + src.url + ')'"></a>
+                </template>
+              </div>
+
+              <div class="flex justify-end space-x-4 pt-4">
+                <button @click="researchResult = null" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-lg text-xs font-bold uppercase">Discard</button>
+                <button @click="saveResearchProduct()" class="bg-brand-orange hover:bg-brand-hover text-white px-6 py-2.5 rounded-lg text-xs font-bold uppercase">Approve & Publish Product</button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Products table -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 class="font-extrabold text-brand-dark mb-4">Store Catalog Inventory</h3>
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-gray-100 text-gray-400 uppercase text-xs">
+                <th class="pb-3">Model</th>
+                <th class="pb-3">Product Name</th>
+                <th class="pb-3">Category</th>
+                <th class="pb-3">Price</th>
+                <th class="pb-3">Stock</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="p in products" :key="p.id">
+                <tr class="border-b border-gray-50">
+                  <td class="py-3 font-mono font-bold text-brand-orange" x-text="p.model"></td>
+                  <td class="py-3 font-semibold" x-text="p.name"></td>
+                  <td class="py-3 text-gray-500" x-text="p.category_name"></td>
+                  <td class="py-3 font-bold" x-text="'৳' + p.price.toLocaleString()"></td>
+                  <td class="py-3" x-text="p.stock_quantity"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ORDERS MANAGEMENT -->
+      <div x-show="activeTab === 'orders'" class="space-y-8" style="display: none;">
+        <h2 class="text-2xl font-extrabold text-brand-dark tracking-tight">Customer Orders & Fulfillment</h2>
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-gray-100 text-gray-400 uppercase text-xs">
+                <th class="pb-3">Order #</th>
+                <th class="pb-3">Customer</th>
+                <th class="pb-3">Phone</th>
+                <th class="pb-3">Total</th>
+                <th class="pb-3">Status</th>
+                <th class="pb-3">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="ord in stats.recentOrders" :key="ord.id">
+                <tr class="border-b border-gray-50">
+                  <td class="py-3 font-mono font-bold text-brand-orange" x-text="ord.order_number"></td>
+                  <td class="py-3 font-semibold" x-text="ord.customer_name"></td>
+                  <td class="py-3 text-gray-500" x-text="ord.customer_phone"></td>
+                  <td class="py-3 font-bold" x-text="'৳' + ord.total_amount.toLocaleString()"></td>
+                  <td class="py-3"><span class="bg-brand-dark text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase" x-text="ord.order_status"></span></td>
+                  <td class="py-3 space-x-2">
+                    <button @click="updateOrderStatus(ord.id, 'dispatched')" class="text-xs bg-brand-orange text-white px-3 py-1 rounded font-bold uppercase">Dispatch</button>
+                    <button @click="updateOrderStatus(ord.id, 'completed')" class="text-xs bg-green-600 text-white px-3 py-1 rounded font-bold uppercase">Complete</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- QUOTES & SERVICES -->
+      <div x-show="activeTab === 'quotes'" class="space-y-8" style="display: none;">
+        <h2 class="text-2xl font-extrabold text-brand-dark tracking-tight">Quotations & Site Survey Inquiries</h2>
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-brand-dark">Quote Requests</h3>
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-gray-100 text-gray-400 uppercase text-xs">
+                <th class="pb-3">Quote #</th>
+                <th class="pb-3">Customer</th>
+                <th class="pb-3">Service</th>
+                <th class="pb-3">Phone</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="q in quotes" :key="q.id">
+                <tr class="border-b border-gray-50">
+                  <td class="py-3 font-mono font-bold text-brand-orange" x-text="q.quote_number"></td>
+                  <td class="py-3 font-semibold" x-text="q.customer_name"></td>
+                  <td class="py-3 text-gray-600" x-text="q.service_type"></td>
+                  <td class="py-3 text-gray-500" x-text="q.phone"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-dark border-t border-gray-800 text-gray-400 py-12 px-4 mt-auto">
+    <div class="max-w-7xl mx-auto border-t border-gray-800 mt-8 pt-8 text-center text-xs">
+      &copy; 2026 CamneX Bangladesh. All Rights Reserved.
+    </div>
+  </footer>
+
+</body>
+</html>

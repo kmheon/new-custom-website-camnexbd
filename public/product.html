@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hardware System Detail | CamneX Bangladesh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              orange: '#F15A24',
+              dark: '#111827',
+              hover: '#D94D1C'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-gray-50 text-brand-dark min-h-screen flex flex-col" x-data="{ mobileMenu: false, cartCount: 0 }" x-init="cartCount = JSON.parse(localStorage.getItem('cart') || '[]').reduce((sum, i) => sum + i.qty, 0)">
+
+  <!-- HEADER -->
+  <header class="bg-brand-dark text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <a href="/" class="flex items-center space-x-3">
+          <div class="bg-brand-orange text-white font-extrabold text-2xl px-4 py-2 rounded-lg tracking-wider transform -skew-x-12">
+            CamneX
+          </div>
+          <span class="text-sm tracking-widest text-gray-400 font-semibold hidden sm:inline uppercase">Bangladesh</span>
+        </a>
+        <nav class="hidden md:flex space-x-8 text-sm font-medium">
+          <a href="/" class="text-gray-300 hover:text-brand-orange transition">Home</a>
+          <a href="/catalog.html" class="text-gray-300 hover:text-brand-orange transition">Products</a>
+          <a href="/packages.html" class="text-gray-300 hover:text-brand-orange transition">Security Packages</a>
+          <a href="/services.html" class="text-gray-300 hover:text-brand-orange transition">Service & Surveys</a>
+          <a href="/order-tracking.html" class="text-gray-300 hover:text-brand-orange transition">Track Order</a>
+          <a href="/admin.html" class="text-gray-400 hover:text-white transition font-medium">Admin Panel</a>
+        </nav>
+        <div class="flex items-center space-x-4">
+          <a href="/cart.html" class="relative p-2 text-gray-300 hover:text-brand-orange transition">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-brand-orange rounded-full" x-text="cartCount">0</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- PRODUCT DETAIL MAIN -->
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12" x-data="{
+    product: null,
+    related: [],
+    quantity: 1,
+    activeTab: 'specs',
+    loadDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      if(!id) return;
+      fetch(`/api/products/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          this.product = data.product;
+          this.related = data.related;
+        });
+    },
+    addToCart() {
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      let existing = cart.find(item => item.id === this.product.id);
+      if(existing) {
+        existing.qty += this.quantity;
+      } else {
+        cart.push({
+          id: this.product.id,
+          name: this.product.name,
+          model: this.product.model,
+          price: this.product.price,
+          qty: this.quantity,
+          image: this.product.images[0]
+        });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      this.cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
+      window.location.href = '/cart.html';
+    }
+  }" x-init="loadDetails()">
+
+    <template x-if="product">
+      <div>
+        <!-- Breadcrumbs -->
+        <nav class="flex text-sm text-gray-500 mb-8 space-x-2">
+          <a href="/" class="hover:text-brand-orange">Home</a>
+          <span>&middot;</span>
+          <a href="/catalog.html" class="hover:text-brand-orange">Catalog</a>
+          <span>&middot;</span>
+          <span class="text-gray-800 font-semibold" x-text="product.name"></span>
+        </nav>
+
+        <!-- Product Hero Box -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-3xl p-8 border border-gray-100 shadow-sm mb-12">
+          <!-- Gallery -->
+          <div class="space-y-4">
+            <div class="h-96 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+              <img :src="product.images[0]" class="w-full h-full object-cover">
+            </div>
+          </div>
+
+          <!-- Product Buy Box Info -->
+          <div class="flex flex-col justify-between">
+            <div class="space-y-4">
+              <span class="bg-brand-orange bg-opacity-10 text-brand-orange text-xs font-bold px-3 py-1.5 rounded-full" x-text="product.brand_name"></span>
+              <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight" x-text="product.name"></h1>
+              <p class="text-sm font-mono text-gray-400" x-text="'Model Number: ' + product.model"></p>
+
+              <div class="flex items-baseline space-x-3">
+                <span class="text-3xl font-extrabold text-brand-orange" x-text="'৳' + product.price.toLocaleString()"></span>
+                <template x-if="product.compare_price">
+                  <span class="text-lg text-gray-400 line-through" x-text="'৳' + product.compare_price.toLocaleString()"></span>
+                </template>
+              </div>
+
+              <div class="border-t border-gray-100 pt-4">
+                <p class="text-sm text-gray-500 leading-relaxed" x-text="product.short_description"></p>
+              </div>
+            </div>
+
+            <div class="space-y-4 mt-8 border-t border-gray-100 pt-6">
+              <div class="flex items-center space-x-4">
+                <div class="flex items-center border border-gray-200 rounded-lg">
+                  <button @click="if(quantity > 1) quantity--" class="px-3 py-2 text-gray-500 hover:text-brand-orange font-bold">-</button>
+                  <span class="px-4 py-2 text-sm font-semibold" x-text="quantity"></span>
+                  <button @click="quantity++" class="px-3 py-2 text-gray-500 hover:text-brand-orange font-bold">+</button>
+                </div>
+                <button @click="addToCart()" class="flex-grow bg-brand-orange hover:bg-brand-hover text-white py-3.5 rounded-lg font-bold transition shadow-md uppercase tracking-wider text-sm">Add to Shopping Cart</button>
+              </div>
+              <div class="flex items-center text-xs text-gray-400 space-x-4">
+                <span x-text="'Warranty: ' + product.warranty"></span>
+                <span>&middot;</span>
+                <span class="text-green-500 font-semibold">&check; Stock Ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spec Tabs -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-12">
+          <div class="border-b border-gray-100 flex space-x-6">
+            <button @click="activeTab = 'specs'" :class="activeTab === 'specs' ? 'border-brand-orange text-brand-orange' : 'border-transparent text-gray-400'" class="pb-4 font-bold text-sm border-b-2 uppercase tracking-wide">Specifications</button>
+            <button @click="activeTab = 'description'" :class="activeTab === 'description' ? 'border-brand-orange text-brand-orange' : 'border-transparent text-gray-400'" class="pb-4 font-bold text-sm border-b-2 uppercase tracking-wide">Description</button>
+          </div>
+
+          <div class="mt-6">
+            <!-- Dynamic Specs Table -->
+            <div x-show="activeTab === 'specs'">
+              <table class="w-full text-sm text-left border-collapse">
+                <tbody>
+                  <template x-for="(val, name) in product.specs" :key="name">
+                    <tr class="border-b border-gray-50 hover:bg-gray-50">
+                      <td class="py-3.5 font-bold text-gray-500 w-1/3" x-text="name"></td>
+                      <td class="py-3.5 text-brand-dark" x-text="val"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Description -->
+            <div x-show="activeTab === 'description'" class="prose leading-relaxed text-sm text-gray-600">
+              <p x-text="product.description"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- RELATED PRODUCTS -->
+        <template x-if="related.length > 0">
+          <div>
+            <h3 class="text-xl font-bold text-brand-dark mb-6">You May Also Be Interested In</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <template x-for="r in related" :key="r.id">
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition">
+                  <a :href="'/product.html?id=' + r.id" class="h-40 overflow-hidden block">
+                    <img :src="(() => { try { const a = JSON.parse(r.images_json); return Array.isArray(a) ? a[0] : 'https://images.unsplash.com/photo-1557597774-9d273605dfa9'; } catch(e) { return 'https://images.unsplash.com/photo-1557597774-9d273605dfa9'; } })()" class="w-full h-full object-cover">
+                  </a>
+                  <div class="p-4 flex-1 flex flex-col justify-between text-xs">
+                    <div>
+                      <a :href="'/product.html?id=' + r.id" class="font-bold text-brand-dark hover:text-brand-orange transition block line-clamp-1" x-text="r.name"></a>
+                      <p class="text-[10px] text-gray-400 font-mono mt-1" x-text="r.model"></p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between">
+                      <span class="font-bold text-brand-orange" x-text="'৳' + r.price.toLocaleString()"></span>
+                      <a :href="'/product.html?id=' + r.id" class="text-brand-orange font-bold uppercase text-[10px]">View</a>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-dark border-t border-gray-800 text-gray-400 py-12 px-4 mt-auto">
+    <div class="max-w-7xl mx-auto border-t border-gray-800 mt-8 pt-8 text-center text-xs">
+      &copy; 2026 CamneX Bangladesh. All Rights Reserved.
+    </div>
+  </footer>
+
+</body>
+</html>

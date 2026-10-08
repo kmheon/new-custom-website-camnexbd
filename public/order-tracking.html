@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Order | CamneX Bangladesh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              orange: '#F15A24',
+              dark: '#111827',
+              hover: '#D94D1C'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-gray-50 text-brand-dark min-h-screen flex flex-col" x-data="{ mobileMenu: false }">
+
+  <!-- HEADER -->
+  <header class="bg-brand-dark text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <a href="/" class="flex items-center space-x-3">
+          <div class="bg-brand-orange text-white font-extrabold text-2xl px-4 py-2 rounded-lg tracking-wider transform -skew-x-12">
+            CamneX
+          </div>
+          <span class="text-sm tracking-widest text-gray-400 font-semibold hidden sm:inline uppercase">Bangladesh</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- TRACKING WORKFLOW -->
+  <main class="flex-grow max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12" x-data="{
+    orderNumber: '',
+    order: null,
+    error: '',
+    track() {
+      if(!this.orderNumber) return;
+      fetch(`/api/orders/${this.orderNumber}`)
+        .then(res => {
+          if(!res.ok) throw new Error('Order number not found');
+          return res.json();
+        })
+        .then(data => {
+          this.order = data;
+          this.error = '';
+        })
+        .catch(err => {
+          this.order = null;
+          this.error = err.message;
+        });
+    }
+  }" x-init="
+    const urlParams = new URLSearchParams(window.location.search);
+    const num = urlParams.get('orderNumber');
+    if(num) {
+      orderNumber = num;
+      track();
+    }
+  ">
+
+    <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+      <h2 class="text-2xl font-extrabold text-brand-dark tracking-tight text-center">Track Your Security Order Status</h2>
+      <div class="max-w-md mx-auto flex space-x-2">
+        <input type="text" x-model="orderNumber" placeholder="Enter Order Number e.g. CNX-ORD..." class="flex-grow text-sm border border-gray-200 rounded-lg px-4 py-3 focus:border-brand-orange focus:outline-none">
+        <button @click="track()" class="bg-brand-orange hover:bg-brand-hover text-white text-sm font-bold px-6 py-3 rounded-lg transition uppercase">Track</button>
+      </div>
+
+      <div class="text-red-500 text-sm text-center font-semibold" x-show="error" x-text="error"></div>
+
+      <!-- Live Tracking Details Output -->
+      <div x-show="order" class="mt-12 border-t border-gray-100 pt-8 space-y-8" style="display: none;">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 pb-6">
+          <div>
+            <span class="text-xs text-gray-400 uppercase tracking-wider block font-bold">Order Reference</span>
+            <span class="text-lg font-extrabold text-brand-dark" x-text="order?.order_number"></span>
+          </div>
+          <div>
+            <span class="text-xs text-gray-400 uppercase tracking-wider block font-bold">Total Bill</span>
+            <span class="text-lg font-extrabold text-brand-orange" x-text="'৳' + (order?.total_amount || 0).toLocaleString()"></span>
+          </div>
+          <div>
+            <span class="text-xs text-gray-400 uppercase tracking-wider block font-bold">Current Delivery Stage</span>
+            <span class="bg-brand-orange text-white font-bold text-xs uppercase px-3 py-1 rounded" x-text="order?.order_status"></span>
+          </div>
+        </div>
+
+        <!-- Chronological status timeline -->
+        <div>
+          <h3 class="text-base font-extrabold text-brand-dark mb-6">Delivery Timeline</h3>
+          <div class="space-y-6 relative border-l-2 border-brand-orange border-opacity-30 pl-6 ml-4">
+            <template x-for="step in order?.timeline" :key="step.date">
+              <div class="relative">
+                <div class="absolute -left-9 top-1 bg-brand-orange h-5 w-5 rounded-full border-4 border-white"></div>
+                <div>
+                  <h4 class="font-bold text-brand-dark text-sm uppercase" x-text="step.status"></h4>
+                  <p class="text-sm text-gray-500 mt-1" x-text="step.text"></p>
+                  <span class="text-xs text-gray-400 block mt-1" x-text="new Date(step.date).toLocaleString()"></span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-dark border-t border-gray-800 text-gray-400 py-12 px-4 mt-auto">
+    <div class="max-w-7xl mx-auto border-t border-gray-800 mt-8 pt-8 text-center text-xs">
+      &copy; 2026 CamneX Bangladesh. All Rights Reserved.
+    </div>
+  </footer>
+
+</body>
+</html>

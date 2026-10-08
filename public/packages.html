@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Package Configurator | CamneX Bangladesh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              orange: '#F15A24',
+              dark: '#111827',
+              hover: '#D94D1C'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-gray-50 text-brand-dark min-h-screen flex flex-col" x-data="{ mobileMenu: false, cartCount: 0 }" x-init="cartCount = JSON.parse(localStorage.getItem('cart') || '[]').reduce((sum, i) => sum + i.qty, 0)">
+
+  <!-- HEADER -->
+  <header class="bg-brand-dark text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <a href="/" class="flex items-center space-x-3">
+          <div class="bg-brand-orange text-white font-extrabold text-2xl px-4 py-2 rounded-lg tracking-wider transform -skew-x-12">
+            CamneX
+          </div>
+          <span class="text-sm tracking-widest text-gray-400 font-semibold hidden sm:inline uppercase">Bangladesh</span>
+        </a>
+        <nav class="hidden md:flex space-x-8 text-sm font-medium">
+          <a href="/" class="text-gray-300 hover:text-brand-orange transition">Home</a>
+          <a href="/catalog.html" class="text-gray-300 hover:text-brand-orange transition">Products</a>
+          <a href="/packages.html" class="text-brand-orange hover:text-brand-orange transition font-bold">Security Packages</a>
+          <a href="/services.html" class="text-gray-300 hover:text-brand-orange transition">Service & Surveys</a>
+          <a href="/order-tracking.html" class="text-gray-300 hover:text-brand-orange transition">Track Order</a>
+          <a href="/admin.html" class="text-gray-400 hover:text-white transition">Admin Panel</a>
+        </nav>
+        <div class="flex items-center space-x-4">
+          <a href="/cart.html" class="relative p-2 text-gray-300 hover:text-brand-orange transition">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-brand-orange rounded-full" x-text="cartCount">0</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONFIGURATOR MAIN -->
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12" x-data="{
+    cameraCount: 4,
+    cameraType: 'bullet',
+    nightVision: 'standard',
+    storage: '',
+    configResult: null,
+    calculatePackage() {
+      fetch('/api/packages/configure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cameraCount: parseInt(this.cameraCount),
+          cameraType: this.cameraType,
+          nightVision: this.nightVision,
+          storage: this.storage
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        this.configResult = data;
+      });
+    },
+    addPackageToCart() {
+      if(!this.configResult) return;
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      cart.push({
+        id: 'pkg-' + Date.now(),
+        name: `${this.cameraCount}-Camera Complete Security Package (${this.cameraType.toUpperCase()})`,
+        model: 'CUSTOM-PKG-' + this.cameraCount,
+        price: this.configResult.totalPrice,
+        qty: 1,
+        image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&q=80&w=800'
+      });
+      localStorage.setItem('cart', JSON.stringify(cart));
+      this.cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
+      window.location.href = '/cart.html';
+    }
+  }" x-init="calculatePackage()">
+
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <span class="bg-brand-orange bg-opacity-10 text-brand-orange text-xs font-bold px-3 py-1.5 rounded-full">Intelligent Package Builder</span>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-brand-dark tracking-tight mt-3">CCTV Security Package Configurator</h1>
+      <p class="text-gray-500 mt-2">Customize your camera quantity, form factor, and storage rules. Automatic cable and power supply calculations are built right in.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- CONFIGURATOR CONTROLS -->
+      <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Camera Count</label>
+          <select x-model="cameraCount" @change="calculatePackage()" class="w-full text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange font-semibold">
+            <option value="2">2 Cameras (Small House / Office)</option>
+            <option value="4">4 Cameras (Standard Commercial / Home)</option>
+            <option value="8">8 Cameras (Large Home / Floor)</option>
+            <option value="16">16 Cameras (Enterprise & Factory)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Camera Form Factor</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button @click="cameraType = 'bullet'; calculatePackage()" :class="cameraType === 'bullet' ? 'bg-brand-orange text-white' : 'bg-gray-50 text-gray-700'" class="py-2.5 text-xs font-bold rounded-lg border border-gray-200 transition">Bullet</button>
+            <button @click="cameraType = 'dome'; calculatePackage()" :class="cameraType === 'dome' ? 'bg-brand-orange text-white' : 'bg-gray-50 text-gray-700'" class="py-2.5 text-xs font-bold rounded-lg border border-gray-200 transition">Dome</button>
+            <button @click="cameraType = 'turret'; calculatePackage()" :class="cameraType === 'turret' ? 'bg-brand-orange text-white' : 'bg-gray-50 text-gray-700'" class="py-2.5 text-xs font-bold rounded-lg border border-gray-200 transition">Turret</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Night Vision Rule</label>
+          <select x-model="nightVision" @change="calculatePackage()" class="w-full text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange font-semibold">
+            <option value="standard">Standard IR (Infrared-Only IRPF Series)</option>
+            <option value="longrange">Long Range IR (IT3F Series)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Hard Disk Storage (Auto-Rule Applied)</label>
+          <select x-model="storage" @change="calculatePackage()" class="w-full text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange font-semibold">
+            <option value="">Auto Recommended</option>
+            <option value="500GB">500GB Surveillance HDD</option>
+            <option value="1TB">1TB Surveillance HDD</option>
+            <option value="2TB">2TB Surveillance HDD</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- CONFIGURATION SUMMARY RECEIPT -->
+      <div class="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between" x-show="configResult">
+        <div>
+          <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+            <h2 class="text-xl font-extrabold text-brand-dark">Package System Summary</h2>
+            <span class="bg-brand-dark text-white text-xs font-bold px-3 py-1 rounded" x-text="configResult?.cameraCount + ' Cameras Configured'"></span>
+          </div>
+
+          <div class="space-y-4">
+            <template x-for="item in configResult?.items" :key="item.model">
+              <div class="flex items-center justify-between text-sm py-2 border-b border-gray-50">
+                <div>
+                  <span class="font-bold text-brand-dark" x-text="item.name"></span>
+                  <p class="text-xs text-gray-400 font-mono" x-text="'Model: ' + item.model"></p>
+                </div>
+                <span class="font-semibold text-gray-600" x-text="'Qty: ' + item.qty"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="mt-8 border-t border-gray-100 pt-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <span class="text-xs text-gray-400 uppercase tracking-wider block font-bold">Total Estimated Package Price</span>
+              <span class="text-3xl font-extrabold text-brand-orange" x-text="'৳' + (configResult?.totalPrice || 0).toLocaleString()"></span>
+            </div>
+            <button @click="addPackageToCart()" class="bg-brand-orange hover:bg-brand-hover text-white px-8 py-4 rounded-xl font-bold shadow-md transition uppercase tracking-wider text-sm">Add Package to Cart</button>
+          </div>
+          <p class="text-xs text-gray-400">Includes 10 meters Cat6 UTP cable per camera, connectors, power supply, and official warranty.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-dark border-t border-gray-800 text-gray-400 py-12 px-4 mt-auto">
+    <div class="max-w-7xl mx-auto border-t border-gray-800 mt-8 pt-8 text-center text-xs">
+      &copy; 2026 CamneX Bangladesh. All Rights Reserved.
+    </div>
+  </footer>
+
+</body>
+</html>

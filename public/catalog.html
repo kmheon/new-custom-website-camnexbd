@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hardware Catalog | CamneX Bangladesh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              orange: '#F15A24',
+              dark: '#111827',
+              hover: '#D94D1C'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="/search.js"></script>
+</head>
+<body class="font-sans bg-gray-50 text-brand-dark min-h-screen flex flex-col" x-data="{ mobileMenu: false, cartCount: 0 }" x-init="cartCount = JSON.parse(localStorage.getItem('cart') || '[]').reduce((sum, i) => sum + i.qty, 0)">
+
+  <!-- HEADER -->
+  <header class="bg-brand-dark text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20 gap-4">
+        <a href="/" class="flex items-center space-x-3 flex-shrink-0">
+          <div class="bg-brand-orange text-white font-extrabold text-2xl px-4 py-2 rounded-lg tracking-wider transform -skew-x-12">
+            CamneX
+          </div>
+          <span class="text-sm tracking-widest text-gray-400 font-semibold hidden md:inline uppercase">Bangladesh</span>
+        </a>
+        <nav class="hidden xl:flex space-x-6 text-sm font-medium flex-shrink-0">
+          <a href="/" class="text-gray-300 hover:text-brand-orange transition">Home</a>
+          <a href="/catalog.html" class="text-brand-orange hover:text-brand-orange transition font-bold">Products</a>
+          <a href="/packages.html" class="text-gray-300 hover:text-brand-orange transition">Security Packages</a>
+          <a href="/services.html" class="text-gray-300 hover:text-brand-orange transition">Service & Surveys</a>
+          <a href="/order-tracking.html" class="text-gray-300 hover:text-brand-orange transition">Track Order</a>
+        </nav>
+
+        <!-- Real-Time Search Bar -->
+        <div class="relative flex-1 max-w-xs sm:max-w-sm lg:max-w-md hidden sm:block" x-data="headerSearch()">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              x-ref="desktopSearchInput"
+              x-model="query"
+              @input.debounce.250ms="doSearch()"
+              @focus="if(query.trim()) isOpen = true"
+              @keydown.enter.prevent="submitSearch()"
+              @keydown.escape="isOpen = false"
+              placeholder="Search hardware, CCTV, Wi-Fi, services..."
+              class="w-full bg-gray-900/95 text-gray-100 placeholder-gray-400 text-xs rounded-xl pl-10 pr-12 py-2.5 border border-gray-700/80 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange focus:outline-none transition"
+            />
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+              <button type="button" x-show="query" @click="clearSearch()" class="text-gray-400 hover:text-white text-sm" style="display: none;">&times;</button>
+            </div>
+          </div>
+
+          <!-- Dropdown -->
+          <div
+            x-show="isOpen && (totalMatches > 0 || hasSearched || isLoading)"
+            @click.outside="isOpen = false"
+            class="absolute left-0 right-0 top-full mt-2 bg-[#0B1120] border border-gray-700/90 rounded-2xl shadow-2xl overflow-hidden z-50 text-gray-200 text-xs divide-y divide-gray-800/80 max-h-96 overflow-y-auto"
+            style="display: none;"
+          >
+            <div x-show="results.products && results.products.length > 0" class="p-3 space-y-1">
+              <span class="text-[10px] uppercase font-bold text-gray-400 px-2 block">Products</span>
+              <template x-for="p in results.products" :key="p.id">
+                <a :href="'/product.html?id=' + p.id" class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/70">
+                  <span class="truncate font-medium text-white" x-text="p.name"></span>
+                  <span class="text-brand-orange font-bold ml-2" x-text="'৳' + p.price.toLocaleString()"></span>
+                </a>
+              </template>
+            </div>
+            <div x-show="results.services && results.services.length > 0" class="p-3 space-y-1">
+              <span class="text-[10px] uppercase font-bold text-gray-400 px-2 block">Services</span>
+              <template x-for="s in results.services" :key="s.name">
+                <a :href="s.url" class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/70 text-emerald-400">
+                  <span class="truncate" x-text="s.name"></span>
+                  <span class="text-[10px] text-gray-400">Book &rarr;</span>
+                </a>
+              </template>
+            </div>
+            <div x-show="hasSearched && totalMatches === 0 && !isLoading" class="p-4 text-center text-gray-400">
+              No matching hardware or services found.
+            </div>
+            <div class="p-2.5 bg-gray-900/90 text-right">
+              <button type="button" @click="submitSearch()" class="text-brand-orange font-bold text-[11px] hover:underline">
+                View in catalog &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4 flex-shrink-0">
+          <a href="/cart.html" class="relative p-2 text-gray-300 hover:text-brand-orange transition">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-brand-orange rounded-full" x-text="cartCount">0</span>
+          </a>
+          <button @click="mobileMenu = !mobileMenu" class="md:hidden text-gray-300 hover:text-brand-orange focus:outline-none">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- STOREFRONT FILTER BLOCK -->
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{
+    products: [],
+    categories: [],
+    brands: [],
+    selectedCat: '',
+    selectedBrand: '',
+    search: '',
+    minPrice: '',
+    maxPrice: '',
+    sort: 'newest',
+    loadProducts() {
+      let url = `/api/products?sort=${this.sort}&category=${this.selectedCat}&brand=${this.selectedBrand}&search=${encodeURIComponent(this.search)}&minPrice=${this.minPrice}&maxPrice=${this.maxPrice}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          this.products = data;
+        });
+    }
+  }" x-init="
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('search')) search = urlParams.get('search');
+    if (urlParams.get('category')) selectedCat = urlParams.get('category');
+    fetch('/api/categories').then(res => res.json()).then(data => categories = data);
+    fetch('/api/brands').then(res => res.json()).then(data => brands = data);
+    loadProducts();
+  ">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- SIDEBAR FILTERING -->
+      <aside class="w-full lg:w-64 flex-shrink-0 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-6">
+        <div>
+          <h3 class="font-extrabold text-brand-dark mb-4 text-sm uppercase tracking-wider">Search Equipment</h3>
+          <div class="relative">
+            <input type="text" x-model="search" @input.debounce.300ms="loadProducts()" placeholder="e.g. Model, Brand..." class="w-full text-sm border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 focus:border-brand-orange focus:outline-none">
+            <svg class="h-5 w-5 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-extrabold text-brand-dark mb-4 text-sm uppercase tracking-wider">Category</h3>
+          <div class="space-y-2 text-sm text-gray-600">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="radio" name="category" value="" x-model="selectedCat" @change="loadProducts()" class="text-brand-orange focus:ring-brand-orange h-4 w-4">
+              <span>All Equipment</span>
+            </label>
+            <template x-for="cat in categories" :key="cat.id">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="category" :value="cat.id" x-model="selectedCat" @change="loadProducts()" class="text-brand-orange focus:ring-brand-orange h-4 w-4">
+                <span x-text="cat.name"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-extrabold text-brand-dark mb-4 text-sm uppercase tracking-wider">Brand</h3>
+          <div class="space-y-2 text-sm text-gray-600">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="radio" name="brand" value="" x-model="selectedBrand" @change="loadProducts()" class="text-brand-orange focus:ring-brand-orange h-4 w-4">
+              <span>All Brands</span>
+            </label>
+            <template x-for="b in brands" :key="b.id">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="brand" :value="b.id" x-model="selectedBrand" @change="loadProducts()" class="text-brand-orange focus:ring-brand-orange h-4 w-4">
+                <span x-text="b.name"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-extrabold text-brand-dark mb-4 text-sm uppercase tracking-wider">Price Range (BDT)</h3>
+          <div class="flex space-x-2">
+            <input type="number" x-model="minPrice" @input.debounce.300ms="loadProducts()" placeholder="Min" class="w-1/2 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-brand-orange focus:outline-none">
+            <input type="number" x-model="maxPrice" @input.debounce.300ms="loadProducts()" placeholder="Max" class="w-1/2 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-brand-orange focus:outline-none">
+          </div>
+        </div>
+      </aside>
+
+      <!-- PRODUCTS CONTENT -->
+      <section class="flex-grow">
+        <!-- Sort & Stats Header -->
+        <div class="bg-white p-4 rounded-xl border border-gray-100 flex flex-col sm:flex-row items-center justify-between mb-8 shadow-sm">
+          <span class="text-sm text-gray-500 font-semibold" x-text="products.length + ' systems available'"></span>
+          <div class="flex items-center space-x-3 mt-4 sm:mt-0">
+            <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Sort by:</span>
+            <select x-model="sort" @change="loadProducts()" class="text-sm border border-gray-200 rounded-lg py-1.5 px-3 focus:outline-none focus:border-brand-orange">
+              <option value="newest">New Releases</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <template x-for="p in products" :key="p.id">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
+              <a :href="'/product.html?id=' + p.id" class="relative h-48 bg-gray-50 overflow-hidden block">
+                <img :src="(() => { try { const a = JSON.parse(p.images_json); return Array.isArray(a) ? a[0] : 'https://images.unsplash.com/photo-1557597774-9d273605dfa9'; } catch(e) { return 'https://images.unsplash.com/photo-1557597774-9d273605dfa9'; } })()" class="w-full h-full object-cover">
+                <span class="absolute top-4 right-4 bg-brand-dark text-white text-[10px] font-bold px-2.5 py-1 rounded" x-text="p.brand_name"></span>
+              </a>
+              <div class="p-6 flex-1 flex flex-col justify-between font-sans">
+                <div>
+                  <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider" x-text="p.category_name"></span>
+                  <a :href="'/product.html?id=' + p.id" class="block font-bold text-brand-dark mt-1 hover:text-brand-orange transition" x-text="p.name"></a>
+                  <p class="text-xs text-gray-400 mt-1 font-mono" x-text="p.model"></p>
+                </div>
+                <div class="mt-6 border-t border-gray-100 pt-4 flex items-center justify-between">
+                  <span class="text-lg font-extrabold text-brand-orange" x-text="'৳' + (p.price ? p.price.toLocaleString() : '0')"></span>
+                  <a :href="'/product.html?id=' + p.id" class="border border-brand-orange text-brand-orange hover:bg-brand-orange hover:text-white text-xs font-bold px-4 py-2 rounded-lg transition uppercase">Details</a>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-dark border-t border-gray-800 text-gray-400 py-12 px-4 mt-auto">
+    <div class="max-w-7xl mx-auto border-t border-gray-800 mt-8 pt-8 text-center text-xs">
+      &copy; 2026 CamneX Bangladesh. All Rights Reserved.
+    </div>
+  </footer>
+
+</body>
+</html>
