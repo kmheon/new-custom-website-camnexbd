@@ -11,7 +11,7 @@ const db = require('./database');
 // ============================================================================
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 180,
+  max: parseInt(process.env.API_RATE_LIMIT || '600', 10),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please slow down.' }

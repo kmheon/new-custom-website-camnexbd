@@ -2642,6 +2642,7 @@ function resolveRouteMetadata(reqPath) {
     '/checkout': { title: 'Checkout | CamneX Bangladesh', description: 'Single-page checkout for security hardware and installation.' },
     '/compare': { title: 'Product Comparison | CamneX Bangladesh', description: 'Side-by-side technical specifications comparison.' },
     '/tracking': { title: 'Track Order Status | CamneX Bangladesh', description: 'Check delivery and installation status by order reference number.' },
+    '/order-tracking': { title: 'Track Order Status | CamneX Bangladesh', description: 'Check delivery and installation status by order reference number.' },
     '/account': { title: 'Customer Account | CamneX Bangladesh', description: 'Customer account and order history.' },
     '/admin': { title: 'Admin Console | CamneX Bangladesh', description: 'CamneX administration dashboard.' }
   };

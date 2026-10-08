@@ -92,7 +92,7 @@ export default function App() {
         setCurrentRoute('cart');
       } else if (path === '/checkout') {
         setCurrentRoute('checkout');
-      } else if (path.startsWith('/tracking')) {
+      } else if (path.startsWith('/tracking') || path.startsWith('/order-tracking')) {
         setCurrentRoute('tracking');
         const parts = path.split('/');
         setRouteParam(parts[2]);
