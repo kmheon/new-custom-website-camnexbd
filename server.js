@@ -31,6 +31,82 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
+// ============================================================================
+// STARTUP ASSET VALIDATION (Fail loudly if dist/manifest.json or files are missing)
+// ============================================================================
+function validateBuildAssets() {
+  const manifestPath = path.join(__dirname, 'public/dist/manifest.json');
+  if (!fs.existsSync(manifestPath)) {
+    console.error('================================================================');
+    console.error('[FATAL STARTUP ERROR] Production bundle manifest not found!');
+    console.error(`  Expected manifest at: ${manifestPath}`);
+    console.error('  Please run "npm run build" to compile scripts and Tailwind CSS');
+    console.error('  before starting the server.');
+    console.error('================================================================');
+    process.exit(1);
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (err) {
+    console.error('================================================================');
+    console.error(`[FATAL STARTUP ERROR] Corrupt manifest at: ${manifestPath}`);
+    console.error('  Error:', err.message);
+    console.error('  Please run "npm run build" to regenerate valid bundle files.');
+    console.error('================================================================');
+    process.exit(1);
+  }
+
+  const jsFile = manifest['main.js'];
+  const cssFile = manifest['main.css'];
+
+  if (!jsFile || !cssFile) {
+    console.error('================================================================');
+    console.error('[FATAL STARTUP ERROR] Manifest is missing main.js or main.css entries!');
+    console.error('  Manifest contents:', JSON.stringify(manifest, null, 2));
+    console.error('  Please run "npm run build" to regenerate bundles.');
+    console.error('================================================================');
+    process.exit(1);
+  }
+
+  const jsDiskPath = path.join(__dirname, 'public', jsFile.replace(/^\//, ''));
+  const cssDiskPath = path.join(__dirname, 'public', cssFile.replace(/^\//, ''));
+
+  if (!fs.existsSync(jsDiskPath) || fs.statSync(jsDiskPath).size === 0) {
+    console.error('================================================================');
+    console.error(`[FATAL STARTUP ERROR] Referenced JS bundle missing or empty: ${jsDiskPath}`);
+    console.error('  Please run "npm run build" to regenerate bundles.');
+    console.error('================================================================');
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(cssDiskPath) || fs.statSync(cssDiskPath).size === 0) {
+    console.error('================================================================');
+    console.error(`[FATAL STARTUP ERROR] Referenced CSS bundle missing or empty: ${cssDiskPath}`);
+    console.error('  Please run "npm run build" to compile Tailwind CSS.');
+    console.error('================================================================');
+    process.exit(1);
+  }
+
+  return manifest;
+}
+
+const startupManifest = validateBuildAssets();
+console.log(`[STARTUP] Verified build assets: JS=${startupManifest['main.js']}, CSS=${startupManifest['main.css']}`);
+
+function getActiveManifest() {
+  const manifestPath = path.join(__dirname, 'public/dist/manifest.json');
+  try {
+    if (fs.existsSync(manifestPath)) {
+      return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    }
+  } catch (err) {
+    console.error('[MANIFEST READ ERROR]', err.message);
+  }
+  return startupManifest;
+}
+
 // When running behind reverse proxy (Nginx / Cloudflare), trust proxy hops
 // Configurable via TRUST_PROXY (defaults to 1 for Nginx, set 2 for Cloudflare + Nginx)
 const trustProxyHops = process.env.TRUST_PROXY
@@ -142,6 +218,29 @@ app.use((req, res, next) => {
         return res.redirect(redirectRow.status_code || 301, redirectRow.to_path);
       }
     } catch (_) {}
+  }
+  next();
+});
+
+// Legacy static HTML redirects to SPA routes
+const legacyHtmlRedirects = {
+  '/index.html': '/',
+  '/admin.html': '/admin',
+  '/product.html': '/catalog',
+  '/cart.html': '/cart',
+  '/checkout.html': '/checkout',
+  '/catalog.html': '/catalog',
+  '/packages.html': '/packages',
+  '/services.html': '/services',
+  '/order-tracking.html': '/order-tracking'
+};
+
+app.use((req, res, next) => {
+  if (['GET', 'HEAD'].includes(req.method)) {
+    const target = legacyHtmlRedirects[req.path.toLowerCase()];
+    if (target) {
+      return res.redirect(301, target);
+    }
   }
   next();
 });
@@ -2595,26 +2694,41 @@ function renderPageWithMetadata(indexHtml, meta) {
 
   html = html.replace('</head>', `  ${extraHead}\n</head>`);
 
-  // Dynamically inject content-hashed bundle and stylesheet from manifest if available
-  const manifestPath = path.join(__dirname, 'public/dist/manifest.json');
-  if (fs.existsSync(manifestPath)) {
-    try {
-      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-      if (manifest['main.js']) {
-        html = html.replace(/<script src="bundle\.js".*?<\/script>/i, `<script src="${manifest['main.js']}"></script>`);
-      }
-      if (manifest['main.css']) {
-        html = html.replace(/<link rel="stylesheet" href="\/style\.css".*?>/i, `<link rel="stylesheet" href="${manifest['main.css']}">`);
-      }
-    } catch (_) {}
+  // Always read manifest fresh (or fallback to validated startup manifest)
+  const manifest = getActiveManifest();
+  const cssHref = (manifest && manifest['main.css']) || '/style.css';
+  const jsSrc = (manifest && manifest['main.js']) || '/bundle.js';
+
+  // Guarantee stylesheet link exists and points to the current hashed bundle
+  const cssRegex = /<link[^>]+(?:id="app-styles"|href=["'][^"']*(?:\/style\.css|\/dist\/bundle\.[^"']*\.css)["'])[^>]*>/i;
+  const newCssTag = `<link rel="stylesheet" href="${cssHref}" id="app-styles">`;
+  if (cssRegex.test(html)) {
+    html = html.replace(cssRegex, newCssTag);
+  } else {
+    html = html.replace('</head>', `  ${newCssTag}\n</head>`);
+  }
+
+  // Guarantee script bundle exists and points to the current hashed bundle
+  const jsRegex = /<script[^>]+src=["'][^"']*(?:bundle\.js|\/dist\/bundle\.[^"']*\.js)["'][^>]*><\/script>/i;
+  const newJsTag = `<script src="${jsSrc}"></script>`;
+  if (jsRegex.test(html)) {
+    html = html.replace(jsRegex, newJsTag);
+  } else {
+    html = html.replace('</body>', `  ${newJsTag}\n</body>`);
   }
 
   return html;
 }
 
-// Fallback HTML router
+// Fallback HTML router (every HTML response, including SEO-injected pages, 404s and SPA fallback, includes the current CSS link)
 app.use((req, res, next) => {
-  if (['GET', 'HEAD'].includes(req.method) && !req.path.startsWith('/api/') && !req.path.includes('.')) {
+  if (['GET', 'HEAD'].includes(req.method) && !req.path.startsWith('/api/')) {
+    const ext = path.extname(req.path).toLowerCase();
+    // Non-HTML static files (.js, .css, .png, etc.) that missed static middleware should 404 normally
+    if (ext && ext !== '.html') {
+      return next();
+    }
+
     const isFilter = req.query && Object.keys(req.query).length > 0;
     const meta = resolveRouteMetadata(req.path);
     if (isFilter) {

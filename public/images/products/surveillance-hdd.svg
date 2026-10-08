@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgHdd" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#F4EEE6"/>
+    </linearGradient>
+    <linearGradient id="hddCasing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="labelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="24" fill="url(#bgHdd)"/>
+  
+  <!-- 3.5-inch Hard Drive Body -->
+  <rect x="100" y="80" width="200" height="240" rx="16" fill="url(#hddCasing)" stroke="#475569" stroke-width="3"/>
+  
+  <!-- Drive Top Plate Inset -->
+  <rect x="115" y="95" width="170" height="210" rx="10" fill="#0F172A"/>
+  
+  <!-- Surveillance Platter Recess Ring -->
+  <circle cx="200" cy="180" r="60" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+  <circle cx="200" cy="180" r="22" fill="#334155" stroke="#475569" stroke-width="2"/>
+  <circle cx="200" cy="180" r="8" fill="#F15A24"/>
+  
+  <!-- Manufacturer Specification Label -->
+  <rect x="125" y="210" width="150" height="85" rx="6" fill="url(#labelGrad)" stroke="#CBD5E1" stroke-width="1.5"/>
+  <!-- Purple Brand Strip for Surveillance -->
+  <rect x="125" y="210" width="150" height="14" rx="4" fill="#7C3AED"/>
+  
+  <rect x="135" y="234" width="70" height="6" rx="3" fill="#1E293B"/>
+  <rect x="135" y="246" width="110" height="4" rx="2" fill="#64748B"/>
+  <rect x="135" y="256" width="90" height="4" rx="2" fill="#64748B"/>
+  <rect x="135" y="266" width="60" height="4" rx="2" fill="#94A3B8"/>
+  <rect x="235" y="274" width="30" height="12" rx="3" fill="#F15A24"/>
+  
+  <!-- Corner Mounting Screws -->
+  <circle cx="112" cy="92" r="3" fill="#64748B"/>
+  <circle cx="288" cy="92" r="3" fill="#64748B"/>
+  <circle cx="112" cy="308" r="3" fill="#64748B"/>
+  <circle cx="288" cy="308" r="3" fill="#64748B"/>
+</svg>

@@ -8,7 +8,7 @@
       "publishedAt": "2026-02-10",
       "excerpt": "An objective engineering breakdown comparing cost, cable distance, image clarity, and long-term expandability.",
       "content": "<p>When planning a surveillance deployment in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>",
-      "featuredImage": "https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80",
+      "featuredImage": "/images/products/hikvision-bullet.svg",
       "tags": [
         "CCTV",
         "Hikvision",
@@ -66,7 +66,7 @@
       "name": "CCTV Cameras",
       "slug": "cctv-cameras",
       "description": "High-definition bullet, dome and turret cameras for residential and commercial security.",
-      "image": "https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=600&q=80",
+      "image": "/images/products/hikvision-bullet.svg",
       "specTemplateId": "tpl-cctv",
       "featured": true,
       "order": 1
@@ -76,7 +76,7 @@
       "name": "DVR & NVR Recorders",
       "slug": "dvr-nvr-recorders",
       "description": "Digital Video Recorders and Network Video Recorders with H.265+ compression and cloud app support.",
-      "image": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80",
+      "image": "/images/products/hikvision-dvr.svg",
       "specTemplateId": "tpl-dvr",
       "featured": true,
       "order": 2
@@ -86,7 +86,7 @@
       "name": "Access Control & Biometrics",
       "slug": "biometrics-access-control",
       "description": "ZKTeco facial recognition terminals, biometric fingerprint time-attendance, and electronic door locks.",
-      "image": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80",
+      "image": "/images/products/zkteco-biometric.svg",
       "specTemplateId": "tpl-biometric",
       "featured": true,
       "order": 3
@@ -96,7 +96,7 @@
       "name": "Network Switches",
       "slug": "network-switches",
       "description": "PoE surveillance switches and gigabit enterprise managed distribution switches.",
-      "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80",
+      "image": "/images/products/ruijie-switch.svg",
       "specTemplateId": "tpl-switch",
       "featured": true,
       "order": 4
@@ -106,7 +106,7 @@
       "name": "Access Points & Wi-Fi",
       "slug": "access-points-wifi",
       "description": "Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.",
-      "image": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80",
+      "image": "/images/products/ruijie-wifi.svg",
       "specTemplateId": "tpl-wifi",
       "featured": true,
       "order": 5
@@ -456,9 +456,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hikvision-bullet.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hikvision-bullet.svg",
       "shortDescription": "Reliable 1080p Full HD infrared bullet camera with Smart IR up to 20m and IP67 weather resistance.",
       "description": "The Hikvision DS-2CE1AD0T-IRPF is an industry-standard 2MP analog bullet surveillance camera engineered for residential gates, retail storefronts, and perimeter monitoring. Features Smart IR technology to avoid overexposure in dark conditions and 4-in-1 switchable video output.",
       "keyFeatures": [
@@ -516,9 +516,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hikvision-dome.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hikvision-dome.svg",
       "shortDescription": "Compact 2MP dome camera for clean indoor ceiling installations in offices and apartments.",
       "description": "Designed for discreet indoor surveillance, the DS-2CE7AD0T-MMFP dome blends seamlessly into ceiling tiles while providing crisp 1080p video with 20m infrared night vision.",
       "keyFeatures": [
@@ -565,9 +565,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hikvision-dvr.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hikvision-dvr.svg",
       "shortDescription": "4-channel 1080p Turbo HD DVR with H.265 Pro+ compression and free Hik-Connect mobile live view.",
       "description": "High-performance 4-channel digital video recorder with advanced video encoding, HDMI/VGA simultaneous outputs, and seamless smartphone remote monitoring without static IP configuration.",
       "keyFeatures": [
@@ -612,9 +612,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80"
+        "/images/products/zkteco-biometric.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/zkteco-biometric.svg",
       "shortDescription": "Multi-biometric identification terminal with high-speed facial recognition and optical fingerprint sensor.",
       "description": "ZKTeco MB20 integrates face, fingerprint, and RFID card identification for office time-attendance and electromagnetic door lock control. Includes Excel automated shift report generation.",
       "keyFeatures": [
@@ -659,9 +659,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80"
+        "/images/products/ruijie-wifi.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/ruijie-wifi.svg",
       "shortDescription": "Dual-band Gigabit ceiling-mount access point with enterprise mesh and Ruijie Cloud management.",
       "description": "High-density commercial access point delivering seamless Wi-Fi roaming across multi-story offices and restaurants. Managed via mobile app with zero licensing fees.",
       "keyFeatures": [
@@ -705,9 +705,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80"
+        "/images/products/ruijie-switch.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/ruijie-switch.svg",
       "shortDescription": "Enterprise 24-port PoE+ smart managed switch with 370W power budget and optical SFP uplinks.",
       "description": "Designed for enterprise IP camera systems and wireless networks with centralized cloud monitoring, automatic CCTV loop prevention, and 250m long-distance PoE transmission.",
       "keyFeatures": [
@@ -751,9 +751,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hikvision-dvr.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hikvision-dvr.svg",
       "shortDescription": "8-Channel H.265 Pro+ surveillance recorder supporting up to 4MP lite video and 1 SATA interface.",
       "description": "Hikvision DS-7108HQHI-K1 8-Channel Turbo HD DVR features efficient H.265 Pro+ video compression, multi-standard TVI/AHD/CVI/CVBS video inputs, and up to 6TB single SATA HDD capacity.",
       "keyFeatures": [
@@ -799,9 +799,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hikvision-dvr.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hikvision-dvr.svg",
       "shortDescription": "Enterprise 16-Channel surveillance recorder for medium to commercial security installations.",
       "description": "Enterprise 16-Channel Turbo HD DVR for commercial and industrial facilities. Commercial pricing is provided via custom engineering quotation.",
       "keyFeatures": [
@@ -844,9 +844,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"
+        "/images/products/surveillance-hdd.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/surveillance-hdd.svg",
       "shortDescription": "Surveillance-grade 3.5-inch internal hard drive engineered for 24/7 continuous video recording.",
       "description": "Engineered specifically for surveillance security systems. WD Purple drives are optimized for high-temperature, always-on surveillance systems.",
       "keyFeatures": [
@@ -891,9 +891,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"
+        "/images/products/surveillance-hdd.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/surveillance-hdd.svg",
       "shortDescription": "Surveillance-grade 1TB 3.5-inch internal hard drive engineered for 24/7 continuous video recording.",
       "description": "1TB WD Purple surveillance drive built for 24/7 always-on high-definition security systems.",
       "keyFeatures": [
@@ -937,9 +937,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"
+        "/images/products/surveillance-hdd.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/surveillance-hdd.svg",
       "shortDescription": "Surveillance-grade 2TB 3.5-inch internal hard drive for enterprise continuous recording.",
       "description": "2TB WD Purple surveillance drive. Industrial enterprise capacity available upon quotation.",
       "keyFeatures": [
@@ -982,9 +982,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hardware-accessory.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hardware-accessory.svg",
       "shortDescription": "100% solid oxygen-free pure copper 23 AWG 4-pair unshielded twisted pair cable.",
       "description": "Genuine Hikvision DS-1LN6-UU 100% solid oxygen-free pure copper Cat6 cable. Guaranteed high bandwidth transmission up to 250MHz without signal drop.",
       "keyFeatures": [
@@ -1029,9 +1029,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hardware-accessory.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hardware-accessory.svg",
       "shortDescription": "Centralized 12V 10A regulated power supply box with individual PTC fuse protection.",
       "description": "Centralized power supply for up to 8 surveillance cameras. Built-in individual auto-reset PTC fuses, short circuit, and overload protection.",
       "keyFeatures": [
@@ -1077,9 +1077,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hardware-accessory.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hardware-accessory.svg",
       "shortDescription": "High-capacity 12V 20A centralized power distribution unit for up to 18 cameras.",
       "description": "Heavy-duty 12V 20A centralized power supply with surge suppressor and filtered output for enterprise commercial setups.",
       "keyFeatures": [
@@ -1123,9 +1123,9 @@
       "websiteVisible": true,
       "posAvailable": true,
       "images": [
-        "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80"
+        "/images/products/hardware-accessory.svg"
       ],
-      "primaryImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+      "primaryImage": "/images/products/hardware-accessory.svg",
       "shortDescription": "High-definition video transceiver balun pair with heavy-duty DC power male/female pigtails.",
       "description": "Passive video balun kit with anti-interference filters and transient voltage suppressors, paired with heavy copper male/female DC power connectors.",
       "keyFeatures": [

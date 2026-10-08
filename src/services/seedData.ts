@@ -376,7 +376,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'CCTV Cameras',
     slug: 'cctv-cameras',
     description: 'High-definition bullet, dome and turret cameras for residential and commercial security.',
-    image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=600&q=80',
+    image: '/images/products/hikvision-bullet.svg',
     specTemplateId: 'tpl-cctv',
     featured: true,
     order: 1
@@ -386,7 +386,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'DVR & NVR Recorders',
     slug: 'dvr-nvr-recorders',
     description: 'Digital Video Recorders and Network Video Recorders with H.265+ compression and cloud app support.',
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    image: '/images/products/hikvision-dvr.svg',
     specTemplateId: 'tpl-dvr',
     featured: true,
     order: 2
@@ -396,7 +396,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Access Control & Biometrics',
     slug: 'biometrics-access-control',
     description: 'ZKTeco facial recognition terminals, biometric fingerprint time-attendance, and electronic door locks.',
-    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80',
+    image: '/images/products/zkteco-biometric.svg',
     specTemplateId: 'tpl-biometric',
     featured: true,
     order: 3
@@ -406,7 +406,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Network Switches',
     slug: 'network-switches',
     description: 'PoE surveillance switches and gigabit enterprise managed distribution switches.',
-    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+    image: '/images/products/ruijie-switch.svg',
     specTemplateId: 'tpl-switch',
     featured: true,
     order: 4
@@ -416,7 +416,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Access Points & Wi-Fi',
     slug: 'access-points-wifi',
     description: 'Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.',
-    image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+    image: '/images/products/ruijie-wifi.svg',
     specTemplateId: 'tpl-wifi',
     featured: true,
     order: 5
@@ -438,9 +438,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     websiteVisible: true,
     posAvailable: true,
     images: [
-      'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80'
+      '/images/products/hikvision-bullet.svg'
     ],
-    primaryImage: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80',
+    primaryImage: '/images/products/hikvision-bullet.svg',
     shortDescription: 'Reliable 1080p Full HD infrared bullet camera with Smart IR up to 20m and IP67 weather resistance.',
     description: 'The Hikvision DS-2CE1AD0T-IRPF is an industry-standard 2MP analog bullet surveillance camera engineered for residential gates, retail storefronts, and perimeter monitoring. Features Smart IR technology to avoid overexposure in dark conditions and 4-in-1 switchable video output.',
     keyFeatures: [
@@ -492,9 +492,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     websiteVisible: true,
     posAvailable: true,
     images: [
-      'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
+      '/images/products/hikvision-dome.svg'
     ],
-    primaryImage: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+    primaryImage: '/images/products/hikvision-dome.svg',
     shortDescription: 'Compact 2MP dome camera for clean indoor ceiling installations in offices and apartments.',
     description: 'Designed for discreet indoor surveillance, the DS-2CE7AD0T-MMFP dome blends seamlessly into ceiling tiles while providing crisp 1080p video with 20m infrared night vision.',
     keyFeatures: [
@@ -541,9 +541,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     websiteVisible: true,
     posAvailable: true,
     images: [
-      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80'
+      '/images/products/hikvision-dvr.svg'
     ],
-    primaryImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
+    primaryImage: '/images/products/hikvision-dvr.svg',
     shortDescription: '4-channel 1080p Turbo HD DVR with H.265 Pro+ compression and free Hik-Connect mobile live view.',
     description: 'High-performance 4-channel digital video recorder with advanced video encoding, HDMI/VGA simultaneous outputs, and seamless smartphone remote monitoring without static IP configuration.',
     keyFeatures: [
@@ -588,9 +588,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     websiteVisible: true,
     posAvailable: true,
     images: [
-      'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80'
+      '/images/products/zkteco-biometric.svg'
     ],
-    primaryImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80',
+    primaryImage: '/images/products/zkteco-biometric.svg',
     shortDescription: 'Multi-biometric identification terminal with high-speed facial recognition and optical fingerprint sensor.',
     description: 'ZKTeco MB20 integrates face, fingerprint, and RFID card identification for office time-attendance and electromagnetic door lock control. Includes Excel automated shift report generation.',
     keyFeatures: [
@@ -635,9 +635,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     websiteVisible: true,
     posAvailable: true,
     images: [
-      'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80'
+      '/images/products/ruijie-wifi.svg'
     ],
-    primaryImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80',
+    primaryImage: '/images/products/ruijie-wifi.svg',
     shortDescription: 'Dual-band Gigabit ceiling-mount access point with enterprise mesh and Ruijie Cloud management.',
     description: 'High-density commercial access point delivering seamless Wi-Fi roaming across multi-story offices and restaurants. Managed via mobile app with zero licensing fees.',
     keyFeatures: [
@@ -681,9 +681,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     websiteVisible: true,
     posAvailable: true,
     images: [
-      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80'
+      '/images/products/ruijie-switch.svg'
     ],
-    primaryImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
+    primaryImage: '/images/products/ruijie-switch.svg',
     shortDescription: 'Enterprise 24-port PoE+ smart managed switch with 370W power budget and optical SFP uplinks.',
     description: 'Designed for enterprise IP camera systems and wireless networks with centralized cloud monitoring, automatic CCTV loop prevention, and 250m long-distance PoE transmission.',
     keyFeatures: [
@@ -791,7 +791,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     publishedAt: '2026-02-10',
     excerpt: 'An objective engineering breakdown comparing cost, cable distance, image clarity, and long-term expandability.',
     content: '<p>When planning a surveillance deployment in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>',
-    featuredImage: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80',
+    featuredImage: '/images/products/hikvision-bullet.svg',
     tags: ['CCTV', 'Hikvision', 'Installation Guide'],
     readTime: '4 min read',
     isDemo: true

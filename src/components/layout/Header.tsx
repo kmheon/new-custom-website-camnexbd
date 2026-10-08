@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
       <div className="sticky top-4 z-40 px-3 md:px-6 pointer-events-none transition-all duration-200">
         <header
           ref={navRef}
-          className={`max-w-[1200px] mx-auto pointer-events-auto bg-white/92 backdrop-blur-md rounded-[20px] border border-[#EDE8E1] shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-200 ${
+          className={`sticky top-4 max-w-[1200px] mx-auto pointer-events-auto bg-white/92 backdrop-blur-md rounded-[20px] border border-[#EDE8E1] shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-200 ${
             isScrolled ? 'py-2.5 px-4 md:px-6 shadow-md' : 'py-3.5 px-4 md:px-6'
           }`}
         >

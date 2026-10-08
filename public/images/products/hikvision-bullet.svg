@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgBullet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#F4EEE6"/>
+    </linearGradient>
+    <linearGradient id="camBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="lensGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="24" fill="url(#bgBullet)"/>
+  
+  <!-- Mount Bracket -->
+  <path d="M 80 230 L 140 230 L 150 200 L 180 200" stroke="#94A3B8" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <rect x="70" y="200" width="20" height="60" rx="6" fill="#64748B"/>
+  
+  <!-- Camera Body -->
+  <rect x="150" y="150" width="160" height="90" rx="14" fill="url(#camBody)" stroke="#CBD5E1" stroke-width="3"/>
+  
+  <!-- Sunshield Top Visor -->
+  <path d="M 140 145 L 325 145 C 330 145 332 152 328 156 L 315 168 L 145 168 Z" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="2"/>
+  
+  <!-- Front Bezel -->
+  <rect x="300" y="155" width="25" height="80" rx="8" fill="#0F172A"/>
+  
+  <!-- Glass Lens -->
+  <circle cx="312" cy="195" r="18" fill="url(#lensGrad)"/>
+  <circle cx="312" cy="195" r="8" fill="#0284C7" opacity="0.6"/>
+  <circle cx="310" cy="192" r="3" fill="#FFFFFF" opacity="0.8"/>
+  
+  <!-- IR Ring Leds -->
+  <circle cx="312" cy="168" r="3" fill="#EF4444" opacity="0.8"/>
+  <circle cx="312" cy="222" r="3" fill="#EF4444" opacity="0.8"/>
+  
+  <!-- Subtle Branding Accent -->
+  <rect x="175" y="210" width="36" height="4" rx="2" fill="#F15A24"/>
+  <rect x="220" y="210" width="60" height="4" rx="2" fill="#CBD5E1"/>
+</svg>

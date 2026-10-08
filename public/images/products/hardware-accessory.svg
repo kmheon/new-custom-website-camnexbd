@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgAcc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#F4EEE6"/>
+    </linearGradient>
+    <linearGradient id="psuBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="24" fill="url(#bgAcc)"/>
+  
+  <!-- Centralized Power Box / Accessory Housing -->
+  <rect x="80" y="110" width="150" height="190" rx="12" fill="url(#psuBody)" stroke="#CBD5E1" stroke-width="3"/>
+  <rect x="95" y="125" width="120" height="160" rx="6" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+  <!-- Keyhole Lock -->
+  <circle cx="108" cy="140" r="4" fill="#64748B"/>
+  <rect x="107" y="142" width="2" height="4" fill="#64748B"/>
+  <!-- Vents -->
+  <line x1="130" y1="140" x2="200" y2="140" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+  <line x1="130" y1="148" x2="200" y2="148" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+  <!-- Status LEDs -->
+  <circle cx="108" cy="265" r="3" fill="#22C55E"/>
+  <circle cx="120" cy="265" r="3" fill="#F15A24"/>
+  
+  <!-- Coiled Cat6 / Power Cable -->
+  <path d="M 230 240 C 270 240, 310 270, 320 230 C 330 190, 270 170, 290 140 C 300 120, 340 130, 340 160" stroke="#0284C7" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <!-- BNC / RJ45 Connector Head -->
+  <rect x="330" y="150" width="24" height="34" rx="4" fill="#0F172A" stroke="#475569" stroke-width="2"/>
+  <rect x="336" y="184" width="12" height="6" fill="#F59E0B"/>
+</svg>

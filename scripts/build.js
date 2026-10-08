@@ -21,14 +21,6 @@ async function runBuild() {
     fs.mkdirSync(distDir, { recursive: true });
   }
 
-  // Clean old hashed bundle files in public/dist
-  const existingFiles = fs.readdirSync(distDir);
-  for (const f of existingFiles) {
-    if (f.startsWith('bundle.') && (f.endsWith('.js') || f.endsWith('.css'))) {
-      try { fs.unlinkSync(path.join(distDir, f)); } catch (_) {}
-    }
-  }
-
   // 1. Bundle TypeScript/React Application
   console.log('[BUILD] Bundling src/main.tsx with esbuild...');
   const jsResult = await esbuild.build({
@@ -39,6 +31,10 @@ async function runBuild() {
     write: false,
     sourcemap: false
   });
+
+  if (!jsResult.outputFiles || jsResult.outputFiles.length === 0) {
+    throw new Error('esbuild produced no output files');
+  }
 
   const outputJs = jsResult.outputFiles[0].contents;
   const jsHash = crypto.createHash('md5').update(outputJs).digest('hex').slice(0, 10);
@@ -83,6 +79,39 @@ async function runBuild() {
   };
 
   fs.writeFileSync(path.join(distDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+
+  // 4. Synchronize public/index.html with active hashed bundles
+  const indexHtmlPath = path.join(__dirname, '../public/index.html');
+  if (fs.existsSync(indexHtmlPath)) {
+    let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+    const cssRegex = /<link[^>]+(?:id="app-styles"|href=["'][^"']*(?:\/style\.css|\/dist\/bundle\.[^"']*\.css)["'])[^>]*>/i;
+    const newCssTag = `<link rel="stylesheet" href="/dist/${hashedCssFilename}" id="app-styles">`;
+    if (cssRegex.test(indexHtml)) {
+      indexHtml = indexHtml.replace(cssRegex, newCssTag);
+    } else {
+      indexHtml = indexHtml.replace('</head>', `  ${newCssTag}\n</head>`);
+    }
+
+    const jsRegex = /<script[^>]+src=["'][^"']*(?:bundle\.js|\/dist\/bundle\.[^"']*\.js)["'][^>]*><\/script>/i;
+    const newJsTag = `<script src="/dist/${hashedJsFilename}"></script>`;
+    if (jsRegex.test(indexHtml)) {
+      indexHtml = indexHtml.replace(jsRegex, newJsTag);
+    } else {
+      indexHtml = indexHtml.replace('</body>', `  ${newJsTag}\n</body>`);
+    }
+
+    fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
+  }
+
+  // 5. Clean up old hashed bundle files (keep current ones)
+  const existingFiles = fs.readdirSync(distDir);
+  for (const f of existingFiles) {
+    if (f.startsWith('bundle.') && (f.endsWith('.js') || f.endsWith('.css'))) {
+      if (f !== hashedJsFilename && f !== hashedCssFilename) {
+        try { fs.unlinkSync(path.join(distDir, f)); } catch (_) {}
+      }
+    }
+  }
 
   console.log(`[BUILD] Success!`);
   console.log(`  -> JS:  /dist/${hashedJsFilename} (${(outputJs.length / 1024).toFixed(1)} KB)`);

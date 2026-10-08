@@ -57,9 +57,9 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
               {/* Image Preview with Fallback */}
               <div className="mb-6 rounded-xl overflow-hidden border border-slate-700/80 max-h-56">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1200&q=80"
+                  src="/images/products/hikvision-bullet.svg"
                   alt="High Definition CCTV Camera with Night Vision"
-                  className="w-full h-48 object-cover filter brightness-90 hover:scale-105 transition-transform duration-500"
+                  className="w-full h-48 object-contain filter brightness-90 hover:scale-105 transition-transform duration-500"
                 />
               </div>
 

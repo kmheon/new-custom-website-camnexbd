@@ -355,8 +355,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       status: 'active',
       websiteVisible: true,
       posAvailable: true,
-      images: ['https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=600&q=80'],
-      primaryImage: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=600&q=80',
+      images: ['/images/products/hikvision-bullet.svg'],
+      primaryImage: '/images/products/hikvision-bullet.svg',
       shortDescription: reviewFields.shortDesc?.value || '',
       description: reviewFields.shortDesc?.value || '',
       keyFeatures: researchResult.suggestedKeyFeatures.value || [],
@@ -401,19 +401,30 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
   if (!isAdminAuthenticated || !currentUser || currentUser.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="flex justify-center items-center gap-2 mb-2">
-            <span className="w-3 h-3 rounded-full bg-[#F15A24]"></span>
-            <span className="text-2xl font-black text-white tracking-tight">Camne<span className="text-[#F15A24]">X</span></span>
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
+        <header className="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F15A24]"></span>
+            <span className="text-sm font-black text-white tracking-tight font-heading">Camne<span className="text-[#F15A24]">X</span> Portal</span>
           </div>
-          <h2 className="text-center text-xl font-bold tracking-tight text-white">
-            Administration Portal
-          </h2>
-          <p className="mt-1 text-center text-xs text-slate-400">
-            Sign in with your verified administrator credentials
-          </p>
-        </div>
+          <button onClick={() => onNavigate('home')} className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">
+            Return to Storefront
+          </button>
+        </header>
+
+        <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="flex justify-center items-center gap-2 mb-2">
+              <span className="w-3 h-3 rounded-full bg-[#F15A24]"></span>
+              <span className="text-2xl font-black text-white tracking-tight">Camne<span className="text-[#F15A24]">X</span></span>
+            </div>
+            <h2 className="text-center text-xl font-bold tracking-tight text-white">
+              Administration Portal
+            </h2>
+            <p className="mt-1 text-center text-xs text-slate-400">
+              Sign in with your verified administrator credentials
+            </p>
+          </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-slate-900 border border-slate-800 py-8 px-6 shadow-2xl rounded-xl sm:px-10">
@@ -451,7 +462,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               <button
                 type="submit"
                 disabled={submittingLogin}
-                className="w-full mt-2 py-2.5 px-4 bg-[#F15A24] hover:bg-[#D94D1C] text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full mt-2 min-h-[44px] py-2.5 px-6 bg-[#F15A24] hover:bg-[#D94D1C] text-white text-sm font-bold rounded-full transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submittingLogin ? (
                   <>
@@ -473,15 +484,16 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="bg-slate-900 min-h-screen text-slate-100 flex flex-col">
       <SEO title="Platform Admin Dashboard | CamneX Business Platform" description="Role-gated administration portal." noIndex={true} />
 
       {/* Admin Top Navigation */}
-      <div className="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => onNavigate('home')} className="flex items-center gap-2 text-white font-bold text-sm">
             <span className="w-2 h-2 rounded-full bg-[#F15A24]"></span>
@@ -514,7 +526,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
         </div>
-      </div>
+      </header>
 
       <div className="flex-1 flex overflow-hidden">
         

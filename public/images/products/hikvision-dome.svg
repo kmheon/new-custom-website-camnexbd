@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgDome" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#F4EEE6"/>
+    </linearGradient>
+    <linearGradient id="baseDome" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <radialGradient id="glassSphere" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="60%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="400" rx="24" fill="url(#bgDome)"/>
+  
+  <!-- Dome Ceiling Base Plate -->
+  <ellipse cx="200" cy="160" rx="130" ry="25" fill="#CBD5E1"/>
+  <ellipse cx="200" cy="155" rx="130" ry="25" fill="url(#baseDome)" stroke="#CBD5E1" stroke-width="2"/>
+  
+  <!-- Outer Bezel Ring -->
+  <path d="M 90 155 Q 90 260 200 275 Q 310 260 310 155 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <ellipse cx="200" cy="180" rx="100" ry="20" fill="#F1F5F9"/>
+  
+  <!-- Inner Glass Bubble -->
+  <path d="M 120 180 C 120 255, 280 255, 280 180 Z" fill="url(#glassSphere)"/>
+  
+  <!-- Lens Core -->
+  <circle cx="200" cy="205" r="22" fill="#0284C7" opacity="0.7"/>
+  <circle cx="200" cy="205" r="14" fill="#0F172A"/>
+  <circle cx="196" cy="201" r="5" fill="#FFFFFF" opacity="0.8"/>
+  
+  <!-- Status Indicator -->
+  <circle cx="200" cy="255" r="4" fill="#F15A24"/>
+  <circle cx="160" cy="200" r="3" fill="#EF4444" opacity="0.6"/>
+  <circle cx="240" cy="200" r="3" fill="#EF4444" opacity="0.6"/>
+</svg>

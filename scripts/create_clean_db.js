@@ -40,8 +40,8 @@ let targetPath = outputArg
 console.log(`[CLEAN-DB] Initializing clean SQLite database at: ${targetPath}`);
 
 if (fs.existsSync(targetPath)) {
-  if (shouldReplace) {
-    console.log('[CLEAN-DB] Removing existing target database (--replace specified)...');
+  if (shouldReplace || targetPath.endsWith('camnex_clean.db')) {
+    console.log('[CLEAN-DB] Removing existing clean target database...');
     try {
       fs.unlinkSync(targetPath);
       if (fs.existsSync(targetPath + '-wal')) fs.unlinkSync(targetPath + '-wal');

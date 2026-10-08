@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Phone,
   Mail,
@@ -21,6 +21,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Mobile accordion state
   const [openAccordions, setOpenAccordions] = useState<{ [key: string]: boolean }>({
@@ -323,15 +333,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
       </footer>
 
-      {/* FIXED BACK TO TOP (Fixed Bottom-Left: Never overlaps WhatsApp!) */}
-      <button
-        type="button"
-        onClick={scrollToTop}
-        aria-label="Back to top"
-        className="fixed bottom-20 md:bottom-6 left-4 md:left-6 z-30 w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#141210] hover:bg-[#F15A24] border border-white/15 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none"
-      >
-        <ArrowUp className="w-4 h-4" />
-      </button>
+      {/* FIXED BACK TO TOP (Fixed Bottom-Left: Never overlaps WhatsApp, only visible when scrolled) */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          className="fixed bottom-20 md:bottom-6 left-4 md:left-6 z-30 w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#141210] hover:bg-[#F15A24] border border-white/15 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none"
+        >
+          <ArrowUp className="w-4 h-4" />
+        </button>
+      )}
 
       {/* FLOATING WHATSAPP BUTTON (Fixed Bottom-Right: Desktop only, mobile uses sticky bar!) */}
       <a

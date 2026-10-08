@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgSwitch" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#F4EEE6"/>
+    </linearGradient>
+    <linearGradient id="switchBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="24" fill="url(#bgSwitch)"/>
+  
+  <!-- Rackmount Ears -->
+  <rect x="40" y="170" width="16" height="60" rx="3" fill="#64748B"/>
+  <circle cx="48" cy="180" r="3.5" fill="#1E293B"/>
+  <circle cx="48" cy="220" r="3.5" fill="#1E293B"/>
+  <rect x="344" y="170" width="16" height="60" rx="3" fill="#64748B"/>
+  <circle cx="352" cy="180" r="3.5" fill="#1E293B"/>
+  <circle cx="352" cy="220" r="3.5" fill="#1E293B"/>
+  
+  <!-- Main Switch Chassis -->
+  <rect x="52" y="165" width="296" height="70" rx="4" fill="url(#switchBody)" stroke="#475569" stroke-width="2"/>
+  
+  <!-- Front Panel Port Area Recess -->
+  <rect x="62" y="175" width="276" height="50" rx="3" fill="#0F172A"/>
+  
+  <!-- Brand & Model Label -->
+  <rect x="70" y="182" width="28" height="5" rx="2" fill="#F15A24"/>
+  <circle cx="72" cy="195" r="2.5" fill="#22C55E"/>
+  <circle cx="80" cy="195" r="2.5" fill="#3B82F6"/>
+  <circle cx="88" cy="195" r="2.5" fill="#F59E0B"/>
+  
+  <!-- RJ45 PoE Ports (2 rows of 6 blocks = 24 ports) -->
+  <!-- Top row -->
+  <g fill="#1E293B" stroke="#475569" stroke-width="1">
+    <rect x="110" y="180" width="12" height="14" rx="1"/>
+    <rect x="125" y="180" width="12" height="14" rx="1"/>
+    <rect x="145" y="180" width="12" height="14" rx="1"/>
+    <rect x="160" y="180" width="12" height="14" rx="1"/>
+    <rect x="180" y="180" width="12" height="14" rx="1"/>
+    <rect x="195" y="180" width="12" height="14" rx="1"/>
+    <rect x="215" y="180" width="12" height="14" rx="1"/>
+    <rect x="230" y="180" width="12" height="14" rx="1"/>
+  </g>
+  <!-- Bottom row -->
+  <g fill="#1E293B" stroke="#475569" stroke-width="1">
+    <rect x="110" y="200" width="12" height="14" rx="1"/>
+    <rect x="125" y="200" width="12" height="14" rx="1"/>
+    <rect x="145" y="200" width="12" height="14" rx="1"/>
+    <rect x="160" y="200" width="12" height="14" rx="1"/>
+    <rect x="180" y="200" width="12" height="14" rx="1"/>
+    <rect x="195" y="200" width="12" height="14" rx="1"/>
+    <rect x="215" y="200" width="12" height="14" rx="1"/>
+    <rect x="230" y="200" width="12" height="14" rx="1"/>
+  </g>
+  
+  <!-- Port Link LEDs (Green) -->
+  <g fill="#22C55E">
+    <circle cx="116" cy="176" r="1.5"/>
+    <circle cx="131" cy="176" r="1.5"/>
+    <circle cx="151" cy="176" r="1.5"/>
+    <circle cx="166" cy="176" r="1.5"/>
+    <circle cx="186" cy="176" r="1.5"/>
+    <circle cx="201" cy="176" r="1.5"/>
+    <circle cx="221" cy="176" r="1.5"/>
+    <circle cx="236" cy="176" r="1.5"/>
+  </g>
+  
+  <!-- 2 SFP Gigabit Fiber Ports -->
+  <rect x="260" y="184" width="16" height="30" rx="2" fill="#020617" stroke="#38BDF8" stroke-width="1.5"/>
+  <rect x="282" y="184" width="16" height="30" rx="2" fill="#020617" stroke="#38BDF8" stroke-width="1.5"/>
+  <circle cx="268" cy="178" r="1.5" fill="#38BDF8"/>
+  <circle cx="290" cy="178" r="1.5" fill="#38BDF8"/>
+</svg>
