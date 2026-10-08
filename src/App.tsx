@@ -185,7 +185,7 @@ export default function App() {
   const isAdmin = currentRoute === 'admin';
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#111827] font-sans antialiased selection:bg-[#F15A24] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#111827] font-sans antialiased selection:bg-[#F15A24] selection:text-white">
       {!isAdmin && <Header onNavigate={navigate} currentRoute={currentRoute} />}
 
       <main className="flex-1">

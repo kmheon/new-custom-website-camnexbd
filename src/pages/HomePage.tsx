@@ -1,61 +1,163 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Shield, CheckCircle2, ChevronRight, Star, ShoppingBag, Wrench, Layers, Award, Sparkles, Phone, MessageSquare, Calendar } from 'lucide-react';
+import {
+  ArrowRight,
+  Shield,
+  CheckCircle2,
+  ChevronRight,
+  ShoppingBag,
+  Wrench,
+  Layers,
+  Phone,
+  MessageCircle,
+  Calendar,
+  Sparkles,
+  Camera,
+  Cpu,
+  Wifi,
+  Eye,
+  Settings,
+  HardDrive
+} from 'lucide-react';
 import { SEO } from '../components/common/SEO';
-import { Button, Badge, Card } from '../components/common/UI';
+import { SectionHeader } from '../components/common/SectionHeader';
+import { ProductCard } from '../components/common/ProductCard';
+import { ProductRow } from '../components/common/ProductRow';
 import { HeroSlider } from '../components/HeroSlider';
-import { cmsService, productService, categoryService, brandService, packageService } from '../services';
-import { INITIAL_CTA_DATA } from '../services/seedData';
-import { HomepageSection, Product, Category, Brand, SecurityPackage } from '../types';
-import { useCartStore } from '../store';
+import {
+  cmsService,
+  productService,
+  categoryService,
+  packageService
+} from '../services';
+import {
+  HomepageSection,
+  Product,
+  Category,
+  SecurityPackage,
+  Testimonial,
+  ProjectCaseStudy
+} from '../types';
+import { useSettingsStore, useAdminAuthStore } from '../store';
+import {
+  DEFAULT_SERVICES_LIST,
+  DEFAULT_PROCESS_STEPS,
+  DEFAULT_HOW_IT_WORKS
+} from '../services/seedData';
 
 interface HomePageProps {
   onNavigate: (route: string, param?: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
-  const [sections, setSections] = useState<HomepageSection[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [packages, setPackages] = useState<SecurityPackage[]>([]);
-  const [selectedPremise, setSelectedPremise] = useState<'Home' | 'Shop' | 'Office' | 'Factory'>('Home');
-  const [selectedCamCount, setSelectedCamCount] = useState<number>(4);
+  const { settings, loadSettings } = useSettingsStore();
+  const { isAdminAuthenticated, checkAuth } = useAdminAuthStore();
 
-  const addItemToCart = useCartStore((s) => s.addItem);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [specialOffers, setSpecialOffers] = useState<Product[]>([]);
+  const [categoryRowProducts, setCategoryRowProducts] = useState<{ [catId: string]: Product[] }>({});
+  const [packages, setPackages] = useState<SecurityPackage[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [projects, setProjects] = useState<ProjectCaseStudy[]>([]);
+
+  // Package section filter
+  const [packageFilter, setPackageFilter] = useState<string>('All');
+
+  // Services accordion active state
+  const [activeServiceIdx, setActiveServiceIdx] = useState<number>(0);
 
   useEffect(() => {
-    cmsService.getHomepageSections().then(setSections);
-    categoryService.getCategories().then(setCategories);
-    productService.getFeaturedProducts(6).then(setFeaturedProducts);
-    productService.getPopularProducts(6).then(setPopularProducts);
-    brandService.getBrands().then(setBrands);
+    loadSettings();
+    checkAuth();
+
+    // Fetch categories
+    categoryService.getCategories().then((allCats) => {
+      setCategories(allCats);
+
+      // Fetch products for categories configured to show on homepage
+      const homepageCats = allCats.filter((c) => c.showOnHomepage);
+      homepageCats.forEach((cat) => {
+        productService.getProducts({ category: cat.slug, limit: 8 }).then((res) => {
+          setCategoryRowProducts((prev) => ({
+            ...prev,
+            [cat.id]: res.items
+          }));
+        });
+      });
+    });
+
+    // Fetch popular products
+    productService.getPopularProducts(8).then(setPopularProducts);
+
+    // Fetch new arrivals (sorted by newest)
+    productService.getProducts({ sortBy: 'created_at', sortOrder: 'desc', limit: 8 }).then((res) => {
+      setNewArrivals(res.items);
+    });
+
+    // Fetch all products to identify REAL special offers (strictly products with genuine sale price < regular price)
+    productService.getProducts({ limit: 40 }).then((res) => {
+      const discounted = res.items.filter(
+        (p) => p.pricing.salePrice && p.pricing.regularPrice && p.pricing.salePrice < p.pricing.regularPrice
+      );
+      setSpecialOffers(discounted);
+    });
+
+    // Fetch packages
     packageService.getPackages().then(setPackages);
-  }, []);
 
-  const calculateQuickEstimate = () => {
-    let base = 8500;
-    if (selectedCamCount === 2) base = 8500;
-    else if (selectedCamCount === 4) base = 14500;
-    else if (selectedCamCount === 8) base = 27500;
-    else if (selectedCamCount >= 16) base = 54000;
+    // Fetch proof sections (testimonials and projects)
+    cmsService.getTestimonials().then(setTestimonials);
+    cmsService.getProjects().then(setProjects);
+  }, [loadSettings, checkAuth]);
 
-    if (selectedPremise === 'Office') base += 2500;
-    if (selectedPremise === 'Factory') base += 6000;
-    return `৳${base.toLocaleString()} - ৳${Math.round(base * 1.25).toLocaleString()}`;
+  // Filtered packages
+  const filteredPackages = packages.filter((pkg) => {
+    if (packageFilter === 'All') return true;
+    if (packageFilter === 'Bullet Series') return pkg.name.toLowerCase().includes('bullet') || pkg.description.toLowerCase().includes('bullet');
+    if (packageFilter === 'Dome Series') return pkg.name.toLowerCase().includes('dome') || pkg.description.toLowerCase().includes('dome');
+    if (packageFilter === 'PoE IP Systems') return pkg.name.toLowerCase().includes('ip') || pkg.name.toLowerCase().includes('poe') || pkg.description.toLowerCase().includes('poe');
+    return true;
+  });
+
+  const servicesList = settings?.servicesList?.filter((s) => s.enabled) || DEFAULT_SERVICES_LIST;
+  const processSteps = settings?.processSteps?.filter((p) => p.enabled) || DEFAULT_PROCESS_STEPS;
+  const howItWorks = settings?.howItWorks || DEFAULT_HOW_IT_WORKS;
+
+  const phone = settings?.phone || '+880 1540-535150';
+  const whatsappNumber = settings?.whatsappNumber || '8801540535150';
+  const waUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hello%20CamneX,%20I%20would%20like%20to%20consult%20about%20a%20security%20system`;
+
+  // Helper for service icons
+  const renderServiceIcon = (iconName?: string) => {
+    const className = "w-4 h-4 text-[#F15A24] flex-shrink-0";
+    switch (iconName?.toLowerCase()) {
+      case 'camera': return <Camera className={className} />;
+      case 'wifi': return <Wifi className={className} />;
+      case 'cpu': return <Cpu className={className} />;
+      case 'eye': return <Eye className={className} />;
+      case 'wrench': return <Wrench className={className} />;
+      case 'harddrive': return <HardDrive className={className} />;
+      case 'shield': return <Shield className={className} />;
+      default: return <Settings className={className} />;
+    }
   };
 
-  const enabledSections = sections.filter(s => s.enabled).sort((a, b) => a.order - b.order);
+  // Helper for Category image fallback
+  const handleCatImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = '/images/hero/hikvision-bullet.jpg';
+  };
 
   return (
-    <div>
+    <div className="bg-[#FAF7F2] text-[#111827] min-h-screen">
       <SEO
-        title="CamneX Bangladesh"
+        title="CamneX Bangladesh | Authorized Security & Surveillance Engineering"
         description="Authorized Hikvision Partner and ZKTeco Installer in Bangladesh. Genuine CCTV cameras, Turbo HD DVRs, enterprise switches, and biometric access control."
         canonicalPath="/"
         jsonLd={{
           "@context": "https://schema.org",
-          "@type": "LocalBusiness",
+          "@type": "SecurityService",
           "name": "CamneX Bangladesh",
           "telephone": "+8801540535150",
           "email": "contact@camnexbd.com",
@@ -70,493 +172,583 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         }}
       />
 
-      {/* RENDER ADMIN-EDITABLE SECTIONS */}
-      {enabledSections.map((section) => {
-        
-        // 1. HERO SLIDER SECTION (Light & Airy Phase 1 Master Slider)
-        if (section.type === 'hero') {
-          return <HeroSlider key={section.id} onNavigate={onNavigate} />;
-        }
+      {/* 1. HERO SLIDER + BRAND STRIP (Definitive Section 2) */}
+      <HeroSlider onNavigate={onNavigate} />
 
-        // 2. CREDENTIALS STRIP
-        if (section.type === 'credentials') {
-          return (
-            <section key={section.id} className="bg-slate-900 border-b border-slate-800 py-6">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                  <div className="flex items-center gap-3 p-3 bg-slate-950/60 rounded-xl border border-slate-800">
-                    <div className="w-10 h-10 rounded-lg bg-red-600/20 text-red-500 flex items-center justify-center font-black">
-                      HIK
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-white">Hikvision Authorized Partner</div>
-                      <div className="text-xs text-slate-400">Genuine cameras, DVRs & NVRs with verified warranty</div>
-                    </div>
-                  </div>
+      {/* 2. SHOP BY CATEGORY (Definitive Section 3: On the Canvas) */}
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 my-14 md:my-22">
+        <SectionHeader
+          eyebrow="Hardware Categories"
+          title="Shop by Category"
+          subtitle="Authentic surveillance, networking, and biometric equipment from authorized manufacturers"
+          actionText="All categories"
+          onAction={() => onNavigate('catalog')}
+        />
 
-                  <div className="flex items-center gap-3 p-3 bg-slate-950/60 rounded-xl border border-slate-800">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-600/20 text-emerald-500 flex items-center justify-center font-black">
-                      ZK
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-white">ZKTeco Authorized Installer</div>
-                      <div className="text-xs text-slate-400">Certified biometric attendance & electronic door access</div>
-                    </div>
-                  </div>
+        {/* Six Large Tiles (3x2 desktop, 2x3 mobile) */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6">
+          {categories.slice(0, 6).map((cat) => (
+            <div
+              key={cat.id}
+              onClick={() => onNavigate('category', cat.slug)}
+              className="bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between h-full"
+            >
+              <div>
+                {/* Illustration/Image on Soft Tinted Area */}
+                <div className="bg-[#F4EEE6] rounded-2xl h-36 sm:h-44 flex items-center justify-center p-3 sm:p-4 overflow-hidden mb-4 sm:mb-5 group-hover:bg-[#EDE5DA] transition-colors">
+                  <img
+                    src={cat.image || '/images/hero/hikvision-bullet.jpg'}
+                    alt={cat.name}
+                    onError={handleCatImageError}
+                    className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
+                  />
                 </div>
+
+                {/* Bold Category Name */}
+                <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] group-hover:text-[#F15A24] transition-colors mb-1 line-clamp-1">
+                  {cat.name}
+                </h3>
+
+                {/* One Short Line */}
+                <p className="text-xs text-[#5B6472] line-clamp-1 mb-4">
+                  {cat.description || 'Verified hardware with distributor warranty'}
+                </p>
               </div>
-            </section>
-          );
-        }
 
-        // 3. CATEGORIES SECTION
-        if (section.type === 'categories') {
-          return (
-            <section key={section.id} className="py-16 bg-white border-b border-slate-200">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-end justify-between mb-10">
-                  <div>
-                    <span className="text-xs font-bold text-[#F15A24] uppercase tracking-wider block mb-1">
-                      Hardware Categories
-                    </span>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] font-heading">
-                      Shop by Engineering Category
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => onNavigate('catalog')}
-                    className="text-xs font-bold text-[#F15A24] hover:text-[#D94D1C] flex items-center gap-1"
-                  >
-                    <span>View all products</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {categories.map((cat) => (
-                    <div
-                      key={cat.id}
-                      onClick={() => onNavigate('category', cat.slug)}
-                      className="group p-5 bg-[#F8FAFC] border border-slate-200 rounded-2xl hover:border-orange-300 hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between"
-                    >
-                      <div className="h-32 mb-3 rounded-xl overflow-hidden bg-slate-200">
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors font-heading mb-1">
-                          {cat.name}
-                        </h3>
-                        <p className="text-[11px] text-slate-500 line-clamp-2">
-                          {cat.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          );
-        }
-
-        // 4. FEATURED PRODUCTS SECTION
-        if (section.type === 'featured_products') {
-          return (
-            <section key={section.id} className="py-16 bg-[#F8FAFC] border-b border-slate-200">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-end justify-between mb-10">
-                  <div>
-                    <span className="text-xs font-bold text-[#F15A24] uppercase tracking-wider block mb-1">
-                      Top Hardware Selections
-                    </span>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] font-heading">
-                      Featured Surveillance & IT Hardware
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => onNavigate('catalog')}
-                    className="text-xs font-bold text-[#F15A24] hover:underline"
-                  >
-                    Complete Catalog →
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredProducts.map((prod) => (
-                    <div
-                      key={prod.id}
-                      className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between"
-                    >
-                      <div>
-                        {/* Image */}
-                        <div
-                          onClick={() => onNavigate('product', prod.id)}
-                          className="h-48 rounded-xl overflow-hidden bg-slate-100 cursor-pointer mb-4 relative"
-                        >
-                          <img
-                            src={prod.primaryImage}
-                            alt={prod.name}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute top-2.5 left-2.5">
-                            <Badge variant="dark">{prod.brand}</Badge>
-                          </div>
-                          {prod.isDemo && (
-                            <div className="absolute bottom-2 left-2">
-                              <span className="text-[10px] bg-slate-900/80 text-slate-300 px-2 py-0.5 rounded font-mono">
-                                Sample item
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Title & Model */}
-                        <div className="text-xs font-mono text-slate-500 mb-1">{prod.modelNumber}</div>
-                        <h3
-                          onClick={() => onNavigate('product', prod.id)}
-                          className="font-bold text-base text-[#111827] hover:text-[#F15A24] cursor-pointer transition-colors font-heading mb-2 line-clamp-1"
-                        >
-                          {prod.name}
-                        </h3>
-                        <p className="text-xs text-slate-600 line-clamp-2 mb-4">
-                          {prod.shortDescription}
-                        </p>
-                      </div>
-
-                      {/* Pricing & Add to Cart */}
-                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                        <div>
-                          {prod.pricing.regularPrice ? (
-                            <div className="text-lg font-black text-[#F15A24] font-heading">
-                              ৳{prod.pricing.regularPrice.toLocaleString()}
-                            </div>
-                          ) : (
-                            <div className="text-xs font-bold text-slate-500">
-                              Request quotation
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => onNavigate('product', prod.id)}
-                            className="text-xs font-bold text-slate-600 hover:text-black px-2.5 py-1.5 rounded-lg border border-slate-200"
-                          >
-                            Details
-                          </button>
-                          <Button
-                            size="sm"
-                            onClick={() => addItemToCart(prod, 1)}
-                          >
-                            <ShoppingBag className="w-3.5 h-3.5 mr-1" />
-                            <span>Add</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          );
-        }
-
-        // 5. PACKAGES SECTION
-        if (section.type === 'packages') {
-          return (
-            <section key={section.id} className="py-16 bg-white border-b border-slate-200">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center max-w-2xl mx-auto mb-12">
-                  <Badge variant="orange" className="mb-2">Configurable Bundles</Badge>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] font-heading">
-                    Turnkey CCTV Security Packages
-                  </h2>
-                  <p className="text-sm text-slate-600 mt-2">
-                    Pure infrared night vision packages. Rules-based storage and cable formulas without surprise fees.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {packages.map((pkg) => (
-                    <div
-                      key={pkg.id}
-                      className="bg-[#111827] text-white p-7 rounded-2xl shadow-xl border border-slate-800 flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <Badge variant="orange">{pkg.badge || 'Turnkey System'}</Badge>
-                          <span className="text-xs text-slate-400 font-mono">2, 4, 8, 16 Cams</span>
-                        </div>
-
-                        <h3 className="text-xl font-bold font-heading mb-2 text-white">
-                          {pkg.name}
-                        </h3>
-
-                        <p className="text-xs text-slate-300 leading-relaxed mb-6">
-                          {pkg.description}
-                        </p>
-
-                        <div className="space-y-2 text-xs text-slate-300 mb-6 bg-slate-900 p-4 rounded-xl border border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24]" />
-                            <span>Hikvision 2MP IRPF Infrared Cameras</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24]" />
-                            <span>WD Purple Surveillance HDD</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24]" />
-                            <span>10 Meters Pure Cat6 Cable per camera</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24]" />
-                            <span>Free Hik-Connect Smartphone Live View</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="text-2xl font-black text-[#F15A24] font-heading mb-4">
-                          {pkg.basePrice ? `Starting at ৳${pkg.basePrice.toLocaleString()}` : 'Pricing by Specification'}
-                        </div>
-
-                        <Button
-                          size="md"
-                          onClick={() => onNavigate('packages', pkg.slug)}
-                          className="w-full"
-                        >
-                          <span>Open Package Builder</span>
-                          <ArrowRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          );
-        }
-
-        // 6. BRANDS SECTION
-        if (section.type === 'brands') {
-          return (
-            <section key={section.id} className="py-12 bg-[#F8FAFC] border-b border-slate-200">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-6">
-                  Authorized Manufacturer Partners & Official Brands
+              {/* Round Orange Arrow Button that lifts on hover */}
+              <div className="flex items-center justify-between pt-2 border-t border-[#EDE8E1]/60">
+                <span className="text-[11px] font-bold text-[#5B6472] group-hover:text-[#111827] transition-colors">
+                  Browse Series
                 </span>
-
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                  {brands.map((b) => (
-                    <div
-                      key={b.id}
-                      onClick={() => onNavigate('brand', b.slug)}
-                      className="bg-white p-4 rounded-xl border border-slate-200 hover:border-orange-400 cursor-pointer shadow-sm transition-all text-center"
-                    >
-                      <span className="text-sm font-black text-[#111827] tracking-wider block font-heading">
-                        {b.name.toUpperCase()}
-                      </span>
-                      <span className="text-[10px] text-slate-500">Official Hardware</span>
-                    </div>
-                  ))}
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-50 text-[#F15A24] group-hover:bg-[#F15A24] group-hover:text-white flex items-center justify-center transition-all transform group-hover:-translate-y-1 group-hover:shadow-md">
+                  <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
-            </section>
-          );
-        }
+            </div>
+          ))}
+        </div>
+      </section>
 
-        // 7. SOLUTIONS / SERVICES
-        if (section.type === 'solutions') {
-          return (
-            <section key={section.id} className="py-16 bg-white border-b border-slate-200">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center max-w-2xl mx-auto mb-12">
-                  <Badge variant="dark" className="mb-2">Engineering Capabilities</Badge>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] font-heading">
-                    Turnkey Engineering & IT Infrastructure
-                  </h2>
-                  <p className="text-sm text-slate-600 mt-2">
-                    Professional deployment with clean concealed trunking and dedicated maintenance SLAs.
+      {/* 3. PACKAGES (Definitive Section 4: Soft Tinted Panel "surface-soft" #F4EEE6) */}
+      <section className="px-3 md:px-6 my-14 md:my-22">
+        <div className="max-w-[1200px] mx-auto bg-[#F4EEE6] rounded-[20px] md:rounded-[28px] border border-[#EDE8E1] p-6 sm:p-10 lg:p-14">
+          
+          {/* Centered Header */}
+          <SectionHeader
+            eyebrow="Turnkey Bundles"
+            title="Complete CCTV Packages"
+            subtitle="Configurable camera kits with genuine storage, wiring, and certified technician installation"
+            centered
+          />
+
+          {/* Chips for Form Factor and Package Type */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8 sm:mb-10">
+            {['All', 'Bullet Series', 'Dome Series', 'PoE IP Systems'].map((chip) => {
+              const isActive = packageFilter === chip;
+              return (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setPackageFilter(chip)}
+                  className={`min-h-[38px] px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[#F15A24] text-white shadow-sm'
+                      : 'bg-white hover:bg-slate-50 text-[#111827] border border-[#EDE8E1]'
+                  }`}
+                >
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* White Package Cards: 4 across desktop, snap-scroll on mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {filteredPackages.map((pkg) => (
+              <div
+                key={pkg.id}
+                className="bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-lg transition-all h-full"
+              >
+                <div>
+                  {/* Badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
+                      {pkg.badge || 'Complete Kit'}
+                    </span>
+                    <span className="text-[11px] font-bold text-[#5B6472]">
+                      2-16 Cams
+                    </span>
+                  </div>
+
+                  {/* Title & Description */}
+                  <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
+                    {pkg.name}
+                  </h3>
+                  <p className="text-xs text-[#5B6472] leading-relaxed mb-4 line-clamp-2">
+                    {pkg.description}
+                  </p>
+
+                  {/* Included Items Checklist */}
+                  <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                      <span className="line-clamp-1">Hikvision IR Night Vision Cams</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                      <span className="line-clamp-1">WD Purple Surveillance HDD</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                      <span className="line-clamp-1">Pure Copper Cat6 Cabling</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                      <span className="line-clamp-1">Hik-Connect Smartphone App</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price & Action Button */}
+                <div>
+                  <div className="mb-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
+                      Starting From
+                    </span>
+                    <div className="text-xl font-black text-[#111827] font-heading">
+                      {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('packages', pkg.slug)}
+                    className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                  >
+                    <span>Configure Package</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* 4. SERVICES (Definitive Section 5: Dark Panel "surface-dark" #141210) */}
+      <section className="px-3 md:px-6 my-14 md:my-22">
+        <div className="max-w-[1200px] mx-auto bg-[#141210] rounded-[20px] md:rounded-[28px] p-6 sm:p-12 lg:p-16 text-white shadow-2xl">
+          
+          {/* Centered Header */}
+          <SectionHeader
+            eyebrow="Services"
+            title="Installation, setup and support"
+            subtitle="Professional deployment with concealed wiring, certified technicians, and dedicated maintenance agreements"
+            centered
+            dark
+          />
+
+          {/* Two Columns Below */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-10">
+            
+            {/* LEFT: Rounded Orange-Gradient Card with Floating Checklist Card */}
+            <div className="lg:col-span-5 flex items-center justify-center">
+              <div className="w-full rounded-3xl bg-gradient-to-br from-[#F15A24] to-[#D94D1C] p-6 sm:p-8 flex items-center justify-center relative overflow-hidden min-h-[380px] shadow-xl">
+                
+                {/* Background decorative glow */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_60%)] pointer-events-none" />
+
+                {/* White Floating Card with 3 Process Steps */}
+                <div className="relative z-10 bg-white rounded-2xl p-6 shadow-2xl w-full max-w-sm text-[#111827] space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#EDE8E1] pb-3">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#F15A24]">
+                      Engineering Workflow
+                    </span>
+                    <span className="text-[10px] font-bold text-[#5B6472]">
+                      3 Step Guarantee
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    {processSteps.map((step, idx) => (
+                      <div key={step.id || idx} className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-orange-100 text-[#F15A24] font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-[#111827]">
+                            {step.title}
+                          </div>
+                          <div className="text-[11px] text-[#5B6472] leading-snug">
+                            {step.description}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 border-t border-[#EDE8E1] text-center">
+                    <span className="text-[10px] font-bold text-[#5B6472]">
+                      Transparent estimates without surprise charges
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* RIGHT: Vertical List of Services (Accordion) */}
+            <div className="lg:col-span-7 space-y-1">
+              {servicesList.map((srv, idx) => {
+                const isActive = activeServiceIdx === idx;
+                return (
+                  <div
+                    key={srv.id || idx}
+                    onMouseEnter={() => setActiveServiceIdx(idx)}
+                    onClick={() => setActiveServiceIdx(idx)}
+                    className={`p-4 rounded-xl transition-all cursor-pointer border-b border-white/10 ${
+                      isActive
+                        ? 'border-l-4 border-l-[#F15A24] bg-white/5 pl-4'
+                        : 'hover:bg-white/5 pl-2'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                          {renderServiceIcon(srv.icon)}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white font-heading">
+                            {srv.title}
+                          </h4>
+                          {isActive && (
+                            <p className="text-xs text-[#A0A8B4] mt-1 leading-relaxed animate-fade-in">
+                              {srv.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isActive ? 'rotate-90 text-[#F15A24]' : ''}`} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+
+          {/* Centered Pill Buttons Below Services */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => onNavigate('quote')}
+              className="w-full sm:w-auto min-h-[44px] px-8 py-3 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Book a site survey</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('quote')}
+              className="w-full sm:w-auto min-h-[44px] px-7 py-3 rounded-full bg-transparent hover:bg-white/10 text-white border border-white/30 font-bold text-xs transition-all flex items-center justify-center gap-2"
+            >
+              <Wrench className="w-4 h-4" />
+              <span>Request a quote</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 5. PRODUCT ROWS (Definitive Section 6: Alternating Canvas / White Rounded Panels) */}
+      
+      {/* Row 1: Popular Products (Canvas) */}
+      {popularProducts.length > 0 && (
+        <ProductRow
+          eyebrow="Popular Hardware"
+          title="Popular Products"
+          subtitle="Top verified security cameras, video recorders, and biometric access hardware"
+          products={popularProducts}
+          actionText={`View all (${popularProducts.length})`}
+          onAction={() => onNavigate('catalog')}
+          onNavigate={onNavigate}
+          variant="canvas"
+        />
+      )}
+
+      {/* Row 2: New Arrivals (White Rounded Panel) */}
+      {newArrivals.length > 0 && (
+        <ProductRow
+          eyebrow="New Deployments"
+          title="New Arrivals"
+          subtitle="Latest firmware models, high-density PoE switches, and Wi-Fi 6 hardware additions"
+          products={newArrivals}
+          actionText={`View all (${newArrivals.length})`}
+          onAction={() => onNavigate('catalog')}
+          onNavigate={onNavigate}
+          variant="panel"
+        />
+      )}
+
+      {/* Row 3: Special Offers (Canvas - ONLY if real discounts exist) */}
+      {specialOffers.length > 0 && (
+        <ProductRow
+          eyebrow="Verified Discounts"
+          title="Special Offers"
+          subtitle="Genuine sale prices set directly by the distributor without inflated baselines"
+          products={specialOffers}
+          actionText={`View all (${specialOffers.length})`}
+          onAction={() => onNavigate('catalog')}
+          onNavigate={onNavigate}
+          variant="canvas"
+        />
+      )}
+
+      {/* Category Rows (marked showOnHomepage) */}
+      {categories
+        .filter((cat) => cat.showOnHomepage && categoryRowProducts[cat.id]?.length > 0)
+        .map((cat, idx) => (
+          <ProductRow
+            key={cat.id}
+            eyebrow="Category Showcase"
+            title={cat.name}
+            subtitle={cat.description}
+            products={categoryRowProducts[cat.id]}
+            actionText="View category"
+            onAction={() => onNavigate('category', cat.slug)}
+            onNavigate={onNavigate}
+            variant={idx % 2 === 0 ? 'panel' : 'canvas'}
+            promoTile={{
+              badge: 'Featured',
+              title: `${cat.name} Solutions`,
+              description: `Explore full technical specifications and commercial stock for ${cat.name}.`,
+              buttonText: 'View Series',
+              link: `/category/${cat.slug}`
+            }}
+          />
+        ))}
+
+      {/* 6. HOW IT WORKS (Definitive Section 7: Optional, Admin-Controlled) */}
+      {howItWorks?.enabled && (
+        <section className="px-3 md:px-6 my-14 md:my-22">
+          <div className="max-w-[1200px] mx-auto bg-white rounded-[20px] md:rounded-[28px] border border-[#EDE8E1] p-6 sm:p-10 lg:p-14 shadow-sm">
+            <SectionHeader
+              eyebrow="Process"
+              title={howItWorks.title || 'How It Works'}
+              subtitle={howItWorks.subtitle || 'Transparent workflow from consultation to post-installation support'}
+              centered
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#EDE8E1] pt-4">
+              {howItWorks.steps.map((step, idx) => (
+                <div key={idx} className="p-6 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] font-black text-sm flex items-center justify-center mx-auto shadow-2xs">
+                    0{idx + 1}
+                  </div>
+                  <h3 className="font-heading font-bold text-base text-[#111827]">
+                    {step.title}
+                  </h3>
+                  <p className="text-xs text-[#5B6472] leading-relaxed max-w-xs mx-auto">
+                    {step.description}
                   </p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-[#F8FAFC] rounded-2xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                      <div className="w-10 h-10 rounded-xl bg-[#F15A24]/10 text-[#F15A24] flex items-center justify-center font-bold mb-4">
-                        01
-                      </div>
-                      <h3 className="text-lg font-bold text-[#111827] font-heading mb-2">
-                        CCTV & Video Surveillance
-                      </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                        Analog HD and IP optical network camera setups designed to eliminate blind spots across homes, duplex villas, and manufacturing plants.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => onNavigate('services')}
-                      className="text-xs font-bold text-[#F15A24] hover:underline text-left"
-                    >
-                      Learn more →
-                    </button>
+      {/* 7. PROOF SECTIONS (Definitive Section 8: Testimonials & Projects) */}
+      {/* Testimonials */}
+      {testimonials.length > 0 ? (
+        <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 my-14 md:my-22">
+          <SectionHeader
+            eyebrow="Client Experiences"
+            title="Verified Client Feedback"
+            subtitle="Real deployment feedback from commercial and residential project owners"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t) => (
+              <div
+                key={t.id}
+                className="bg-white rounded-[20px] border border-[#EDE8E1] p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center gap-1 text-amber-400 mb-3">
+                    {[...Array(t.rating || 5)].map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
                   </div>
-
-                  <div className="p-6 bg-[#F8FAFC] rounded-2xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold mb-4">
-                        02
-                      </div>
-                      <h3 className="text-lg font-bold text-[#111827] font-heading mb-2">
-                        Structured Cabling & Wi-Fi 6
-                      </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                        Server rack termination, patch panel labeling, Cat6 copper cabling, and high-density commercial access point deployments.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => onNavigate('services')}
-                      className="text-xs font-bold text-blue-600 hover:underline text-left"
-                    >
-                      Learn more →
-                    </button>
-                  </div>
-
-                  <div className="p-6 bg-[#F8FAFC] rounded-2xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold mb-4">
-                        03
-                      </div>
-                      <h3 className="text-lg font-bold text-[#111827] font-heading mb-2">
-                        Biometric Access Control
-                      </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                        ZKTeco facial recognition, biometric fingerprint scanners, magnetic locks, and automated shift-wise Excel payroll reporting.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => onNavigate('services')}
-                      className="text-xs font-bold text-emerald-600 hover:underline text-left"
-                    >
-                      Learn more →
-                    </button>
-                  </div>
+                  <p className="text-xs text-[#111827] leading-relaxed italic mb-4">
+                    "{t.content}"
+                  </p>
+                </div>
+                <div className="pt-3 border-t border-[#EDE8E1]">
+                  <div className="font-bold text-xs text-[#111827]">{t.clientName}</div>
+                  <div className="text-[11px] text-[#5B6472]">{t.clientRole || t.company}</div>
                 </div>
               </div>
-            </section>
-          );
-        }
+            ))}
+          </div>
+        </section>
+      ) : isAdminAuthenticated ? (
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 my-10">
+          <div className="border-2 border-dashed border-[#EDE8E1] rounded-[20px] p-8 text-center bg-white/50">
+            <p className="text-sm font-semibold text-[#5B6472]">No testimonials published yet.</p>
+            <p className="text-xs text-slate-400 mt-1">This section is hidden from visitors and only visible to you as admin.</p>
+            <button
+              onClick={() => onNavigate('admin', 'testimonials')}
+              className="mt-3 text-xs font-bold text-[#F15A24] hover:underline"
+            >
+              + Add Testimonial in Admin
+            </button>
+          </div>
+        </div>
+      ) : null}
 
-        // 8. FINAL CTA SECTION (Orange Panel with 3 White Cards and Reassurance Row)
-        if (section.type === 'quote_cta') {
-          const cta = section.ctaData || INITIAL_CTA_DATA;
-          const activeReassurances = (cta.reassurances || INITIAL_CTA_DATA.reassurances).filter(r => r.enabled);
-          const cardsList = (cta.cards && cta.cards.length > 0) ? cta.cards : INITIAL_CTA_DATA.cards;
-
-          return (
-            <section key={section.id} className="py-12 sm:py-16 bg-slate-50">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="relative rounded-3xl bg-gradient-to-br from-[#F15A24] via-[#ea5019] to-[#D94D1C] text-white overflow-hidden shadow-2xl p-8 sm:p-12 lg:p-16 text-center space-y-8">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_50%)] pointer-events-none"></div>
-
-                  <div className="relative z-10 max-w-4xl mx-auto space-y-4">
-                    {/* Small pill eyebrow at the top */}
-                    {cta.eyebrow && (
-                      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold uppercase tracking-wider shadow-sm">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>{cta.eyebrow}</span>
-                      </div>
-                    )}
-
-                    {/* H2 */}
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-heading text-white tracking-tight leading-tight">
-                      {cta.heading || 'Need Help Choosing the Right Security Solution?'}
-                    </h2>
-
-                    {/* Subtext */}
-                    <p className="text-base sm:text-lg text-white/90 max-w-2xl mx-auto font-normal leading-relaxed">
-                      {cta.subtext || 'Our specialists are ready to help you choose the perfect CCTV, networking, access control or smart security solution for your home or business.'}
-                    </p>
-                  </div>
-
-                  {/* Three white rounded action cards in a row */}
-                  <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto pt-2">
-                    {cardsList.map((card) => {
-                      const isSurvey = card.type === 'survey';
-                      const isCall = card.type === 'call';
-                      const isWa = card.type === 'whatsapp';
-                      const IconComponent = isWa ? MessageSquare : isCall ? Phone : Calendar;
-
-                      if (isSurvey) {
-                        return (
-                          <button
-                            key={card.id}
-                            type="button"
-                            onClick={() => onNavigate('quote')}
-                            className="bg-white text-[#111827] rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 text-left flex flex-col justify-between group cursor-pointer w-full"
-                          >
-                            <div>
-                              <div className="w-11 h-11 rounded-xl bg-orange-50 text-[#F15A24] flex items-center justify-center mb-4 group-hover:bg-[#F15A24] group-hover:text-white transition-colors">
-                                <IconComponent className="w-5 h-5" />
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <h3 className="font-bold font-heading text-lg text-[#111827]">{card.title}</h3>
-                                <ArrowRight className="w-4 h-4 text-[#F15A24] transform group-hover:translate-x-1 transition-transform" />
-                              </div>
-                              <p className="text-sm text-slate-500 mt-1.5 leading-snug">{card.description}</p>
-                            </div>
-                          </button>
-                        );
-                      }
-
-                      return (
-                        <a
-                          key={card.id}
-                          href={card.actionUrl || (isCall ? 'tel:+8801540535150' : 'https://wa.me/8801540535150')}
-                          target={isWa ? '_blank' : undefined}
-                          rel={isWa ? 'noopener noreferrer' : undefined}
-                          className="bg-white text-[#111827] rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 text-left flex flex-col justify-between group"
-                        >
-                          <div>
-                            <div className="w-11 h-11 rounded-xl bg-orange-50 text-[#F15A24] flex items-center justify-center mb-4 group-hover:bg-[#F15A24] group-hover:text-white transition-colors">
-                              <IconComponent className="w-5 h-5" />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-bold font-heading text-lg text-[#111827]">{card.title}</h3>
-                              <ArrowRight className="w-4 h-4 text-[#F15A24] transform group-hover:translate-x-1 transition-transform" />
-                            </div>
-                            {card.phoneDisplay && (
-                              <p className="text-xs font-bold text-[#F15A24] mt-0.5">{card.phoneDisplay}</p>
-                            )}
-                            <p className="text-sm text-slate-500 mt-1 leading-snug">{card.description}</p>
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-
-                  {/* Reassurance row below the cards */}
-                  {activeReassurances.length > 0 && (
-                    <div className="relative z-10 pt-6 border-t border-white/20 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 sm:gap-x-10 text-xs sm:text-sm text-white/95 font-medium">
-                      {activeReassurances.map((item) => (
-                        <div key={item.id} className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0" />
-                          <span>{item.label}</span>
-                        </div>
-                      ))}
-                    </div>
+      {/* Projects */}
+      {projects.length > 0 ? (
+        <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 my-14 md:my-22">
+          <SectionHeader
+            eyebrow="Case Studies"
+            title="Recent Installation Projects"
+            subtitle="Commercial surveillance, factory Wi-Fi mesh, and corporate biometric deployments"
+            actionText="View all projects"
+            onAction={() => onNavigate('projects')}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {projects.map((p) => (
+              <div
+                key={p.id}
+                onClick={() => onNavigate('projects')}
+                className="bg-white rounded-[20px] border border-[#EDE8E1] overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div className="h-44 bg-slate-100 overflow-hidden relative">
+                  <img
+                    src={p.image || '/images/hero/hikvision-bullet.jpg'}
+                    alt={p.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {p.category && (
+                    <span className="absolute top-3 left-3 bg-[#111827]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                      {p.category}
+                    </span>
                   )}
                 </div>
+                <div className="p-5">
+                  <h3 className="font-heading font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-1 line-clamp-1">
+                    {p.title}
+                  </h3>
+                  <p className="text-xs text-[#5B6472] line-clamp-2">
+                    {p.description}
+                  </p>
+                </div>
               </div>
-            </section>
-          );
-        }
+            ))}
+          </div>
+        </section>
+      ) : isAdminAuthenticated ? (
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 my-10">
+          <div className="border-2 border-dashed border-[#EDE8E1] rounded-[20px] p-8 text-center bg-white/50">
+            <p className="text-sm font-semibold text-[#5B6472]">No project case studies published yet.</p>
+            <p className="text-xs text-slate-400 mt-1">This section is hidden from visitors and only visible to you as admin.</p>
+            <button
+              onClick={() => onNavigate('admin', 'projects')}
+              className="mt-3 text-xs font-bold text-[#F15A24] hover:underline"
+            >
+              + Add Project in Admin
+            </button>
+          </div>
+        </div>
+      ) : null}
 
-        return null;
-      })}
+      {/* 8. FINAL CTA (Definitive Section 9: Orange Rounded Panel #F15A24 to #D94D1C) */}
+      <section className="px-3 md:px-6 my-14 md:my-22">
+        <div className="max-w-[1200px] mx-auto rounded-[20px] md:rounded-[28px] bg-gradient-to-br from-[#F15A24] via-[#ea5019] to-[#D94D1C] text-white p-8 sm:p-12 lg:p-16 text-center space-y-8 shadow-xl relative overflow-hidden">
+          
+          {/* Subtle radial pattern */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_50%)] pointer-events-none" />
+
+          <div className="relative z-10 max-w-3xl mx-auto space-y-4">
+            {/* Centered Translucent Pill Eyebrow */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold uppercase tracking-wider shadow-xs">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Engineering & Security Assistance</span>
+            </div>
+
+            {/* White H2 */}
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-heading text-white tracking-tight leading-tight">
+              Need a customized security or network setup?
+            </h2>
+
+            {/* White 90% Subtext */}
+            <p className="text-base sm:text-lg text-white/90 max-w-2xl mx-auto font-normal leading-relaxed">
+              Our certified technicians perform on-site surveys and provide transparent quotations across Dhaka and nationwide.
+            </p>
+          </div>
+
+          {/* Three Pill Buttons */}
+          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
+            
+            {/* 1. WhatsApp Pill */}
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto min-h-[44px] px-7 py-3 rounded-full bg-white text-[#111827] hover:bg-slate-100 font-bold text-xs shadow-md inline-flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+            >
+              <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
+              <span>Chat on WhatsApp</span>
+            </a>
+
+            {/* 2. Call Pill */}
+            <a
+              href={`tel:${phone.replace(/\s+/g, '')}`}
+              className="w-full sm:w-auto min-h-[44px] px-7 py-3 rounded-full bg-white text-[#111827] hover:bg-slate-100 font-bold text-xs shadow-md inline-flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+            >
+              <Phone className="w-4 h-4 text-[#F15A24]" />
+              <span>Call {phone}</span>
+            </a>
+
+            {/* 3. Book Site Visit Pill */}
+            <button
+              type="button"
+              onClick={() => onNavigate('quote')}
+              className="w-full sm:w-auto min-h-[44px] px-7 py-3 rounded-full bg-[#141210] text-white hover:bg-black font-bold text-xs shadow-md inline-flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+            >
+              <Wrench className="w-4 h-4 text-[#F15A24]" />
+              <span>Book Site Visit</span>
+            </button>
+
+          </div>
+
+          {/* Reassurance Row Below */}
+          <div className="relative z-10 border-t border-white/20 pt-6 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 sm:gap-x-10 text-xs sm:text-sm font-medium text-white/95">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+              <span>Authorized Hikvision & ZKTeco Partner</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+              <span>Genuine Warranty with Serial Tracking</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+              <span>Concealed Trunking & Neat Cabling</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+              <span>Free Mobile Viewing Setup</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
     </div>
   );
 };

@@ -620,8 +620,11 @@ export class RestCmsService implements ICmsService {
   }
 
   private buildSlideFromProduct(config: HeroSlide, prod: Product, templates: SpecTemplate[]): HeroSlide {
-    const image = config.overrides?.image || config.image || prod.primaryImage || (prod.images && prod.images[0]) || '/images/hero/hikvision-bullet.png';
-    const headline = config.overrides?.headline || `${prod.brand} ${prod.name}`;
+    const image = config.overrides?.image || config.image || prod.primaryImage || (prod.images && prod.images[0]) || '/images/hero/hikvision-bullet.jpg';
+    const cleanHeadline = prod.name.toLowerCase().startsWith((prod.brand || '').toLowerCase())
+      ? prod.name
+      : `${prod.brand ? prod.brand + ' ' : ''}${prod.name}`;
+    const headline = config.overrides?.headline || cleanHeadline;
     const description = config.overrides?.description || prod.shortDescription || prod.description;
 
     let badge = config.overrides?.badge || config.badge;

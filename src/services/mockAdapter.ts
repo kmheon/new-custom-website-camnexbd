@@ -819,7 +819,10 @@ export class MockCmsService implements ICmsService {
     const image = config.overrides?.image || config.image || prod.primaryImage || (prod.images && prod.images[0]) || '/images/hero/hikvision-bullet.jpg';
 
     // 2. Headline & description
-    const headline = config.overrides?.headline || `${prod.brand} ${prod.name}`;
+    const cleanHeadline = prod.name.toLowerCase().startsWith((prod.brand || '').toLowerCase())
+      ? prod.name
+      : `${prod.brand ? prod.brand + ' ' : ''}${prod.name}`;
+    const headline = config.overrides?.headline || cleanHeadline;
     const description = config.overrides?.description || prod.shortDescription || prod.description;
 
     // 3. Badge

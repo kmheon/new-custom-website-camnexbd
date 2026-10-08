@@ -10,7 +10,10 @@ import {
   ProjectCaseStudy,
   Testimonial,
   FaqItem,
-  HeroSlide
+  HeroSlide,
+  ServiceItem,
+  ProcessStep,
+  HowItWorksStep
 } from '../types';
 
 export const INITIAL_SITE_SETTINGS: SiteSettings = {
@@ -46,6 +49,19 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   businessHours: 'Sat-Thu 9:30 AM - 7:30 PM, Friday on-call',
   enableStockBadges: true,
   sampleDataBanner: true,
+  showSampleContent: false,
+  announcementBar: {
+    enabled: false,
+    text: '',
+    link: '',
+    dismissible: true
+  },
+  servicesList: DEFAULT_SERVICES_LIST,
+  processSteps: DEFAULT_PROCESS_STEPS,
+  howItWorks: {
+    enabled: true,
+    steps: DEFAULT_HOW_IT_WORKS
+  },
   footer: {
     description: 'Security, surveillance, enterprise networking and IT infrastructure engineering in Dhaka, Bangladesh.',
     quickLinks: [
@@ -128,20 +144,126 @@ export const INITIAL_CTA_DATA = {
   ]
 };
 
+export const DEFAULT_SERVICES_LIST: ServiceItem[] = [
+  {
+    id: 'srv-cctv',
+    title: 'CCTV Installation & Cabling',
+    description: 'Professional IP & Turbo HD camera setup, clean concealed PVC conduit trunking, and NVR configuration.',
+    icon: 'camera',
+    link: '/services',
+    enabled: true,
+    order: 1
+  },
+  {
+    id: 'srv-survey',
+    title: 'Physical Site Survey',
+    description: 'On-premise physical engineering inspection in Dhaka with coverage mapping, blind spot analysis, and itemized bill of materials.',
+    icon: 'clipboard',
+    link: '/quote',
+    enabled: true,
+    order: 2
+  },
+  {
+    id: 'srv-wifi',
+    title: 'Networking & Wi-Fi Setup',
+    description: 'Server rack termination, Cat6 patch panels, high-density Wi-Fi 6 access points, and seamless roaming.',
+    icon: 'wifi',
+    link: '/services',
+    enabled: true,
+    order: 3
+  },
+  {
+    id: 'srv-access',
+    title: 'Access Control & Biometrics',
+    description: 'ZKTeco facial recognition terminals, RFID attendance systems, electromagnetic glass door locks, and payroll report export.',
+    icon: 'lock',
+    link: '/services',
+    enabled: true,
+    order: 4
+  },
+  {
+    id: 'srv-it',
+    title: 'IT Support & Maintenance',
+    description: 'Preventative quarterly lens cleaning, storage health checks, firmware security patches, and rapid breakdown response SLA.',
+    icon: 'wrench',
+    link: '/services',
+    enabled: true,
+    order: 5
+  },
+  {
+    id: 'srv-config',
+    title: 'Configuration & Deployment',
+    description: 'Cloud DDNS setup, Hik-Connect multi-device smartphone viewing, motion notification zones, and isolated security VLANs.',
+    icon: 'settings',
+    link: '/services',
+    enabled: true,
+    order: 6
+  }
+];
+
+export const DEFAULT_PROCESS_STEPS: ProcessStep[] = [
+  {
+    id: 'step-1',
+    stepNumber: 1,
+    title: 'Requirement & Consultation',
+    description: 'Share your property layout or security requirements online, or request an engineer consultation.'
+  },
+  {
+    id: 'step-2',
+    stepNumber: 2,
+    title: 'On-Site Survey & BOM Quote',
+    description: 'Certified engineers inspect your site, map optical angles, and prepare an itemized Bill of Materials.'
+  },
+  {
+    id: 'step-3',
+    stepNumber: 3,
+    title: 'Deployment & Lifetime SLA',
+    description: 'Neat concealed cabling, app live-view configuration, testing, and dedicated warranty support.'
+  }
+];
+
+export const DEFAULT_HOW_IT_WORKS: HowItWorksStep[] = [
+  {
+    id: 'hiw-1',
+    title: 'Choose Hardware or Turnkey Bundle',
+    description: 'Explore individual verified models or select from our rules-based 2, 4, 8, or 16 camera packages with genuine storage.',
+    icon: 'layers'
+  },
+  {
+    id: 'hiw-2',
+    title: 'Order Online or Request Quote',
+    description: 'Instant checkout for standalone devices or request a custom engineer quotation with physical site survey.',
+    icon: 'shopping-cart'
+  },
+  {
+    id: 'hiw-3',
+    title: 'Professional Installation & Support',
+    description: 'Concealed cabling, Hik-Connect mobile live-view setup, and authorized manufacturer warranty service.',
+    icon: 'wrench'
+  }
+];
+
 export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [
   { id: 'sec-hero', type: 'hero', title: 'Enterprise Hero Banner', enabled: true, order: 1 },
-  { id: 'sec-cred', type: 'credentials', title: 'Official Partner Credentials', enabled: true, order: 2 },
-  { id: 'sec-cats', type: 'categories', title: 'Shop by Engineering Category', enabled: true, order: 3 },
-  { id: 'sec-feat', type: 'featured_products', title: 'Featured Surveillance & IT Hardware', enabled: true, order: 4 },
-  { id: 'sec-pkgs', type: 'packages', title: 'Turnkey CCTV Security Packages', enabled: true, order: 5 },
-  { id: 'sec-brands', type: 'brands', title: 'Authorized Manufacturer Brands', enabled: true, order: 6 },
-  { id: 'sec-sol', type: 'solutions', title: 'Engineering & Deployment Solutions', enabled: true, order: 7 },
+  { id: 'sec-cats', type: 'categories', title: 'Shop by Engineering Category', enabled: true, order: 2 },
+  { id: 'sec-pkgs', type: 'packages', title: 'Turnkey CCTV Security Packages', enabled: true, order: 3 },
+  { id: 'sec-services', type: 'services', title: 'Installation, Setup & Support', enabled: true, order: 4 },
+  { id: 'sec-popular', type: 'popular_products', title: 'Popular Products', enabled: true, order: 5 },
+  { id: 'sec-new', type: 'new_arrivals', title: 'New Arrivals', enabled: true, order: 6 },
+  { id: 'sec-offers', type: 'special_offers', title: 'Special Offers', enabled: true, order: 7 },
+  { id: 'sec-cat-cctv', type: 'category_row', title: 'CCTV Cameras', categorySlug: 'cctv-cameras', enabled: true, order: 8 },
+  { id: 'sec-cat-access', type: 'category_row', title: 'Access Control & Biometrics', categorySlug: 'biometrics-access-control', enabled: true, order: 9 },
+  { id: 'sec-cat-recorders', type: 'category_row', title: 'DVR & NVR Recorders', categorySlug: 'dvr-nvr-recorders', enabled: true, order: 10 },
+  { id: 'sec-cat-net', type: 'category_row', title: 'Network Equipment & Wi-Fi', categorySlug: 'network-switches', enabled: true, order: 11 },
+  { id: 'sec-how', type: 'how_it_works', title: 'How It Works', enabled: true, order: 12 },
+  { id: 'sec-testimonials', type: 'testimonials', title: 'Verified Client Feedback', enabled: true, order: 13 },
+  { id: 'sec-projects', type: 'projects', title: 'Verified Case Studies', enabled: true, order: 14 },
   {
     id: 'sec-cta',
     type: 'quote_cta',
     title: 'Need Help Choosing the Right Security Solution?',
     enabled: true,
-    order: 8,
+    order: 15,
     ctaData: INITIAL_CTA_DATA
   }
 ];

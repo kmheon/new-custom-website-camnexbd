@@ -84,6 +84,7 @@ export interface Category {
   parentId?: string | null;
   specTemplateId: string;
   featured?: boolean;
+  showOnHomepage?: boolean;
   order: number;
 }
 
@@ -362,12 +363,26 @@ export interface SiteSettings {
   businessHours: string;
   enableStockBadges: boolean;
   sampleDataBanner: boolean;
+  showSampleContent?: boolean;
+  announcementBar?: {
+    enabled: boolean;
+    text: string;
+    link?: string;
+    dismissible?: boolean;
+  };
   promoBanner?: {
     enabled: boolean;
     text: string;
     link?: string;
   };
   footer?: FooterNavigationSettings;
+  servicesList?: ServiceItem[];
+  processSteps?: ProcessStep[];
+  servicesSectionPhoto?: string;
+  howItWorks?: {
+    enabled: boolean;
+    steps: HowItWorksStep[];
+  };
 
   // Global SEO Configuration
   seoTitle?: string;
@@ -395,14 +410,48 @@ export interface SiteSettings {
   privacyPolicyText?: string;
 }
 
+export interface ServiceItem {
+  id: string;
+  title: string;
+  description: string;
+  icon?: string;
+  link?: string;
+  enabled: boolean;
+  order: number;
+}
+
+export interface ProcessStep {
+  id: string;
+  stepNumber: number;
+  title: string;
+  description: string;
+}
+
+export interface HowItWorksStep {
+  id: string;
+  title: string;
+  description: string;
+  icon?: string;
+}
+
 export interface HomepageSection {
   id: string;
-  type: 'hero' | 'categories' | 'featured_products' | 'packages' | 'brands' | 'solutions' | 'credentials' | 'quote_cta';
+  type: 'hero' | 'categories' | 'packages' | 'services' | 'popular_products' | 'new_arrivals' | 'special_offers' | 'category_row' | 'how_it_works' | 'testimonials' | 'projects' | 'quote_cta' | 'brands' | 'credentials' | 'featured_products' | string;
   title: string;
   subtitle?: string;
   enabled: boolean;
   order: number;
+  categoryId?: string;
+  categorySlug?: string;
+  itemLimit?: number;
   ctaData?: CtaSectionData;
+  promoTile?: {
+    title: string;
+    description: string;
+    buttonText: string;
+    link: string;
+    image?: string;
+  };
 }
 
 export interface BlogPost {
