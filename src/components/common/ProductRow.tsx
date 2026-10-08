@@ -146,3 +146,4 @@ export const ProductRow: React.FC<ProductRowProps> = ({
     </section>
   );
 };
+

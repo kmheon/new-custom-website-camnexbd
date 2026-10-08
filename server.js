@@ -31,9 +31,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// When running behind reverse proxy (Nginx), trust the first proxy hop
-// to correctly resolve visitor IP for rate limiting and logging
-app.set('trust proxy', 1);
+// When running behind reverse proxy (Nginx / Cloudflare), trust proxy hops
+// Configurable via TRUST_PROXY (defaults to 1 for Nginx, set 2 for Cloudflare + Nginx)
+const trustProxyHops = process.env.TRUST_PROXY
+  ? (isNaN(process.env.TRUST_PROXY) ? process.env.TRUST_PROXY : parseInt(process.env.TRUST_PROXY, 10))
+  : 1;
+app.set('trust proxy', trustProxyHops);
 
 // Compression & Security Headers Middleware
 app.use(compression({
@@ -49,12 +52,11 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: [
-        "'self'",
-        "https://cdn.tailwindcss.com"
+        "'self'"
       ],
       styleSrc: [
         "'self'",
-        "'unsafe-inline'", // Required by runtime Tailwind CSS JIT stylesheet creation
+        "'unsafe-inline'", // Required for React dynamic inline style attributes and Google Fonts
         "https://fonts.googleapis.com"
       ],
       fontSrc: [
@@ -163,6 +165,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
   }
 }));
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, 'public/uploads');
@@ -1085,6 +1089,24 @@ app.get('/api/orders/:orderNumber', (req, res) => {
 app.post(['/api/orders', '/api/cart/checkout'], submissionLimiter, validateBody(schemas.order), (req, res) => {
   try {
     const orderData = req.body;
+
+    // Verify configured payment methods from site settings
+    const settingsRow = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const siteSettings = settingsRow ? JSON.parse(settingsRow.value) : {};
+    const hasCod = Boolean(siteSettings.enableCashOnDelivery);
+    const hasBkash = Boolean(siteSettings.bkashMerchantNumber && siteSettings.bkashMerchantNumber.trim().length > 0);
+    const hasNagad = Boolean(siteSettings.nagadMerchantNumber && siteSettings.nagadMerchantNumber.trim().length > 0);
+    const hasBank = Boolean(siteSettings.bankDetails && siteSettings.bankDetails.bankName && siteSettings.bankDetails.accountNumber);
+    const hasAnyPaymentMethod = hasCod || hasBkash || hasNagad || hasBank;
+
+    if (!hasAnyPaymentMethod) {
+      return res.status(400).json({ error: 'No payment methods are currently active or configured on this store.' });
+    }
+
+    if (orderData.paymentMethod === 'cod' && !hasCod) {
+      return res.status(400).json({ error: 'Cash on Delivery is currently disabled by store administrator.' });
+    }
+
     const orderNumber = generateNumber('CNX-ORD');
     const id = `ord-${Date.now()}`;
     const createdAt = new Date().toISOString();
@@ -2573,13 +2595,16 @@ function renderPageWithMetadata(indexHtml, meta) {
 
   html = html.replace('</head>', `  ${extraHead}\n</head>`);
 
-  // Dynamically inject content-hashed bundle from manifest if available
+  // Dynamically inject content-hashed bundle and stylesheet from manifest if available
   const manifestPath = path.join(__dirname, 'public/dist/manifest.json');
   if (fs.existsSync(manifestPath)) {
     try {
       const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
       if (manifest['main.js']) {
         html = html.replace(/<script src="bundle\.js".*?<\/script>/i, `<script src="${manifest['main.js']}"></script>`);
+      }
+      if (manifest['main.css']) {
+        html = html.replace(/<link rel="stylesheet" href="\/style\.css".*?>/i, `<link rel="stylesheet" href="${manifest['main.css']}">`);
       }
     } catch (_) {}
   }

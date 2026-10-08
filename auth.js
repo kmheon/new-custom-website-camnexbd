@@ -56,9 +56,10 @@ function createSession(userId, role, email, name, res) {
   `).run(token, userId, role, email, name, expiresAt);
 
   const isProd = process.env.NODE_ENV === 'production';
+  // Session cookie uses SameSite=Lax to allow authenticated top-level navigation from external links/emails
   res.cookie('camnex_session', token, {
     httpOnly: true,
-    sameSite: isProd ? 'strict' : 'lax',
+    sameSite: 'lax',
     secure: isProd,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/'
@@ -83,9 +84,10 @@ function destroySession(token, res) {
 function issueCsrfCookie(res) {
   const csrfToken = crypto.randomBytes(16).toString('hex');
   const isProd = process.env.NODE_ENV === 'production';
+  // CSRF cookie stays SameSite=Strict to defend state-changing mutations
   res.cookie('camnex_csrf', csrfToken, {
     httpOnly: true,
-    sameSite: isProd ? 'strict' : 'lax',
+    sameSite: 'strict',
     secure: isProd,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/'

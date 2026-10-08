@@ -102,6 +102,7 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   deliveryFeeInsideDhaka: null,
   deliveryFeeOutsideDhaka: null,
   installationBaseFee: null,
+  enableCashOnDelivery: false,
   warrantyPolicyText: '',
   returnPolicyText: '',
   termsPolicyText: '',

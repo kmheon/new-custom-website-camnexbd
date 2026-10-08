@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Trash2, ArrowRight, CheckCircle2, ShieldCheck, Truck, Wrench, CreditCard, Smartphone, Building2, Check, Banknote } from 'lucide-react';
+import { ShoppingBag, Trash2, ArrowRight, CheckCircle2, ShieldCheck, Truck, Wrench, CreditCard, Smartphone, Building2, Check, Banknote, AlertCircle } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Input, Select, Badge, Card, Alert, Modal } from '../components/common/UI';
 import { useCartStore } from '../store';
@@ -42,16 +42,29 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
     cmsService.getSiteSettings().then(setSiteSettings).catch(() => {});
   }, []);
 
+  const hasCod = Boolean(siteSettings?.enableCashOnDelivery);
   const hasBkash = Boolean(siteSettings?.bkashMerchantNumber && siteSettings.bkashMerchantNumber.trim().length > 0);
   const hasNagad = Boolean(siteSettings?.nagadMerchantNumber && siteSettings.nagadMerchantNumber.trim().length > 0);
   const hasBank = Boolean(siteSettings?.bankDetails && siteSettings.bankDetails.bankName && siteSettings.bankDetails.accountNumber);
+  const hasAnyPaymentMethod = hasCod || hasBkash || hasNagad || hasBank;
 
   useEffect(() => {
-    if (paymentMethod === 'bkash_manual' && !hasBkash) setPaymentMethod('cod');
-    if (paymentMethod === 'nagad_manual' && !hasNagad) setPaymentMethod('cod');
-    if (paymentMethod === 'bank_transfer' && !hasBank) setPaymentMethod('cod');
-    if (paymentMethod === 'online_gateway') setPaymentMethod('cod');
-  }, [hasBkash, hasNagad, hasBank, paymentMethod]);
+    if (!hasAnyPaymentMethod) {
+      return;
+    }
+    const isCurrentValid =
+      (paymentMethod === 'cod' && hasCod) ||
+      (paymentMethod === 'bkash_manual' && hasBkash) ||
+      (paymentMethod === 'nagad_manual' && hasNagad) ||
+      (paymentMethod === 'bank_transfer' && hasBank);
+
+    if (!isCurrentValid) {
+      if (hasCod) setPaymentMethod('cod');
+      else if (hasBkash) setPaymentMethod('bkash_manual');
+      else if (hasNagad) setPaymentMethod('nagad_manual');
+      else if (hasBank) setPaymentMethod('bank_transfer');
+    }
+  }, [hasCod, hasBkash, hasNagad, hasBank, hasAnyPaymentMethod, paymentMethod]);
 
   // Summary computation
   const [summary, setSummary] = useState({
@@ -80,8 +93,18 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasAnyPaymentMethod) {
+      setFormError('Payment methods are not yet configured on this store. Please contact our support desk directly.');
+      return;
+    }
+
     if (!customerName.trim() || !customerPhone.trim() || !deliveryAddress.trim()) {
       setFormError('Please enter your full name, phone number, and delivery address.');
+      return;
+    }
+
+    if (paymentMethod === 'cod' && !hasCod) {
+      setFormError('Cash on Delivery is currently disabled.');
       return;
     }
 
@@ -536,29 +559,43 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
                       4. Payment Method
                     </span>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {/* COD Option */}
-                      <div
-                        onClick={() => setPaymentMethod('cod')}
-                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
-                          paymentMethod === 'cod'
-                            ? 'border-[#F15A24] bg-orange-50/20 ring-1 ring-[#F15A24]'
-                            : 'border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-[#111827] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-                          COD
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-xs font-bold text-[#111827] flex items-center justify-between">
-                            <span>Cash on Delivery</span>
-                            {paymentMethod === 'cod' && <span className="text-[#F15A24] text-[10px] font-bold">Selected</span>}
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
-                            Pay in cash upon inspection and delivery at your premises.
+                    {!hasAnyPaymentMethod && (
+                      <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl text-amber-900 text-xs flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-bold text-sm text-amber-950">Payments Not Configured</div>
+                          <p className="mt-1 text-amber-800 leading-relaxed">
+                            No payment methods are currently active or configured on this store. Checkout is temporarily unavailable. Please contact our Dhaka office directly via phone or WhatsApp to request an official quotation or coordinate hardware dispatch.
                           </p>
                         </div>
                       </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* COD Option (Only if enabled by admin) */}
+                      {hasCod && (
+                        <div
+                          onClick={() => setPaymentMethod('cod')}
+                          className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
+                            paymentMethod === 'cod'
+                              ? 'border-[#F15A24] bg-orange-50/20 ring-1 ring-[#F15A24]'
+                              : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-[#111827] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+                            COD
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-xs font-bold text-[#111827] flex items-center justify-between">
+                              <span>Cash on Delivery</span>
+                              {paymentMethod === 'cod' && <span className="text-[#F15A24] text-[10px] font-bold">Selected</span>}
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              Pay in cash upon inspection and delivery at your premises.
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       {/* bKash Option (Only if configured by admin) */}
                       {hasBkash && (
@@ -719,9 +756,12 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
                     size="lg"
                     type="submit"
                     isLoading={isSubmitting}
+                    disabled={isSubmitting || !hasAnyPaymentMethod}
                     className="w-full mt-4"
                   >
-                    Confirm & Place Order (৳{summary.total.toLocaleString()})
+                    {!hasAnyPaymentMethod
+                      ? "Checkout Unavailable (Payments Not Configured)"
+                      : `Confirm & Place Order (৳${summary.total.toLocaleString()})`}
                   </Button>
 
                 </form>

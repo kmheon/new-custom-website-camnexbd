@@ -287,6 +287,31 @@ db.prepare(`
   )
 `).run();
 
+const cleanSiteSettings = {
+  companyName: 'CamneX Bangladesh',
+  phone: process.env.SITE_PHONE || '+880 1540-535150',
+  email: process.env.SITE_EMAIL || 'contact@camnexbd.com',
+  secondaryEmail: 'camnexbd@gmail.com',
+  website: 'https://camnexbd.com',
+  facebookUrl: 'https://facebook.com/camnexbd',
+  whatsappNumber: '8801540535150',
+  address: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207',
+  credentials: ['Hikvision Authorized Partner', 'ZKTeco Authorized Installer'],
+  services: ['CCTV/video surveillance', 'Networking', 'Access control', 'Installation'],
+  businessHours: 'Sat-Thu 9:30 AM - 7:30 PM, Friday on-call',
+  enableStockBadges: true,
+  sampleDataBanner: false,
+  showSampleContent: false,
+  enableCashOnDelivery: false, // Explicitly OFF by default in clean DB
+  bkashMerchantNumber: '',
+  nagadMerchantNumber: '',
+  bankDetails: null,
+  deliveryFeeInsideDhaka: null,
+  deliveryFeeOutsideDhaka: null,
+  installationBaseFee: null
+};
+db.prepare("INSERT INTO settings (key, value) VALUES ('site_settings', ?)").run(JSON.stringify(cleanSiteSettings));
+
 // 17. Media
 db.prepare(`
   CREATE TABLE media (

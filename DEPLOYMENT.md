@@ -96,11 +96,13 @@ This sets up the SQLite schema, registers the initial administrator from `.env`,
 
 ## 3. Production Asset Bundling
 
-Build the content-hashed JavaScript and CSS assets:
+> **Important**: The `public/dist/` directory contains compiled output and is excluded from git tracking via `.gitignore`. You **must** run the asset compiler on the host machine (or in your CI/CD deployment pipeline) before starting the server.
+
+Build the content-hashed JavaScript and compiled Tailwind CSS assets:
 ```bash
 npm run build
 ```
-This produces immutable, content-hashed bundles in `public/dist/` (e.g., `bundle.[hash].js`) and generates `manifest.json`.
+This runs `esbuild` for TypeScript/React bundling and `postcss` + `tailwindcss` for style compilation, producing immutable, content-hashed bundles in `public/dist/` (e.g., `bundle.[hash].js` and `bundle.[hash].css`) and writing `manifest.json`.
 
 ---
 
@@ -235,6 +237,36 @@ sudo certbot --nginx -d camnexbd.com -d www.camnexbd.com
 sudo systemctl reload nginx
 ```
 
+### Cloudflare Proxy Configuration (`TRUST_PROXY=2`)
+
+If your domain uses Cloudflare CDN/WAF in front of your Nginx server, incoming HTTP requests traverse **two** reverse proxy hops:
+1. Visitor $\to$ **Cloudflare Edge Proxy**
+2. Cloudflare $\to$ **Origin Nginx Server**
+3. Nginx $\to$ **Node.js Express App (:3000)**
+
+In this dual-proxy setup:
+1. In your `.env` file, specify:
+   ```ini
+   TRUST_PROXY=2
+   ```
+   This instructs Express to traverse 2 hops back in the `X-Forwarded-For` chain to resolve the true client IP (`req.ip`), ensuring login brute-force rate limits and security logging target the actual visitor rather than the Cloudflare edge IP.
+2. In your Nginx configuration, pass the Cloudflare visitor IP header:
+   ```nginx
+   # Pass Cloudflare real visitor IP
+   proxy_set_header X-Real-IP $http_cf_connecting_ip;
+   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+   ```
+
+### Cookie Security Architecture (`SameSite=Lax` vs `SameSite=Strict`)
+
+CamneX implements a dual-cookie defense:
+- **`camnex_session` (Session Authentication Cookie)**:
+  - Attributes: `HttpOnly: true`, `Secure: true` (in production), `SameSite: 'lax'`, `path: '/'`.
+  - **Rationale**: `SameSite=Lax` ensures that authenticated users arriving from external links (such as clicking an order tracking URL from an SMS/email, clicking a bookmark, or returning from an external portal) remain logged in during initial top-level GET navigation. If `SameSite=Strict` were used on the session cookie, external link clicks would fail to send the session cookie, displaying the visitor as logged out until an internal navigation occurred.
+- **`camnex_csrf` (CSRF Protection Cookie)**:
+  - Attributes: `HttpOnly: true`, `Secure: true` (in production), `SameSite: 'strict'`, `path: '/'`.
+  - **Rationale**: The CSRF token is kept strictly isolated. Any state-changing HTTP request (`POST`, `PUT`, `DELETE`, `PATCH`) performed while authenticated must transmit an identical token in the `X-CSRF-Token` header. Because third-party sites cannot read or forge the cookie or custom header, cross-site forgery is fully mitigated.
+
 ---
 
 ## 6. SQLite Database Backup & Restore
@@ -289,9 +321,27 @@ To restore from a backup snapshot:
 
 ## 7. Post-Deployment Verification Checklist
 
-- [ ] Storefront loads at `https://camnexbd.com` with valid SSL certificate
-- [ ] Admin login works at `/admin` using credentials from `.env`
-- [ ] Add to cart -> checkout flow creates an order
+### 1. Test Login Rate Limiting (Live Production Probe)
+Verify that the `loginLimiter` active in production correctly tracks visitor IP and triggers `HTTP 429 Too Many Requests` after 5 failed attempts within 60 seconds:
+
+```bash
+# Execute 6 rapid failed login attempts:
+for i in {1..6}; do
+  echo -n "Attempt $i status: "
+  curl -s -o /dev/null -w "%{http_code}\n" -X POST https://camnexbd.com/api/auth/admin/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"admin@camnexbd.com","password":"test-rate-limit-wrong-pass"}'
+done
+```
+**Expected Output:**
+- Attempts 1–5: `401` (Unauthorized)
+- Attempt 6+: `429` (Too Many Requests — "Too many login attempts. Please wait 1 minute before trying again.")
+
+### 2. Verification Checklist
+- [ ] Storefront loads cleanly at `https://camnexbd.com` with valid SSL certificate
+- [ ] Admin login succeeds at `/admin` using credentials from `.env`
+- [ ] Automated platform verification passes: `npm test`
 - [ ] Image upload generates WebP and thumbnail in `public/uploads/`
-- [ ] Security attack test passes: `node scratch/test_security_attacks.js`
+- [ ] Rate limit test returns `429` on 6th failed login attempt
 - [ ] `robots.txt` and `sitemap.xml` resolve properly with correct canonical URLs
+- [ ] Storefront checkout displays "Payments Not Configured" until admin enables COD or MFS in settings

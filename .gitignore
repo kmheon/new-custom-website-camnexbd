@@ -23,6 +23,9 @@ logs/
 # Scratch scripts & temporary data
 scratch/
 
+# Compiled production bundles (built on host by npm run build)
+public/dist/
+
 # OS metadata
 .DS_Store
 Thumbs.db

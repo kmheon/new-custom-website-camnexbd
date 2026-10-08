@@ -402,6 +402,7 @@ export interface SiteSettings {
   deliveryFeeInsideDhaka?: number | null;
   deliveryFeeOutsideDhaka?: number | null;
   installationBaseFee?: number | null;
+  enableCashOnDelivery?: boolean; // Admin setting: OFF by default in clean DB
 
   // Policy Text
   warrantyPolicyText?: string;

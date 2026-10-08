@@ -1302,7 +1302,8 @@
     "warrantyPolicyText": "",
     "returnPolicyText": "",
     "termsPolicyText": "",
-    "privacyPolicyText": ""
+    "privacyPolicyText": "",
+    "enableCashOnDelivery": false
   },
   "INITIAL_SPEC_TEMPLATES": [
     {
