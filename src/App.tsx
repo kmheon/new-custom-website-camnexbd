@@ -110,6 +110,8 @@ export default function App() {
         setCurrentRoute('solutions');
       } else if (path === '/projects') {
         setCurrentRoute('projects');
+      } else if (path === '/testimonials') {
+        setCurrentRoute('testimonials');
       } else if (path === '/faq') {
         setCurrentRoute('faq');
       } else if (path === '/contact') {
@@ -165,6 +167,7 @@ export default function App() {
     else if (route === 'account') newUrl = '/account';
     else if (route === 'solutions') newUrl = '/solutions';
     else if (route === 'projects') newUrl = '/projects';
+    else if (route === 'testimonials') newUrl = '/testimonials';
     else if (route === 'faq') newUrl = '/faq';
     else if (route === 'contact') newUrl = '/contact';
     else if (route === 'about') newUrl = '/about';
@@ -203,6 +206,7 @@ export default function App() {
           {currentRoute === 'account' && <CustomerAccountPage onNavigate={navigate} />}
           {currentRoute === 'solutions' && <ContentPages type="solutions" onNavigate={navigate} />}
           {currentRoute === 'projects' && <ContentPages type="projects" onNavigate={navigate} />}
+          {currentRoute === 'testimonials' && <ContentPages type="testimonials" onNavigate={navigate} />}
           {currentRoute === 'faq' && <ContentPages type="faq" onNavigate={navigate} />}
           {currentRoute === 'contact' && <ContentPages type="contact" onNavigate={navigate} />}
           {currentRoute === 'about' && <ContentPages type="about" onNavigate={navigate} />}

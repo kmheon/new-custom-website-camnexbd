@@ -32,17 +32,10 @@ if (fs.existsSync(envPath)) {
 
 const args = process.argv.slice(2);
 const shouldReplace = args.includes('--replace');
-let targetPath = path.join(__dirname, '../camnex_clean.db');
-
-for (const arg of args) {
-  if (arg.startsWith('--output=')) {
-    targetPath = path.resolve(process.cwd(), arg.split('=')[1]);
-  }
-}
-
-if (shouldReplace) {
-  targetPath = path.join(__dirname, '../camnex.db');
-}
+const outputArg = args.find(a => a.startsWith('--output='));
+let targetPath = outputArg 
+  ? path.resolve(process.cwd(), outputArg.split('=')[1])
+  : (shouldReplace ? path.join(__dirname, '../camnex.db') : path.join(__dirname, '../camnex_clean.db'));
 
 console.log(`[CLEAN-DB] Initializing clean SQLite database at: ${targetPath}`);
 
@@ -266,6 +259,23 @@ db.prepare(`
     id TEXT PRIMARY KEY,
     question TEXT NOT NULL,
     data_json TEXT NOT NULL
+  )
+`).run();
+
+// 15b. Testimonials
+db.prepare(`
+  CREATE TABLE testimonials (
+    id TEXT PRIMARY KEY,
+    client_name TEXT NOT NULL,
+    company TEXT,
+    role TEXT,
+    rating INTEGER DEFAULT 5,
+    content TEXT NOT NULL,
+    image TEXT,
+    verified INTEGER DEFAULT 1,
+    display_order INTEGER DEFAULT 1,
+    data_json TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `).run();
 

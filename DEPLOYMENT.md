@@ -12,11 +12,40 @@ This guide describes how to deploy, secure, and maintain the CamneX E-Commerce &
 - **Process Manager**: PM2 or systemd
 - **Database**: SQLite 3 with WAL mode (bundled via `better-sqlite3`, no external DB daemon needed)
 
-Install Node.js 20 LTS on Ubuntu:
+### Native Build Tools & Library Requirements (`better-sqlite3` & `sharp`)
+
+Both `better-sqlite3` and `sharp` contain platform-native C/C++ bindings. While standard x64 and arm64 Linux systems will download prebuilt binaries during `npm ci`, a C++ compiler toolchain and Python 3 are required for fallback compilation and node-gyp operations.
+
+#### Ubuntu 22.04 / 24.04 LTS or Debian 12:
 ```bash
+# 1. Install Node.js 20 LTS repository
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs nginx build-essential
+
+# 2. Install Node.js, Nginx, and native build dependencies
+sudo apt-get update
+sudo apt-get install -y nodejs nginx build-essential python3 make g++
+
+# 3. Verify compiler and Node versions
+node -v
+npm -v
+g++ --version
+python3 --version
 ```
+
+#### RHEL / Rocky Linux / AlmaLinux 9:
+```bash
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y python3 make gcc-c++
+```
+
+#### Alpine Linux (Docker container):
+```bash
+apk add --no-cache nodejs npm python3 make g++ gcc vips-dev libc6-compat
+```
+
+> **Note on glibc and `sharp`**:
+> - Precompiled `sharp` binaries require glibc >= 2.29. Ubuntu 20.04+ (glibc 2.31+) and Debian 11+ (glibc 2.31+) satisfy this out of the box.
+> - If deploying via a Dockerfile or cross-platform CI runner, run `npm ci` directly inside the target Linux container architecture rather than copying `node_modules` from Windows or macOS.
 
 ---
 

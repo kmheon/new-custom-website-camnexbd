@@ -744,13 +744,23 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
 
                   <div className="flex justify-between text-slate-600">
                     <span>Delivery Charge ({deliveryMethod.replace(/_/g, ' ')}):</span>
-                    <span className="font-bold text-[#111827]">৳{summary.deliveryFee.toLocaleString()}</span>
+                    {deliveryMethod === 'store_pickup' ? (
+                      <span className="font-bold text-emerald-600">Free (Pickup)</span>
+                    ) : summary.deliveryFee > 0 ? (
+                      <span className="font-bold text-[#111827]">৳{summary.deliveryFee.toLocaleString()}</span>
+                    ) : (
+                      <span className="font-semibold text-slate-500 text-xs">To be confirmed</span>
+                    )}
                   </div>
 
                   {requestInstallation && (
                     <div className="flex justify-between text-slate-600">
                       <span>Installation Service Fee:</span>
-                      <span className="font-bold text-[#F15A24]">৳{summary.installationFee.toLocaleString()}</span>
+                      {summary.installationFee > 0 ? (
+                        <span className="font-bold text-[#F15A24]">৳{summary.installationFee.toLocaleString()}</span>
+                      ) : (
+                        <span className="font-semibold text-slate-500 text-xs">Quoted on survey</span>
+                      )}
                     </div>
                   )}
 

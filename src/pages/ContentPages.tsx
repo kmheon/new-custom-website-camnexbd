@@ -240,6 +240,49 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
   }
 
   // --------------------------------------------------------------------------
+  // TESTIMONIALS PAGE (Only renders if entered data exists)
+  // --------------------------------------------------------------------------
+  if (type === 'testimonials') {
+    if (testimonials.length === 0) {
+      return (
+        <div className="bg-[#F8FAFC] min-h-screen py-16 text-center text-slate-500">
+          <p>No client testimonials currently published.</p>
+        </div>
+      );
+    }
+    return (
+      <div className="bg-[#F8FAFC] min-h-screen py-10">
+        <SEO title="Verified Client Testimonials | CamneX Bangladesh" description="Authentic feedback from verified corporate and residential clients." />
+        <div className="max-w-6xl mx-auto px-4 space-y-8">
+          <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Testimonials' }]} />
+          
+          <div className="bg-white p-8 rounded-2xl border border-slate-200">
+            <h1 className="text-3xl font-black text-[#111827] font-heading mb-2">Verified Client Feedback</h1>
+            <p className="text-xs sm:text-sm text-slate-600">Authentic statements from real property owners and corporate clients.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testimonials.map(t => (
+              <div key={t.id} className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
+                <div className="flex items-center gap-1 text-amber-400">
+                  {Array.from({ length: t.rating || 5 }).map((_, i) => (
+                    <span key={i} className="text-amber-400 text-sm">★</span>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-700 italic leading-relaxed">“{t.content}”</p>
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="font-bold text-xs text-[#111827]">{t.client_name}</div>
+                  {t.company && <div className="text-[11px] text-slate-500">{t.role ? `${t.role}, ` : ''}{t.company}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --------------------------------------------------------------------------
   // BLOG PAGES
   // --------------------------------------------------------------------------
   if (type === 'blog') {

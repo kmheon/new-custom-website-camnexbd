@@ -76,6 +76,9 @@ export async function apiFetch<T = any>(
     headers['Content-Type'] = 'application/json';
   }
 
+  if (!inMemoryCsrfToken && options?.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
+    await fetchCsrfToken();
+  }
   const csrf = inMemoryCsrfToken || getCsrfTokenFromCookie();
   if (csrf && !headers['X-CSRF-Token']) {
     headers['X-CSRF-Token'] = csrf;

@@ -77,13 +77,14 @@ function destroySession(token, res) {
     } catch (_) {}
   }
   res.clearCookie('camnex_session', { path: '/' });
+  res.clearCookie('camnex_csrf', { path: '/' });
 }
 
 function issueCsrfCookie(res) {
   const csrfToken = crypto.randomBytes(16).toString('hex');
   const isProd = process.env.NODE_ENV === 'production';
   res.cookie('camnex_csrf', csrfToken, {
-    httpOnly: false, // Must be readable by client to place in X-CSRF-Token header
+    httpOnly: true,
     sameSite: isProd ? 'strict' : 'lax',
     secure: isProd,
     maxAge: 7 * 24 * 60 * 60 * 1000,

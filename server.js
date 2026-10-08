@@ -31,6 +31,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
+// When running behind reverse proxy (Nginx), trust the first proxy hop
+// to correctly resolve visitor IP for rate limiting and logging
+app.set('trust proxy', 1);
+
 // Compression & Security Headers Middleware
 app.use(compression({
   threshold: 1024,
@@ -41,7 +45,46 @@ app.use(compression({
 }));
 
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "https://cdn.tailwindcss.com"
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'", // Required by runtime Tailwind CSS JIT stylesheet creation
+        "https://fonts.googleapis.com"
+      ],
+      fontSrc: [
+        "'self'",
+        "https://fonts.gstatic.com",
+        "data:"
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        "https://images.unsplash.com",
+        "https://*.unsplash.com",
+        "https://*.hikvision.com",
+        "https://*.zkteco.com",
+        "https://*.ruijienetworks.com",
+        "https://*.dahuasecurity.com"
+      ],
+      connectSrc: [
+        "'self'",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+        "https://camnexbd.com"
+      ],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"]
+    }
+  },
   crossOriginEmbedderPolicy: false
 }));
 
@@ -1290,6 +1333,15 @@ app.get('/api/settings', (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get('/api/cms/settings', (req, res) => {
+  try {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    if (!row) return res.json({});
+    res.json(JSON.parse(row.value));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.put('/api/settings', requireAdmin, validateBody(schemas.settings), (req, res) => {
   try {
@@ -2458,6 +2510,7 @@ function resolveRouteMetadata(reqPath) {
     '/solutions': { title: 'Engineering Solutions & SLA Services | CamneX Bangladesh', description: 'Professional security engineering, clean concealed cabling, and IT maintenance in Dhaka.' },
     '/quote': { title: 'Request Quotation & Site Survey | CamneX Bangladesh', description: 'Book a free physical site survey and get an itemized bill of materials in Dhaka.' },
     '/projects': { title: 'Verified Deployments & Case Studies | CamneX Bangladesh', description: 'Documented security installations and network deployments in Dhaka.' },
+    '/testimonials': { title: 'Verified Client Feedback | CamneX Bangladesh', description: 'Authentic testimonials and feedback from verified corporate and residential clients in Dhaka.' },
     '/blog': { title: 'Technical Security & IT Blog | CamneX Bangladesh', description: 'Articles on surveillance design, Wi-Fi standards, and access control engineering.' },
     '/faq': { title: 'Frequently Asked Questions | CamneX Bangladesh', description: 'Frequently asked questions regarding genuine serials, mobile viewing, and warranty.' },
     '/warranty': { title: 'Warranty & Service SLA Policy | CamneX Bangladesh', description: 'Official manufacturer warranty and service policy.' },

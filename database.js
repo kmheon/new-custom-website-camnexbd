@@ -17,13 +17,15 @@ try {
         if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
           val = val.slice(1, -1);
         }
-        process.env[key] = val;
+        if (process.env[key] === undefined) {
+          process.env[key] = val;
+        }
       }
     });
   }
 } catch (_) {}
 
-const dbPath = path.join(__dirname, 'camnex.db');
+const dbPath = process.env.DB_PATH ? path.resolve(process.env.DB_PATH) : path.join(__dirname, 'camnex.db');
 const db = new Database(dbPath);
 
 // Enable WAL mode and foreign keys for high performance and integrity
