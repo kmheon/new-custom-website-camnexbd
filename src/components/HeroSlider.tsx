@@ -20,7 +20,14 @@ interface HeroSliderProps {
   onNavigate: (route: string, param?: string) => void;
 }
 
-const BrandStripItem: React.FC<{
+const DEFAULT_BRAND_DATA: Brand[] = [
+  { id: 'b-hikvision', name: 'Hikvision', slug: 'hikvision', logo: '/images/brands/hikvision.svg', description: '', website: '', featured: true },
+  { id: 'b-zkteco', name: 'ZKTeco', slug: 'zkteco', logo: '/images/brands/zkteco.svg', description: '', website: '', featured: true },
+  { id: 'b-dahua', name: 'Dahua Technology', slug: 'dahua', logo: '/images/brands/dahua.svg', description: '', website: '', featured: true },
+  { id: 'b-wd', name: 'Western Digital', slug: 'western-digital', logo: '/images/brands/western-digital.svg', description: '', website: '', featured: true },
+];
+
+const BrandGridItem: React.FC<{
   brand: Brand;
   onNavigate: (route: string, param?: string) => void;
 }> = ({ brand, onNavigate }) => {
@@ -29,31 +36,26 @@ const BrandStripItem: React.FC<{
 
   return (
     <button
+      type="button"
       onClick={() => onNavigate('brand', brand.slug)}
-      className="group flex-shrink-0 flex flex-col items-center justify-center transition-all p-1 focus:outline-none cursor-pointer"
+      className="group relative flex items-center justify-center p-3.5 sm:p-5 h-20 sm:h-24 rounded-[14px] bg-white/70 hover:bg-white border border-[#EDE8E1] hover:border-[#FF5722]/50 hover:shadow-md transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 w-full"
       title={brand.name}
     >
       <span className="sr-only">{brand.name}</span>
-      <div className="h-7 sm:h-8 flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center pointer-events-none">
         {hasLogo ? (
           <img
             src={brand.logo}
             alt={brand.name}
-            className="max-h-7 sm:max-h-8 max-w-[110px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
+            className="max-h-7 sm:max-h-8 max-w-[110px] sm:max-w-[130px] w-auto object-contain filter grayscale opacity-60 contrast-75 transition-all duration-300 ease-in-out group-hover:grayscale-0 group-hover:opacity-100 group-hover:contrast-100 group-hover:scale-105"
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#5B6472] group-hover:text-[#111827] transition-colors whitespace-nowrap">
+          <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#5B6472] group-hover:text-[#FF5722] transition-colors">
             {brand.name}
           </span>
         )}
       </div>
-
-      {brand.showBadge && brand.badgeText && (
-        <span className="mt-1 text-[9px] font-bold text-[#F15A24] bg-orange-100/90 border border-orange-200 px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-2xs">
-          {brand.badgeText}
-        </span>
-      )}
     </button>
   );
 };
@@ -184,6 +186,15 @@ const FALLBACK_SLIDE: HeroSlide = {
 
   const currentSlide = slides.length > 0 ? slides[currentIndex] : FALLBACK_SLIDE;
   const primaryHighlight = currentSlide.highlights?.[0];
+
+  // Target the 4 core surveillance brands in order, falling back gracefully
+  const targetSlugs = ['hikvision', 'zkteco', 'dahua', 'western-digital'];
+  const matchedBrands = targetSlugs.map((slug) => brands.find((b) => b.slug === slug)).filter(Boolean) as Brand[];
+  const displayBrands = matchedBrands.length === 4
+    ? matchedBrands
+    : brands.length > 0
+    ? brands.slice(0, 4)
+    : DEFAULT_BRAND_DATA;
 
   return (
     <div className="w-full">
@@ -395,33 +406,31 @@ const FALLBACK_SLIDE: HeroSlide = {
         )}
       </section>
 
-      {/* BRAND STRIP DIRECTLY BELOW HERO (Full-width row with real logos, badges, fallback wordmarks) */}
-      <section id="hero-brands" className="w-full bg-[#FAF7F2] border-b border-[#EDE8E1] py-6 sm:py-8">
+      {/* BRAND SECTION DIRECTLY BELOW HERO (Frosted white container with subtle stone border matching Category cards) */}
+      <section id="hero-brands" className="w-full bg-[#FAF6F0] py-8 sm:py-10 border-b border-[#EDE8E1]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-5 md:gap-8">
-            {/* Left Label */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-[#F15A24]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">
-                Brands we work with
-              </span>
+          <div className="bg-gradient-to-br from-white/95 via-white/90 to-[#F7F3EE]/80 backdrop-blur-md rounded-[20px] sm:rounded-[24px] border border-[#EDE8E1] p-6 sm:p-8 lg:p-9 shadow-xs">
+            {/* Header: Clean "Trusted Ecosystem" badge header + Title + Unified subtitle on the left */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8 pb-5 sm:pb-6 border-b border-[#EDE8E1]/80">
+              <div className="space-y-1.5 text-left">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-50 text-[#FF5722] border border-orange-200/70 shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF5722]" />
+                  <span>Trusted Ecosystem</span>
+                </div>
+                <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-[#111827] tracking-tight">
+                  Brands We Work With
+                </h2>
+                <p className="text-xs sm:text-sm text-[#5B6472] font-medium leading-relaxed">
+                  Authorized support & certified hardware integration partners
+                </p>
+              </div>
             </div>
 
-            {/* Right Brand Logos Row */}
-            <div className="w-full md:w-auto flex flex-wrap items-center justify-center md:justify-end gap-6 sm:gap-8 lg:gap-10 px-2 sm:px-4 py-1">
-              {brands.length > 0 ? (
-                brands.map((b) => (
-                  <BrandStripItem key={b.id} brand={b} onNavigate={onNavigate} />
-                ))
-              ) : (
-                <div className="flex items-center justify-center gap-6 px-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">HIKVISION</span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">DAHUA</span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">ZKTECO</span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">RUIJIE</span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">WESTERN DIGITAL</span>
-                </div>
-              )}
+            {/* Responsive 2-column (mobile) to 4-column (desktop) grid layout */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5">
+              {displayBrands.map((b) => (
+                <BrandGridItem key={b.id} brand={b} onNavigate={onNavigate} />
+              ))}
             </div>
           </div>
         </div>
