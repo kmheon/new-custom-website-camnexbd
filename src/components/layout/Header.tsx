@@ -24,7 +24,6 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategoryScope, setSelectedCategoryScope] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -77,9 +76,6 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
       setIsSearching(true);
       try {
         const queryParams: any = { search: searchQuery.trim(), limit: 6 };
-        if (selectedCategoryScope) {
-          queryParams.category = selectedCategoryScope;
-        }
         const res = await productService.getProducts(queryParams);
         setSearchSuggestions(res.items);
       } finally {
@@ -87,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
       }
     }, 180);
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategoryScope]);
+  }, [searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,18 +170,6 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               onSubmit={handleSearchSubmit}
               className="w-full flex items-center bg-[#FAF7F2] border border-[#EDE8E1] rounded-full focus-within:border-[#F15A24] focus-within:ring-2 focus-within:ring-[#F15A24]/15 focus-within:bg-white transition-all px-2 py-1"
             >
-              {/* Category Scope Dropdown */}
-              <select
-                value={selectedCategoryScope}
-                onChange={(e) => setSelectedCategoryScope(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-[#111827] pl-2 pr-1 py-1.5 focus:outline-none cursor-pointer border-r border-[#EDE8E1] max-w-[130px] truncate"
-              >
-                <option value="">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>{c.name}</option>
-                ))}
-              </select>
-
               {/* Extended Search Field */}
               <input
                 ref={searchInputRef}
@@ -197,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 }}
                 onFocus={() => setSearchOpen(true)}
                 placeholder="Search camera, DVR, brand, model, SKU..."
-                className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-[#111827] placeholder:text-[#5B6472] focus:outline-none"
+                className="flex-1 bg-transparent px-4 py-1.5 text-xs sm:text-sm text-[#111827] placeholder:text-[#5B6472] focus:outline-none"
               />
 
               {/* Search Submit Pill Button */}
