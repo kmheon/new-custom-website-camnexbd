@@ -136,9 +136,9 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
           <div className="flex items-center">
             <button
               onClick={() => onNavigate('tracking')}
-              className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-xs"
             >
-              <Truck className="w-3.5 h-3.5 text-[#F15A24]" />
+              <Truck className="w-3.5 h-3.5 text-white" />
               <span>Track Order</span>
             </button>
           </div>
@@ -712,9 +712,15 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               </button>
               <button
                 onClick={() => { setMobileMenuOpen(false); onNavigate('tracking'); }}
-                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#F15A24] bg-orange-50/70 rounded-xl hover:bg-orange-100 flex items-center justify-between transition-colors"
               >
-                Track Order
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-[#F15A24]" />
+                  <span>Track Order</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F15A24] text-white">
+                  Live
+                </span>
               </button>
               <button
                 onClick={() => { setMobileMenuOpen(false); onNavigate('account'); }}
