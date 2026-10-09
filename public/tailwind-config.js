@@ -8,13 +8,13 @@ tailwind.config = {
       },
       colors: {
         canvas: '#FAF7F2',
-        'surface-dark': '#141210',
+        'surface-dark': '#0F172A',
         'surface-soft': '#F4EEE6',
         'border-subtle': '#EDE8E1',
         graphite: '#111827',
         'muted-text': '#5B6472',
         brand: {
-          navy: '#0B1220',
+          navy: '#0F172A',
           orange: '#F15A24',
           orangeHover: '#D94D1C',
           gray: '#F5F7FA'

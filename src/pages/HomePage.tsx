@@ -145,7 +145,7 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }
 
       {/* Client Info */}
       <div className="pt-3 border-t border-[#EDE8E1] flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-full bg-[#141210] text-white flex items-center justify-center font-bold text-xs shrink-0">
+        <div className="w-9 h-9 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs shrink-0">
           {(testimonial.clientName || 'C').charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
@@ -183,7 +183,7 @@ const ProjectCard: React.FC<{
           className={`w-full h-full ${hasImage ? 'object-cover' : 'object-contain p-4'} group-hover:scale-105 transition-transform duration-300`}
         />
         {project.category && (
-          <span className="absolute top-3 left-3 bg-[#111827]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+          <span className="absolute top-3 left-3 bg-[#0F172A]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
             {project.category}
           </span>
         )}
@@ -858,7 +858,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                         onClick={() => setPackageTypeFilter(chip)}
                         className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
                           isActive
-                            ? 'bg-[#141210] text-white'
+                            ? 'bg-[#0F172A] text-white'
                             : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
                         }`}
                       >
@@ -995,8 +995,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </section>
       )}
 
-      {/* 8. QUICK SERVICE REQUEST (Dark Band #141210) */}
-      <section className="w-full bg-[#141210] text-white py-12 md:py-[72px]">
+      {/* 8. QUICK SERVICE REQUEST (Dark Navy Band #0F172A) */}
+      <section className="w-full bg-[#0F172A] text-white py-12 md:py-[72px]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             

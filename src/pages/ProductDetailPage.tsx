@@ -208,7 +208,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
                         onClick={() => setSelectedFormFactor(f)}
                         className={`py-2 text-xs font-bold rounded-lg border capitalize transition-all ${
                           selectedFormFactor === f
-                            ? 'bg-[#111827] border-[#111827] text-white'
+                            ? 'bg-[#0F172A] border-[#0F172A] text-white'
                             : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                         }`}
                       >
@@ -420,7 +420,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
 
         {/* Packages Containing This Product */}
         {packagesContaining.length > 0 && (
-          <div className="my-10 bg-[#111827] text-white p-6 sm:p-8 rounded-2xl border border-slate-800">
+          <div className="my-10 bg-[#0F172A] text-white p-6 sm:p-8 rounded-2xl border border-slate-800">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <Badge variant="orange" className="mb-1">Available in Turnkey Bundles</Badge>

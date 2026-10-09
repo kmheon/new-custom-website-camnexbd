@@ -28,7 +28,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
           {/* Card 1: CCTV & Video Surveillance (Highlighted, larger 7-col card) */}
-          <div className="lg:col-span-7 bg-[#0B1220] text-white rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden flex flex-col justify-between border border-slate-800">
+          <div className="lg:col-span-7 bg-[#0F172A] text-white rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden flex flex-col justify-between border border-slate-800">
             <div className="absolute top-0 right-0 w-80 h-80 bg-[#F25C2A]/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10">
@@ -162,7 +162,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
                 </a>
                 <button
                   onClick={() => onSelectSolution('Structured Cabling & Wi-Fi')}
-                  className="text-xs font-bold bg-[#0B1220] text-white px-3.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                  className="text-xs font-bold bg-[#0F172A] text-white px-3.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   Configure
                 </button>
@@ -221,7 +221,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
                 </a>
                 <button
                   onClick={() => onSelectSolution('Access Control & Biometrics')}
-                  className="text-xs font-bold bg-[#0B1220] text-white px-3.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                  className="text-xs font-bold bg-[#0F172A] text-white px-3.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   Configure
                 </button>

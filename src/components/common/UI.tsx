@@ -28,8 +28,8 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variants = {
     primary: 'bg-[#F15A24] hover:bg-[#D94D1C] text-white shadow-md shadow-orange-600/20 focus:ring-[#F15A24]',
-    secondary: 'bg-[#111827] hover:bg-slate-800 text-white shadow-sm focus:ring-[#111827]',
-    outline: 'border-2 border-[#111827] text-[#111827] hover:bg-[#111827] hover:text-white focus:ring-[#111827]',
+    secondary: 'bg-[#0F172A] hover:bg-slate-800 text-white shadow-sm focus:ring-[#0F172A]',
+    outline: 'border-2 border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white focus:ring-[#0F172A]',
     danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
     ghost: 'text-slate-700 hover:bg-slate-100 hover:text-[#F15A24] focus:ring-slate-300'
   };
@@ -70,7 +70,7 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const variants = {
     orange: 'bg-[#F15A24]/10 text-[#F15A24] border border-[#F15A24]/20',
-    dark: 'bg-[#111827] text-white',
+    dark: 'bg-[#0F172A] text-white',
     success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
     warning: 'bg-amber-50 text-amber-700 border border-amber-200',
     info: 'bg-blue-50 text-blue-700 border border-blue-200',

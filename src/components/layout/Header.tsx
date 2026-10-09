@@ -112,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   return (
     <header className="sticky top-0 z-40 w-full bg-white">
       {/* 1. FULL-WIDTH SLIM TOP BAR (36px, surface-dark, 13px text) */}
-      <div className="w-full bg-[#141210] text-[#A0A8B4] text-[13px] border-b border-white/10 h-9 relative z-50">
+      <div className="w-full bg-[#0F172A] text-[#A0A8B4] text-[13px] border-b border-white/10 h-9 relative z-50">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
           {/* Left: Tap-to-call phone and email */}
           <div className="flex items-center gap-3 sm:gap-6">

@@ -108,7 +108,7 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({
   };
 
   return (
-    <section id="quote-calculator" className="py-20 lg:py-24 bg-[#0B1220] text-white scroll-mt-20 relative overflow-hidden border-b border-slate-800">
+    <section id="quote-calculator" className="py-20 lg:py-24 bg-[#0F172A] text-white scroll-mt-20 relative overflow-hidden border-b border-slate-800">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#F25C2A]/10 rounded-full blur-[140px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

@@ -119,8 +119,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
   return (
     <>
-      {/* FULL-WIDTH FOOTER (#141210 surface-dark) FLUSH TO BOTTOM */}
-      <footer id="site-footer" className="w-full bg-[#141210] text-white m-0 p-0">
+      {/* FULL-WIDTH FOOTER (#0F172A dark navy blue) FLUSH TO BOTTOM */}
+      <footer id="site-footer" className="w-full bg-[#0F172A] text-white m-0 p-0">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           
           {/* Top Row: "Stay updated" Newsletter Row */}
@@ -364,7 +364,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           type="button"
           onClick={scrollToTop}
           aria-label="Back to top"
-          className="fixed z-40 w-11 h-11 rounded-full bg-[#141210] hover:bg-[#F15A24] border border-white/20 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none bottom-[144px] right-[22px] md:bottom-[100px] md:right-[38px]"
+          className="fixed z-40 w-11 h-11 rounded-full bg-[#0F172A] hover:bg-[#F15A24] border border-white/20 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none bottom-[144px] right-[22px] md:bottom-[100px] md:right-[38px]"
         >
           <ArrowUp className="w-4 h-4" />
         </button>

@@ -176,7 +176,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
                     onClick={() => setFormFactor(ff)}
                     className={`py-3 text-xs font-bold rounded-xl border capitalize text-center transition-all ${
                       formFactor === ff
-                        ? 'bg-[#111827] border-[#111827] text-white shadow-md'
+                        ? 'bg-[#0F172A] border-[#0F172A] text-white shadow-md'
                         : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -289,7 +289,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
                   <Button
                     size="lg"
                     onClick={() => onNavigate('quote')}
-                    className="w-full bg-[#111827] hover:bg-black text-white"
+                    className="w-full bg-[#0F172A] hover:bg-slate-900 text-white"
                   >
                     <ShoppingBag className="w-5 h-5 mr-2" />
                     <span>Request Quotation for Setup</span>

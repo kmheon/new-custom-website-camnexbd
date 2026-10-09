@@ -582,7 +582,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
                               : 'border-slate-200 hover:border-slate-300'
                           }`}
                         >
-                          <div className="w-8 h-8 rounded-lg bg-[#111827] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+                          <div className="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
                             COD
                           </div>
                           <div className="flex-1">

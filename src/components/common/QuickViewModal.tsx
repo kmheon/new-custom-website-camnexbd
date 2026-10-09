@@ -239,7 +239,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
             <div>
               {/* Brand Chip & Monospace Model */}
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#141210] text-white px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#0F172A] text-white px-2 py-0.5 rounded-full">
                   {product.brand}
                 </span>
                 <span className="text-xs font-mono text-[#5B6472] uppercase">

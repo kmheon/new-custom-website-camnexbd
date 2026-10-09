@@ -264,7 +264,7 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
           <div className="mt-8 space-y-6">
             <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#111827] text-white flex items-center justify-center font-bold text-xl">
+                <div className="w-14 h-14 rounded-2xl bg-[#0F172A] text-white flex items-center justify-center font-bold text-xl">
                   {currentCustomer?.name ? currentCustomer.name[0].toUpperCase() : 'C'}
                 </div>
                 <div>

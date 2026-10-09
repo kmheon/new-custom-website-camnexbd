@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenQuote, lang, setLang }) =>
   }, [searchQuery]);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0B1220]/95 backdrop-blur-md border-b border-slate-800 text-white">
+    <header className="sticky top-0 z-40 bg-[#0F172A]/95 backdrop-blur-md border-b border-slate-800 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenQuote, lang, setLang }) =>
 
             {/* Live Search Dropdown */}
             {searchOpen && searchResults && (
-              <div className="absolute top-12 left-0 right-0 bg-[#0B1220] border border-slate-700 rounded-xl shadow-2xl p-3 z-50 max-h-96 overflow-y-auto">
+              <div className="absolute top-12 left-0 right-0 bg-[#0F172A] border border-slate-700 rounded-xl shadow-2xl p-3 z-50 max-h-96 overflow-y-auto">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">
                   Search Results
                 </div>
@@ -236,7 +236,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenQuote, lang, setLang }) =>
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#0B1220] border-b border-slate-800 px-4 pt-3 pb-6 space-y-4">
+        <div className="lg:hidden bg-[#0F172A] border-b border-slate-800 px-4 pt-3 pb-6 space-y-4">
           <div className="relative mb-3">
             <input
               type="text"

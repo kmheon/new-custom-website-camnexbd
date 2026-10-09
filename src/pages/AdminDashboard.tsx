@@ -1921,7 +1921,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               <button
                 onClick={() => setAssistantMode('A')}
                 className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                  assistantMode === 'A' ? 'bg-[#111827] text-white shadow-sm' : 'text-slate-600'
+                  assistantMode === 'A' ? 'bg-[#0F172A] text-white shadow-sm' : 'text-slate-600'
                 }`}
               >
                 Mode A: Automatic Research Assistant
@@ -1929,7 +1929,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               <button
                 onClick={() => setAssistantMode('B')}
                 className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                  assistantMode === 'B' ? 'bg-[#111827] text-white shadow-sm' : 'text-slate-600'
+                  assistantMode === 'B' ? 'bg-[#0F172A] text-white shadow-sm' : 'text-slate-600'
                 }`}
               >
                 Mode B: Manual Entry
@@ -2130,7 +2130,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   onClick={() => setEditingSlide({ ...editingSlide, sourceMode: 'manual' })}
                   className={`py-2 text-xs font-bold rounded-lg transition-all ${
                     editingSlide.sourceMode === 'manual'
-                      ? 'bg-[#111827] text-white shadow-sm'
+                      ? 'bg-[#0F172A] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -2141,7 +2141,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   onClick={() => setEditingSlide({ ...editingSlide, sourceMode: 'product' })}
                   className={`py-2 text-xs font-bold rounded-lg transition-all ${
                     editingSlide.sourceMode === 'product'
-                      ? 'bg-[#111827] text-white shadow-sm'
+                      ? 'bg-[#0F172A] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -2152,7 +2152,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   onClick={() => setEditingSlide({ ...editingSlide, sourceMode: 'collection' })}
                   className={`py-2 text-xs font-bold rounded-lg transition-all ${
                     editingSlide.sourceMode === 'collection'
-                      ? 'bg-[#111827] text-white shadow-sm'
+                      ? 'bg-[#0F172A] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >

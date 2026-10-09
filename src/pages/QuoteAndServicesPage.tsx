@@ -305,7 +305,7 @@ export const QuoteAndServicesPage: React.FC<QuoteAndServicesPageProps> = ({
 
               {/* Sidebar Info (4-col) */}
               <div className="lg:col-span-4 space-y-6">
-                <div className="bg-[#111827] text-white p-6 rounded-2xl border border-slate-800 space-y-4">
+                <div className="bg-[#0F172A] text-white p-6 rounded-2xl border border-slate-800 space-y-4">
                   <Badge variant="orange">Direct Engineering Desk</Badge>
                   <h3 className="text-lg font-bold font-heading">Need Urgent Assistance?</h3>
                   <p className="text-xs text-slate-300 leading-relaxed">

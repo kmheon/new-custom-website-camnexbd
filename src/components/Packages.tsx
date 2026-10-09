@@ -88,7 +88,7 @@ export const Packages: React.FC<PackagesProps> = ({ onBookPackage }) => {
               key={pkg.id}
               className={`rounded-2xl flex flex-col justify-between transition-all duration-300 relative ${
                 pkg.popular
-                  ? 'bg-[#0B1220] text-white ring-4 ring-[#F25C2A] shadow-2xl scale-100 lg:-translate-y-2'
+                  ? 'bg-[#0F172A] text-white ring-4 ring-[#F25C2A] shadow-2xl scale-100 lg:-translate-y-2'
                   : 'bg-white text-[#0B1220] border border-slate-200 shadow-md hover:shadow-xl'
               }`}
             >
@@ -155,7 +155,7 @@ export const Packages: React.FC<PackagesProps> = ({ onBookPackage }) => {
                   className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 ${
                     pkg.popular
                       ? 'bg-[#F25C2A] hover:bg-[#D84818] text-white shadow-lg shadow-orange-500/30'
-                      : 'border-2 border-[#0B1220] hover:bg-[#0B1220] text-[#0B1220] hover:text-white'
+                      : 'border-2 border-[#0F172A] hover:bg-[#0F172A] text-[#0F172A] hover:text-white'
                   }`}
                 >
                   <span>Book This Package</span>

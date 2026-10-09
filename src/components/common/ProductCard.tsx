@@ -166,7 +166,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
             {/* Top-Left Brand Logo / Chip */}
             <div className="absolute top-2.5 left-2.5 z-10">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#141210] text-white shadow-xs">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#0F172A] text-white shadow-xs">
                 {product.brand}
               </span>
             </div>
