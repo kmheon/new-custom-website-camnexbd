@@ -638,7 +638,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           <span className="text-slate-400 ml-2">{ord.customerName} ({ord.customerPhone})</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="font-bold text-[#F15A24]">৳{ord.total.toLocaleString()}</span>
+                          <span className="font-bold text-[#F15A24]">৳{ord.total?.toLocaleString ? ord.total.toLocaleString() : (ord.total ?? 0)}</span>
                           <Badge variant="dark">{ord.status}</Badge>
                         </div>
                       </div>
@@ -693,7 +693,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         <td className="p-3.5 font-mono text-slate-400">{p.modelNumber}</td>
                         <td className="p-3.5">{p.category}</td>
                         <td className="p-3.5 font-bold text-[#F15A24]">
-                          {p.pricing.regularPrice ? `৳${p.pricing.regularPrice.toLocaleString()}` : 'Quote Request'}
+                          {p.pricing?.regularPrice ? `৳${p.pricing.regularPrice.toLocaleString()}` : 'Quote Request'}
                         </td>
                         <td className="p-3.5">
                           <Badge variant={p.status === 'active' ? 'success' : 'gray'}>{p.status}</Badge>
@@ -859,13 +859,13 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">Base Price:</span>
-                          <span className="font-bold text-[#F15A24]">৳{p.basePrice.toLocaleString()}</span>
+                          <span className="font-bold text-[#F15A24]">৳{p.basePrice?.toLocaleString ? p.basePrice.toLocaleString() : (p.basePrice ?? 'Quote')}</span>
                         </div>
                       </div>
 
                       {/* Inclusions count */}
                       <div className="pt-2 text-[11px] text-slate-400">
-                        Includes: <strong className="text-slate-200">{p.inclusions.length} turnkey hardware components</strong>
+                        Includes: <strong className="text-slate-200">{p.inclusions?.length || 0} turnkey hardware components</strong>
                       </div>
                     </div>
 
@@ -980,7 +980,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                             </span>
                           )}
                         </td>
-                        <td className="p-3.5 font-bold text-[#F15A24]">৳{o.total.toLocaleString()}</td>
+                        <td className="p-3.5 font-bold text-[#F15A24]">৳{o.total?.toLocaleString ? o.total.toLocaleString() : (o.total ?? 0)}</td>
                         <td className="p-3.5"><Badge variant="orange">{o.status}</Badge></td>
                         <td className="p-3.5 text-right">
                           <select
@@ -2492,7 +2492,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         headline: `${prod.brand} ${prod.name}`,
                         description: prod.shortDescription || '',
                         image: prod.primaryImage || '',
-                        priceText: prod.pricing.regularPrice ? `৳${prod.pricing.regularPrice.toLocaleString()}` : '',
+                        priceText: prod.pricing?.regularPrice ? `৳${prod.pricing.regularPrice.toLocaleString()}` : '',
                         buttonText: 'View Product',
                         buttonLink: `/product/${prod.id}`,
                         secondaryText: 'Request quotation',
@@ -2505,7 +2505,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     <option value="">-- Choose a Product --</option>
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.brand} - {p.name} ({p.modelNumber}) {p.pricing.regularPrice ? `[৳${p.pricing.regularPrice.toLocaleString()}]` : ''}
+                        {p.brand} - {p.name} ({p.modelNumber}) {p.pricing?.regularPrice ? `[৳${p.pricing.regularPrice.toLocaleString()}]` : ''}
                       </option>
                     ))}
                   </select>
@@ -2523,7 +2523,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           <span className="text-slate-500 block font-mono text-[11px]">{prod.modelNumber} · {prod.category}</span>
                         </div>
                         <span className="font-extrabold text-[#F15A24]">
-                          {prod.pricing.regularPrice ? `৳${prod.pricing.regularPrice.toLocaleString()}` : 'Quotation'}
+                          {prod.pricing?.regularPrice ? `৳${prod.pricing.regularPrice.toLocaleString()}` : 'Quotation'}
                         </span>
                       </div>
 
