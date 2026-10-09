@@ -340,38 +340,58 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
         )}
       </section>
 
-      {/* BRAND STRIP DIRECTLY BELOW HERO (No card, no border) */}
-      <section className="w-full bg-[#FAF7F2] py-6 sm:py-8">
+      {/* BRAND STRIP DIRECTLY BELOW HERO (Full-width row with real logos, badges, fallback wordmarks) */}
+      <section className="w-full bg-[#FAF7F2] border-b border-[#EDE8E1] py-6 sm:py-8">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5 md:gap-8">
             {/* Left Label */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <CheckCircle2 className="w-4 h-4 text-[#F15A24]" />
               <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">
-                Authorized Hardware Partners
+                Brands we work with
               </span>
             </div>
 
             {/* Right Brand Logos Row */}
-            <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center justify-start md:justify-end gap-6 sm:gap-10 py-1">
+            <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center justify-start md:justify-end gap-6 sm:gap-8 py-1">
               {brands.length > 0 ? (
                 brands.map((b) => (
                   <button
                     key={b.id}
                     onClick={() => onNavigate('brand', b.slug)}
-                    className="flex-shrink-0 text-sm font-extrabold uppercase tracking-wider text-[#5B6472] hover:text-[#111827] transition-colors filter grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
+                    className="group flex-shrink-0 flex items-center gap-2 transition-all p-1"
+                    title={b.name}
                   >
-                    {b.name}
+                    {b.logo ? (
+                      <img
+                        src={b.logo}
+                        alt={b.name}
+                        className="h-6 sm:h-7 max-w-[120px] object-contain filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#5B6472] group-hover:text-[#111827] transition-colors">
+                        {b.name}
+                      </span>
+                    )}
+
+                    {b.showBadge && b.badgeText && (
+                      <span className="text-[9px] font-bold text-[#F15A24] bg-orange-100/90 border border-orange-200 px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-2xs">
+                        {b.badgeText}
+                      </span>
+                    )}
                   </button>
                 ))
               ) : (
-                <>
-                  <span className="text-sm font-extrabold uppercase tracking-wider text-[#5B6472] grayscale opacity-60">HIKVISION</span>
-                  <span className="text-sm font-extrabold uppercase tracking-wider text-[#5B6472] grayscale opacity-60">ZKTECO</span>
-                  <span className="text-sm font-extrabold uppercase tracking-wider text-[#5B6472] grayscale opacity-60">RUIJIE REYEE</span>
-                  <span className="text-sm font-extrabold uppercase tracking-wider text-[#5B6472] grayscale opacity-60">DAHUA</span>
-                  <span className="text-sm font-extrabold uppercase tracking-wider text-[#5B6472] grayscale opacity-60">UNIVIEW</span>
-                </>
+                <div className="flex items-center gap-6">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">HIKVISION</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">DAHUA</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">ZKTECO</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">RUIJIE</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#5B6472]">WESTERN DIGITAL</span>
+                </div>
               )}
             </div>
           </div>

@@ -73,6 +73,21 @@ export interface Brand {
   description?: string;
   website?: string;
   featured?: boolean;
+  badgeText?: string;
+  showBadge?: boolean;
+}
+
+export interface ScenarioItem {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  iconName: string; // 'Home' | 'Building2' | 'ShoppingBag' | 'Factory' | 'GraduationCap'
+  recommendedCategories?: string[];
+  recommendedPackages?: string[];
+  recommendedProducts?: string[];
+  enabled: boolean;
+  order: number;
 }
 
 export interface Category {
@@ -383,6 +398,7 @@ export interface SiteSettings {
     enabled: boolean;
     steps: HowItWorksStep[];
   };
+  scenarios?: ScenarioItem[];
 
   // Global SEO Configuration
   seoTitle?: string;

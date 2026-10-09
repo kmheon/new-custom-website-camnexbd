@@ -28,6 +28,8 @@ import { ProjectsModule } from '../components/admin/ProjectsModule';
 import { PagesModule } from '../components/admin/PagesModule';
 import { TestimonialsModule } from '../components/admin/TestimonialsModule';
 import { RedirectsModule } from '../components/admin/RedirectsModule';
+import { BrandsModule } from '../components/admin/BrandsModule';
+import { ScenariosModule } from '../components/admin/ScenariosModule';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
   const { currentUser, isAdminAuthenticated, checkAuth, login, logout, isLoading: authLoading, error: authError } = useAdminAuthStore();
@@ -549,6 +551,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             { id: 'projects', label: 'Projects & Portfolio', icon: <Briefcase className="w-4 h-4" /> },
             { id: 'pages', label: 'Pages & Policy CMS', icon: <Globe className="w-4 h-4" /> },
             { id: 'testimonials', label: 'Customer Testimonials', icon: <Star className="w-4 h-4" /> },
+            { id: 'brands', label: 'Brands & Badges', icon: <Tag className="w-4 h-4" /> },
+            { id: 'scenarios', label: 'Scenarios & Topologies', icon: <Compass className="w-4 h-4 text-emerald-400" /> },
             { id: 'redirects', label: 'URL Redirects (301)', icon: <Compass className="w-4 h-4" /> },
             { id: 'blog', label: 'Blog & Articles', icon: <BookOpen className="w-4 h-4" /> },
             { id: 'faqs', label: 'FAQ Knowledgebase', icon: <HelpCircle className="w-4 h-4" /> },
@@ -1460,6 +1464,16 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           {/* TESTIMONIALS CMS MODULE */}
           {activeModule === 'testimonials' && (
             <TestimonialsModule />
+          )}
+
+          {/* BRANDS & BADGES MODULE */}
+          {activeModule === 'brands' && (
+            <BrandsModule />
+          )}
+
+          {/* SCENARIOS MODULE */}
+          {activeModule === 'scenarios' && (
+            <ScenariosModule />
           )}
 
           {/* REDIRECTS 301/302 MANAGER MODULE */}

@@ -23,41 +23,56 @@
       "id": "b-hikvision",
       "name": "Hikvision",
       "slug": "hikvision",
+      "logo": "/images/brands/hikvision.svg",
       "description": "World-leading provider of security products and solutions. CamneX is an Authorized Partner in Bangladesh.",
       "website": "https://www.hikvision.com",
-      "featured": true
+      "featured": true,
+      "badgeText": "Authorized Support Partner",
+      "showBadge": true
     },
     {
       "id": "b-zkteco",
       "name": "ZKTeco",
       "slug": "zkteco",
+      "logo": "/images/brands/zkteco.svg",
       "description": "Globally renowned biometric verification and smart access control solutions. CamneX is an Authorized Installer.",
       "website": "https://www.zkteco.com",
-      "featured": true
+      "featured": true,
+      "badgeText": "",
+      "showBadge": false
     },
     {
       "id": "b-dahua",
       "name": "Dahua Technology",
       "slug": "dahua",
+      "logo": "/images/brands/dahua.svg",
       "description": "World-leading video-centric smart IoT solution and service provider.",
       "website": "https://www.dahuasecurity.com",
-      "featured": true
+      "featured": true,
+      "badgeText": "Authorized Support Partner",
+      "showBadge": true
     },
     {
       "id": "b-ruijie",
       "name": "Ruijie Reyee",
       "slug": "ruijie-reyee",
+      "logo": "/images/brands/ruijie.svg",
       "description": "Enterprise networking, cloud-managed switches and commercial Wi-Fi 6 solutions.",
       "website": "https://www.ruijienetworks.com",
-      "featured": true
+      "featured": true,
+      "badgeText": "",
+      "showBadge": false
     },
     {
       "id": "b-wd",
       "name": "Western Digital",
       "slug": "western-digital",
+      "logo": "/images/brands/western-digital.svg",
       "description": "WD Purple surveillance-grade continuous write hard disk drives.",
       "website": "https://www.westerndigital.com",
-      "featured": false
+      "featured": false,
+      "badgeText": "",
+      "showBadge": false
     }
   ],
   "INITIAL_CATEGORIES": [
@@ -193,7 +208,7 @@
       "badge": "New",
       "headline": "Hikvision Smart Hybrid Light 4K Bullet",
       "description": "Enterprise 4K Ultra HD surveillance featuring dual smart lighting, AcuSense AI vehicle classification, and IP67 weather-sealed all-metal housing.",
-      "image": "/images/hero/hikvision-bullet.jpg",
+      "image": "/images/hero/hikvision-bullet.png",
       "priceText": "৳4,850",
       "buttonText": "View Product",
       "buttonLink": "/product/prod-hik-irpf-2mp",
@@ -230,7 +245,7 @@
       "sourceMode": "product",
       "productId": "prod-rui-rap2200e",
       "badge": "Featured",
-      "image": "/images/hero/ruijie-wifi6.jpg",
+      "image": "/images/hero/ruijie-wifi6.png",
       "buttonText": "View Product",
       "buttonLink": "/product/prod-rui-rap2200e",
       "secondaryText": "Add to cart",
@@ -1303,7 +1318,108 @@
     "returnPolicyText": "",
     "termsPolicyText": "",
     "privacyPolicyText": "",
-    "enableCashOnDelivery": false
+    "enableCashOnDelivery": false,
+    "scenarios": [
+      {
+        "id": "scen-home",
+        "slug": "home-residence",
+        "title": "Home & Residential",
+        "description": "Discreet indoor and outdoor surveillance with smartphone live view and perimeter tripwire alerts.",
+        "iconName": "Home",
+        "recommendedCategories": [
+          "cctv-cameras",
+          "biometrics-access-control"
+        ],
+        "recommendedPackages": [
+          "night-vision-cctv-package"
+        ],
+        "recommendedProducts": [
+          "prod-hik-irpf-2mp"
+        ],
+        "enabled": true,
+        "order": 1
+      },
+      {
+        "id": "scen-office",
+        "slug": "corporate-office",
+        "title": "Corporate Office",
+        "description": "Time attendance biometrics, seamless Wi-Fi 6 roaming, and central server rack networking.",
+        "iconName": "Building2",
+        "recommendedCategories": [
+          "biometrics-access-control",
+          "access-points-wifi",
+          "network-switches"
+        ],
+        "recommendedPackages": [
+          "night-vision-cctv-package"
+        ],
+        "recommendedProducts": [
+          "prod-zkteco-mb20",
+          "prod-ruijie-rap2260g"
+        ],
+        "enabled": true,
+        "order": 2
+      },
+      {
+        "id": "scen-retail",
+        "slug": "shop-retail",
+        "title": "Shop & Retail Store",
+        "description": "Cash counter dome zoom, customer footfall monitoring, and concealed PVC channel wiring.",
+        "iconName": "ShoppingBag",
+        "recommendedCategories": [
+          "cctv-cameras",
+          "dvr-nvr-recorders"
+        ],
+        "recommendedPackages": [
+          "night-vision-cctv-package"
+        ],
+        "recommendedProducts": [
+          "prod-hik-dome-2mp"
+        ],
+        "enabled": true,
+        "order": 3
+      },
+      {
+        "id": "scen-factory",
+        "slug": "factory-warehouse",
+        "title": "Factory & Warehouse",
+        "description": "High-mount 4K optical zoom, weatherproof IP67 enclosures, and long-range fiber / PoE switches.",
+        "iconName": "Factory",
+        "recommendedCategories": [
+          "cctv-cameras",
+          "network-switches",
+          "cctv-accessories"
+        ],
+        "recommendedPackages": [
+          "night-vision-cctv-package"
+        ],
+        "recommendedProducts": [
+          "prod-ruijie-es205gc-p"
+        ],
+        "enabled": true,
+        "order": 4
+      },
+      {
+        "id": "scen-school",
+        "slug": "school-institute",
+        "title": "School & Institute",
+        "description": "Corridor surveillance, staff biometric check-in, and unified campus Wi-Fi infrastructure.",
+        "iconName": "GraduationCap",
+        "recommendedCategories": [
+          "cctv-cameras",
+          "biometrics-access-control",
+          "access-points-wifi"
+        ],
+        "recommendedPackages": [
+          "night-vision-cctv-package"
+        ],
+        "recommendedProducts": [
+          "prod-zkteco-mb20"
+        ],
+        "enabled": true,
+        "order": 5
+      }
+    ]
   },
   "INITIAL_SPEC_TEMPLATES": [
     {

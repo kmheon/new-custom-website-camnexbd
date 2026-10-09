@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingBag, Phone, Menu, X, Shield, ChevronDown, User, ArrowRight, Wrench, MessageCircle } from 'lucide-react';
+import {
+  Search, ShoppingBag, Phone, Mail, Menu, X, Shield, ChevronDown, User,
+  ArrowRight, Wrench, MessageCircle, Layers, CheckCircle2, Building2, HelpCircle
+} from 'lucide-react';
 import { useCartStore, useSettingsStore } from '../../store';
 import { categoryService, productService, brandService } from '../../services';
 import { Category, Product, Brand } from '../../types';
@@ -12,17 +15,17 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
-  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   // Search state
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryScope, setSelectedCategoryScope] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
@@ -35,15 +38,9 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
     loadSettings();
     categoryService.getCategories().then(setCategories);
     brandService.getBrands().then(setBrands);
-
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
   }, [loadSettings]);
 
-  // Click outside to close dropdowns & search
+  // Click outside to close search suggestions and nav dropdowns
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -66,19 +63,24 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await productService.getProducts({ search: searchQuery, limit: 5 });
+        const queryParams: any = { search: searchQuery.trim(), limit: 6 };
+        if (selectedCategoryScope) {
+          queryParams.category = selectedCategoryScope;
+        }
+        const res = await productService.getProducts(queryParams);
         setSearchSuggestions(res.items);
       } finally {
         setIsSearching(false);
       }
     }, 180);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategoryScope]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setSearchOpen(false);
+      setMobileSearchOpen(false);
       onNavigate('search', searchQuery.trim());
     }
   };
@@ -91,745 +93,508 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
     setMobileAccordion((prev) => (prev === name ? null : name));
   };
 
-  const announcementText = settings?.announcementBar?.enabled ? settings?.announcementBar?.text : (settings?.promoBanner?.enabled ? settings?.promoBanner?.text : '');
-  const announcementLink = settings?.announcementBar?.enabled ? settings?.announcementBar?.link : (settings?.promoBanner?.enabled ? settings?.promoBanner?.link : '');
+  const phone = settings?.phone || '+880 1540-535150';
+  const email = settings?.email || 'contact@camnexbd.com';
 
   return (
-    <>
-      {/* Optional Slim Dismissible Announcement Bar (only if admin configured text) */}
-      {announcementText && !announcementDismissed && (
-        <div className="bg-[#F15A24] text-white text-xs py-2 px-4 relative z-50 shadow-sm transition-all">
-          <div className="max-w-[1200px] mx-auto flex items-center justify-between gap-4">
-            <div className="flex-1 text-center font-medium">
-              {announcementLink ? (
-                <a href={announcementLink} className="underline hover:text-white/90">
-                  {announcementText}
-                </a>
-              ) : (
-                <span>{announcementText}</span>
-              )}
-            </div>
-            <button
-              onClick={() => setAnnouncementDismissed(true)}
-              className="p-1 rounded hover:bg-black/10 text-white/90 hover:text-white transition-colors"
-              aria-label="Dismiss announcement"
+    <header className="sticky top-0 z-40 w-full bg-white">
+      {/* 1. FULL-WIDTH SLIM TOP BAR (36px, surface-dark, 13px text) */}
+      <div className="w-full bg-[#141210] text-[#A0A8B4] text-[13px] border-b border-white/10 h-9 relative z-50">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+          {/* Left: Tap-to-call phone and email */}
+          <div className="flex items-center gap-3 sm:gap-6">
+            <a
+              href={`tel:${phone.replace(/\s+/g, '')}`}
+              className="flex items-center gap-1.5 text-white/90 hover:text-white font-medium transition-colors"
             >
-              <X className="w-3.5 h-3.5" />
+              <Phone className="w-3.5 h-3.5 text-[#F15A24]" />
+              <span>{phone}</span>
+            </a>
+            <a
+              href={`mailto:${email}`}
+              className="hidden sm:flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors pl-4 border-l border-white/15"
+            >
+              <Mail className="w-3.5 h-3.5 text-[#F15A24]" />
+              <span>{email}</span>
+            </a>
+          </div>
+
+          {/* Right: Track Order, Account/Login, Admin Panel */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={() => onNavigate('tracking')}
+              className="hidden md:flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+            >
+              <span>Track Order</span>
             </button>
+
+            <button
+              onClick={() => onNavigate('account')}
+              className="flex items-center gap-1.5 text-white/90 hover:text-white font-medium transition-colors cursor-pointer md:pl-3 md:border-l md:border-white/15"
+            >
+              <User className="w-3.5 h-3.5 text-[#F15A24]" />
+              <span>Account</span>
+            </button>
+
+            <a
+              href="/admin"
+              className="hidden md:flex items-center gap-1.5 text-white/80 hover:text-[#F15A24] font-medium transition-colors pl-3 border-l border-white/15"
+            >
+              <Shield className="w-3.5 h-3.5 text-[#F15A24]" />
+              <span>Admin Panel</span>
+            </a>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Floating Rounded Header Card */}
-      <div className="sticky top-4 z-40 px-3 md:px-6 pointer-events-none transition-all duration-200">
-        <header
-          ref={navRef}
-          className={`sticky top-4 max-w-[1200px] mx-auto pointer-events-auto bg-white/92 backdrop-blur-md rounded-[20px] border border-[#EDE8E1] shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-200 ${
-            isScrolled ? 'py-2.5 px-4 md:px-6 shadow-md' : 'py-3.5 px-4 md:px-6'
-          }`}
-        >
-          <div className="flex items-center justify-between gap-4">
-            
-            {/* Left: Brand Logo */}
-            <button
-              onClick={() => {
-                setActiveDropdown(null);
-                onNavigate('home');
-              }}
-              className="flex items-center gap-3 text-left focus:outline-none group flex-shrink-0"
-              aria-label="CamneX Bangladesh Home"
+      {/* 2. FULL-WIDTH WHITE HEADER ROW */}
+      <div className="w-full bg-white border-b border-[#EDE8E1] shadow-xs">
+        {/* ROW 1: Logo + EXTENDED Search Bar + Cart + Get Quote */}
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-4 lg:gap-8">
+          {/* Logo */}
+          <button
+            onClick={() => onNavigate('home')}
+            className="flex items-center gap-2.5 flex-shrink-0 cursor-pointer focus:outline-none"
+            aria-label="CamneX Home"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#F15A24] to-[#D94D1C] flex items-center justify-center text-white font-black text-lg shadow-sm">
+              C
+            </div>
+            <div className="text-left">
+              <span className="text-lg sm:text-xl font-black text-[#111827] tracking-tight font-heading block leading-none">
+                Camne<span className="text-[#F15A24]">X</span>
+              </span>
+              <span className="text-[9px] font-bold text-[#5B6472] uppercase tracking-wider block mt-0.5">
+                Bangladesh
+              </span>
+            </div>
+          </button>
+
+          {/* EXTENDED SEARCH BAR (Desktop: Takes all spare width, min ~480px) */}
+          <div ref={searchRef} className="hidden md:flex flex-1 max-w-[700px] min-w-[440px] lg:min-w-[480px] relative">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="w-full flex items-center bg-[#FAF7F2] border border-[#EDE8E1] rounded-full focus-within:border-[#F15A24] focus-within:ring-2 focus-within:ring-[#F15A24]/15 focus-within:bg-white transition-all px-2 py-1"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#F15A24] to-[#D94D1C] flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
-                <Shield className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xl font-black tracking-tight text-[#111827] font-heading">
-                    Camne<span className="text-[#F15A24]">X</span>
-                  </span>
-                  <span className="bg-[#F15A24]/10 text-[#F15A24] text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase border border-[#F15A24]/20">
-                    BD
-                  </span>
-                </div>
-                <span className="text-[10px] text-[#5B6472] font-medium hidden sm:block">
-                  Security & Surveillance
-                </span>
-              </div>
-            </button>
-
-            {/* Center: Desktop Navigation Links with Dropdowns */}
-            <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-[13px] font-semibold text-[#111827]">
-              
-              {/* Shop (Mega Menu) */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('shop')}
-                onMouseLeave={() => setActiveDropdown(null)}
+              {/* Category Scope Dropdown */}
+              <select
+                value={selectedCategoryScope}
+                onChange={(e) => setSelectedCategoryScope(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-[#111827] pl-2 pr-1 py-1.5 focus:outline-none cursor-pointer border-r border-[#EDE8E1] max-w-[130px] truncate"
               >
-                <button
-                  onClick={() => toggleDropdown('shop')}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-full transition-colors ${
-                    activeDropdown === 'shop' || currentRoute === 'catalog' || currentRoute === 'category'
-                      ? 'text-[#F15A24] bg-orange-50/60 font-bold'
-                      : 'hover:text-[#F15A24] hover:bg-slate-50'
-                  }`}
-                >
-                  <span>Shop</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'shop' ? 'rotate-180 text-[#F15A24]' : 'text-slate-400'}`} />
-                </button>
+                <option value="">All Categories</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.slug}>{c.name}</option>
+                ))}
+              </select>
 
-                {activeDropdown === 'shop' && (
-                  <div className="absolute top-full left-0 w-[580px] bg-white rounded-[20px] border border-[#EDE8E1] shadow-2xl p-5 z-50 mt-1 animate-fade-in grid grid-cols-12 gap-5">
-                    {/* Category Column */}
-                    <div className="col-span-7 space-y-1">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-[#5B6472] px-2 mb-2">
-                        Hardware Categories
-                      </div>
-                      <div className="grid grid-cols-1 gap-1">
-                        {categories.map((cat) => (
-                          <button
-                            key={cat.id}
-                            onClick={() => {
-                              setActiveDropdown(null);
-                              onNavigate('category', cat.slug);
-                            }}
-                            className="text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] flex items-center justify-between transition-colors group"
-                          >
-                            <span>{cat.name}</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#F15A24] transition-colors" />
-                          </button>
-                        ))}
-                      </div>
-                      <div className="pt-2 border-t border-[#EDE8E1] mt-2">
-                        <button
-                          onClick={() => {
-                            setActiveDropdown(null);
-                            onNavigate('catalog');
-                          }}
-                          className="w-full text-left px-3 py-1.5 text-xs font-bold text-[#F15A24] hover:underline flex items-center gap-1.5"
-                        >
-                          <span>Browse Complete Catalog</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+              {/* Extended Search Field */}
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchOpen(true);
+                }}
+                onFocus={() => setSearchOpen(true)}
+                placeholder="Search camera, DVR, brand, model, SKU..."
+                className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-[#111827] placeholder:text-[#5B6472] focus:outline-none"
+              />
+
+              {/* Search Submit Pill Button */}
+              <button
+                type="submit"
+                className="w-8 h-8 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer shadow-xs"
+                aria-label="Submit search"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            </form>
+
+            {/* Instant Suggestions Dropdown (Desktop) */}
+            {searchOpen && (searchQuery.trim() || isSearching) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl overflow-hidden z-50 p-2">
+                {isSearching ? (
+                  <div className="p-4 text-center text-xs text-[#5B6472]">Searching hardware catalog...</div>
+                ) : searchSuggestions.length > 0 ? (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-bold text-[#5B6472] uppercase tracking-wider px-3 py-1">
+                      Matching Hardware
                     </div>
-
-                    {/* Promo Tile */}
-                    <div className="col-span-5 bg-gradient-to-br from-[#F4EEE6] to-orange-50/40 rounded-2xl p-4 border border-[#EDE8E1] flex flex-col justify-between">
-                      <div>
-                        <span className="inline-block bg-[#F15A24] text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-2">
-                          Ready Packages
-                        </span>
-                        <h4 className="text-sm font-bold text-[#111827] mb-1">
-                          Complete CCTV Kits
-                        </h4>
-                        <p className="text-[11px] text-[#5B6472] leading-relaxed">
-                          2, 4, 8 & 16 camera systems with storage, cabling & verified installation.
-                        </p>
-                      </div>
+                    {searchSuggestions.map((p) => (
                       <button
+                        key={p.id}
+                        type="button"
                         onClick={() => {
-                          setActiveDropdown(null);
-                          onNavigate('packages');
+                          setSearchOpen(false);
+                          setSearchQuery('');
+                          onNavigate('product', p.id);
                         }}
-                        className="mt-4 w-full py-2 bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold rounded-full transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                        className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[#FAF7F2] transition-colors text-left cursor-pointer"
                       >
-                        <span>Package Builder</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <div className="w-10 h-10 rounded-lg bg-[#FAF7F2] border border-[#EDE8E1] flex items-center justify-center p-1 flex-shrink-0">
+                          {p.primaryImage ? (
+                            <img src={p.primaryImage} alt="" className="w-full h-full object-contain" />
+                          ) : (
+                            <Search className="w-4 h-4 text-[#5B6472]" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#5B6472] uppercase">
+                            <span className="font-bold text-[#111827]">{p.brand}</span>
+                            <span>•</span>
+                            <span>{p.modelNumber}</span>
+                          </div>
+                          <div className="text-xs font-bold text-[#111827] truncate">{p.name}</div>
+                        </div>
+                        <div className="text-xs font-black text-[#F15A24] flex-shrink-0">
+                          {p.pricing?.regularPrice ? `৳${p.pricing.regularPrice.toLocaleString()}` : 'Quote'}
+                        </div>
+                      </button>
+                    ))}
+                    <div className="pt-2 border-t border-[#EDE8E1] px-2">
+                      <button
+                        type="button"
+                        onClick={handleSearchSubmit}
+                        className="w-full py-1.5 text-center text-xs font-bold text-[#F15A24] hover:underline"
+                      >
+                        View all results for "{searchQuery}"
                       </button>
                     </div>
                   </div>
+                ) : (
+                  <div className="p-4 text-center text-xs text-[#5B6472]">
+                    No hardware found for "{searchQuery}".
+                  </div>
                 )}
               </div>
+            )}
+          </div>
 
-              {/* Solutions Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('solutions')}
-                onMouseLeave={() => setActiveDropdown(null)}
+          {/* Right Header Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Search Toggle */}
+            <button
+              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              className="p-2 rounded-full hover:bg-[#FAF7F2] text-[#111827] md:hidden cursor-pointer"
+              aria-label="Toggle Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+
+            {/* Cart Icon */}
+            <button
+              onClick={() => onNavigate('cart')}
+              className="relative p-2.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] transition-colors cursor-pointer"
+              aria-label="Shopping Cart"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              {totalCartCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#F15A24] text-white text-[10px] font-black flex items-center justify-center">
+                  {totalCartCount}
+                </span>
+              )}
+            </button>
+
+            {/* Desktop Orange Get Quote Pill */}
+            <button
+              onClick={() => onNavigate('quote')}
+              className="hidden sm:flex min-h-[44px] px-5 py-2.5 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs sm:text-sm rounded-full transition-all shadow-sm items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <span>Get Quote</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Mobile Hamburger Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 rounded-full hover:bg-[#FAF7F2] text-[#111827] md:hidden cursor-pointer"
+              aria-label="Open Navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Expandable Search Bar */}
+        {mobileSearchOpen && (
+          <div className="p-3 bg-[#FAF7F2] border-t border-[#EDE8E1] md:hidden">
+            <form onSubmit={handleSearchSubmit} className="flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search cameras, NVRs, SKUs..."
+                className="flex-1 px-4 py-2 text-xs bg-white border border-[#EDE8E1] rounded-full focus:outline-none focus:border-[#F15A24]"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-[#F15A24] text-white text-xs font-bold rounded-full"
               >
+                Search
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ROW 2: Nav links with dropdowns on thin bordered strip (Desktop) */}
+        <div ref={navRef} className="hidden md:block w-full border-t border-[#EDE8E1]/80 bg-white">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-2 flex items-center justify-between text-xs sm:text-sm font-semibold text-[#111827]">
+            <div className="flex items-center gap-1 lg:gap-2">
+              {/* All Categories Mega Menu */}
+              <div className="relative">
                 <button
-                  onClick={() => toggleDropdown('solutions')}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-full transition-colors ${
-                    activeDropdown === 'solutions' || currentRoute === 'solutions'
-                      ? 'text-[#F15A24] bg-orange-50/60 font-bold'
-                      : 'hover:text-[#F15A24] hover:bg-slate-50'
-                  }`}
+                  type="button"
+                  onClick={() => toggleDropdown('categories')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] font-bold transition-colors cursor-pointer"
                 >
-                  <span>Solutions</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'solutions' ? 'rotate-180 text-[#F15A24]' : 'text-slate-400'}`} />
+                  <Menu className="w-4 h-4 text-[#F15A24]" />
+                  <span>All Categories</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#5B6472]" />
                 </button>
 
-                {activeDropdown === 'solutions' && (
-                  <div className="absolute top-full left-0 w-64 bg-white rounded-[20px] border border-[#EDE8E1] shadow-2xl p-2 z-50 mt-1 animate-fade-in space-y-1">
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('solutions');
-                      }}
-                      className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      <div className="font-bold">Enterprise & Industrial</div>
-                      <div className="text-[11px] text-[#5B6472]">Perimeter and warehouse CCTV systems</div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('solutions');
-                      }}
-                      className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      <div className="font-bold">Retail & Supermarket</div>
-                      <div className="text-[11px] text-[#5B6472]">Loss prevention & POS area coverage</div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('solutions');
-                      }}
-                      className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      <div className="font-bold">Corporate Biometrics & SLA</div>
-                      <div className="text-[11px] text-[#5B6472]">Attendance integration & yearly support</div>
-                    </button>
+                {activeDropdown === 'categories' && (
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-3 z-50">
+                    <div className="text-[10px] font-bold text-[#5B6472] uppercase tracking-wider px-2 py-1 mb-1">
+                      Hardware Catalog
+                    </div>
+                    <div className="space-y-1">
+                      {categories.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveDropdown(null);
+                            onNavigate('category', c.slug);
+                          }}
+                          className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-[#FAF7F2] text-xs font-bold text-[#111827] hover:text-[#F15A24] transition-colors text-left"
+                        >
+                          <span>{c.name}</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#5B6472]" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Services Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('services')}
-                onMouseLeave={() => setActiveDropdown(null)}
+              {/* Solutions */}
+              <button
+                type="button"
+                onClick={() => onNavigate('solutions')}
+                className="px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
               >
-                <button
-                  onClick={() => toggleDropdown('services')}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-full transition-colors ${
-                    activeDropdown === 'services' || currentRoute === 'services'
-                      ? 'text-[#F15A24] bg-orange-50/60 font-bold'
-                      : 'hover:text-[#F15A24] hover:bg-slate-50'
-                  }`}
-                >
-                  <span>Services</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'services' ? 'rotate-180 text-[#F15A24]' : 'text-slate-400'}`} />
-                </button>
+                Solutions
+              </button>
 
-                {activeDropdown === 'services' && (
-                  <div className="absolute top-full left-0 w-64 bg-white rounded-[20px] border border-[#EDE8E1] shadow-2xl p-2 z-50 mt-1 animate-fade-in space-y-1">
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('services');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      CCTV Installation & Wiring
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('services');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      Site Survey & Estimation
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('services');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      Enterprise Wi-Fi & Mesh Setup
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('services');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      Access Control & Attendance
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('services');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      AMC & Scheduled Maintenance
-                    </button>
-                  </div>
-                )}
-              </div>
+              {/* Services */}
+              <button
+                type="button"
+                onClick={() => onNavigate('services')}
+                className="px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+              >
+                Services
+              </button>
 
               {/* Packages */}
               <button
+                type="button"
                 onClick={() => onNavigate('packages')}
-                className={`px-3 py-2 rounded-full transition-colors ${
-                  currentRoute === 'packages'
-                    ? 'text-[#F15A24] bg-orange-50/60 font-bold'
-                    : 'hover:text-[#F15A24] hover:bg-slate-50'
-                }`}
+                className="px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
               >
                 Packages
               </button>
 
               {/* Brands Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('brands')}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
+              <div className="relative">
                 <button
+                  type="button"
                   onClick={() => toggleDropdown('brands')}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-full transition-colors ${
-                    activeDropdown === 'brands' || currentRoute === 'brand'
-                      ? 'text-[#F15A24] bg-orange-50/60 font-bold'
-                      : 'hover:text-[#F15A24] hover:bg-slate-50'
-                  }`}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
                 >
                   <span>Brands</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'brands' ? 'rotate-180 text-[#F15A24]' : 'text-slate-400'}`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#5B6472]" />
                 </button>
 
                 {activeDropdown === 'brands' && (
-                  <div className="absolute top-full left-0 w-56 bg-white rounded-[20px] border border-[#EDE8E1] shadow-2xl p-2 z-50 mt-1 animate-fade-in space-y-1">
-                    {brands.length > 0 ? (
-                      brands.map((b) => (
-                        <button
-                          key={b.id}
-                          onClick={() => {
-                            setActiveDropdown(null);
-                            onNavigate('brand', b.slug);
-                          }}
-                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] flex items-center justify-between transition-colors"
-                        >
-                          <span>{b.name}</span>
-                          {b.isAuthorized && (
-                            <span className="text-[10px] font-bold text-[#F15A24] bg-orange-50 px-1.5 py-0.5 rounded">
-                              Authorized
-                            </span>
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <>
-                        <button onClick={() => { setActiveDropdown(null); onNavigate('brand', 'hikvision'); }} className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24]">Hikvision</button>
-                        <button onClick={() => { setActiveDropdown(null); onNavigate('brand', 'zkteco'); }} className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24]">ZKTeco</button>
-                        <button onClick={() => { setActiveDropdown(null); onNavigate('brand', 'ruijie'); }} className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24]">Ruijie Reyee</button>
-                        <button onClick={() => { setActiveDropdown(null); onNavigate('brand', 'dahua'); }} className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24]">Dahua</button>
-                      </>
-                    )}
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2 z-50">
+                    {brands.map((b) => (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveDropdown(null);
+                          onNavigate('brand', b.slug);
+                        }}
+                        className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-[#FAF7F2] text-xs font-bold text-[#111827] text-left"
+                      >
+                        <span>{b.name}</span>
+                        {b.showBadge && (
+                          <span className="text-[9px] font-bold text-[#F15A24] bg-orange-50 px-1.5 py-0.5 rounded-full">
+                            Partner
+                          </span>
+                        )}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
               {/* Support Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('support')}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
+              <div className="relative">
                 <button
+                  type="button"
                   onClick={() => toggleDropdown('support')}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-full transition-colors ${
-                    activeDropdown === 'support' || currentRoute === 'tracking' || currentRoute === 'faq' || currentRoute === 'contact'
-                      ? 'text-[#F15A24] bg-orange-50/60 font-bold'
-                      : 'hover:text-[#F15A24] hover:bg-slate-50'
-                  }`}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
                 >
                   <span>Support</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'support' ? 'rotate-180 text-[#F15A24]' : 'text-slate-400'}`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#5B6472]" />
                 </button>
 
                 {activeDropdown === 'support' && (
-                  <div className="absolute top-full right-0 w-56 bg-white rounded-[20px] border border-[#EDE8E1] shadow-2xl p-2 z-50 mt-1 animate-fade-in space-y-1">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2 z-50 text-xs">
                     <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('tracking');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('warranty'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
                     >
-                      Track Order Status
+                      Warranty Policy
                     </button>
                     <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('warranty');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('faq'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
                     >
-                      Warranty & Return Policy
+                      FAQs & Answers
                     </button>
                     <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('faq');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('contact'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
                     >
-                      Frequently Asked Questions
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(null);
-                        onNavigate('contact');
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#111827] hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                    >
-                      Contact Engineering Support
+                      Contact Us
                     </button>
                   </div>
                 )}
               </div>
-
-            </nav>
-
-            {/* Right: Search, Cart, Account, Phone & Quote CTA */}
-            <div className="flex items-center gap-1 sm:gap-2.5">
-              
-              {/* Expanding Search Trigger / Field */}
-              <div className="relative" ref={searchRef}>
-                {searchOpen ? (
-                  <div className="relative flex items-center">
-                    <form onSubmit={handleSearchSubmit} className="relative">
-                      <input
-                        ref={searchInputRef}
-                        type="text"
-                        placeholder="Search model, brand, SKU..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-48 sm:w-72 bg-slate-50 text-xs text-[#111827] placeholder-slate-400 pl-8 pr-8 py-2 rounded-full border border-[#EDE8E1] focus:outline-none focus:border-[#F15A24] focus:ring-1 focus:ring-[#F15A24] transition-all"
-                      />
-                      <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchOpen(false);
-                          setSearchQuery('');
-                        }}
-                        className="absolute right-2 top-2 p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600"
-                        aria-label="Close search"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </form>
-
-                    {/* Instant Suggestions Dropdown */}
-                    <div className="absolute top-11 right-0 w-72 sm:w-80 bg-white border border-[#EDE8E1] rounded-2xl shadow-2xl p-2.5 z-50 max-h-96 overflow-y-auto">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-[#5B6472] uppercase tracking-wider mb-2 px-2">
-                        <span>Product Suggestions</span>
-                        {isSearching && <span className="text-[#F15A24]">Searching...</span>}
-                      </div>
-
-                      {searchSuggestions.length > 0 ? (
-                        <div className="space-y-1">
-                          {searchSuggestions.map((prod) => (
-                            <div
-                              key={prod.id}
-                              onClick={() => {
-                                setSearchOpen(false);
-                                onNavigate('product', prod.id);
-                              }}
-                              className="p-2 hover:bg-orange-50/60 rounded-xl cursor-pointer flex items-center justify-between gap-2.5 transition-colors"
-                            >
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src={prod.primaryImage}
-                                  alt={prod.name}
-                                  className="w-8 h-8 object-contain rounded bg-white border border-slate-100 flex-shrink-0"
-                                />
-                                <div>
-                                  <div className="text-xs font-bold text-[#111827] line-clamp-1">{prod.name}</div>
-                                  <div className="text-[10px] text-[#5B6472] font-mono">{prod.modelNumber} · {prod.brand}</div>
-                                </div>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                {prod.pricing.regularPrice ? (
-                                  <span className="text-xs font-bold text-[#F15A24]">৳{prod.pricing.regularPrice.toLocaleString()}</span>
-                                ) : (
-                                  <span className="text-[10px] font-semibold text-slate-500">Quote</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                          <div className="pt-2 border-t border-[#EDE8E1] text-center">
-                            <button
-                              onClick={handleSearchSubmit}
-                              className="text-xs font-bold text-[#F15A24] hover:underline"
-                            >
-                              View all results for "{searchQuery}" →
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-3 text-center text-xs text-[#5B6472]">
-                          {searchQuery.trim()
-                            ? 'No products found. Try "Hikvision", "NVR", or "ZKTeco".'
-                            : 'Start typing to search products.'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setSearchOpen(true);
-                      setTimeout(() => searchInputRef.current?.focus(), 50);
-                    }}
-                    className="p-2 sm:p-2.5 rounded-full hover:bg-slate-100 text-[#111827] transition-colors"
-                    aria-label="Search"
-                  >
-                    <Search className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              {/* Cart Icon with Count */}
-              <button
-                onClick={() => onNavigate('cart')}
-                className="relative p-2 sm:p-2.5 rounded-full hover:bg-slate-100 text-[#111827] transition-colors"
-                aria-label="Shopping Cart"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                {totalCartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-[#F15A24] text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                    {totalCartCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Account Icon (hidden on small mobile, accessible via hamburger) */}
-              <button
-                onClick={() => onNavigate('account')}
-                className="hidden sm:flex p-2.5 rounded-full hover:bg-slate-100 text-[#111827] transition-colors"
-                aria-label="My Account"
-              >
-                <User className="w-4 h-4" />
-              </button>
-
-              {/* Tap to Call (Wide screens) */}
-              <a
-                href={`tel:${settings?.phone || '+8801540535150'}`}
-                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-orange-50 text-xs font-bold text-[#111827] hover:text-[#F15A24] transition-colors"
-              >
-                <Phone className="w-3.5 h-3.5 text-[#F15A24]" />
-                <span>{settings?.phone || '+880 1540-535150'}</span>
-              </a>
-
-              {/* Orange Pill "Get Quote" */}
-              <button
-                onClick={() => onNavigate('quote')}
-                className="hidden sm:inline-flex items-center gap-1.5 min-h-[44px] px-5 py-2.5 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold shadow-sm transition-all transform hover:-translate-y-0.5 flex-shrink-0"
-              >
-                <Wrench className="w-3.5 h-3.5" />
-                <span>Get Quote</span>
-              </button>
-
-              {/* Mobile Hamburger Toggle */}
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2.5 rounded-full hover:bg-slate-100 text-[#111827] transition-colors"
-                aria-label="Open menu"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-
             </div>
 
+            {/* Quick Consultation Tag */}
+            <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-[#5B6472]">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Dhaka On-Site Surveys & Concealed Wiring</span>
+            </div>
           </div>
-        </header>
+        </div>
       </div>
 
-      {/* Mobile Slide-Over Sheet (Full Height) */}
+      {/* MOBILE DRAWER SHEET */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-
-          {/* Drawer Content */}
-          <div className="relative ml-auto w-full max-w-xs sm:max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 animate-slide-left">
-            {/* Drawer Header */}
-            <div className="p-4 border-b border-[#EDE8E1] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#F15A24] flex items-center justify-center text-white">
-                  <Shield className="w-4 h-4" />
-                </div>
-                <span className="font-heading font-black text-lg text-[#111827]">
-                  Camne<span className="text-[#F15A24]">X</span>
-                </span>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end md:hidden">
+          <div className="w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col p-5 overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-[#EDE8E1]">
+              <div className="text-base font-black text-[#111827]">
+                Camne<span className="text-[#F15A24]">X</span> Navigation
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-full hover:bg-slate-100 text-[#5B6472]"
-                aria-label="Close menu"
+                className="p-2 rounded-full hover:bg-slate-100"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
 
-            {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              
-              {/* Mobile Search */}
-              <form onSubmit={(e) => { handleSearchSubmit(e); setMobileMenuOpen(false); }}>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search model, brand, SKU..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 text-xs text-[#111827] placeholder-slate-400 pl-9 pr-4 py-2.5 rounded-full border border-[#EDE8E1] focus:outline-none focus:border-[#F15A24]"
-                  />
-                  <Search className="absolute left-3 top-3 w-3.5 h-3.5 text-slate-400" />
-                </div>
-              </form>
-
-              {/* Navigation Links & Accordions */}
-              <div className="space-y-1 text-sm font-semibold text-[#111827]">
-                
-                {/* Home */}
-                <button
-                  onClick={() => { setMobileMenuOpen(false); onNavigate('home'); }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                >
-                  Home
-                </button>
-
-                {/* Categories Accordion */}
-                <div>
-                  <button
-                    onClick={() => toggleMobileAccordion('categories')}
-                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 flex items-center justify-between transition-colors"
-                  >
-                    <span>Hardware Categories</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${mobileAccordion === 'categories' ? 'rotate-180 text-[#F15A24]' : 'text-slate-400'}`} />
-                  </button>
-                  {mobileAccordion === 'categories' && (
-                    <div className="pl-4 pr-2 py-1 space-y-1 bg-slate-50 rounded-xl my-1">
-                      {categories.map((cat) => (
-                        <button
-                          key={cat.id}
-                          onClick={() => { setMobileMenuOpen(false); onNavigate('category', cat.slug); }}
-                          className="w-full text-left py-2 px-2 text-xs font-medium text-[#5B6472] hover:text-[#F15A24] flex items-center justify-between"
-                        >
-                          <span>{cat.name}</span>
-                          <ArrowRight className="w-3 h-3 text-slate-300" />
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => { setMobileMenuOpen(false); onNavigate('catalog'); }}
-                        className="w-full text-left py-2 px-2 text-xs font-bold text-[#F15A24] hover:underline"
-                      >
-                        Browse All Products →
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Solutions Accordion */}
-                <div>
-                  <button
-                    onClick={() => toggleMobileAccordion('solutions')}
-                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 flex items-center justify-between transition-colors"
-                  >
-                    <span>Solutions & SLA</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${mobileAccordion === 'solutions' ? 'rotate-180 text-[#F15A24]' : 'text-slate-400'}`} />
-                  </button>
-                  {mobileAccordion === 'solutions' && (
-                    <div className="pl-4 pr-2 py-1 space-y-1 bg-slate-50 rounded-xl my-1">
-                      <button
-                        onClick={() => { setMobileMenuOpen(false); onNavigate('solutions'); }}
-                        className="w-full text-left py-2 px-2 text-xs font-medium text-[#5B6472] hover:text-[#F15A24]"
-                      >
-                        Enterprise CCTV & Warehouse
-                      </button>
-                      <button
-                        onClick={() => { setMobileMenuOpen(false); onNavigate('solutions'); }}
-                        className="w-full text-left py-2 px-2 text-xs font-medium text-[#5B6472] hover:text-[#F15A24]"
-                      >
-                        Retail Loss Prevention
-                      </button>
-                      <button
-                        onClick={() => { setMobileMenuOpen(false); onNavigate('solutions'); }}
-                        className="w-full text-left py-2 px-2 text-xs font-medium text-[#5B6472] hover:text-[#F15A24]"
-                      >
-                        Biometrics & Corporate SLA
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Packages */}
-                <button
-                  onClick={() => { setMobileMenuOpen(false); onNavigate('packages'); }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 text-[#F15A24] font-bold transition-colors flex items-center justify-between"
-                >
-                  <span>CCTV Packages Builder</span>
-                  <span className="text-[10px] bg-orange-100 text-[#F15A24] px-2 py-0.5 rounded-full font-bold">Popular</span>
-                </button>
-
-                {/* Services */}
-                <button
-                  onClick={() => { setMobileMenuOpen(false); onNavigate('services'); }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                >
-                  Installation & Setup Services
-                </button>
-
-                {/* Track Order */}
-                <button
-                  onClick={() => { setMobileMenuOpen(false); onNavigate('tracking'); }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                >
-                  Track Order
-                </button>
-
-                {/* Account */}
-                <button
-                  onClick={() => { setMobileMenuOpen(false); onNavigate('account'); }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 hover:text-[#F15A24] transition-colors"
-                >
-                  My Account
-                </button>
-
-              </div>
-            </div>
-
-            {/* Drawer Footer */}
-            <div className="p-4 border-t border-[#EDE8E1] space-y-2">
+            <div className="py-4 space-y-2 flex-1">
               <button
-                onClick={() => { setMobileMenuOpen(false); onNavigate('quote'); }}
-                className="w-full min-h-[44px] py-2.5 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-sm"
+                onClick={() => { setMobileMenuOpen(false); onNavigate('home'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
               >
-                <Wrench className="w-4 h-4" />
-                <span>Request Free Site Quote</span>
+                Home
+              </button>
+
+              {/* Categories Accordion */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleMobileAccordion('categories')}
+                  className="w-full flex items-center justify-between py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+                >
+                  <span>Categories</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${mobileAccordion === 'categories' ? 'rotate-180' : ''}`} />
+                </button>
+                {mobileAccordion === 'categories' && (
+                  <div className="pl-4 py-1 space-y-1">
+                    {categories.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => { setMobileMenuOpen(false); onNavigate('category', c.slug); }}
+                        className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => { setMobileMenuOpen(false); onNavigate('solutions'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+              >
+                Solutions
+              </button>
+              <button
+                onClick={() => { setMobileMenuOpen(false); onNavigate('services'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+              >
+                Services
+              </button>
+              <button
+                onClick={() => { setMobileMenuOpen(false); onNavigate('packages'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+              >
+                Packages
+              </button>
+              <button
+                onClick={() => { setMobileMenuOpen(false); onNavigate('tracking'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+              >
+                Track Order
+              </button>
+              <button
+                onClick={() => { setMobileMenuOpen(false); onNavigate('account'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+              >
+                Account
               </button>
               <a
-                href={`tel:${settings?.phone || '+8801540535150'}`}
-                className="w-full min-h-[44px] py-2.5 bg-slate-100 hover:bg-slate-200 text-[#111827] font-bold text-xs rounded-full flex items-center justify-center gap-2 transition-colors"
+                href="/admin"
+                className="block w-full text-left py-2 px-3 text-sm font-bold text-[#F15A24] rounded-xl hover:bg-orange-50"
               >
-                <Phone className="w-4 h-4 text-[#F15A24]" />
-                <span>Call {settings?.phone || '+880 1540-535150'}</span>
+                Admin Panel
               </a>
             </div>
 
+            <div className="pt-4 border-t border-[#EDE8E1]">
+              <a
+                href={`tel:${phone}`}
+                className="w-full min-h-[44px] px-4 py-2.5 bg-[#F15A24] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2"
+              >
+                <Phone className="w-4 h-4" />
+                <span>Call {phone}</span>
+              </a>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Mobile Sticky Bottom Bar (Call & WhatsApp) */}
+      {/* MOBILE STICKY BOTTOM BAR (Call & WhatsApp) */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EDE8E1] px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg md:hidden">
         <a
-          href={`tel:${settings?.phone || '+8801540535150'}`}
-          className="flex-1 min-h-[44px] px-4 py-2 bg-white border border-[#EDE8E1] hover:bg-slate-50 text-[#111827] font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-sm transition-colors"
+          href={`tel:${phone.replace(/\s+/g, '')}`}
+          className="flex-1 min-h-[44px] px-4 py-2 bg-white border border-[#EDE8E1] hover:bg-slate-50 text-[#111827] font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors"
         >
           <Phone className="w-4 h-4 text-[#F15A24]" />
           <span>Call Now</span>
@@ -838,12 +603,12 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
           href={`https://wa.me/${(settings?.whatsappNumber || '8801540535150').replace(/[^0-9]/g, '')}?text=Hello%20CamneX,%20I%20need%20assistance%20with%20security%20hardware`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 min-h-[44px] px-4 py-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-sm transition-colors"
+          className="flex-1 min-h-[44px] px-4 py-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors"
         >
           <MessageCircle className="w-4 h-4 fill-white text-[#25D366]" />
           <span>WhatsApp</span>
         </a>
       </div>
-    </>
+    </header>
   );
 };

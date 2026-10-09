@@ -1412,9 +1412,14 @@ app.get('/api/services', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/services', submissionLimiter, validateBody(schemas.serviceRequest), (req, res) => {
+app.post(['/api/services', '/api/service-requests'], submissionLimiter, validateBody(schemas.serviceRequest), (req, res) => {
   try {
     const s = req.body;
+    // Honeypot anti-spam check: bots fill hidden fields
+    if (s.website || s._honeypot || s.hp) {
+      return res.json({ success: true, message: 'Request submitted successfully' });
+    }
+
     const id = `srv-${Date.now()}`;
     const requestNumber = generateNumber('CNX-SRV');
     const createdAt = new Date().toISOString();

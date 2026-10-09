@@ -25,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 300);
+      setShowScrollTop(window.scrollY > 400);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
@@ -118,9 +118,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
   return (
     <>
-      {/* INSET ROUNDED FOOTER PANEL (#141210 surface-dark) */}
-      <footer className="w-full px-3 md:px-6 pt-4 pb-8 md:pb-12 bg-[#FAF7F2]">
-        <div className="max-w-[1200px] mx-auto bg-[#141210] rounded-[20px] md:rounded-[28px] p-6 sm:p-10 lg:p-14 text-white shadow-xl">
+      {/* FULL-WIDTH FOOTER (#141210 surface-dark) FLUSH TO BOTTOM */}
+      <footer id="site-footer" className="w-full bg-[#141210] text-white m-0 p-0">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           
           {/* Top Row: "Stay updated" Newsletter Row */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-8 sm:pb-10 border-b border-white/10">
@@ -299,8 +299,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           </div>
 
-          {/* Bottom Bar: Copyright on Left, Legal Links on Right */}
-          <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#A0A8B4]">
+          {/* Bottom Bar: Copyright on Left, Legal Links on Right - padded on right so text never collides with floating buttons */}
+          <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-[#A0A8B4] pr-28 sm:pr-36">
             <div>
               {footerConfig?.copyrightText || '© 2026 CamneX Bangladesh. All rights reserved.'}
             </div>
@@ -333,28 +333,31 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
       </footer>
 
-      {/* FIXED BACK TO TOP (Fixed Bottom-Left: Never overlaps WhatsApp, only visible when scrolled) */}
-      {showScrollTop && (
-        <button
-          type="button"
-          onClick={scrollToTop}
-          aria-label="Back to top"
-          className="fixed bottom-20 md:bottom-6 left-4 md:left-6 z-30 w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#141210] hover:bg-[#F15A24] border border-white/15 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none"
-        >
-          <ArrowUp className="w-4 h-4" />
-        </button>
-      )}
-
-      {/* FLOATING WHATSAPP BUTTON (Fixed Bottom-Right: Desktop only, mobile uses sticky bar!) */}
+      {/* FLOATING ACTION BUTTONS */}
+      {/* 1. WHATSAPP (56px green circle, bottom-right; on mobile sits above 64px sticky bottom bar) */}
       <a
+        id="floating-whatsapp"
         href={waUrl}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
-        className="hidden md:flex fixed bottom-6 right-6 z-40 h-12 w-12 md:h-14 md:w-14 rounded-full bg-[#25D366] hover:bg-[#20ba59] text-white shadow-2xl items-center justify-center transition-all transform hover:scale-105"
+        className="fixed z-40 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20ba59] text-white shadow-2xl flex items-center justify-center transition-all transform hover:scale-105 bottom-[76px] right-4 md:bottom-8 md:right-8"
       >
         <MessageCircle className="w-6 h-6 fill-white text-[#25D366]" />
       </a>
+
+      {/* 2. BACK TO TOP (Stacked directly ABOVE WhatsApp with 12px gap, appears only after scrolling 400px) */}
+      {showScrollTop && (
+        <button
+          id="floating-back-to-top"
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          className="fixed z-40 w-11 h-11 rounded-full bg-[#141210] hover:bg-[#F15A24] border border-white/20 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none bottom-[144px] right-[22px] md:bottom-[100px] md:right-[38px]"
+        >
+          <ArrowUp className="w-4 h-4" />
+        </button>
+      )}
     </>
   );
 };

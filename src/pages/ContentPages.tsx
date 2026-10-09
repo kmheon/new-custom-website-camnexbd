@@ -4,6 +4,7 @@ import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge } from '../components/common/UI';
 import { cmsService } from '../services';
 import { BlogPost, ProjectCaseStudy, Testimonial, FaqItem, SiteSettings } from '../types';
+import { DEFAULT_SCENARIOS } from '../services/seedData';
 
 interface ContentPageProps {
   type: 'solutions' | 'projects' | 'testimonials' | 'faq' | 'contact' | 'blog' | 'blog_post' | 'about' | 'warranty' | 'terms' | 'privacy' | 'refund';
@@ -47,38 +48,197 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
   }, [type, param]);
 
   // --------------------------------------------------------------------------
-  // SOLUTIONS PAGE
+  // --------------------------------------------------------------------------
+  // SOLUTIONS PAGE & SCENARIO DETAIL
   // --------------------------------------------------------------------------
   if (type === 'solutions') {
+    const allScenarios = (settings?.scenarios && settings.scenarios.length > 0)
+      ? settings.scenarios
+      : DEFAULT_SCENARIOS;
+    const currentScenario = param
+      ? allScenarios.find(s => s.slug === param || s.id === param)
+      : null;
+
+    if (currentScenario) {
+      return (
+        <div className="bg-[#FAF7F2] min-h-screen py-10 md:py-14 text-[#111827]">
+          <SEO
+            title={`${currentScenario.title} Security Solutions | CamneX Bangladesh`}
+            description={currentScenario.description}
+            canonicalPath={`/solutions/${currentScenario.slug}`}
+          />
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <Breadcrumbs
+              items={[
+                { label: 'Home', onClick: () => onNavigate('home') },
+                { label: 'Solutions', onClick: () => onNavigate('solutions') },
+                { label: currentScenario.title }
+              ]}
+            />
+
+            {/* Scenario Header */}
+            <div className="bg-white p-8 sm:p-12 rounded-[28px] border border-[#EDE8E1] shadow-xs space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-[#F15A24] text-xs font-bold uppercase tracking-wider">
+                <span>Deployment Scenario</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black font-heading text-[#111827]">
+                {currentScenario.title}
+              </h1>
+              <p className="text-base text-[#5B6472] leading-relaxed max-w-3xl">
+                {currentScenario.description}
+              </p>
+
+              {/* Action Buttons */}
+              <div className="pt-4 flex flex-wrap gap-4">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('quote')}
+                  className="min-h-[44px] px-8 py-3 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs shadow-sm transition-all"
+                >
+                  Get Quote for this Scenario
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('solutions')}
+                  className="min-h-[44px] px-6 py-3 rounded-full bg-white hover:bg-slate-50 border border-[#EDE8E1] text-[#111827] font-bold text-xs transition-all"
+                >
+                  View All Scenarios
+                </button>
+              </div>
+            </div>
+
+            {/* Recommended Packages & Categories Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Recommended Categories */}
+              <div className="bg-white p-6 sm:p-8 rounded-[24px] border border-[#EDE8E1] space-y-4">
+                <h3 className="font-heading font-bold text-lg text-[#111827]">
+                  Recommended Hardware Categories
+                </h3>
+                <p className="text-xs text-[#5B6472]">
+                  Certified equipment tailored for {currentScenario.title.toLowerCase()} deployments:
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {currentScenario.recommendedCategories?.map((catSlug) => (
+                    <button
+                      key={catSlug}
+                      type="button"
+                      onClick={() => onNavigate('category', catSlug)}
+                      className="px-4 py-2 rounded-full bg-[#FAF7F2] hover:bg-orange-50 border border-[#EDE8E1] text-xs font-bold text-[#111827] hover:text-[#F15A24] transition-all flex items-center gap-1.5"
+                    >
+                      <span className="capitalize">{catSlug.replace(/-/g, ' ')}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Engineering Standards */}
+              <div className="bg-white p-6 sm:p-8 rounded-[24px] border border-[#EDE8E1] space-y-4">
+                <h3 className="font-heading font-bold text-lg text-[#111827]">
+                  Standard SLA & Engineering
+                </h3>
+                <div className="space-y-3 text-xs text-[#5B6472]">
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
+                    <span>Concealed PVC pipe trunking without hanging cables</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
+                    <span>Pure copper Cat6 wiring with waterproof junction boxes</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
+                    <span>Authorized distributor warranty with serial number tracking</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
+                    <span>Free smartphone live-view setup & NVR playback training</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Other Scenarios Carousel/List */}
+            <div className="pt-6">
+              <h2 className="text-xl font-bold font-heading text-[#111827] mb-4">
+                Explore Other Scenarios
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {allScenarios.filter(s => s.id !== currentScenario.id).map(s => (
+                  <div
+                    key={s.id}
+                    onClick={() => onNavigate('solutions', s.slug)}
+                    className="bg-white rounded-2xl border border-[#EDE8E1] p-5 hover:shadow-md transition-all cursor-pointer group"
+                  >
+                    <h4 className="font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-1">
+                      {s.title}
+                    </h4>
+                    <p className="text-xs text-[#5B6472] line-clamp-2 mb-3">
+                      {s.description}
+                    </p>
+                    <div className="text-[11px] font-bold text-[#F15A24] flex items-center gap-1">
+                      <span>Learn more</span>
+                      <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO title="Engineering Solutions & SLA Services | CamneX Bangladesh" description="Professional security engineering, clean concealed cabling, and IT maintenance in Dhaka." />
-        <div className="max-w-5xl mx-auto px-4 space-y-8">
+      <div className="bg-[#FAF7F2] min-h-screen py-10 md:py-14 text-[#111827]">
+        <SEO
+          title="Engineering Solutions & Deployment Scenarios | CamneX Bangladesh"
+          description="Tailored security and networking setups for home, office, retail, warehouse, and school deployments across Dhaka."
+          canonicalPath="/solutions"
+        />
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Solutions & Engineering' }]} />
           
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <Badge variant="orange">Engineering Standard</Badge>
-            <h1 className="text-3xl font-black text-[#111827] font-heading">
-              Enterprise Security & Network Deployment
+          <div className="bg-white p-8 sm:p-12 rounded-[28px] border border-[#EDE8E1] shadow-xs space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-[#F15A24] text-xs font-bold uppercase tracking-wider">
+              <span>Engineering Standard</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black font-heading text-[#111827]">
+              Deployment Solutions by Scenario
             </h1>
-            <p className="text-sm text-slate-600 leading-relaxed max-w-3xl">
-              CamneX delivers certified turnkey hardware and installation across Dhaka. We do not use substandard wiring or leave cables taped across walls.
+            <p className="text-sm sm:text-base text-[#5B6472] leading-relaxed max-w-3xl">
+              CamneX delivers certified turnkey hardware and structured installation across Dhaka. Every scenario is engineered with exact hardware specifications, power budgets, and concealed cabling standards.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
-              <h3 className="font-bold text-base text-[#111827]">Concealed Cabling Standard</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                All cables are run through heavy-duty PVC conduit pipes, interior casing trunking, or false ceilings with waterproof junction boxes.
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
-              <h3 className="font-bold text-base text-[#111827]">1-Year Free Service SLA</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Every turnkey setup includes dedicated Dhaka on-site service support. If a camera lens drifts or a cable degrades, our van responds within 24 hours.
-              </p>
-            </div>
+          {/* Grid of all Scenarios */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {allScenarios.map((scen) => (
+              <div
+                key={scen.id}
+                onClick={() => onNavigate('solutions', scen.slug)}
+                className="bg-white rounded-[24px] border border-[#EDE8E1] p-7 hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] flex items-center justify-center font-bold mb-4 group-hover:scale-105 transition-transform">
+                    <Shield className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-heading font-bold text-lg text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2">
+                    {scen.title}
+                  </h3>
+                  <p className="text-xs text-[#5B6472] leading-relaxed line-clamp-2 mb-4">
+                    {scen.description}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-[#EDE8E1] flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#F15A24]">Explore Setup</span>
+                  <div className="w-8 h-8 rounded-full bg-orange-50 text-[#F15A24] flex items-center justify-center group-hover:bg-[#F15A24] group-hover:text-white transition-colors">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

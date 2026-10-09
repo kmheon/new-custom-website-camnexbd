@@ -196,8 +196,9 @@ async function main() {
     console.log('\n[STEP 3] Seeding baseline hardware catalog into test DB for catalog tests...');
     seedBaselineCatalogIntoDb(TEST_DB_PATH);
 
-    // 5. Run test suites (Visual Rendering, Platform, Packages, Media, Admin, then Security Attacks last)
+    // 5. Run test suites (Visual Rendering, Homepage Revision 2, Platform, Packages, Media, Admin, then Security Attacks last)
     results.push(await runTestSuite('Real Visual Computed Styles Suite (CDP)', path.join(__dirname, 'test_visual_rendering.js'), testEnv));
+    results.push(await runTestSuite('Homepage Revision 2 Layout Suite (CDP)', path.join(__dirname, 'test_homepage_revision2.js'), testEnv));
     results.push(await runTestSuite('Platform Hardening Suite', path.join(__dirname, 'test_platform.js'), testEnv));
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));

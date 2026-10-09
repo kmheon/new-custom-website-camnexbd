@@ -132,8 +132,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
   if (variant === 'panel') {
     return (
-      <section className="px-3 md:px-6 my-14 md:my-20">
-        <div className="max-w-[1200px] mx-auto bg-white rounded-[20px] md:rounded-[28px] border border-[#EDE8E1] p-6 sm:p-10 shadow-sm">
+      <section className="w-full bg-white py-12 md:py-16 border-y border-[#EDE8E1]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           {content}
         </div>
       </section>
@@ -141,8 +141,10 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   }
 
   return (
-    <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 my-14 md:my-20">
-      {content}
+    <section className="w-full bg-[#FAF7F2] py-12 md:py-16">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+        {content}
+      </div>
     </section>
   );
 };

@@ -131,6 +131,7 @@ export interface IOrderService {
 
 export interface IQuoteService {
   createQuote(data: Omit<QuoteRequest, 'id' | 'quoteNumber' | 'createdAt' | 'status'>): Promise<QuoteRequest>;
+  createServiceRequest(data: { customerName: string; phone: string; serviceType: string; area?: string; website?: string }): Promise<any>;
   getQuotes(): Promise<QuoteRequest[]>;
   getQuoteById(id: string): Promise<QuoteRequest | null>;
   updateQuoteStatus(id: string, status: QuoteRequest['status']): Promise<QuoteRequest>;

@@ -13,7 +13,8 @@ import {
   HeroSlide,
   ServiceItem,
   ProcessStep,
-  HowItWorksStep
+  HowItWorksStep,
+  ScenarioItem
 } from '../types';
 
 export const INITIAL_SITE_SETTINGS: SiteSettings = {
@@ -873,4 +874,68 @@ export const INITIAL_HERO_SLIDES: HeroSlide[] = [
     collectionCount: 3
   }
 ];
+
+export const DEFAULT_SCENARIOS: ScenarioItem[] = [
+  {
+    id: 'scen-home',
+    slug: 'home-residence',
+    title: 'Home & Residential',
+    description: 'Discreet indoor and outdoor surveillance with smartphone live view and perimeter tripwire alerts.',
+    iconName: 'Home',
+    recommendedCategories: ['cctv-cameras', 'biometrics-access-control'],
+    recommendedPackages: ['night-vision-cctv-package'],
+    recommendedProducts: ['prod-hik-irpf-2mp'],
+    enabled: true,
+    order: 1
+  },
+  {
+    id: 'scen-office',
+    slug: 'corporate-office',
+    title: 'Corporate Office',
+    description: 'Time attendance biometrics, seamless Wi-Fi 6 roaming, and central server rack networking.',
+    iconName: 'Building2',
+    recommendedCategories: ['biometrics-access-control', 'access-points-wifi', 'network-switches'],
+    recommendedPackages: ['night-vision-cctv-package'],
+    recommendedProducts: ['prod-zkteco-mb20', 'prod-ruijie-rap2260g'],
+    enabled: true,
+    order: 2
+  },
+  {
+    id: 'scen-retail',
+    slug: 'shop-retail',
+    title: 'Shop & Retail Store',
+    description: 'Cash counter dome zoom, customer footfall monitoring, and concealed PVC channel wiring.',
+    iconName: 'ShoppingBag',
+    recommendedCategories: ['cctv-cameras', 'dvr-nvr-recorders'],
+    recommendedPackages: ['night-vision-cctv-package'],
+    recommendedProducts: ['prod-hik-dome-2mp'],
+    enabled: true,
+    order: 3
+  },
+  {
+    id: 'scen-factory',
+    slug: 'factory-warehouse',
+    title: 'Factory & Warehouse',
+    description: 'High-mount 4K optical zoom, weatherproof IP67 enclosures, and long-range fiber / PoE switches.',
+    iconName: 'Factory',
+    recommendedCategories: ['cctv-cameras', 'network-switches', 'cctv-accessories'],
+    recommendedPackages: ['night-vision-cctv-package'],
+    recommendedProducts: ['prod-ruijie-es205gc-p'],
+    enabled: true,
+    order: 4
+  },
+  {
+    id: 'scen-school',
+    slug: 'school-institute',
+    title: 'School & Institute',
+    description: 'Corridor surveillance, staff biometric check-in, and unified campus Wi-Fi infrastructure.',
+    iconName: 'GraduationCap',
+    recommendedCategories: ['cctv-cameras', 'biometrics-access-control', 'access-points-wifi'],
+    recommendedPackages: ['night-vision-cctv-package'],
+    recommendedProducts: ['prod-zkteco-mb20'],
+    enabled: true,
+    order: 5
+  }
+];
+
 

@@ -441,6 +441,13 @@ export class RestQuoteService implements IQuoteService {
     });
   }
 
+  async createServiceRequest(data: { customerName: string; phone: string; serviceType: string; area?: string; website?: string }): Promise<any> {
+    return request<any>('/services', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
   async getQuotes(): Promise<QuoteRequest[]> {
     return request<QuoteRequest[]>('/quotes');
   }

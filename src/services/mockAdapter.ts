@@ -609,6 +609,10 @@ export class MockOrderService implements IOrderService {
 // Quotes & Service Requests
 // ----------------------------------------------------------------------------
 export class MockQuoteService implements IQuoteService {
+  async createServiceRequest(data: any): Promise<any> {
+    return { success: true, id: `srv-${Date.now()}`, ...data };
+  }
+
   async createQuote(data: Omit<QuoteRequest, 'id' | 'quoteNumber' | 'createdAt' | 'status'>): Promise<QuoteRequest> {
     const list = getStorage<QuoteRequest[]>(STORAGE_KEYS.QUOTES, []);
     const rand = Math.floor(1000 + Math.random() * 9000);

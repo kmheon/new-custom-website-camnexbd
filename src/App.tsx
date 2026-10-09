@@ -104,10 +104,13 @@ export default function App() {
         setCurrentRoute('search');
         const params = new URLSearchParams(window.location.search);
         setRouteParam(params.get('q') || undefined);
-      } else if (path === '/account') {
-        setCurrentRoute('account');
-      } else if (path === '/solutions') {
+      } else if (path === '/solutions' || path.startsWith('/solutions/')) {
         setCurrentRoute('solutions');
+        if (path.startsWith('/solutions/')) {
+          setRouteParam(path.replace('/solutions/', ''));
+        } else {
+          setRouteParam(undefined);
+        }
       } else if (path === '/projects') {
         setCurrentRoute('projects');
       } else if (path === '/testimonials') {
@@ -165,7 +168,7 @@ export default function App() {
     else if (route === 'services') newUrl = '/services';
     else if (route === 'search') newUrl = `/search?q=${encodeURIComponent(param || '')}`;
     else if (route === 'account') newUrl = '/account';
-    else if (route === 'solutions') newUrl = '/solutions';
+    else if (route === 'solutions') newUrl = param ? `/solutions/${param}` : '/solutions';
     else if (route === 'projects') newUrl = '/projects';
     else if (route === 'testimonials') newUrl = '/testimonials';
     else if (route === 'faq') newUrl = '/faq';
@@ -204,7 +207,7 @@ export default function App() {
           {currentRoute === 'services' && <QuoteAndServicesPage onNavigate={navigate} defaultService="cctv_installation" />}
           {currentRoute === 'search' && <SearchPage initialQuery={routeParam} onNavigate={navigate} />}
           {currentRoute === 'account' && <CustomerAccountPage onNavigate={navigate} />}
-          {currentRoute === 'solutions' && <ContentPages type="solutions" onNavigate={navigate} />}
+          {currentRoute === 'solutions' && <ContentPages type="solutions" param={routeParam} onNavigate={navigate} />}
           {currentRoute === 'projects' && <ContentPages type="projects" onNavigate={navigate} />}
           {currentRoute === 'testimonials' && <ContentPages type="testimonials" onNavigate={navigate} />}
           {currentRoute === 'faq' && <ContentPages type="faq" onNavigate={navigate} />}
