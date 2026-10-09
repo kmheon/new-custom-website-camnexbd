@@ -33,12 +33,13 @@ const BrandStripItem: React.FC<{
       className="group flex-shrink-0 flex flex-col items-center justify-center transition-all p-1 focus:outline-none cursor-pointer"
       title={brand.name}
     >
+      <span className="sr-only">{brand.name}</span>
       <div className="h-7 sm:h-8 flex items-center justify-center">
         {hasLogo ? (
           <img
             src={brand.logo}
             alt={brand.name}
-            className="max-h-7 sm:max-h-8 max-w-[110px] w-auto object-contain filter grayscale opacity-75 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+            className="max-h-7 sm:max-h-8 max-w-[110px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
             onError={() => setImgFailed(true)}
           />
         ) : (
@@ -407,7 +408,7 @@ const FALLBACK_SLIDE: HeroSlide = {
             </div>
 
             {/* Right Brand Logos Row */}
-            <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center justify-center md:justify-center gap-6 sm:gap-8 px-4 sm:px-6 py-1">
+            <div className="w-full md:w-auto flex flex-wrap items-center justify-center md:justify-end gap-6 sm:gap-8 lg:gap-10 px-2 sm:px-4 py-1">
               {brands.length > 0 ? (
                 brands.map((b) => (
                   <BrandStripItem key={b.id} brand={b} onNavigate={onNavigate} />
