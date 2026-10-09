@@ -331,10 +331,10 @@
   "INITIAL_PACKAGES": [
     {
       "id": "pkg-cctv-night-vision",
-      "name": "Complete Night Vision Turnkey CCTV Package",
-      "slug": "night-vision-cctv-package",
-      "badge": "Standard IR Security",
-      "description": "Professional analog HD surveillance engineered with Hikvision IRPF infrared cameras. Note: This package utilizes pure infrared night vision without false color or audio claims.",
+      "name": "4-Camera Night Vision Turnkey CCTV Package",
+      "slug": "4-camera-night-vision-cctv-package",
+      "badge": "Affordable",
+      "description": "Analog HD surveillance engineered with Hikvision 2MP IRPF infrared night vision cameras.",
       "cameraCountsSupported": [
         2,
         4,
@@ -348,7 +348,7 @@
         "turret"
       ],
       "isNightVisionIrOnly": true,
-      "basePrice": 8500,
+      "basePrice": 17100,
       "rules": [
         {
           "role": "camera",
@@ -401,6 +401,195 @@
           "name": "Video Baluns & DC Power Pins",
           "quantityFormula": "per_camera",
           "qtyPerCamera": 1
+        },
+        {
+          "role": "power",
+          "defaultModelId": "acc-power",
+          "name": "Centralized 12V Regulated Power Supply",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        }
+      ],
+      "isFeatured": true,
+      "isDemo": true
+    },
+    {
+      "id": "pkg-cctv-4cam-color",
+      "name": "4-Camera Color Turnkey CCTV Package",
+      "slug": "4-camera-color-cctv-package",
+      "badge": "Most Popular",
+      "description": "Surveillance setup with full 24/7 color low-light video imaging and Turbo HD digital recording.",
+      "cameraCountsSupported": [
+        2,
+        4,
+        8,
+        16
+      ],
+      "defaultCameraCount": 4,
+      "supportedFormFactors": [
+        "bullet",
+        "dome"
+      ],
+      "isNightVisionIrOnly": false,
+      "basePrice": 19800,
+      "rules": [
+        {
+          "role": "camera",
+          "defaultModelId": "prod-hik-irpf-2mp",
+          "name": "Hikvision Color Imaging Camera",
+          "quantityFormula": "per_camera",
+          "qtyPerCamera": 1
+        },
+        {
+          "role": "recorder",
+          "defaultModelId": "prod-hik-dvr-4ch",
+          "name": "Hikvision 4-Channel Turbo HD DVR",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        },
+        {
+          "role": "storage",
+          "defaultModelId": "prod-wd-purple",
+          "name": "Surveillance HDD",
+          "quantityFormula": "lookup_camera_count",
+          "storageLookup": {
+            "2": {
+              "capacity": "500GB",
+              "modelId": "hdd-500gb"
+            },
+            "4": {
+              "capacity": "1TB",
+              "modelId": "hdd-1tb"
+            },
+            "8": {
+              "capacity": "2TB",
+              "modelId": "hdd-2tb"
+            },
+            "16": {
+              "capacity": "4TB",
+              "modelId": "hdd-4tb"
+            }
+          }
+        },
+        {
+          "role": "cable",
+          "defaultModelId": "cable-cat6",
+          "name": "Cat6 Cable (10m per camera)",
+          "quantityFormula": "per_camera",
+          "qtyPerCamera": 10
+        },
+        {
+          "role": "power",
+          "defaultModelId": "acc-power",
+          "name": "Centralized 12V Regulated Power Supply",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        }
+      ],
+      "isFeatured": true,
+      "isDemo": true
+    },
+    {
+      "id": "pkg-cctv-8cam",
+      "name": "8-Camera Complete Business Package",
+      "slug": "8-camera-business-cctv-package",
+      "badge": "Top Tier",
+      "description": "Comprehensive 8-camera commercial surveillance setup with 8-channel recorder and 2TB dedicated HDD.",
+      "cameraCountsSupported": [
+        8,
+        16
+      ],
+      "defaultCameraCount": 8,
+      "supportedFormFactors": [
+        "bullet",
+        "dome",
+        "turret"
+      ],
+      "basePrice": 34500,
+      "rules": [
+        {
+          "role": "camera",
+          "defaultModelId": "prod-hik-irpf-2mp",
+          "name": "Hikvision 2MP HD Camera",
+          "quantityFormula": "per_camera",
+          "qtyPerCamera": 1
+        },
+        {
+          "role": "recorder",
+          "defaultModelId": "prod-hik-dvr-4ch",
+          "name": "Hikvision 8-Channel Turbo HD DVR",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        },
+        {
+          "role": "storage",
+          "defaultModelId": "prod-wd-purple",
+          "name": "Surveillance HDD 2TB",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        },
+        {
+          "role": "cable",
+          "defaultModelId": "cable-cat6",
+          "name": "Cat6 Cable (10m per camera)",
+          "quantityFormula": "per_camera",
+          "qtyPerCamera": 10
+        },
+        {
+          "role": "power",
+          "defaultModelId": "acc-power",
+          "name": "Centralized 12V Regulated Power Supply",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        }
+      ],
+      "isFeatured": true,
+      "isDemo": true
+    },
+    {
+      "id": "pkg-cctv-16cam",
+      "name": "16-Camera Enterprise Turnkey Package",
+      "slug": "16-camera-enterprise-cctv-package",
+      "badge": "Enterprise",
+      "description": "Facility surveillance kit covering warehouses, factories, and commercial campuses.",
+      "cameraCountsSupported": [
+        16
+      ],
+      "defaultCameraCount": 16,
+      "supportedFormFactors": [
+        "bullet",
+        "dome",
+        "turret"
+      ],
+      "basePrice": 68000,
+      "rules": [
+        {
+          "role": "camera",
+          "defaultModelId": "prod-hik-irpf-2mp",
+          "name": "Hikvision HD Camera",
+          "quantityFormula": "per_camera",
+          "qtyPerCamera": 1
+        },
+        {
+          "role": "recorder",
+          "defaultModelId": "prod-hik-dvr-4ch",
+          "name": "Hikvision 16-Channel HD DVR",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        },
+        {
+          "role": "storage",
+          "defaultModelId": "prod-wd-purple",
+          "name": "Surveillance HDD 4TB",
+          "quantityFormula": "fixed",
+          "fixedQty": 1
+        },
+        {
+          "role": "cable",
+          "defaultModelId": "cable-cat6",
+          "name": "Cat6 Cable (10m per camera)",
+          "quantityFormula": "per_camera",
+          "qtyPerCamera": 10
         },
         {
           "role": "power",

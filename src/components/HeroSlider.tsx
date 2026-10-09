@@ -20,6 +20,43 @@ interface HeroSliderProps {
   onNavigate: (route: string, param?: string) => void;
 }
 
+const BrandStripItem: React.FC<{
+  brand: Brand;
+  onNavigate: (route: string, param?: string) => void;
+}> = ({ brand, onNavigate }) => {
+  const [imgFailed, setImgFailed] = useState(false);
+  const hasLogo = Boolean(brand.logo && brand.logo.trim() && !imgFailed);
+
+  return (
+    <button
+      onClick={() => onNavigate('brand', brand.slug)}
+      className="group flex-shrink-0 flex flex-col items-center justify-center transition-all p-1 focus:outline-none cursor-pointer"
+      title={brand.name}
+    >
+      <div className="h-7 sm:h-8 flex items-center justify-center">
+        {hasLogo ? (
+          <img
+            src={brand.logo}
+            alt={brand.name}
+            className="max-h-7 sm:max-h-8 max-w-[110px] w-auto object-contain filter grayscale opacity-75 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#5B6472] group-hover:text-[#111827] transition-colors whitespace-nowrap">
+            {brand.name}
+          </span>
+        )}
+      </div>
+
+      {brand.showBadge && brand.badgeText && (
+        <span className="mt-1 text-[9px] font-bold text-[#F15A24] bg-orange-100/90 border border-orange-200 px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-2xs">
+          {brand.badgeText}
+        </span>
+      )}
+    </button>
+  );
+};
+
 export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -370,39 +407,10 @@ const FALLBACK_SLIDE: HeroSlide = {
             </div>
 
             {/* Right Brand Logos Row */}
-            <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center justify-center md:justify-end gap-6 sm:gap-8 px-4 sm:px-2 py-1">
+            <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center justify-center md:justify-center gap-6 sm:gap-8 px-4 sm:px-6 py-1">
               {brands.length > 0 ? (
                 brands.map((b) => (
-                  <button
-                    key={b.id}
-                    onClick={() => onNavigate('brand', b.slug)}
-                    className="group flex-shrink-0 flex flex-col items-center justify-center transition-all p-1 focus:outline-none"
-                    title={b.name}
-                  >
-                    <div className="h-7 sm:h-8 flex items-center justify-center">
-                      {b.logo ? (
-                        <img
-                          src={b.logo}
-                          alt={b.name}
-                          className="max-h-7 sm:max-h-8 max-w-[110px] w-auto object-contain filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#5B6472] group-hover:text-[#111827] transition-colors whitespace-nowrap">
-                          {b.name}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Authorized Support Partner pill stays below the logo */}
-                    {b.showBadge && b.badgeText && (
-                      <span className="mt-1 text-[9px] font-bold text-[#F15A24] bg-orange-100/90 border border-orange-200 px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-2xs">
-                        {b.badgeText}
-                      </span>
-                    )}
-                  </button>
+                  <BrandStripItem key={b.id} brand={b} onNavigate={onNavigate} />
                 ))
               ) : (
                 <div className="flex items-center justify-center gap-6 px-4">

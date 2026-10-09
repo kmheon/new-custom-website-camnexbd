@@ -220,6 +220,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
       }
 
       set({ currentCustomer: data.customer, isCustomerAuthenticated: true, isLoading: false, error: null });
+      useWishlistStore.getState().mergeGuestWishlist();
       return true;
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
@@ -241,6 +242,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
       }
 
       set({ currentCustomer: data.customer, isCustomerAuthenticated: true, isLoading: false, error: null });
+      useWishlistStore.getState().mergeGuestWishlist();
       return true;
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
@@ -282,3 +284,150 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     set({ settings: updated });
   }
 }));
+
+// ----------------------------------------------------------------------------
+// Wishlist Store
+// ----------------------------------------------------------------------------
+const WISHLIST_STORAGE_KEY = 'camnex_wishlist_items';
+
+function getStoredWishlist(): string[] {
+  try {
+    const val = localStorage.getItem(WISHLIST_STORAGE_KEY);
+    return val ? JSON.parse(val) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveStoredWishlist(items: string[]): void {
+  try {
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
+  } catch (_) {}
+}
+
+interface WishlistState {
+  wishlistIds: string[];
+  wishlistProducts: Product[];
+  isLoading: boolean;
+  toastMessage: string | null;
+  loadWishlist: (isLoggedIn?: boolean) => Promise<void>;
+  toggleWishlist: (product: Product, isLoggedIn?: boolean) => Promise<boolean>;
+  isInWishlist: (productId: string) => boolean;
+  removeFromWishlist: (productId: string, isLoggedIn?: boolean) => Promise<void>;
+  mergeGuestWishlist: () => Promise<void>;
+  clearToast: () => void;
+  count: () => number;
+}
+
+export const useWishlistStore = create<WishlistState>((set, get) => ({
+  wishlistIds: getStoredWishlist(),
+  wishlistProducts: [],
+  isLoading: false,
+  toastMessage: null,
+
+  count: () => get().wishlistIds.length,
+
+  isInWishlist: (productId: string) => {
+    return get().wishlistIds.includes(productId);
+  },
+
+  clearToast: () => {
+    set({ toastMessage: null });
+  },
+
+  loadWishlist: async (isLoggedIn = false) => {
+    if (!isLoggedIn) {
+      const ids = getStoredWishlist();
+      set({ wishlistIds: ids });
+      return;
+    }
+    set({ isLoading: true });
+    try {
+      const products = await apiFetch<Product[]>('/wishlist');
+      const ids = products.map(p => p.id);
+      saveStoredWishlist(ids);
+      set({ wishlistIds: ids, wishlistProducts: products });
+    } catch (_) {
+      const ids = getStoredWishlist();
+      set({ wishlistIds: ids });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  toggleWishlist: async (product: Product, isLoggedIn = false) => {
+    const current = get().wishlistIds;
+    const exists = current.includes(product.id);
+    let nextIds: string[];
+    let isAdded = false;
+
+    if (exists) {
+      nextIds = current.filter(id => id !== product.id);
+      set({
+        wishlistIds: nextIds,
+        wishlistProducts: get().wishlistProducts.filter(p => p.id !== product.id),
+        toastMessage: `${product.name} removed from your wishlist.`
+      });
+      isAdded = false;
+    } else {
+      nextIds = [...current, product.id];
+      set({
+        wishlistIds: nextIds,
+        wishlistProducts: [...get().wishlistProducts, product],
+        toastMessage: `${product.name} added to your wishlist.`
+      });
+      isAdded = true;
+    }
+
+    saveStoredWishlist(nextIds);
+
+    if (isLoggedIn) {
+      try {
+        await fetchCsrfToken();
+        if (exists) {
+          await apiFetch(`/wishlist/${product.id}`, { method: 'DELETE' });
+        } else {
+          await apiFetch(`/wishlist/${product.id}`, { method: 'PUT' });
+        }
+      } catch (_) {
+        // Fallback to local storage if API call fails
+      }
+    }
+
+    return isAdded;
+  },
+
+  removeFromWishlist: async (productId: string, isLoggedIn = false) => {
+    const nextIds = get().wishlistIds.filter(id => id !== productId);
+    set({
+      wishlistIds: nextIds,
+      wishlistProducts: get().wishlistProducts.filter(p => p.id !== productId)
+    });
+    saveStoredWishlist(nextIds);
+
+    if (isLoggedIn) {
+      try {
+        await fetchCsrfToken();
+        await apiFetch(`/wishlist/${productId}`, { method: 'DELETE' });
+      } catch (_) {}
+    }
+  },
+
+  mergeGuestWishlist: async () => {
+    const localIds = getStoredWishlist();
+    if (localIds.length === 0) return;
+    try {
+      await fetchCsrfToken();
+      await apiFetch('/wishlist/merge', {
+        method: 'POST',
+        body: JSON.stringify({ productIds: localIds })
+      });
+      // Refresh list after merge
+      const products = await apiFetch<Product[]>('/wishlist');
+      const ids = products.map(p => p.id);
+      saveStoredWishlist(ids);
+      set({ wishlistIds: ids, wishlistProducts: products });
+    } catch (_) {}
+  }
+}));
+

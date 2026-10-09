@@ -1,0 +1,71 @@
+HOMEPAGE REVISION 3. This replaces my previous 11-point fix list. No git push/pull/fetch, no history rewriting. Commit locally. Make only the changes below; no other redesign. Attached reference images: (a) old testimonial cards, (b) old category cards, (c) old CTA cards. Take screenshots at 375, 768 and 1280px and look at them before reporting.
+
+1. HEADER AND TOP BAR
+- Remove the "Security & Surveillance Engineering" text with its check icon from the right side of the nav row.
+- Nav row, right side: after a thin vertical divider, an icon cluster: wishlist (heart, count badge), account (user icon with dropdown: Login / Register, or My account / Orders / Wishlist / Logout), and cart (bag, count badge). Use 40px round outlined icon buttons like the old header, with aria-labels and tooltips. Row 1 becomes: logo, extended search, Get Quote. Remove the Account link from the top bar. Mobile: logo, search, wishlist, cart, hamburger; account goes inside the hamburger sheet.
+- Top bar, right side: "Track Order" gets a package/truck line icon. Left side (phone, email) unchanged.
+- ADMIN ACCESS: remove "Admin Panel" from the top bar. Add a small, muted "Staff login" link with a lock icon at the far LEFT of the footer bottom bar, after the copyright and a vertical divider, styled as a small outlined pill (clearly different from normal links), rel="nofollow", at least 24px from any other link and far from the bottom-right floating buttons. Logged-in admins also get "Admin dashboard" inside the account dropdown (role-gated). /admin stays reachable directly.
+
+2. SECTION ORDER (set as the default in seed data, clean-DB defaults and sample data; still reorderable in the admin Homepage Sections editor)
+Hero, Brand strip, Categories, Popular Products, Special Offers, New Arrivals, Quick service request (dark band), Our Solutions, CCTV Packages selector, Trending + category product rows, Testimonials slider, Projects slider, CTA, Footer.
+- REMOVE "How It Works" completely: component, admin editor entry, seed data, settings, tests.
+- Display order differs from dedupe priority: Special Offers claims products first, then Popular, then New Arrivals, then Trending and category rows. A product with a real sale price appears in Special Offers, not Popular. With 1 offer item, show the band as a single wide highlighted card instead of hiding it. "Trending" is an admin flag on products; hide the row if nothing is flagged.
+
+3. CATEGORIES (return to the OLD category card design from reference (b), but SMALLER)
+- Replace the round-chip strip. Left-aligned header "Shop by Category" with an "All categories" link.
+- Grid: 4 columns desktop, 3 tablet, 2 mobile. Show 7 categories plus an "All categories" tile (8 tiles = 2 full rows, never an orphan); with fewer categories, center the row.
+- Card (like reference b): soft white-to-tint gradient, 16px radius, 1px #EDE8E1 border. Left side: small tag chip (optional admin-entered category tag, e.g. PERIMETER), category name (18px bold, max 2 lines), a one-line description (admin-entered, max 60 characters, never cut mid-sentence), and a small "Explore Category" link with an arrow. Right side: the category's product image (transparent PNG, about 40% of card width, contained, bottom-right, NO white box; fallback = inline SVG illustration in the same style). Whole card clickable, equal heights, hover lift with the arrow sliding.
+- Height about 150-170px on desktop (the old tiles were about 280px).
+
+4. PRODUCT CARD (same component everywhere)
+- Brand chip top-left; wishlist heart button top-right; a quick-view eye button directly below the heart (appears on hover on desktop, always visible on touch); badge (New / Hot / -X%) bottom-left of the image area, one badge max per card.
+- WISHLIST: heart toggles fill (orange when saved) with an aria-live toast. Guests: localStorage, wrapped in try/catch. Logged-in customers: stored server-side (GET /api/wishlist, PUT and DELETE /api/wishlist/:productId, auth + CSRF + zod), merged from localStorage on login. Header count updates live. Add a /wishlist page (product cards with add-to-cart and remove, empty state with a "Browse products" button).
+- QUICK VIEW: opens an accessible modal dialog (focus trap, Esc and overlay close, returns focus, locks body scroll; a bottom sheet on mobile). It renders instantly from the card data, then loads the full product from the product service with a skeleton. Contents: gallery, brand, model, name, price (or "Request quotation" linking to /quote with the product preselected), highlight mini-cards, short description, quantity, Add to cart, a wishlist heart, and a "View full details" link.
+- HIGHLIGHTS as small cards: a 2x2 grid of mini tiles inside the card (1-2 items: one row). Each tile has a tiny orange line icon, a bold short value (max 14 characters, e.g. "4K", "20 m IR", "IP67") and a 2-word muted label, on a light tint (#FFF4ED) with a 1px #FBE3D6 border and a 10px radius. Add a "highlightValue" to spec fields flagged "Show in highlights"; where a spec is a long sentence, use the short value or the first number plus unit. No "..." mid-phrase. No tiles at all when there is no data. Reserve height so all cards in a row stay equal.
+- Model number stays above the title in small monospace; the title has no brand or model repeated. "Hot" only on products the admin flagged, never on more than 2 cards in a row.
+
+5. OUR SOLUTIONS (renamed from "Shop by Scenario"; MUCH smaller)
+- Rename everywhere: section title "Our Solutions", eyebrow "Solutions", admin editor label "Solutions". Routes /solutions/<slug> stay.
+- Compact full-width soft band with 48-56px vertical padding. Heading plus a one-line subtext. Tiles: 6 across desktop (3x2 tablet, 2 across mobile), each about 120px tall: icon in a tinted circle, title, a one-line description (max 50 characters), small arrow. No recommended-setup chips and no long text on the homepage; the detail stays on the solution page. Clean-DB defaults are neutral one-liners with no technical or marketing claims.
+
+6. TESTIMONIALS AND PROJECTS SLIDERS
+- Testimonial card design from reference (a): orange rounded-square quote-icon tile top-left, 5-star rating top-right (only if a rating exists), italic quote (clamped to 4 lines with "Read more"), an "Installed solution" mini panel (solution name, location with a pin icon, month and year with a calendar icon; hide the whole panel or any missing part if empty), then an avatar (uploaded photo, else a person-icon circle), name and role. On hover or focus, the card gets an orange border, a filled icon tile and a soft shadow.
+- DO NOT include the "4.9 Average Customer Rating - Based on 500+ Installations" summary pill; it is invented. An optional computed average (admin setting, default OFF) may show "Average of N reviews" using only real entered ratings, with N the real count.
+- Do not copy the names, quotes, solutions or dates from the reference image into seed or default data. All fields are admin-entered.
+- SLIDER: 3 visible on desktop, 2 on tablet, 1 on mobile; scroll-snap, prev/next buttons, dots, swipe, keyboard arrows, autoplay every 6s that pauses on hover, focus and drag and is off for prefers-reduced-motion; aria-roledescription="carousel". With 3 or fewer items on desktop: no arrows, dots or autoplay, shown static and centered. With 4 or more: slider. Never an orphan card or a 3+1 layout.
+- Projects use the same slider mechanics and rules, keeping the current project card design. A project with no image shows a neutral illustration tile, never a product photo.
+
+7. CTA (old card design from reference (c), full-width band)
+- Full-width brand-orange band touching the footer (no rounded box). Keep the headline "Need Help Choosing the Right Security Solution?" and the subtext "Our specialists are ready to help you choose the perfect CCTV, networking, access control or smart security solution for your home or business."
+- Three white cards in a row (stacked on mobile) like the reference: orange-tint icon tile at left, bold title, 2-line description, arrow at right; the whole card is clickable; equal height; hover lift. WhatsApp Us (wa.me/8801540535150 with a prefilled message), Call Now (tel link, shows the number), Book Site Visit (opens the site survey form).
+- Card descriptions are neutral and editable in admin: "Message us for product advice and pricing." / "Speak with our team." / "Request an on-site visit." No "free", "instantly" or similar claims.
+- The thin divider and reassurance row render only when the admin has typed items; the clean-DB default is none.
+
+8. BRAND STRIP REGRESSION
+- Logos are not rendering; only the badge pills show. Render each brand's uploaded logo, or a styled text wordmark when none exists, in one centered row with equal logo height and spacing, and the badge pill UNDER its logo (only for brands with the badge on).
+
+9. PACKAGE SELECTOR
+- It does not appear. Show the packages section whenever at least 1 package exists. With sample content ON, include 4 clearly labelled sample packages (4 camera night vision, 4 camera color, 8 camera, 16 camera), each with an inline SVG kit illustration and an admin tag such as Most Popular / Affordable / Top Tier. Camera-count tabs and type chips filter the cards; hide the chips when there are fewer than 3 packages. If the cause is missing package data, tell me.
+
+10. SPACING
+- Remove the gap between the hero and the brand strip (the hero height fits its content). All sections use the same padding (72px desktop, 48px mobile; the Solutions band 56px) and the same heading-to-content gap (32px).
+
+11. CLAIMS (delete from code, seed data and clean-DB defaults; add all to the banned-phrase test)
+- "Free Consultation", "Fast Response", "Nationwide Service", "Genuine Products", "Free Site Visit", "free consultation", "4.9 Average Customer Rating", "500+ Installations", "Security & Surveillance Engineering", "concealed PVC wiring", "weatherproof IP67", "tripwire alerts", "warranty support", "warranty app setup", "instantly".
+- Scenario/solution descriptions describe only what the admin enters; clean-DB defaults are neutral one-liners.
+
+12. TESTS (npm test, headless browser)
+- Row order matches item 2, and no "How It Works" in the DOM.
+- No text "Security & Surveillance Engineering"; the Track Order link has an svg icon; there is no Admin link in the top bar for visitors; the footer has the staff link with a lock icon.
+- Wishlist toggle persists after reload, the header count updates, and guest items merge after login.
+- Quick view opens, traps focus, closes on Esc, and returns focus.
+- Highlight tiles are at most 4, each value at most 14 characters, none truncated with "...".
+- Every brand in the strip has a visible logo or wordmark; no product repeats across rows; the testimonial and project sliders show no orphan card and no banned text; the CTA renders three cards.
+- Update AUDIT.md only where the truth changed.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-09T21:29:10+06:00.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.8 Flash (High) to Gemini 3.8 Flash (Medium). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

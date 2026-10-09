@@ -281,6 +281,14 @@ const schemas = {
     content: z.string().min(5, 'Review content is required').max(300, 'Testimonial quote cannot exceed 300 characters')
   }).passthrough(),
 
+  wishlistMerge: z.object({
+    productIds: z.array(z.string().min(1)).max(100)
+  }),
+
+  wishlistParam: z.object({
+    productId: z.string().min(1)
+  }),
+
   redirect: z.object({
     from_path: z.string().min(1, 'Source path is required'),
     to_path: z.string().min(1, 'Destination path is required')

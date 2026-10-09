@@ -432,6 +432,71 @@ app.get('/api/customer/orders', requireCustomer, (req, res) => {
   }
 });
 
+// Wishlist Endpoints (Authenticated customer, CSRF protected on mutation)
+app.get('/api/wishlist', requireCustomer, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT product_id FROM wishlists WHERE customer_id = ? ORDER BY created_at DESC').all(req.user.id);
+    const productIds = rows.map(r => r.product_id);
+    if (productIds.length === 0) {
+      return res.json([]);
+    }
+    // Also fetch full product objects if available
+    const placeholders = productIds.map(() => '?').join(',');
+    const prodRows = db.prepare(`SELECT data_json FROM products WHERE id IN (${placeholders})`).all(...productIds);
+    const products = prodRows.map(r => JSON.parse(r.data_json));
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/wishlist/:productId', requireCustomer, csrfProtection, (req, res) => {
+  try {
+    const { productId } = req.params;
+    if (!productId || typeof productId !== 'string') {
+      return res.status(400).json({ error: 'Valid productId is required' });
+    }
+    db.prepare('INSERT OR IGNORE INTO wishlists (customer_id, product_id) VALUES (?, ?)').run(req.user.id, productId);
+    res.json({ success: true, productId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/wishlist/:productId', requireCustomer, csrfProtection, (req, res) => {
+  try {
+    const { productId } = req.params;
+    if (!productId || typeof productId !== 'string') {
+      return res.status(400).json({ error: 'Valid productId is required' });
+    }
+    db.prepare('DELETE FROM wishlists WHERE customer_id = ? AND product_id = ?').run(req.user.id, productId);
+    res.json({ success: true, productId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/wishlist/merge', requireCustomer, csrfProtection, validateBody(schemas.wishlistMerge), (req, res) => {
+  try {
+    const { productIds } = req.body;
+    const stmt = db.prepare('INSERT OR IGNORE INTO wishlists (customer_id, product_id) VALUES (?, ?)');
+    const insertMany = db.transaction((items) => {
+      for (const pid of items) {
+        if (typeof pid === 'string' && pid.trim().length > 0) {
+          stmt.run(req.user.id, pid.trim());
+        }
+      }
+    });
+    insertMany(productIds);
+    
+    // Return the updated full wishlist product IDs
+    const rows = db.prepare('SELECT product_id FROM wishlists WHERE customer_id = ?').all(req.user.id);
+    res.json({ success: true, count: rows.length, productIds: rows.map(r => r.product_id) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================================
 // 1. PRODUCTS REST APIs
 // ============================================================================

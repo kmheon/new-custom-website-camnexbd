@@ -7,7 +7,8 @@ import {
   ArrowUp,
   ChevronDown,
   Shield,
-  MessageCircle
+  MessageCircle,
+  Lock
 } from 'lucide-react';
 import { useSettingsStore } from '../../store';
 import { FooterLinkItem } from '../../types';
@@ -301,8 +302,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           {/* Bottom Bar: Copyright on Left, Legal Links on Right - padded on right so text never collides with floating buttons */}
           <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-[#A0A8B4] pr-28 sm:pr-36">
-            <div>
-              {footerConfig?.copyrightText || '© 2026 CamneX Bangladesh. All rights reserved.'}
+            <div className="flex flex-wrap items-center gap-3">
+              <span>{footerConfig?.copyrightText || '© 2026 CamneX Bangladesh. All rights reserved.'}</span>
+              <span className="text-white/20">|</span>
+              <a
+                href="/admin"
+                rel="nofollow"
+                aria-label="Staff login"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-[#A0A8B4] hover:text-white hover:border-[#F15A24] text-[11px] font-medium transition-colors cursor-pointer"
+              >
+                <Lock className="w-3 h-3 text-[#F15A24]" />
+                <span>Staff login</span>
+              </a>
             </div>
 
             <div className="flex flex-wrap items-center gap-5 sm:gap-6">

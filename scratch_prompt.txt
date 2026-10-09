@@ -1,0 +1,36 @@
+HOMEPAGE REVISION 3. This replaces my previous 11-point fix list. No git push/pull/fetch, no history rewriting. Commit locally. Make only the changes below; no other redesign. Attached reference images: (a) old testimonial cards, (b) old category cards, (c) old CTA cards. Take screenshots at 375, 768 and 1280px and look at them before reporting.
+
+1. HEADER AND TOP BAR
+- Remove the "Security & Surveillance Engineering" text with its check icon from the right side of the nav row.
+- Nav row, right side: after a thin vertical divider, an icon cluster: wishlist (heart, count badge), account (user icon with dropdown: Login / Register, or My account / Orders / Wishlist / Logout), and cart (bag, count badge). Use 40px round outlined icon buttons like the old header, with aria-labels and tooltips. Row 1 becomes: logo, extended search, Get Quote. Remove the Account link from the top bar. Mobile: logo, search, wishlist, cart, hamburger; account goes inside the hamburger sheet.
+- Top bar, right side: "Track Order" gets a package/truck line icon. Left side (phone, email) unchanged.
+- ADMIN ACCESS: remove "Admin Panel" from the top bar. Add a small, muted "Staff login" link with a lock icon at the far LEFT of the footer bottom bar, after the copyright and a vertical divider, styled as a small outlined pill (clearly different from normal links), rel="nofollow", at least 24px from any other link and far from the bottom-right floating buttons. Logged-in admins also get "Admin dashboard" inside the account dropdown (role-gated). /admin stays reachable directly.
+
+2. SECTION ORDER (set as the default in seed data, clean-DB defaults and sample data; still reorderable in the admin Homepage Sections editor)
+Hero, Brand strip, Categories, Popular Products, Special Offers, New Arrivals, Quick service request (dark band), Our Solutions, CCTV Packages selector, Trending + category product rows, Testimonials slider, Projects slider, CTA, Footer.
+- REMOVE "How It Works" completely: component, admin editor entry, seed
+<truncated 7339 bytes>
+ missing package data, tell me.
+
+10. SPACING
+- Remove the gap between the hero and the brand strip (the hero height fits its content). All sections use the same padding (72px desktop, 48px mobile; the Solutions band 56px) and the same heading-to-content gap (32px).
+
+11. CLAIMS (delete from code, seed data and clean-DB defaults; add all to the banned-phrase test)
+- "Free Consultation", "Fast Response", "Nationwide Service", "Genuine Products", "Free Site Visit", "free consultation", "4.9 Average Customer Rating", "500+ Installations", "Security & Surveillance Engineering", "concealed PVC wiring", "weatherproof IP67", "tripwire alerts", "warranty support", "warranty app setup", "instantly".
+- Scenario/solution descriptions describe only what the admin enters; clean-DB defaults are neutral one-liners.
+
+12. TESTS (npm test, headless browser)
+- Row order matches item 2, and no "How It Works" in the DOM.
+- No text "Security & Surveillance Engineering"; the Track Order link has an svg icon; there is no Admin link in the top bar for visitors; the footer has the staff link with a lock icon.
+- Wishlist toggle persists after reload, the header count updates, and guest items merge after login.
+- Quick view opens, traps focus, closes on Esc, and returns focus.
+- Highlight tiles are at most 4, each value at most 14 characters, none truncated with "...".
+- Every brand in the strip has a visible logo or wordmark; no product repeats across rows; the testimonial and project sliders show no orphan card and no banned text; the CTA renders three cards.
+- Update AUDIT.md only where the truth changed.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-09T21:29:10+06:00.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.8 Flash (High) to Gemini 3.8 Flash (Medium). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

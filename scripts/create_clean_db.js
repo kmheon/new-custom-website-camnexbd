@@ -379,6 +379,16 @@ db.prepare(`
   )
 `).run();
 
+// 22. Wishlists (Customer Wishlist Items)
+db.prepare(`
+  CREATE TABLE wishlists (
+    customer_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (customer_id, product_id)
+  )
+`).run();
+
 // Indexes
 db.prepare(`CREATE INDEX idx_jobs_status ON background_jobs(status)`).run();
 db.prepare(`CREATE INDEX idx_products_category ON products(category_slug)`).run();
@@ -389,6 +399,7 @@ db.prepare(`CREATE INDEX idx_orders_number ON orders(order_number)`).run();
 db.prepare(`CREATE INDEX idx_customers_phone ON customers(phone)`).run();
 db.prepare(`CREATE INDEX idx_sessions_expires ON sessions(expires_at)`).run();
 db.prepare(`CREATE INDEX idx_redirects_from ON redirects(from_path)`).run();
+db.prepare(`CREATE INDEX idx_wishlists_customer ON wishlists(customer_id)`).run();
 
 // Create initial Administrator User from environment variable
 const adminEmail = (process.env.ADMIN_EMAIL || 'admin@camnexbd.com').toLowerCase().trim();

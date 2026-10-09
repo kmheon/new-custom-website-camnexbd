@@ -174,6 +174,7 @@ export interface Product {
   updatedAt: string;
   isFeatured?: boolean;
   isPopular?: boolean;
+  isTrending?: boolean;
   isDemo?: boolean; // Clearly labeled sample data
 }
 
@@ -411,12 +412,7 @@ export interface SiteSettings {
   servicesList?: ServiceItem[];
   processSteps?: ProcessStep[];
   servicesSectionPhoto?: string;
-  howItWorks?: {
-    enabled: boolean;
-    title?: string;
-    subtitle?: string;
-    steps: HowItWorksStep[];
-  };
+  solutions?: ScenarioItem[];
   scenarios?: ScenarioItem[];
   reassurances?: string[];
 
@@ -465,16 +461,9 @@ export interface ProcessStep {
   description: string;
 }
 
-export interface HowItWorksStep {
-  id: string;
-  title: string;
-  description: string;
-  icon?: string;
-}
-
 export interface HomepageSection {
   id: string;
-  type: 'hero' | 'categories' | 'packages' | 'services' | 'popular_products' | 'new_arrivals' | 'special_offers' | 'category_row' | 'how_it_works' | 'testimonials' | 'projects' | 'quote_cta' | 'brands' | 'credentials' | 'featured_products' | string;
+  type: 'hero' | 'brands' | 'categories' | 'popular_products' | 'special_offers' | 'new_arrivals' | 'services' | 'solutions' | 'packages' | 'trending' | 'category_row' | 'testimonials' | 'projects' | 'quote_cta' | 'credentials' | 'featured_products' | string;
   title: string;
   subtitle?: string;
   enabled: boolean;

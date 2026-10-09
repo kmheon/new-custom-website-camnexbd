@@ -13,7 +13,6 @@ import {
   HeroSlide,
   ServiceItem,
   ProcessStep,
-  HowItWorksStep,
   ScenarioItem,
   CtaReassuranceItem
 } from '../types';
@@ -96,34 +95,6 @@ export const DEFAULT_PROCESS_STEPS: ProcessStep[] = [
   }
 ];
 
-export const DEFAULT_HOW_IT_WORKS: HowItWorksStep[] = [
-  {
-    id: 'hiw-1',
-    title: 'Choose Hardware or Turnkey Bundle',
-    description: 'Explore verified models or select from our rules-based 2, 4, 8, or 16 camera packages with dedicated storage.',
-    icon: 'layers'
-  },
-  {
-    id: 'hiw-2',
-    title: 'Order Online or Request Quote',
-    description: 'Direct checkout for standalone devices or request an engineer quotation with on-site inspection.',
-    icon: 'shopping-cart'
-  },
-  {
-    id: 'hiw-3',
-    title: 'Professional Installation & Support',
-    description: 'Structured cabling, smartphone app setup, and warranty support.',
-    icon: 'wrench'
-  }
-];
-
-export const DEFAULT_HOW_IT_WORKS_CONFIG = {
-  enabled: true,
-  title: 'How It Works',
-  subtitle: 'Transparent workflow from consultation to post-installation support',
-  steps: DEFAULT_HOW_IT_WORKS
-};
-
 export const INITIAL_SITE_SETTINGS: SiteSettings = {
   companyName: 'CamneX Bangladesh',
   phone: '+880 1540-535150',
@@ -166,7 +137,6 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   },
   servicesList: DEFAULT_SERVICES_LIST,
   processSteps: DEFAULT_PROCESS_STEPS,
-  howItWorks: DEFAULT_HOW_IT_WORKS_CONFIG,
   footer: {
     description: 'Security, surveillance, enterprise networking and IT infrastructure engineering in Dhaka, Bangladesh.',
     quickLinks: [
@@ -246,26 +216,28 @@ export const INITIAL_CTA_DATA = {
 };
 
 export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [
-  { id: 'sec-hero', type: 'hero', title: 'Enterprise Hero Banner', enabled: true, order: 1 },
-  { id: 'sec-cats', type: 'categories', title: 'Shop by Engineering Category', enabled: true, order: 2 },
-  { id: 'sec-pkgs', type: 'packages', title: 'Turnkey CCTV Security Packages', enabled: true, order: 3 },
-  { id: 'sec-services', type: 'services', title: 'Installation, Setup & Support', enabled: true, order: 4 },
-  { id: 'sec-popular', type: 'popular_products', title: 'Popular Products', enabled: true, order: 5 },
+  { id: 'sec-hero', type: 'hero', title: 'Hero Banner', enabled: true, order: 1 },
+  { id: 'sec-brands', type: 'brands', title: 'Brands We Work With', enabled: true, order: 2 },
+  { id: 'sec-cats', type: 'categories', title: 'Shop by Category', enabled: true, order: 3 },
+  { id: 'sec-popular', type: 'popular_products', title: 'Popular Products', enabled: true, order: 4 },
+  { id: 'sec-offers', type: 'special_offers', title: 'Special Offers', enabled: true, order: 5 },
   { id: 'sec-new', type: 'new_arrivals', title: 'New Arrivals', enabled: true, order: 6 },
-  { id: 'sec-offers', type: 'special_offers', title: 'Special Offers', enabled: true, order: 7 },
-  { id: 'sec-cat-cctv', type: 'category_row', title: 'CCTV Cameras', categorySlug: 'cctv-cameras', enabled: true, order: 8 },
-  { id: 'sec-cat-access', type: 'category_row', title: 'Access Control & Biometrics', categorySlug: 'biometrics-access-control', enabled: true, order: 9 },
-  { id: 'sec-cat-recorders', type: 'category_row', title: 'DVR & NVR Recorders', categorySlug: 'dvr-nvr-recorders', enabled: true, order: 10 },
-  { id: 'sec-cat-net', type: 'category_row', title: 'Network Equipment & Wi-Fi', categorySlug: 'network-switches', enabled: true, order: 11 },
-  { id: 'sec-how', type: 'how_it_works', title: 'How It Works', enabled: true, order: 12 },
-  { id: 'sec-testimonials', type: 'testimonials', title: 'Client Feedback', enabled: true, order: 13 },
-  { id: 'sec-projects', type: 'projects', title: 'Verified Case Studies', enabled: true, order: 14 },
+  { id: 'sec-services', type: 'services', title: 'Quick Service Request', enabled: true, order: 7 },
+  { id: 'sec-solutions', type: 'solutions', title: 'Our Solutions', enabled: true, order: 8 },
+  { id: 'sec-pkgs', type: 'packages', title: 'CCTV Packages Selector', enabled: true, order: 9 },
+  { id: 'sec-trending', type: 'trending', title: 'Trending Hardware', enabled: true, order: 10 },
+  { id: 'sec-cat-cctv', type: 'category_row', title: 'CCTV Cameras', categorySlug: 'cctv-cameras', enabled: true, order: 11 },
+  { id: 'sec-cat-access', type: 'category_row', title: 'Access Control & Biometrics', categorySlug: 'biometrics-access-control', enabled: true, order: 12 },
+  { id: 'sec-cat-recorders', type: 'category_row', title: 'DVR & NVR Recorders', categorySlug: 'dvr-nvr-recorders', enabled: true, order: 13 },
+  { id: 'sec-cat-net', type: 'category_row', title: 'Network Equipment & Wi-Fi', categorySlug: 'network-switches', enabled: true, order: 14 },
+  { id: 'sec-testimonials', type: 'testimonials', title: 'Client Feedback', enabled: true, order: 15 },
+  { id: 'sec-projects', type: 'projects', title: 'Recent Installation Projects', enabled: true, order: 16 },
   {
     id: 'sec-cta',
     type: 'quote_cta',
     title: 'Need Help Choosing the Right Security Solution?',
     enabled: true,
-    order: 15,
+    order: 17,
     ctaData: INITIAL_CTA_DATA
   }
 ];
@@ -333,41 +305,56 @@ export const INITIAL_BRANDS: Brand[] = [
     id: 'b-hikvision',
     name: 'Hikvision',
     slug: 'hikvision',
-    description: 'World-leading provider of security products and solutions. CamneX is an Authorized Partner in Bangladesh.',
+    logo: '/images/brands/hikvision.svg',
+    description: 'World-leading provider of security products and solutions.',
     website: 'https://www.hikvision.com',
-    featured: true
+    featured: true,
+    showBadge: true,
+    badgeText: 'Authorized Support Partner'
   },
   {
     id: 'b-zkteco',
     name: 'ZKTeco',
     slug: 'zkteco',
-    description: 'Globally renowned biometric verification and smart access control solutions. CamneX is an Authorized Installer.',
+    logo: '/images/brands/zkteco.svg',
+    description: 'Biometric verification and smart access control solutions.',
     website: 'https://www.zkteco.com',
-    featured: true
+    featured: true,
+    showBadge: false,
+    badgeText: ''
   },
   {
     id: 'b-dahua',
     name: 'Dahua Technology',
     slug: 'dahua',
-    description: 'World-leading video-centric smart IoT solution and service provider.',
+    logo: '/images/brands/dahua.svg',
+    description: 'Video-centric smart IoT solution and service provider.',
     website: 'https://www.dahuasecurity.com',
-    featured: true
+    featured: true,
+    showBadge: true,
+    badgeText: 'Authorized Support Partner'
   },
   {
     id: 'b-ruijie',
     name: 'Ruijie Reyee',
     slug: 'ruijie-reyee',
+    logo: '/images/brands/ruijie.svg',
     description: 'Enterprise networking, cloud-managed switches and commercial Wi-Fi 6 solutions.',
     website: 'https://www.ruijienetworks.com',
-    featured: true
+    featured: true,
+    showBadge: false,
+    badgeText: ''
   },
   {
     id: 'b-wd',
     name: 'Western Digital',
     slug: 'western-digital',
+    logo: '/images/brands/western-digital.svg',
     description: 'Surveillance-grade continuous write hard disk drives.',
     website: 'https://www.westerndigital.com',
-    featured: false
+    featured: false,
+    showBadge: false,
+    badgeText: ''
   }
 ];
 
@@ -720,15 +707,15 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const INITIAL_PACKAGES: SecurityPackage[] = [
   {
     id: 'pkg-cctv-night-vision',
-    name: 'Complete Night Vision Turnkey CCTV Package',
-    slug: 'night-vision-cctv-package',
-    badge: 'Standard IR Security',
-    description: 'Professional analog HD surveillance engineered with Hikvision IRPF infrared cameras. Note: This package utilizes pure infrared night vision without false color or audio claims.',
+    name: '4-Camera Night Vision Turnkey CCTV Package',
+    slug: '4-camera-night-vision-cctv-package',
+    badge: 'Affordable',
+    description: 'Analog HD surveillance engineered with Hikvision 2MP IRPF infrared night vision cameras.',
     cameraCountsSupported: [2, 4, 8, 16],
     defaultCameraCount: 4,
     supportedFormFactors: ['bullet', 'dome', 'turret'],
     isNightVisionIrOnly: true,
-    basePrice: 8500,
+    basePrice: 17100,
     rules: [
       {
         role: 'camera',
@@ -769,6 +756,162 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
         name: 'Video Baluns & DC Power Pins',
         quantityFormula: 'per_camera',
         qtyPerCamera: 1
+      },
+      {
+        role: 'power',
+        defaultModelId: 'acc-power',
+        name: 'Centralized 12V Regulated Power Supply',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      }
+    ],
+    isFeatured: true,
+    isDemo: true
+  },
+  {
+    id: 'pkg-cctv-4cam-color',
+    name: '4-Camera Color Turnkey CCTV Package',
+    slug: '4-camera-color-cctv-package',
+    badge: 'Most Popular',
+    description: 'Surveillance setup with full 24/7 color low-light video imaging and Turbo HD digital recording.',
+    cameraCountsSupported: [2, 4, 8, 16],
+    defaultCameraCount: 4,
+    supportedFormFactors: ['bullet', 'dome'],
+    isNightVisionIrOnly: false,
+    basePrice: 19800,
+    rules: [
+      {
+        role: 'camera',
+        defaultModelId: 'prod-hik-irpf-2mp',
+        name: 'Hikvision Color Imaging Camera',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 1
+      },
+      {
+        role: 'recorder',
+        defaultModelId: 'prod-hik-dvr-4ch',
+        name: 'Hikvision 4-Channel Turbo HD DVR',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      },
+      {
+        role: 'storage',
+        defaultModelId: 'prod-wd-purple',
+        name: 'Surveillance HDD',
+        quantityFormula: 'lookup_camera_count',
+        storageLookup: {
+          2: { capacity: '500GB', modelId: 'hdd-500gb' },
+          4: { capacity: '1TB', modelId: 'hdd-1tb' },
+          8: { capacity: '2TB', modelId: 'hdd-2tb' },
+          16: { capacity: '4TB', modelId: 'hdd-4tb' }
+        }
+      },
+      {
+        role: 'cable',
+        defaultModelId: 'cable-cat6',
+        name: 'Cat6 Cable (10m per camera)',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 10
+      },
+      {
+        role: 'power',
+        defaultModelId: 'acc-power',
+        name: 'Centralized 12V Regulated Power Supply',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      }
+    ],
+    isFeatured: true,
+    isDemo: true
+  },
+  {
+    id: 'pkg-cctv-8cam',
+    name: '8-Camera Complete Business Package',
+    slug: '8-camera-business-cctv-package',
+    badge: 'Top Tier',
+    description: 'Comprehensive 8-camera commercial surveillance setup with 8-channel recorder and 2TB dedicated HDD.',
+    cameraCountsSupported: [8, 16],
+    defaultCameraCount: 8,
+    supportedFormFactors: ['bullet', 'dome', 'turret'],
+    basePrice: 34500,
+    rules: [
+      {
+        role: 'camera',
+        defaultModelId: 'prod-hik-irpf-2mp',
+        name: 'Hikvision 2MP HD Camera',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 1
+      },
+      {
+        role: 'recorder',
+        defaultModelId: 'prod-hik-dvr-4ch',
+        name: 'Hikvision 8-Channel Turbo HD DVR',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      },
+      {
+        role: 'storage',
+        defaultModelId: 'prod-wd-purple',
+        name: 'Surveillance HDD 2TB',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      },
+      {
+        role: 'cable',
+        defaultModelId: 'cable-cat6',
+        name: 'Cat6 Cable (10m per camera)',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 10
+      },
+      {
+        role: 'power',
+        defaultModelId: 'acc-power',
+        name: 'Centralized 12V Regulated Power Supply',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      }
+    ],
+    isFeatured: true,
+    isDemo: true
+  },
+  {
+    id: 'pkg-cctv-16cam',
+    name: '16-Camera Enterprise Turnkey Package',
+    slug: '16-camera-enterprise-cctv-package',
+    badge: 'Enterprise',
+    description: 'Facility surveillance kit covering warehouses, factories, and commercial campuses.',
+    cameraCountsSupported: [16],
+    defaultCameraCount: 16,
+    supportedFormFactors: ['bullet', 'dome', 'turret'],
+    basePrice: 68000,
+    rules: [
+      {
+        role: 'camera',
+        defaultModelId: 'prod-hik-irpf-2mp',
+        name: 'Hikvision HD Camera',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 1
+      },
+      {
+        role: 'recorder',
+        defaultModelId: 'prod-hik-dvr-4ch',
+        name: 'Hikvision 16-Channel HD DVR',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      },
+      {
+        role: 'storage',
+        defaultModelId: 'prod-wd-purple',
+        name: 'Surveillance HDD 4TB',
+        quantityFormula: 'fixed',
+        fixedQty: 1
+      },
+      {
+        role: 'cable',
+        defaultModelId: 'cable-cat6',
+        name: 'Cat6 Cable (10m per camera)',
+        quantityFormula: 'per_camera',
+        qtyPerCamera: 10
       },
       {
         role: 'power',
@@ -928,13 +1071,25 @@ export const DEFAULT_SCENARIOS: ScenarioItem[] = [
     id: 'scen-school',
     slug: 'school-institute',
     title: 'School & Institute',
-    description: 'Corridor surveillance, staff biometric check-in, and unified campus Wi-Fi infrastructure.',
+    description: 'Corridor surveillance, staff biometric check-in, and campus Wi-Fi infrastructure.',
     iconName: 'GraduationCap',
     recommendedCategories: ['cctv-cameras', 'biometrics-access-control', 'access-points-wifi'],
     recommendedPackages: ['night-vision-cctv-package'],
     recommendedProducts: ['prod-zkteco-mb20'],
     enabled: true,
     order: 5
+  },
+  {
+    id: 'scen-building',
+    slug: 'apartment-building',
+    title: 'Apartment & Society',
+    description: 'Gate access barriers, lift surveillance, and central monitoring station connectivity.',
+    iconName: 'Building2',
+    recommendedCategories: ['cctv-cameras', 'biometrics-access-control'],
+    recommendedPackages: ['night-vision-cctv-package'],
+    recommendedProducts: ['prod-hik-irpf-2mp'],
+    enabled: true,
+    order: 6
   }
 ];
 

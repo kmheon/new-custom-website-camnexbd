@@ -193,6 +193,17 @@ function initDb() {
     )
   `).run();
 
+  // 9b. Customer Wishlists
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS wishlists (
+      customer_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (customer_id, product_id)
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_wishlist_customer ON wishlists(customer_id)`).run();
+
   // 10. Quotes
   db.prepare(`
     CREATE TABLE IF NOT EXISTS quotes (

@@ -200,6 +200,7 @@ async function main() {
     results.push(await runTestSuite('Real Visual Computed Styles Suite (CDP)', path.join(__dirname, 'test_visual_rendering.js'), testEnv));
     results.push(await runTestSuite('Homepage Revision 2 Layout Suite (CDP)', path.join(__dirname, 'test_homepage_revision2.js'), testEnv));
     results.push(await runTestSuite('Homepage Fixes Suite (CDP)', path.join(__dirname, 'test_homepage_fixes.js'), testEnv));
+    results.push(await runTestSuite('Homepage Revision 3 Suite (CDP)', path.join(__dirname, 'test_homepage_revision3.js'), testEnv));
     results.push(await runTestSuite('Platform Hardening Suite', path.join(__dirname, 'test_platform.js'), testEnv));
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));

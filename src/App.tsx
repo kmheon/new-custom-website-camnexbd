@@ -17,6 +17,7 @@ const QuoteAndServicesPage = lazy(() => import('./pages/QuoteAndServicesPage').t
 const SearchPage = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
 const CustomerAccountPage = lazy(() => import('./pages/CustomerAccountPage').then(m => ({ default: m.CustomerAccountPage })));
 const ContentPages = lazy(() => import('./pages/ContentPages').then(m => ({ default: m.ContentPages })));
+const WishlistPage = lazy(() => import('./pages/WishlistPage').then(m => ({ default: m.WishlistPage })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 
 const PageLoadingFallback: React.FC = () => (
@@ -98,6 +99,8 @@ export default function App() {
         setRouteParam(parts[2]);
       } else if (path === '/quote') {
         setCurrentRoute('quote');
+      } else if (path === '/wishlist') {
+        setCurrentRoute('wishlist');
       } else if (path === '/services') {
         setCurrentRoute('services');
       } else if (path.startsWith('/search')) {
@@ -165,6 +168,7 @@ export default function App() {
     else if (route === 'checkout') newUrl = '/checkout';
     else if (route === 'tracking') newUrl = param ? `/tracking/${param}` : '/tracking';
     else if (route === 'quote') newUrl = '/quote';
+    else if (route === 'wishlist') newUrl = '/wishlist';
     else if (route === 'services') newUrl = '/services';
     else if (route === 'search') newUrl = `/search?q=${encodeURIComponent(param || '')}`;
     else if (route === 'account') newUrl = '/account';
@@ -204,6 +208,7 @@ export default function App() {
           {currentRoute === 'checkout' && <CartAndCheckoutPage onNavigate={navigate} initialStep="checkout" />}
           {currentRoute === 'tracking' && <OrderTrackingPage initialOrderNumber={routeParam} onNavigate={navigate} />}
           {currentRoute === 'quote' && <QuoteAndServicesPage onNavigate={navigate} defaultService="site_survey" />}
+          {currentRoute === 'wishlist' && <WishlistPage onNavigate={navigate} />}
           {currentRoute === 'services' && <QuoteAndServicesPage onNavigate={navigate} defaultService="cctv_installation" />}
           {currentRoute === 'search' && <SearchPage initialQuery={routeParam} onNavigate={navigate} />}
           {currentRoute === 'account' && <CustomerAccountPage onNavigate={navigate} />}

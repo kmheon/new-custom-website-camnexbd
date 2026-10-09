@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, ShoppingBag, Phone, Mail, Menu, X, Shield, ChevronDown, User,
-  ArrowRight, Wrench, MessageCircle, Layers, CheckCircle2, Building2, HelpCircle
+  ArrowRight, Wrench, MessageCircle, Layers, CheckCircle2, Building2, HelpCircle,
+  Heart, Truck, LogOut, Package as PackageIcon
 } from 'lucide-react';
-import { useCartStore, useSettingsStore } from '../../store';
+import { useCartStore, useSettingsStore, useWishlistStore, useCustomerAuthStore, useAdminAuthStore } from '../../store';
 import { categoryService, productService, brandService } from '../../services';
 import { Category, Product, Brand } from '../../types';
 
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,16 +31,24 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
 
   const searchRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const totalCartCount = useCartStore((s) => s.totalCount());
+  const wishlistCount = useWishlistStore((s) => s.count());
+  const loadWishlist = useWishlistStore((s) => s.loadWishlist);
+  const { currentCustomer, isCustomerAuthenticated, checkCustomerAuth, logout: customerLogout } = useCustomerAuthStore();
+  const { currentUser, isAdminAuthenticated, checkAuth: checkAdminAuth, logout: adminLogout } = useAdminAuthStore();
   const { settings, loadSettings } = useSettingsStore();
 
   useEffect(() => {
     loadSettings();
+    checkCustomerAuth();
+    checkAdminAuth();
+    loadWishlist(isCustomerAuthenticated);
     categoryService.getCategories().then(setCategories);
     brandService.getBrands().then(setBrands);
-  }, [loadSettings]);
+  }, [loadSettings, isCustomerAuthenticated]);
 
   // Click outside to close search suggestions and nav dropdowns
   useEffect(() => {
@@ -48,6 +58,9 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
       }
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
         setActiveDropdown(null);
+      }
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -119,37 +132,22 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
             </a>
           </div>
 
-          {/* Right: Track Order, Account/Login, Admin Panel */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          {/* Right: Track Order with line icon */}
+          <div className="flex items-center">
             <button
               onClick={() => onNavigate('tracking')}
-              className="hidden md:flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
+              <Truck className="w-3.5 h-3.5 text-[#F15A24]" />
               <span>Track Order</span>
             </button>
-
-            <button
-              onClick={() => onNavigate('account')}
-              className="flex items-center gap-1.5 text-white/90 hover:text-white font-medium transition-colors cursor-pointer md:pl-3 md:border-l md:border-white/15"
-            >
-              <User className="w-3.5 h-3.5 text-[#F15A24]" />
-              <span>Account</span>
-            </button>
-
-            <a
-              href="/admin"
-              className="hidden md:flex items-center gap-1.5 text-white/80 hover:text-[#F15A24] font-medium transition-colors pl-3 border-l border-white/15"
-            >
-              <Shield className="w-3.5 h-3.5 text-[#F15A24]" />
-              <span>Admin Panel</span>
-            </a>
           </div>
         </div>
       </div>
 
       {/* 2. FULL-WIDTH WHITE HEADER ROW */}
       <div className="w-full bg-white border-b border-[#EDE8E1] shadow-xs">
-        {/* ROW 1: Logo + EXTENDED Search Bar + Cart + Get Quote */}
+        {/* ROW 1: Logo + EXTENDED Search Bar + Get Quote */}
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-4 lg:gap-8">
           {/* Logo */}
           <button
@@ -272,44 +270,56 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
             )}
           </div>
 
-          {/* Right Header Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Mobile Search Toggle */}
+          {/* Desktop Row 1 Right: Get Quote (Row 1 is logo, extended search, Get Quote) */}
+          <div className="hidden md:flex items-center flex-shrink-0">
+            <button
+              onClick={() => onNavigate('quote')}
+              className="min-h-[44px] px-5 py-2.5 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <span>Get Quote</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Mobile Row 1 Right: search, wishlist, cart, hamburger */}
+          <div className="flex md:hidden items-center gap-1.5">
             <button
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-              className="p-2 rounded-full hover:bg-[#FAF7F2] text-[#111827] md:hidden cursor-pointer"
-              aria-label="Toggle Search"
+              className="w-10 h-10 rounded-full border border-[#EDE8E1] hover:bg-[#FAF7F2] text-[#111827] flex items-center justify-center cursor-pointer"
+              aria-label="Search"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-4 h-4" />
             </button>
 
-            {/* Cart Icon */}
+            <button
+              onClick={() => onNavigate('wishlist')}
+              className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:bg-[#FAF7F2] text-[#111827] flex items-center justify-center cursor-pointer"
+              aria-label="Wishlist"
+            >
+              <Heart className={`w-4 h-4 ${wishlistCount > 0 ? 'text-[#F15A24] fill-[#F15A24]' : ''}`} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-bold flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => onNavigate('cart')}
-              className="relative p-2.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] transition-colors cursor-pointer"
+              className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:bg-[#FAF7F2] text-[#111827] flex items-center justify-center cursor-pointer"
               aria-label="Shopping Cart"
             >
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4" />
               {totalCartCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#F15A24] text-white text-[10px] font-black flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-bold flex items-center justify-center">
                   {totalCartCount}
                 </span>
               )}
             </button>
 
-            {/* Desktop Orange Get Quote Pill */}
-            <button
-              onClick={() => onNavigate('quote')}
-              className="hidden sm:flex min-h-[44px] px-5 py-2.5 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs sm:text-sm rounded-full transition-all shadow-sm items-center gap-1.5 cursor-pointer flex-shrink-0"
-            >
-              <span>Get Quote</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 rounded-full hover:bg-[#FAF7F2] text-[#111827] md:hidden cursor-pointer"
+              className="w-10 h-10 rounded-full border border-[#EDE8E1] hover:bg-[#FAF7F2] text-[#111827] flex items-center justify-center cursor-pointer"
               aria-label="Open Navigation"
             >
               <Menu className="w-5 h-5" />
@@ -339,7 +349,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
           </div>
         )}
 
-        {/* ROW 2: Nav links with dropdowns on thin bordered strip (Desktop) */}
+        {/* ROW 2: Nav links with dropdowns on thin bordered strip + Right Icon Cluster (Desktop) */}
         <div ref={navRef} className="hidden md:block w-full border-t border-[#EDE8E1]/80 bg-white">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-2 flex items-center justify-between text-xs sm:text-sm font-semibold text-[#111827]">
             <div className="flex items-center gap-1 lg:gap-2">
@@ -481,10 +491,142 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               </div>
             </div>
 
-            {/* Engineering Support Tag */}
-            <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-[#5B6472]">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Security & Surveillance Engineering</span>
+            {/* Right Side: Thin vertical divider + 40px round outlined icon buttons cluster */}
+            <div className="flex items-center gap-3">
+              <div className="h-5 w-px bg-[#EDE8E1]" />
+
+              <div className="flex items-center gap-2">
+                {/* 1. Wishlist (heart + count badge) */}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('wishlist')}
+                  className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:border-[#F15A24] hover:bg-orange-50/40 text-[#111827] flex items-center justify-center transition-all cursor-pointer group"
+                  aria-label="Wishlist"
+                  title="Saved Items"
+                >
+                  <Heart className={`w-4 h-4 transition-colors ${wishlistCount > 0 ? 'text-[#F15A24] fill-[#F15A24]' : 'group-hover:text-[#F15A24]'}`} />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* 2. Account (user icon with dropdown) */}
+                <div ref={accountRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                    className="w-10 h-10 rounded-full border border-[#EDE8E1] hover:border-[#F15A24] hover:bg-orange-50/40 text-[#111827] flex items-center justify-center transition-all cursor-pointer group"
+                    aria-label="Account Menu"
+                    title={isCustomerAuthenticated ? (currentCustomer?.name || 'My Account') : 'Account'}
+                  >
+                    <User className="w-4 h-4 text-[#111827] group-hover:text-[#F15A24] transition-colors" />
+                  </button>
+
+                  {/* Account Dropdown */}
+                  {accountMenuOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2 z-50 text-xs">
+                      {isCustomerAuthenticated ? (
+                        <>
+                          <div className="px-3 py-2 border-b border-[#EDE8E1] mb-1">
+                            <div className="font-bold text-[#111827] truncate">{currentCustomer?.name || 'Customer'}</div>
+                            <div className="text-[11px] text-[#5B6472] truncate">{currentCustomer?.email || currentCustomer?.phone || ''}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setAccountMenuOpen(false); onNavigate('account'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                          >
+                            <User className="w-3.5 h-3.5 text-[#5B6472]" />
+                            <span>My Account</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setAccountMenuOpen(false); onNavigate('account'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                          >
+                            <PackageIcon className="w-3.5 h-3.5 text-[#5B6472]" />
+                            <span>Orders</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setAccountMenuOpen(false); onNavigate('wishlist'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                          >
+                            <Heart className="w-3.5 h-3.5 text-[#5B6472]" />
+                            <span>Wishlist ({wishlistCount})</span>
+                          </button>
+                          {isAdminAuthenticated && (
+                            <a
+                              href="/admin"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-orange-50 font-bold text-[#F15A24] border-t border-[#EDE8E1] mt-1"
+                            >
+                              <Shield className="w-3.5 h-3.5 text-[#F15A24]" />
+                              <span>Admin dashboard</span>
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setAccountMenuOpen(false);
+                              await customerLogout();
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-rose-50 font-semibold text-rose-600 border-t border-[#EDE8E1] mt-1"
+                          >
+                            <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                            <span>Logout</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => { setAccountMenuOpen(false); onNavigate('account'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-[#FAF7F2] font-bold text-[#111827]"
+                          >
+                            <User className="w-3.5 h-3.5 text-[#F15A24]" />
+                            <span>Login / Register</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setAccountMenuOpen(false); onNavigate('wishlist'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                          >
+                            <Heart className="w-3.5 h-3.5 text-[#5B6472]" />
+                            <span>Wishlist ({wishlistCount})</span>
+                          </button>
+                          {isAdminAuthenticated && (
+                            <a
+                              href="/admin"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-orange-50 font-bold text-[#F15A24] border-t border-[#EDE8E1] mt-1"
+                            >
+                              <Shield className="w-3.5 h-3.5 text-[#F15A24]" />
+                              <span>Admin dashboard</span>
+                            </a>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Cart (bag + count badge) */}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('cart')}
+                  className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:border-[#F15A24] hover:bg-orange-50/40 text-[#111827] flex items-center justify-center transition-all cursor-pointer group"
+                  aria-label="Shopping Cart"
+                  title="Shopping Bag"
+                >
+                  <ShoppingBag className="w-4 h-4 text-[#111827] group-hover:text-[#F15A24] transition-colors" />
+                  {totalCartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+                      {totalCartCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -558,6 +700,17 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 Packages
               </button>
               <button
+                onClick={() => { setMobileMenuOpen(false); onNavigate('wishlist'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2] flex items-center justify-between"
+              >
+                <span>Wishlist</span>
+                {wishlistCount > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F15A24] text-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={() => { setMobileMenuOpen(false); onNavigate('tracking'); }}
                 className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
               >
@@ -567,14 +720,16 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 onClick={() => { setMobileMenuOpen(false); onNavigate('account'); }}
                 className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
               >
-                Account
+                {isCustomerAuthenticated ? 'My Account' : 'Login / Register'}
               </button>
-              <a
-                href="/admin"
-                className="block w-full text-left py-2 px-3 text-sm font-bold text-[#F15A24] rounded-xl hover:bg-orange-50"
-              >
-                Admin Panel
-              </a>
+              {isAdminAuthenticated && (
+                <a
+                  href="/admin"
+                  className="block w-full text-left py-2 px-3 text-sm font-bold text-[#F15A24] rounded-xl hover:bg-orange-50"
+                >
+                  Admin Panel
+                </a>
+              )}
             </div>
 
             <div className="pt-4 border-t border-[#EDE8E1]">
