@@ -76,7 +76,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const supportLinks: FooterLinkItem[] = footerConfig?.customerSupport || [
     { label: 'Track Order Status', route: 'tracking' },
     { label: 'Warranty & RMA Policy', route: 'warranty' },
-    { label: 'Free Site Survey', route: 'quote' },
+    { label: 'Request Quotation', route: 'quote' },
     { label: 'Frequently Asked Questions', route: 'faq' },
     { label: 'Contact Engineering Team', route: 'contact' }
   ];
