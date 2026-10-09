@@ -812,7 +812,190 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         />
       )}
 
-      {/* 6. QUICK SERVICE REQUEST (Dark Band #141210) */}
+      {/* 6. CCTV PACKAGE SELECTOR (Show when packages >= 1, hide filter chips if < 3 packages) */}
+      {displayPackages.length >= 1 && (
+        <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionHeader
+              eyebrow="Turnkey Bundles"
+              title="Complete CCTV Packages"
+              subtitle="Configurable camera kits with storage, wiring, and professional installation options"
+              actionText="All packages"
+              onAction={() => onNavigate('packages')}
+              className="mb-8"
+            />
+
+            {/* Filter chips shown ONLY if packages >= 3 */}
+            {packages.length >= 3 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+                <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-full border border-[#EDE8E1] shadow-2xs">
+                  {['All', '2 Camera', '4 Camera', '8 Camera', '16 Camera'].map((tab) => {
+                    const isActive = packageCountFilter === tab;
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setPackageCountFilter(tab)}
+                        className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          isActive
+                            ? 'bg-[#F15A24] text-white shadow-xs'
+                            : 'text-[#5B6472] hover:text-[#111827]'
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {['All Types', 'Bullet Series', 'Dome Series', 'PoE IP Systems'].map((chip) => {
+                    const isActive = packageTypeFilter === chip;
+                    return (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => setPackageTypeFilter(chip)}
+                        className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          isActive
+                            ? 'bg-[#141210] text-white'
+                            : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
+                        }`}
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Package Cards Grid (centered if < 3 items) */}
+            <div className={displayPackages.length < 3 ? "flex flex-wrap justify-center gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"}>
+              {displayPackages.map((pkg) => (
+                <div
+                  key={pkg.id}
+                  className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all h-full group ${
+                    displayPackages.length < 3 ? 'w-full max-w-[360px]' : ''
+                  }`}
+                >
+                  <div>
+                    <div className="mb-4 overflow-hidden rounded-2xl">
+                      {pkg.image ? (
+                        <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
+                          <img
+                            src={pkg.image}
+                            alt={pkg.name}
+                            className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <CctvKitSvgFallback />
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
+                        {pkg.badge || 'Complete Kit'}
+                      </span>
+                      <span className="text-[11px] font-bold text-[#5B6472]">
+                        Hardware Kit
+                      </span>
+                    </div>
+
+                    <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
+                      {pkg.description}
+                    </p>
+
+                    <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
+                      {pkg.rules && pkg.rules.length > 0 ? (
+                        pkg.rules.slice(0, 4).map((rule: any, rIdx: number) => (
+                          <div key={rIdx} className="flex items-center gap-2">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                            <span className="line-clamp-1 font-mono text-[11px]">{rule.name}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex items-center gap-2 text-[#5B6472]">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#5B6472] shrink-0" />
+                          <span className="text-[11px]">Components to be confirmed</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
+                        Starting From
+                      </span>
+                      <div className="text-xl font-black text-[#111827] font-heading">
+                        {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('packages', pkg.slug)}
+                      className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      <span>Configure Package</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 7. OUR SOLUTIONS (Renamed from Shop by Scenario, Compact soft band 48-56px padding, 6 tiles across desktop, ~120px tall, neutral one-liners) */}
+      {scenarios.length > 0 && (
+        <section className="w-full bg-[#F4EEE6] py-12 md:py-14 border-y border-[#EDE8E1]">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionHeader
+              eyebrow="Solutions"
+              title="Our Solutions"
+              subtitle="Turnkey surveillance and networking setups engineered for specific deployment environments"
+              centered
+              className="mb-8"
+            />
+
+            {/* 6 Tiles Across Desktop (3x2 tablet, 2 mobile), ~120px tall */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              {scenarios.slice(0, 6).map((scenario) => (
+                <div
+                  key={scenario.id}
+                  onClick={() => onNavigate('solutions', scenario.slug)}
+                  className="bg-white rounded-[16px] border border-[#EDE8E1] p-3.5 hover:shadow-md hover:border-orange-300 transition-all duration-300 cursor-pointer group flex flex-col justify-between min-w-0 h-[120px]"
+                >
+                  <div className="min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-orange-50 text-[#F15A24] flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+                      {renderScenarioIcon(scenario.iconName)}
+                    </div>
+                    <h3 className="font-heading font-bold text-xs sm:text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors line-clamp-1 min-w-0 [overflow-wrap:anywhere] break-words">
+                      {scenario.title}
+                    </h3>
+                  </div>
+
+                  <p className="text-[10px] sm:text-[11px] text-[#5B6472] line-clamp-2 leading-tight min-w-0 [overflow-wrap:anywhere] break-words">
+                    {scenario.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 8. QUICK SERVICE REQUEST (Dark Band #141210) */}
       <section className="w-full bg-[#141210] text-white py-12 md:py-[72px]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -972,188 +1155,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* 7. OUR SOLUTIONS (Renamed from Shop by Scenario, Compact soft band 48-56px padding, 6 tiles across desktop, ~120px tall, neutral one-liners) */}
-      {scenarios.length > 0 && (
-        <section className="w-full bg-[#F4EEE6] py-12 md:py-14 border-y border-[#EDE8E1]">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-            <SectionHeader
-              eyebrow="Solutions"
-              title="Our Solutions"
-              subtitle="Turnkey surveillance and networking setups engineered for specific deployment environments"
-              centered
-              className="mb-8"
-            />
-
-            {/* 6 Tiles Across Desktop (3x2 tablet, 2 mobile), ~120px tall */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              {scenarios.slice(0, 6).map((scenario) => (
-                <div
-                  key={scenario.id}
-                  onClick={() => onNavigate('solutions', scenario.slug)}
-                  className="bg-white rounded-[16px] border border-[#EDE8E1] p-3.5 hover:shadow-md hover:border-orange-300 transition-all duration-300 cursor-pointer group flex flex-col justify-between min-w-0 h-[120px]"
-                >
-                  <div className="min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-orange-50 text-[#F15A24] flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
-                      {renderScenarioIcon(scenario.iconName)}
-                    </div>
-                    <h3 className="font-heading font-bold text-xs sm:text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors line-clamp-1 min-w-0 [overflow-wrap:anywhere] break-words">
-                      {scenario.title}
-                    </h3>
-                  </div>
-
-                  <p className="text-[10px] sm:text-[11px] text-[#5B6472] line-clamp-2 leading-tight min-w-0 [overflow-wrap:anywhere] break-words">
-                    {scenario.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 8. CCTV PACKAGE SELECTOR (Show when packages >= 1, hide filter chips if < 3 packages) */}
-      {displayPackages.length >= 1 && (
-        <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-            <SectionHeader
-              eyebrow="Turnkey Bundles"
-              title="Complete CCTV Packages"
-              subtitle="Configurable camera kits with storage, wiring, and professional installation options"
-              actionText="All packages"
-              onAction={() => onNavigate('packages')}
-              className="mb-8"
-            />
-
-            {/* Filter chips shown ONLY if packages >= 3 */}
-            {packages.length >= 3 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-                <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-full border border-[#EDE8E1] shadow-2xs">
-                  {['All', '2 Camera', '4 Camera', '8 Camera', '16 Camera'].map((tab) => {
-                    const isActive = packageCountFilter === tab;
-                    return (
-                      <button
-                        key={tab}
-                        type="button"
-                        onClick={() => setPackageCountFilter(tab)}
-                        className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
-                          isActive
-                            ? 'bg-[#F15A24] text-white shadow-xs'
-                            : 'text-[#5B6472] hover:text-[#111827]'
-                        }`}
-                      >
-                        {tab}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {['All Types', 'Bullet Series', 'Dome Series', 'PoE IP Systems'].map((chip) => {
-                    const isActive = packageTypeFilter === chip;
-                    return (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() => setPackageTypeFilter(chip)}
-                        className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
-                          isActive
-                            ? 'bg-[#141210] text-white'
-                            : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
-                        }`}
-                      >
-                        {chip}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Package Cards Grid (centered if < 3 items) */}
-            <div className={displayPackages.length < 3 ? "flex flex-wrap justify-center gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"}>
-              {displayPackages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all h-full group ${
-                    displayPackages.length < 3 ? 'w-full max-w-[360px]' : ''
-                  }`}
-                >
-                  <div>
-                    <div className="mb-4 overflow-hidden rounded-2xl">
-                      {pkg.image ? (
-                        <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
-                          <img
-                            src={pkg.image}
-                            alt={pkg.name}
-                            className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <CctvKitSvgFallback />
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
-                        {pkg.badge || 'Complete Kit'}
-                      </span>
-                      <span className="text-[11px] font-bold text-[#5B6472]">
-                        Hardware Kit
-                      </span>
-                    </div>
-
-                    <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
-                      {pkg.name}
-                    </h3>
-                    <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
-                      {pkg.description}
-                    </p>
-
-                    <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
-                      {pkg.rules && pkg.rules.length > 0 ? (
-                        pkg.rules.slice(0, 4).map((rule: any, rIdx: number) => (
-                          <div key={rIdx} className="flex items-center gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                            <span className="line-clamp-1 font-mono text-[11px]">{rule.name}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex items-center gap-2 text-[#5B6472]">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#5B6472] shrink-0" />
-                          <span className="text-[11px]">Components to be confirmed</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
-                        Starting From
-                      </span>
-                      <div className="text-xl font-black text-[#111827] font-heading">
-                        {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => onNavigate('packages', pkg.slug)}
-                      className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                    >
-                      <span>Configure Package</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* 9. TRENDING HARDWARE (Admin flag isTrending, row hidden if nothing flagged) */}
       {dedupTrending.length > 0 && (

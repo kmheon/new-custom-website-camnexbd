@@ -256,6 +256,32 @@ async function runRevision3Tests() {
     console.log(`  Our Solutions tile count: ${sRes.tileCount}, tile height: ${sRes.height}px`);
     console.log(`  ✓ PASS: Our Solutions band present with compact ~120px tiles`);
 
+    // 4b. Verify Section Swap Order: Complete CCTV Packages -> Our Solutions -> Need a technician?
+    console.log('\n--- 4b. Testing Section Swap Order ---');
+    const orderEval = await send('Runtime.evaluate', {
+      expression: `
+        (() => {
+          const sections = Array.from(document.querySelectorAll('section'));
+          const pkgIdx = sections.findIndex(s => s.innerText.includes('Complete CCTV Packages'));
+          const solIdx = sections.findIndex(s => s.innerText.includes('Our Solutions'));
+          const techIdx = sections.findIndex(s => s.innerText.includes('Need a technician?'));
+          return {
+            pkgIdx,
+            solIdx,
+            techIdx,
+            isCorrectOrder: pkgIdx !== -1 && solIdx !== -1 && techIdx !== -1 && pkgIdx < solIdx && solIdx < techIdx
+          };
+        })()
+      `,
+      returnByValue: true
+    });
+    const oRes = orderEval.result.value;
+    console.log(`  Section order indices: Packages=${oRes.pkgIdx}, Solutions=${oRes.solIdx}, Technician=${oRes.techIdx}`);
+    if (!oRes.isCorrectOrder) {
+      throw new Error(`Expected section order: Packages (< Solutions < Technician), got: Packages=${oRes.pkgIdx}, Solutions=${oRes.solIdx}, Technician=${oRes.techIdx}`);
+    }
+    console.log(`  ✓ PASS: Section swap order verified: Complete CCTV Packages -> Our Solutions -> Need a technician?`);
+
     // 5. Testimonial Card (Reference a) & Sliders
     console.log('\n--- 5. Testing Testimonial Cards & Slider Mechanics ---');
     const testEval = await send('Runtime.evaluate', {
