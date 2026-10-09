@@ -63,19 +63,19 @@ export const QuoteAndServicesPage: React.FC<QuoteAndServicesPageProps> = ({
   };
 
   const servicesList: Array<{ type: ServiceType; title: string; desc: string }> = [
-    { type: 'cctv_installation', title: 'CCTV Camera Installation', desc: 'Concealed wiring, camera mounting, DVR/NVR configuration' },
-    { type: 'site_survey', title: 'Free On-Site Survey in Dhaka', desc: 'Physical premises audit, blind-spot mapping, exact cable assessment' },
+    { type: 'cctv_installation', title: 'CCTV Camera Installation', desc: 'Cabling and installation, camera mounting, DVR/NVR configuration' },
+    { type: 'site_survey', title: 'Premises Survey in Dhaka', desc: 'Premises assessment, camera placement mapping, exact cable assessment' },
     { type: 'networking_wifi', title: 'Enterprise Networking & Wi-Fi', desc: 'Server racks, patch panels, Cat6 cabling, ceiling mesh Wi-Fi APs' },
     { type: 'access_control_biometric', title: 'Biometrics & Door Access Control', desc: 'ZKTeco facial recognition, magnetic door locks, payroll attendance' },
     { type: 'it_infrastructure', title: 'Complete IT Infrastructure', desc: 'Turnkey surveillance + networking + biometrics for corporate offices' },
-    { type: 'maintenance_amc', title: 'Preventive Maintenance & AMC', desc: 'Regular camera cleaning, firmware audits, and priority on-call SLA' }
+    { type: 'maintenance_amc', title: 'Preventive Maintenance & AMC', desc: 'Regular camera cleaning and scheduled maintenance visits' }
   ];
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen py-6 sm:py-10">
       <SEO
-        title="Request a Quote & On-Site Survey | CamneX Bangladesh"
-        description="Book a certified security engineer for on-site surveys in Dhaka or request a custom bill of materials."
+        title="Request a Quote & Consultation | CamneX Bangladesh"
+        description="Schedule a technical consultation in Dhaka or request a custom bill of materials."
         canonicalPath="/quote"
       />
 

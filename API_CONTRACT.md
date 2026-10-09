@@ -183,7 +183,7 @@ Returns full order details with status timeline.
 
 ---
 
-## 5. Quotation & On-Site Survey Inquiries
+## 5. Quotation & Consultation Inquiries
 
 ### `POST /api/v1/quotes`
 Request body:

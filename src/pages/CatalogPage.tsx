@@ -345,7 +345,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                           </div>
                         )}
                         <span className="text-[11px] font-semibold text-emerald-600">
-                          Hardware Warranty
+                          Warranty
                         </span>
                       </div>
 

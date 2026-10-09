@@ -148,7 +148,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
                   </div>
                   <div className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
-                    <span>Hardware warranty with serial number record</span>
+                    <span>Warranty coverage with serial number record</span>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
@@ -207,7 +207,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
               Deployment Solutions by Scenario
             </h1>
             <p className="text-sm sm:text-base text-[#5B6472] leading-relaxed max-w-3xl">
-              CamneX delivers certified turnkey hardware and structured installation across Dhaka. Every scenario is engineered with exact hardware specifications, power budgets, and concealed cabling standards.
+              CamneX delivers certified turnkey hardware and structured installation across Dhaka. Every scenario is engineered with exact hardware specifications, power budgets, and cabling and installation standards.
             </p>
           </div>
 
@@ -379,14 +379,14 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {projects.map(proj => (
-              <div key={proj.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <img src={proj.image} alt={proj.title} className="w-full h-56 object-cover" />
-                <div className="p-6 space-y-2">
+              <div key={proj.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm min-w-0">
+                <img src={proj.image || '/images/projects/project-neutral.svg'} alt={proj.title} className="w-full h-56 object-cover" />
+                <div className="p-6 space-y-2 min-w-0">
                   <div className="text-xs font-bold text-[#F15A24]">{proj.location} · {proj.cameraCount}</div>
-                  <h3 className="font-bold text-base text-[#111827] font-heading">{proj.title}</h3>
-                  <p className="text-xs text-slate-600">{proj.systemSummary}</p>
+                  <h3 className="font-bold text-base text-[#111827] font-heading [overflow-wrap:anywhere] break-words">{proj.title}</h3>
+                  <p className="text-xs text-slate-600 [overflow-wrap:anywhere] break-words">{proj.systemSummary}</p>
                   {proj.clientQuote && (
-                    <div className="p-3 bg-slate-50 rounded-xl text-xs italic text-slate-700 mt-2">
+                    <div className="p-3 bg-slate-50 rounded-xl text-xs italic text-slate-700 mt-2 [overflow-wrap:anywhere] break-words">
                       “{proj.clientQuote}” — <strong>{proj.clientAuthor}</strong>
                     </div>
                   )}
@@ -417,22 +417,22 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
           <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Testimonials' }]} />
           
           <div className="bg-white p-8 rounded-2xl border border-slate-200">
-            <h1 className="text-3xl font-black text-[#111827] font-heading mb-2">Verified Client Feedback</h1>
+            <h1 className="text-3xl font-black text-[#111827] font-heading mb-2">Client Feedback</h1>
             <p className="text-xs sm:text-sm text-slate-600">Authentic statements from real property owners and corporate clients.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {testimonials.map(t => (
-              <div key={t.id} className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
+              <div key={t.id} className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3 shadow-sm min-w-0">
                 <div className="flex items-center gap-1 text-amber-400">
                   {Array.from({ length: t.rating || 5 }).map((_, i) => (
                     <span key={i} className="text-amber-400 text-sm">★</span>
                   ))}
                 </div>
-                <p className="text-xs text-slate-700 italic leading-relaxed">“{t.content}”</p>
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="font-bold text-xs text-[#111827]">{t.client_name}</div>
-                  {t.company && <div className="text-[11px] text-slate-500">{t.role ? `${t.role}, ` : ''}{t.company}</div>}
+                <p className="text-xs text-slate-700 italic leading-relaxed [overflow-wrap:anywhere] break-words">“{t.content}”</p>
+                <div className="pt-2 border-t border-slate-100 min-w-0">
+                  <div className="font-bold text-xs text-[#111827] [overflow-wrap:anywhere] break-words">{t.client_name}</div>
+                  {t.company && <div className="text-[11px] text-slate-500 [overflow-wrap:anywhere] break-words">{t.role ? `${t.role}, ` : ''}{t.company}</div>}
                 </div>
               </div>
             ))}
@@ -559,7 +559,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
   if (type === 'warranty') {
     return (
       <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO title="Warranty Policy | CamneX Bangladesh" description="Manufacturer hardware warranty and service policy." />
+        <SEO title="Warranty Policy | CamneX Bangladesh" description="Manufacturer warranty and service policy." />
         <div className="max-w-4xl mx-auto px-4 space-y-8">
           <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Warranty Policy' }]} />
 
@@ -569,7 +569,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
               Warranty & Service Policy
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Every system supplied by CamneX Bangladesh carries manufacturer hardware warranty coverage verifiable via authentic serial numbers.
+              Every system supplied by CamneX Bangladesh carries manufacturer warranty coverage verifiable via authentic serial numbers.
             </p>
           </div>
 

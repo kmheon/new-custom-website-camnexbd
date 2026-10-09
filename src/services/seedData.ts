@@ -133,17 +133,12 @@ export const INITIAL_CTA_DATA = {
     {
       id: 'cta-survey',
       type: 'survey' as const,
-      title: 'Book Free Site Visit',
-      description: 'Schedule an on-site physical premise and cable audit',
+      title: 'Book Site Visit',
+      description: 'Schedule a physical premise and cable audit',
       actionUrl: '/quote'
     }
   ],
-  reassurances: [
-    { id: 'reassure-1', label: 'Inquiry support', enabled: true },
-    { id: 'reassure-2', label: 'On-site survey', enabled: true },
-    { id: 'reassure-3', label: 'Itemized quotation', enabled: true },
-    { id: 'reassure-4', label: 'Hardware warranty', enabled: true }
-  ]
+  reassurances: []
 };
 
 export const DEFAULT_SERVICES_LIST: ServiceItem[] = [
@@ -214,7 +209,7 @@ export const DEFAULT_PROCESS_STEPS: ProcessStep[] = [
     id: 'step-2',
     stepNumber: 2,
     title: 'Survey and quote',
-    description: 'Site assessment and itemized quotation.'
+    description: 'Site assessment and quotation.'
   },
   {
     id: 'step-3',
@@ -258,7 +253,7 @@ export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [
   { id: 'sec-cat-recorders', type: 'category_row', title: 'DVR & NVR Recorders', categorySlug: 'dvr-nvr-recorders', enabled: true, order: 10 },
   { id: 'sec-cat-net', type: 'category_row', title: 'Network Equipment & Wi-Fi', categorySlug: 'network-switches', enabled: true, order: 11 },
   { id: 'sec-how', type: 'how_it_works', title: 'How It Works', enabled: true, order: 12 },
-  { id: 'sec-testimonials', type: 'testimonials', title: 'Verified Client Feedback', enabled: true, order: 13 },
+  { id: 'sec-testimonials', type: 'testimonials', title: 'Client Feedback', enabled: true, order: 13 },
   { id: 'sec-projects', type: 'projects', title: 'Verified Case Studies', enabled: true, order: 14 },
   {
     id: 'sec-cta',
@@ -818,9 +813,9 @@ export const INITIAL_FAQS: FaqItem[] = [
   },
   {
     id: 'faq-3',
-    question: 'Do you offer on-site surveys in Dhaka?',
-    answer: 'Yes. A qualified engineer can visit your premises anywhere in Dhaka to assess blind spots, measure cable lengths, and formulate an itemized bill of materials.',
-    category: 'Installation & Survey'
+    question: 'Can an engineer inspect premises in Dhaka before quotation?',
+    answer: 'Yes. An engineer can visit premises in Dhaka to evaluate cable routes and formulate a bill of materials.',
+    category: 'Installation & Inspection'
   }
 ];
 

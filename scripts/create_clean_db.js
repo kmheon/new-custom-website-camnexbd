@@ -303,6 +303,7 @@ const cleanSiteSettings = {
   sampleDataBanner: false,
   showSampleContent: false,
   enableCashOnDelivery: false, // Explicitly OFF by default in clean DB
+  reassurances: [], // Explicitly empty in clean DB
   bkashMerchantNumber: '',
   nagadMerchantNumber: '',
   bankDetails: null,

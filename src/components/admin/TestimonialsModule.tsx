@@ -63,6 +63,16 @@ export const TestimonialsModule: React.FC = () => {
       return;
     }
 
+    if (editingItem.client_name.length > 80) {
+      setError('Client name cannot exceed 80 characters.');
+      return;
+    }
+
+    if (editingItem.content.length > 300) {
+      setError('Testimonial quote cannot exceed 300 characters.');
+      return;
+    }
+
     try {
       if (editingItem.id) {
         await apiFetch(`/cms/testimonials/${encodeURIComponent(editingItem.id)}`, {
@@ -199,10 +209,14 @@ export const TestimonialsModule: React.FC = () => {
 
             <form onSubmit={handleSave} className="space-y-3">
               <div>
-                <span className="font-semibold text-slate-400 block mb-1">Client / Representative Name *</span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-slate-400">Client / Representative Name *</span>
+                  <span className="text-[10px] text-slate-500 font-mono">{(editingItem.client_name || '').length}/80</span>
+                </div>
                 <input
                   type="text"
                   required
+                  maxLength={80}
                   value={editingItem.client_name || ''}
                   onChange={(e) => setEditingItem({ ...editingItem, client_name: e.target.value })}
                   placeholder="e.g. Tanvir Ahmed"
@@ -215,6 +229,7 @@ export const TestimonialsModule: React.FC = () => {
                   <span className="font-semibold text-slate-400 block mb-1">Company / Organization</span>
                   <input
                     type="text"
+                    maxLength={80}
                     value={editingItem.company || ''}
                     onChange={(e) => setEditingItem({ ...editingItem, company: e.target.value })}
                     placeholder="e.g. Apex Holdings"
@@ -225,6 +240,7 @@ export const TestimonialsModule: React.FC = () => {
                   <span className="font-semibold text-slate-400 block mb-1">Role / Designation</span>
                   <input
                     type="text"
+                    maxLength={80}
                     value={editingItem.role || ''}
                     onChange={(e) => setEditingItem({ ...editingItem, role: e.target.value })}
                     placeholder="e.g. Facility Manager"
@@ -258,10 +274,14 @@ export const TestimonialsModule: React.FC = () => {
               </div>
 
               <div>
-                <span className="font-semibold text-slate-400 block mb-1">Client Statement / Review Content *</span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-slate-400">Client Statement / Review Content *</span>
+                  <span className="text-[10px] text-slate-500 font-mono">{(editingItem.content || '').length}/300</span>
+                </div>
                 <textarea
                   rows={4}
                   required
+                  maxLength={300}
                   value={editingItem.content || ''}
                   onChange={(e) => setEditingItem({ ...editingItem, content: e.target.value })}
                   placeholder="Enter authentic feedback regarding equipment or installation quality..."

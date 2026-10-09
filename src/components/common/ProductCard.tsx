@@ -90,9 +90,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={() => onNavigate('product', product.id)}
-      className={`bg-white rounded-2xl border border-[#EDE8E1] p-4 sm:p-5 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative cursor-pointer h-full ${className}`}
+      className={`bg-white rounded-2xl border border-[#EDE8E1] p-4 sm:p-5 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative cursor-pointer h-full min-w-0 ${className}`}
     >
-      <div>
+      <div className="min-w-0">
         {/* LARGER IMAGE AREA ON SOFT GRADIENT */}
         <div className="h-48 sm:h-52 rounded-xl overflow-hidden bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] mb-4 relative flex items-center justify-center p-3">
           {!imageError && product.primaryImage ? (
@@ -152,13 +152,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* MODEL NUMBER IN SMALL MUTED MONOSPACE ABOVE TITLE */}
-        <div className="text-[11px] font-mono text-[#5B6472] uppercase tracking-wider mb-1 truncate">
+        <div className="text-[11px] font-mono text-[#5B6472] uppercase tracking-wider mb-1 truncate min-w-0">
           {product.modelNumber}
         </div>
 
         {/* CLEAN TITLE WITHOUT REPEATED BRAND OR MODEL */}
         <h3
-          className="font-bold text-sm sm:text-base text-[#111827] group-hover:text-[#F15A24] transition-colors font-heading line-clamp-2 leading-snug mb-3"
+          className="font-bold text-sm sm:text-base text-[#111827] group-hover:text-[#F15A24] transition-colors font-heading line-clamp-2 leading-snug mb-3 min-w-0 [overflow-wrap:anywhere] break-words"
           title={product.name}
         >
           {cleanTitle}

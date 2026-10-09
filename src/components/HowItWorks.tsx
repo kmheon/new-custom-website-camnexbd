@@ -5,31 +5,24 @@ export const HowItWorks: React.FC = () => {
   const steps = [
     {
       num: '01',
-      title: 'On-Site Survey',
-      subtitle: 'Premise Assessment',
-      desc: 'Our engineer visits your site to inspect optical angles, measure cable runs, and review power requirements.',
+      title: 'Request',
+      subtitle: 'Initial Consultation',
+      desc: 'Submit your hardware requirements or contact our engineering team.',
       icon: <ClipboardCheck className="w-6 h-6 text-[#F25C2A]" />
     },
     {
       num: '02',
-      title: 'Itemized Proposal',
-      subtitle: 'Bill of Materials',
-      desc: 'You receive a detailed quotation outlining equipment model numbers, storage capacity, and setup fees.',
+      title: 'Survey and quote',
+      subtitle: 'Technical Assessment',
+      desc: 'Premises inspection and equipment specification prepared by technicians.',
       icon: <FileSpreadsheet className="w-6 h-6 text-blue-600" />
     },
     {
       num: '03',
-      title: 'Structured Installation',
-      subtitle: 'Neat Conduit Cabling',
-      desc: 'Our technicians install your system using clean PVC conduits, waterproof junction boxes, and rack termination.',
+      title: 'Installation and support',
+      subtitle: 'Deployment & Setup',
+      desc: 'Equipment mounting, cabling and installation, testing and handover documentation.',
       icon: <Sparkles className="w-6 h-6 text-emerald-600" />
-    },
-    {
-      num: '04',
-      title: 'Handover & Testing',
-      subtitle: '1-Year Warranty',
-      desc: 'We configure smartphone viewing, verify all channels, hand over documentation, and register your hardware warranty.',
-      icon: <ShieldCheck className="w-6 h-6 text-purple-600" />
     }
   ];
 

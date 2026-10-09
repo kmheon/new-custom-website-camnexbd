@@ -196,7 +196,7 @@ const schemas = {
   }),
 
   customerRegister: z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
+    name: z.string().min(2, 'Name must be at least 2 characters').max(80, 'Name cannot exceed 80 characters'),
     phone: z.string().min(11, 'Phone must be at least 11 digits'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     email: z.string().email('Invalid email address').optional().or(z.literal(''))
@@ -234,20 +234,20 @@ const schemas = {
   }).passthrough(),
 
   order: z.object({
-    customerName: z.string().min(2, 'Customer name is required'),
+    customerName: z.string().min(2, 'Customer name is required').max(80, 'Customer name cannot exceed 80 characters'),
     customerPhone: z.string().min(11, 'Valid phone number is required'),
     deliveryAddress: z.string().min(3, 'Delivery address is required'),
     items: z.array(z.any()).min(1, 'Order must contain at least one item')
   }).passthrough(),
 
   quote: z.object({
-    customerName: z.string().min(2, 'Name is required'),
+    customerName: z.string().min(2, 'Name is required').max(80, 'Customer name cannot exceed 80 characters'),
     phone: z.string().min(11, 'Valid phone number is required'),
     serviceType: z.string().min(2, 'Service type is required')
   }).passthrough(),
 
   serviceRequest: z.object({
-    customerName: z.string().min(2, 'Name is required'),
+    customerName: z.string().min(2, 'Name is required').max(80, 'Customer name cannot exceed 80 characters'),
     phone: z.string().min(11, 'Valid phone number is required'),
     serviceType: z.string().min(2, 'Service type is required')
   }).passthrough(),
@@ -267,7 +267,7 @@ const schemas = {
   }).passthrough(),
 
   project: z.object({
-    title: z.string().min(2, 'Project title is required'),
+    title: z.string().min(2, 'Project title is required').max(100, 'Project title cannot exceed 100 characters'),
     slug: z.string().min(1, 'Project slug is required')
   }).passthrough(),
 
@@ -277,8 +277,8 @@ const schemas = {
   }).passthrough(),
 
   testimonial: z.object({
-    client_name: z.string().min(2, 'Client name is required'),
-    content: z.string().min(5, 'Review content is required')
+    client_name: z.string().min(2, 'Client name is required').max(80, 'Client name cannot exceed 80 characters'),
+    content: z.string().min(5, 'Review content is required').max(300, 'Testimonial quote cannot exceed 300 characters')
   }).passthrough(),
 
   redirect: z.object({

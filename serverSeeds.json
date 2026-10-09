@@ -155,28 +155,7 @@
         "actionUrl": "/quote"
       }
     ],
-    "reassurances": [
-      {
-        "id": "reassure-1",
-        "label": "Inquiry support",
-        "enabled": true
-      },
-      {
-        "id": "reassure-2",
-        "label": "On-site survey",
-        "enabled": true
-      },
-      {
-        "id": "reassure-3",
-        "label": "Itemized quotation",
-        "enabled": true
-      },
-      {
-        "id": "reassure-4",
-        "label": "Hardware warranty",
-        "enabled": true
-      }
-    ]
+    "reassurances": []
   },
   "INITIAL_FAQS": [
     {
@@ -193,8 +172,8 @@
     },
     {
       "id": "faq-3",
-      "question": "Do you offer on-site surveys in Dhaka?",
-      "answer": "Yes. A qualified engineer can visit your premises anywhere in Dhaka to assess blind spots, measure cable lengths, and formulate an itemized bill of materials.",
+      "question": "Can you visit my location in Dhaka before installation?",
+      "answer": "Yes. A technician can inspect your premises in Dhaka to assess cable routes and prepare a bill of materials.",
       "category": "Installation & Survey"
     }
   ],
@@ -345,28 +324,7 @@
             "actionUrl": "/quote"
           }
         ],
-        "reassurances": [
-          {
-            "id": "reassure-1",
-            "label": "Inquiry support",
-            "enabled": true
-          },
-          {
-            "id": "reassure-2",
-            "label": "On-site survey",
-            "enabled": true
-          },
-          {
-            "id": "reassure-3",
-            "label": "Itemized quotation",
-            "enabled": true
-          },
-          {
-            "id": "reassure-4",
-            "label": "Hardware warranty",
-            "enabled": true
-          }
-        ]
+        "reassurances": []
       }
     }
   ],

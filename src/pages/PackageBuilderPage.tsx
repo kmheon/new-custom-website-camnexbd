@@ -127,7 +127,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
           </div>
 
           <Button variant="outline" size="md" onClick={() => onNavigate('quote')}>
-            Request On-Site Survey Instead
+            Request Consultation Instead
           </Button>
         </div>
 

@@ -181,7 +181,7 @@ export const ComparePage: React.FC<ComparePageProps> = ({ onNavigate }) => {
                 </tr>
 
                 <tr>
-                  <td className="p-4 font-bold text-slate-700">Hardware Warranty</td>
+                  <td className="p-4 font-bold text-slate-700">Warranty</td>
                   {products.map((p) => (
                     <td key={p.id} className="p-4 text-emerald-700 font-semibold text-xs">
                       {p.warrantyText || `${p.warrantyMonths || 12} Months Warranty`}

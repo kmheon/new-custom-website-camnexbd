@@ -85,7 +85,20 @@ async function run() {
     'Genuine Products',
     'Fast Response',
     'Free Consultation',
-    'Authorized Hardware Partners'
+    'Authorized Hardware Partners',
+    'Hardware warranty',
+    'Inquiry support',
+    'On-site survey',
+    'Itemized quotation',
+    'Dhaka On-Site Surveys & Concealed Wiring',
+    'emergency repair',
+    'Concealed Cabling',
+    'from authorized manufacturers',
+    'Top verified',
+    'Verified Client Feedback',
+    'Real deployment feedback from',
+    'firmware guidance',
+    'Fast physical site surveys'
   ];
 
   const routesToCheck = ['/', '/product/prod-hik-irpf-2mp', '/checkout'];

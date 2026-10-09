@@ -49,7 +49,7 @@ export const ProjectsModule: React.FC = () => {
       industry: 'Corporate Office',
       location: 'Dhaka, Bangladesh',
       summary: '',
-      featuredImage: '/images/hero/hikvision-bullet.jpg'
+      featuredImage: ''
     });
     setModalOpen(true);
   };
@@ -63,6 +63,16 @@ export const ProjectsModule: React.FC = () => {
     e.preventDefault();
     if (!editingProject?.title || !editingProject?.slug) {
       setError('Title and slug are required.');
+      return;
+    }
+
+    if (editingProject.title.length > 100) {
+      setError('Project title cannot exceed 100 characters.');
+      return;
+    }
+
+    if (editingProject.client && editingProject.client.length > 80) {
+      setError('Client name cannot exceed 80 characters.');
       return;
     }
 
@@ -208,10 +218,14 @@ export const ProjectsModule: React.FC = () => {
 
             <form onSubmit={handleSave} className="space-y-3">
               <div>
-                <span className="font-semibold text-slate-400 block mb-1">Project Title *</span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-slate-400">Project Title *</span>
+                  <span className="text-[10px] text-slate-500 font-mono">{(editingProject.title || '').length}/100</span>
+                </div>
                 <input
                   type="text"
                   required
+                  maxLength={100}
                   value={editingProject.title || ''}
                   onChange={(e) => {
                     const title = e.target.value;
@@ -239,9 +253,13 @@ export const ProjectsModule: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="font-semibold text-slate-400 block mb-1">Client Name</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-slate-400">Client Name</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{(editingProject.client || '').length}/80</span>
+                  </div>
                   <input
                     type="text"
+                    maxLength={80}
                     value={editingProject.client || ''}
                     onChange={(e) => setEditingProject({ ...editingProject, client: e.target.value })}
                     className="w-full bg-slate-900 border border-slate-700 text-white p-2 rounded-xl focus:border-[#F15A24] focus:outline-none"

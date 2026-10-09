@@ -1024,10 +1024,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 <div>
                   <h2 className="text-xl font-bold font-heading text-white flex items-center gap-2">
                     <FileText className="w-5 h-5 text-[#F15A24]" />
-                    <span>Site Survey & Quote Requests</span>
+                    <span>Technical Consultations & Quote Requests</span>
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Client requests for on-site surveys, CCTV engineering, access control, and network cabling in Dhaka.
+                    Client requests for technical consultations, CCTV engineering, access control, and network cabling in Dhaka.
                   </p>
                 </div>
                 <div className="text-xs text-slate-400 font-bold bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">

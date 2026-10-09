@@ -132,7 +132,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 Stay updated with engineering releases
               </h3>
               <p className="text-xs sm:text-sm text-[#A0A8B4] mt-1">
-                Receive new product notices, firmware guidance, and installation tips. No spam.
+                Receive new product releases and hardware announcements. No spam.
               </p>
             </div>
 

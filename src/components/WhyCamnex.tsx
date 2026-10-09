@@ -10,9 +10,9 @@ export const WhyCamnex: React.FC = () => {
       icon: <ShieldCheck className="w-6 h-6 text-[#F25C2A]" />
     },
     {
-      title: 'Concealed Wiring Standard',
+      title: 'Cabling and Installation Standard',
       subtitle: 'Structured Cable Management',
-      desc: 'No dangling wires across your room or office reception. We use neat PVC conduits, concealed wall channels, and waterproof junction boxes.',
+      desc: 'No dangling wires across your room or office reception. We use neat PVC conduits, structured cable channels, and waterproof junction boxes.',
       icon: <Sparkles className="w-6 h-6 text-blue-600" />
     },
     {
@@ -28,13 +28,13 @@ export const WhyCamnex: React.FC = () => {
       icon: <Smartphone className="w-6 h-6 text-purple-600" />
     },
     {
-      title: 'Itemized Quotations',
+      title: 'Hardware Quotations',
       subtitle: 'Clear Bill of Materials',
-      desc: 'CamneX provides comprehensive itemized quotes before installation begins. What we quote is what you pay.',
+      desc: 'CamneX provides comprehensive equipment quotes before installation begins. What we quote is what you pay.',
       icon: <Receipt className="w-6 h-6 text-amber-600" />
     },
     {
-      title: 'On-Site Survey in Dhaka',
+      title: 'Premises Inspection in Dhaka',
       subtitle: 'Engineer Premise Inspection',
       desc: 'An engineer visits your property in Dhaka to measure angles, evaluate lighting, and design the camera layout.',
       icon: <Compass className="w-6 h-6 text-teal-600" />

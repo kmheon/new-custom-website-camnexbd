@@ -81,6 +81,86 @@ const CctvKitSvgFallback: React.FC = () => (
   </div>
 );
 
+// Expandable Testimonial Card with 5-line clamping & [overflow-wrap:anywhere]
+const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isLong = (testimonial.content || '').length > 180;
+  return (
+    <div className="bg-white rounded-[20px] border border-[#EDE8E1] p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between min-w-0 w-full">
+      <div className="min-w-0">
+        <div className="flex items-center gap-1 text-amber-400 mb-3">
+          {[...Array(testimonial.rating || 5)].map((_, i) => (
+            <span key={i}>★</span>
+          ))}
+        </div>
+        <p
+          className={`text-xs text-[#111827] leading-relaxed italic mb-2 min-w-0 [overflow-wrap:anywhere] break-words ${
+            !isExpanded ? 'line-clamp-5' : ''
+          }`}
+        >
+          "{testimonial.content}"
+        </p>
+        {isLong && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-[11px] font-bold text-[#F15A24] hover:underline mb-3 inline-block cursor-pointer focus:outline-none"
+          >
+            {isExpanded ? 'Read less' : 'Read more'}
+          </button>
+        )}
+      </div>
+      <div className="pt-3 border-t border-[#EDE8E1] min-w-0">
+        <div className="font-bold text-xs text-[#111827] [overflow-wrap:anywhere] break-words truncate">
+          {testimonial.clientName}
+        </div>
+        <div className="text-[11px] text-[#5B6472] [overflow-wrap:anywhere] break-words truncate">
+          {testimonial.clientRole || testimonial.company}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Neutral Fallback Project Card with [overflow-wrap:anywhere] and real image / blueprint vector
+const ProjectCard: React.FC<{
+  project: ProjectCaseStudy;
+  onNavigate: (route: string, param?: string) => void;
+}> = ({ project, onNavigate }) => {
+  const [imgError, setImgError] = useState(false);
+  const fallbackSvg = '/images/projects/project-neutral.svg';
+  const hasImage = Boolean(project.image && project.image.trim() && !imgError);
+
+  return (
+    <div
+      onClick={() => onNavigate('projects')}
+      className="bg-white rounded-[20px] border border-[#EDE8E1] overflow-hidden shadow-xs hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between min-w-0 w-full"
+    >
+      <div className="h-44 bg-slate-100 overflow-hidden relative min-w-0">
+        <img
+          src={hasImage ? project.image : fallbackSvg}
+          alt={project.title}
+          onError={() => setImgError(true)}
+          className={`w-full h-full ${hasImage ? 'object-cover' : 'object-contain p-4'} group-hover:scale-105 transition-transform duration-300`}
+        />
+        {project.category && (
+          <span className="absolute top-3 left-3 bg-[#111827]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+            {project.category}
+          </span>
+        )}
+      </div>
+      <div className="p-5 min-w-0 flex-1 flex flex-col justify-between">
+        <h3 className="font-heading font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-1 line-clamp-1 min-w-0 [overflow-wrap:anywhere] break-words">
+          {project.title}
+        </h3>
+        <p className="text-xs text-[#5B6472] leading-relaxed line-clamp-2 min-w-0 [overflow-wrap:anywhere] break-words">
+          {project.description}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const { settings, loadSettings } = useSettingsStore();
   const { isAdminAuthenticated, checkAuth } = useAdminAuthStore();
@@ -238,9 +318,37 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const configuredReassurances = settings?.reassurances
     ? (settings.reassurances as any[]).filter(r => r && r.enabled).map(r => r.label)
     : [];
-  const reassuranceItems = configuredReassurances.length > 0
-    ? configuredReassurances
-    : ['Inquiry support', 'On-site survey', 'Itemized quotation', 'Hardware warranty'];
+  const reassuranceItems = configuredReassurances;
+
+  // Real category name lookup for scenario chips (no auto-capitalized slugs)
+  const categoryNameMap = React.useMemo(() => {
+    const map: Record<string, string> = {
+      'cctv-cameras': 'CCTV Cameras',
+      'cat-cctv': 'CCTV Cameras',
+      'dvr-nvr': 'DVR / NVR Recorders',
+      'dvr-nvr-recorders': 'DVR / NVR Recorders',
+      'recorders': 'DVR / NVR Recorders',
+      'cat-recorders': 'DVR / NVR Recorders',
+      'access-control': 'Access Control & Biometrics',
+      'biometrics-access-control': 'Access Control & Biometrics',
+      'cat-access': 'Access Control & Biometrics',
+      'enterprise-networking': 'Enterprise Networking',
+      'network-switches': 'Enterprise Networking',
+      'networking': 'Enterprise Networking',
+      'cat-networking': 'Enterprise Networking',
+      'wifi': 'Enterprise Wi-Fi & APs',
+      'cat-wifi': 'Enterprise Wi-Fi & APs',
+      'storage': 'Surveillance Hard Drives',
+      'surveillance-hard-drives': 'Surveillance Hard Drives',
+      'cctv-accessories': 'Installation Accessories',
+      'accessories': 'Installation Accessories'
+    };
+    categories.forEach((c) => {
+      if (c.slug) map[c.slug] = c.name;
+      if (c.id) map[c.id] = c.name;
+    });
+    return map;
+  }, [categories]);
 
   // Helper for Category image fallback
   const handleCatImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -277,10 +385,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     })
     .filter((row) => row.items.length > 0);
 
-  // 6 Quick Service Request Chips
+  // 6 Quick Service Request Chips (neutral, claim-free)
   const serviceChips = [
     'CCTV Camera Setup',
-    'Concealed Cabling',
+    'Cabling and installation',
     'Physical Site Survey',
     'Wi-Fi 6 Networking',
     'Biometric Attendance',
@@ -314,14 +422,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       <HeroSlider onNavigate={onNavigate} />
 
       {/* 2. SHOP BY CATEGORY (Definitive Section: Compact Icon Chips) */}
-      <section className="w-full bg-[#FAF7F2] py-12 md:py-16">
+      <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             eyebrow="Hardware Categories"
             title="Shop by Category"
-            subtitle="Authentic surveillance, networking, and biometric equipment from authorized manufacturers"
+            subtitle="Surveillance, networking, and biometric equipment"
             actionText="All categories"
             onAction={() => onNavigate('catalog')}
+            className="mb-8"
           />
 
           {/* Compact Chip Strip: Horizontal scroll mobile, wrapping centered grid desktop */}
@@ -331,7 +440,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 key={cat.id}
                 type="button"
                 onClick={() => onNavigate('category', cat.slug)}
-                className="flex flex-col items-center group cursor-pointer text-center w-20 sm:w-24 shrink-0 transition-transform focus:outline-none"
+                className="flex flex-col items-center group cursor-pointer text-center w-20 sm:w-24 shrink-0 transition-transform focus:outline-none min-w-0"
               >
                 {/* 88-104px Soft Circle with Icon */}
                 <div className="w-[88px] h-[88px] sm:w-[96px] sm:h-[96px] rounded-full bg-[#F4EEE6] group-hover:bg-orange-50 border border-[#EDE8E1] group-hover:border-orange-300 transition-all duration-300 flex items-center justify-center p-3 sm:p-4 shadow-2xs group-hover:shadow-md group-hover:-translate-y-1">
@@ -344,7 +453,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Category Name Below (No descriptions, no big cards) */}
-                <span className="mt-2.5 text-xs font-bold text-[#111827] group-hover:text-[#F15A24] transition-colors leading-tight line-clamp-2">
+                <span className="mt-2.5 text-xs font-bold text-[#111827] group-hover:text-[#F15A24] transition-colors leading-tight line-clamp-2 [overflow-wrap:anywhere] break-words">
                   {cat.name}
                 </span>
               </button>
@@ -371,56 +480,60 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 3. SHOP BY SCENARIO (Definitive Section: Full-Width Soft Band #F4EEE6) */}
       {scenarios.length > 1 && (
-        <section className="w-full bg-[#F4EEE6] py-14 md:py-20 border-y border-[#EDE8E1]">
+        <section className="w-full bg-[#F4EEE6] py-12 md:py-[72px] border-y border-[#EDE8E1]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
               eyebrow="Tailored Engineering"
               title="Shop by Scenario"
               subtitle="Recommended turnkey surveillance and networking setups engineered for specific deployment environments"
               centered
+              className="mb-8"
             />
 
             {/* Large Scenario Tiles (centered if < 3 items) */}
-            <div className={scenarios.length === 2 ? "flex flex-wrap justify-center gap-6 pt-2" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2"}>
+            <div className={scenarios.length === 2 ? "flex flex-wrap justify-center gap-6" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}>
               {scenarios.map((scenario) => (
                 <div
                   key={scenario.id}
                   onClick={() => onNavigate('solutions', scenario.slug)}
-                  className={`bg-white rounded-[24px] border border-[#EDE8E1] p-6 sm:p-7 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between ${
+                  className={`bg-white rounded-[24px] border border-[#EDE8E1] p-6 sm:p-7 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between min-w-0 ${
                     scenarios.length === 2 ? 'w-full max-w-[380px]' : ''
                   }`}
                 >
-                  <div>
+                  <div className="min-w-0">
                     {/* Large Line Icon on Soft Circle */}
                     <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                       {renderScenarioIcon(scenario.iconName)}
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-heading font-bold text-lg text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2">
+                    <h3 className="font-heading font-bold text-lg text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2 min-w-0 [overflow-wrap:anywhere] break-words">
                       {scenario.title}
                     </h3>
 
                     {/* 1-Line Description (no mid-sentence ellipsis) */}
-                    <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
+                    <p className="text-xs text-[#5B6472] leading-relaxed mb-4 min-w-0 [overflow-wrap:anywhere] break-words">
                       {scenario.description}
                     </p>
 
-                    {/* "Recommended" Chips pointing to real categories/packages/products */}
+                    {/* "Recommended" Chips pointing to real categories/packages/products with real category names */}
                     {scenario.recommendedCategories && scenario.recommendedCategories.length > 0 && (
-                      <div className="space-y-1.5 pt-2 border-t border-[#EDE8E1]/80 mb-4">
+                      <div className="space-y-1.5 pt-2 border-t border-[#EDE8E1]/80 mb-4 min-w-0">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
                           Recommended Setup:
                         </span>
                         <div className="flex flex-wrap gap-1.5">
-                          {scenario.recommendedCategories.slice(0, 3).map((catSlug) => (
-                            <span
-                              key={catSlug}
-                              className="text-[10px] font-medium bg-[#FAF7F2] text-[#111827] border border-[#EDE8E1] px-2 py-0.5 rounded-full capitalize"
-                            >
-                              {catSlug.replace(/-/g, ' ')}
-                            </span>
-                          ))}
+                          {scenario.recommendedCategories.slice(0, 3).map((catSlug) => {
+                            const realCategoryName = categoryNameMap[catSlug] || catSlug.replace(/-/g, ' ');
+                            return (
+                              <span
+                                key={catSlug}
+                                className="text-[10px] font-medium bg-[#FAF7F2] text-[#111827] border border-[#EDE8E1] px-2 py-0.5 rounded-full [overflow-wrap:anywhere] break-words"
+                              >
+                                {realCategoryName}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -442,7 +555,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 4. CCTV PACKAGE SELECTOR (Definitive Section: Full-Width Band #FAF7F2) */}
       {displayPackages.length > 1 && (
-        <section className="w-full bg-[#FAF7F2] py-14 md:py-20">
+        <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
               eyebrow="Turnkey Bundles"
@@ -450,6 +563,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               subtitle="Configurable camera kits with storage, wiring, and professional installation options"
               actionText="All packages"
               onAction={() => onNavigate('packages')}
+              className="mb-8"
             />
 
             {/* Camera Count Tabs & Type Chips */}
@@ -589,7 +703,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       )}
 
       {/* 5. SERVICES: QUICK SERVICE REQUEST (Definitive Short surface-dark Band #141210) */}
-      <section className="w-full bg-[#141210] text-white py-12 md:py-16">
+      <section className="w-full bg-[#141210] text-white py-12 md:py-[72px]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
@@ -603,7 +717,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 Need a technician?
               </h2>
               <p className="text-xs sm:text-sm text-[#A0A8B4] leading-relaxed max-w-lg">
-                Fast physical site surveys, concealed cabling, and emergency repair across Dhaka. Click a service below to schedule an engineer callback:
+                Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:
               </p>
 
               {/* 6 Service Chips */}
@@ -759,7 +873,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <ProductRow
           eyebrow="Popular Hardware"
           title="Popular Products"
-          subtitle="Top verified security cameras, video recorders, and biometric access hardware"
+          subtitle="Security cameras, video recorders, and biometric access hardware"
           products={dedupPopular}
           actionText={`View all (${dedupPopular.length})`}
           onAction={() => onNavigate('catalog')}
@@ -784,14 +898,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 8. SPECIAL OFFERS (Definitive Section: Full-Width Warm Orange-Tint Gradient) */}
       {specialOffers.length > 1 && (
-        <section className="w-full bg-gradient-to-r from-[#FFF1E8] via-[#FFEADB] to-[#FFE0CC] py-14 md:py-20 border-y border-orange-200/60">
+        <section className="w-full bg-gradient-to-r from-[#FFF1E8] via-[#FFEADB] to-[#FFE0CC] py-12 md:py-[72px] border-y border-orange-200/60">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
-              eyebrow="Distributor Flash Deals"
+              eyebrow="Special Deals"
               title="Special Offers"
-              subtitle="Genuine promotional pricing verified directly with authorized distributors"
+              subtitle="Promotional pricing on security and networking equipment"
               actionText={`View all deals (${specialOffers.length})`}
               onAction={() => onNavigate('catalog')}
+              className="mb-8"
             />
 
             <div className={specialOffers.length === 2 ? "flex flex-wrap justify-center gap-5 pt-2" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2"}>
@@ -804,17 +919,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 return (
                   <div
                     key={p.id}
-                    className={`bg-white rounded-[20px] border border-orange-200/80 p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group ${
+                    className={`bg-white rounded-[20px] border border-orange-200/80 p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group min-w-0 ${
                       specialOffers.length === 2 ? 'w-full max-w-[320px]' : ''
                     }`}
                   >
-                    <div>
+                    <div className="min-w-0">
                       {/* Badge Row: Bold -X% Badge & Brand Chip */}
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="text-[10px] font-black uppercase tracking-wider bg-red-600 text-white px-2.5 py-0.5 rounded-full shadow-2xs">
                           -{discountPct}% OFF
                         </span>
-                        <span className="text-[10px] font-bold text-[#5B6472] uppercase">
+                        <span className="text-[10px] font-bold text-[#5B6472] uppercase truncate">
                           {p.brand}
                         </span>
                       </div>
@@ -832,14 +947,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                       </div>
 
                       {/* Monospace Model Above Title */}
-                      <div className="text-[11px] font-mono font-medium text-[#5B6472] mb-1 line-clamp-1">
+                      <div className="text-[11px] font-mono font-medium text-[#5B6472] mb-1 line-clamp-1 [overflow-wrap:anywhere] break-words">
                         {p.model}
                       </div>
 
                       {/* Clean Title */}
                       <h3
                         onClick={() => onNavigate('product', p.id)}
-                        className="font-heading font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2 line-clamp-2 cursor-pointer"
+                        className="font-heading font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2 line-clamp-2 cursor-pointer [overflow-wrap:anywhere] break-words"
                       >
                         {p.name}
                       </h3>
@@ -931,39 +1046,40 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 11. PROOF SECTIONS (Testimonials & Projects) */}
       {/* Testimonials */}
-      {testimonials.length > 1 ? (
-        <section className="w-full bg-[#FAF7F2] py-14 md:py-20">
+      {testimonials.length > 0 ? (
+        <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
+              className="mb-8"
               eyebrow="Client Experiences"
-              title="Verified Client Feedback"
-              subtitle="Real deployment feedback from commercial and residential project owners"
+              title="Client Feedback"
+              subtitle="Feedback from commercial and residential project clients"
             />
-            <div className={testimonials.length === 2 ? "flex flex-wrap justify-center gap-6" : "grid grid-cols-1 md:grid-cols-3 gap-6"}>
-              {testimonials.map((t) => (
-                <div
-                  key={t.id}
-                  className={`bg-white rounded-[20px] border border-[#EDE8E1] p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
-                    testimonials.length === 2 ? 'w-full max-w-[380px]' : ''
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center gap-1 text-amber-400 mb-3">
-                      {[...Array(t.rating || 5)].map((_, i) => (
-                        <span key={i}>★</span>
-                      ))}
-                    </div>
-                    <p className="text-xs text-[#111827] leading-relaxed italic mb-4">
-                      "{t.content}"
-                    </p>
+            {testimonials.length === 4 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[840px] mx-auto">
+                {testimonials.map((t) => (
+                  <div key={t.id} className="min-w-0 flex">
+                    <TestimonialCard testimonial={t} />
                   </div>
-                  <div className="pt-3 border-t border-[#EDE8E1]">
-                    <div className="font-bold text-xs text-[#111827]">{t.clientName}</div>
-                    <div className="text-[11px] text-[#5B6472]">{t.clientRole || t.company}</div>
+                ))}
+              </div>
+            ) : testimonials.length < 4 ? (
+              <div className="flex flex-wrap justify-center gap-6">
+                {testimonials.map((t) => (
+                  <div key={t.id} className="w-full max-w-[380px] min-w-0 flex">
+                    <TestimonialCard testimonial={t} />
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap justify-center gap-6">
+                {testimonials.map((t) => (
+                  <div key={t.id} className="w-full sm:w-[calc((100%-24px)/2)] lg:w-[calc((100%-48px)/3)] max-w-[380px] min-w-0 flex">
+                    <TestimonialCard testimonial={t} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       ) : isAdminAuthenticated ? (
@@ -984,48 +1100,42 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       ) : null}
 
       {/* Projects */}
-      {projects.length > 1 ? (
-        <section className="w-full bg-white py-14 md:py-20 border-y border-[#EDE8E1]">
+      {projects.length > 0 ? (
+        <section className="w-full bg-white py-12 md:py-[72px] border-y border-[#EDE8E1]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
+              className="mb-8"
               eyebrow="Case Studies"
               title="Recent Installation Projects"
-              subtitle="Commercial surveillance, factory Wi-Fi mesh, and corporate biometric deployments"
+              subtitle="Commercial surveillance, factory Wi-Fi, and corporate biometric deployments"
               actionText="View all projects"
               onAction={() => onNavigate('projects')}
             />
-            <div className={projects.length === 2 ? "flex flex-wrap justify-center gap-6" : "grid grid-cols-1 md:grid-cols-3 gap-6"}>
-              {projects.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => onNavigate('projects')}
-                  className={`bg-white rounded-[20px] border border-[#EDE8E1] overflow-hidden shadow-xs hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between ${
-                    projects.length === 2 ? 'w-full max-w-[380px]' : ''
-                  }`}
-                >
-                  <div className="h-44 bg-slate-100 overflow-hidden relative">
-                    <img
-                      src={p.image || '/images/hero/hikvision-bullet.jpg'}
-                      alt={p.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {p.category && (
-                      <span className="absolute top-3 left-3 bg-[#111827]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                        {p.category}
-                      </span>
-                    )}
+            {projects.length === 4 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[840px] mx-auto">
+                {projects.map((p) => (
+                  <div key={p.id} className="min-w-0 flex">
+                    <ProjectCard project={p} onNavigate={onNavigate} />
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-heading font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-1 line-clamp-1">
-                      {p.title}
-                    </h3>
-                    <p className="text-xs text-[#5B6472] leading-relaxed">
-                      {p.description}
-                    </p>
+                ))}
+              </div>
+            ) : projects.length < 4 ? (
+              <div className="flex flex-wrap justify-center gap-6">
+                {projects.map((p) => (
+                  <div key={p.id} className="w-full max-w-[380px] min-w-0 flex">
+                    <ProjectCard project={p} onNavigate={onNavigate} />
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap justify-center gap-6">
+                {projects.map((p) => (
+                  <div key={p.id} className="w-full sm:w-[calc((100%-24px)/2)] lg:w-[calc((100%-48px)/3)] max-w-[380px] min-w-0 flex">
+                    <ProjectCard project={p} onNavigate={onNavigate} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       ) : isAdminAuthenticated ? (
@@ -1046,7 +1156,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       ) : null}
 
       {/* 12. FINAL CTA BAND (Full-Width Orange Band Touching Footer With Zero Gap) */}
-      <section id="site-cta" className="w-full bg-gradient-to-br from-[#F15A24] via-[#ea5019] to-[#D94D1C] text-white py-16 md:py-20 m-0">
+      <section id="site-cta" className="w-full bg-gradient-to-br from-[#F15A24] via-[#ea5019] to-[#D94D1C] text-white py-12 md:py-[72px] m-0">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative overflow-hidden">
           <div className="relative z-10 max-w-3xl mx-auto space-y-4">
             {/* Centered Translucent Pill Eyebrow */}
@@ -1062,7 +1172,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
             {/* White 90% Subtext */}
             <p className="text-base sm:text-lg text-white/90 max-w-2xl mx-auto font-normal leading-relaxed">
-              Our engineering team performs on-site surveys and provides itemized quotations across Dhaka.
+              Our engineering team provides technical consultations and hardware quotations in Dhaka.
             </p>
           </div>
 
@@ -1092,22 +1202,24 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <button
               type="button"
               onClick={() => onNavigate('quote')}
-              className="w-full sm:w-auto min-h-[44px] px-7 py-3 rounded-full bg-[#141210] text-white hover:bg-black font-bold text-xs shadow-md inline-flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+              className="w-full sm:w-auto min-h-[44px] px-7 py-3 rounded-full bg-transparent border border-white text-white hover:bg-white/10 font-bold text-xs shadow-md inline-flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
             >
-              <Wrench className="w-4 h-4 text-[#F15A24]" />
+              <Wrench className="w-4 h-4 text-white" />
               <span>Book Site Visit</span>
             </button>
           </div>
 
           {/* Reassurance Row Below */}
-          <div className="relative z-10 border-t border-white/20 pt-6 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 sm:gap-x-10 text-xs sm:text-sm font-medium text-white/95">
-            {reassuranceItems.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
+          {reassuranceItems && reassuranceItems.length > 0 && (
+            <div className="relative z-10 border-t border-white/20 pt-6 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 sm:gap-x-10 text-xs sm:text-sm font-medium text-white/95">
+              {reassuranceItems.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>

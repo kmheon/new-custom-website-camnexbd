@@ -1,0 +1,36 @@
+<svg viewBox="0 0 400 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="240" fill="#F4EEE6"/>
+  <!-- Blueprint grid lines -->
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#EDE8E1" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="240" fill="url(#grid)" />
+  
+  <!-- Subtle architectural deployment site building shape -->
+  <rect x="70" y="80" width="80" height="120" rx="4" fill="#E8DFD5" stroke="#D5C7B8" stroke-width="1.5"/>
+  <rect x="170" y="50" width="100" height="150" rx="4" fill="#DFD4C6" stroke="#CBB9A7" stroke-width="1.5"/>
+  <rect x="290" y="100" width="60" height="100" rx="4" fill="#E8DFD5" stroke="#D5C7B8" stroke-width="1.5"/>
+  
+  <!-- Building windows -->
+  <rect x="85" y="95" width="16" height="20" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="115" y="95" width="16" height="20" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="85" y="130" width="16" height="20" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="115" y="130" width="16" height="20" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  
+  <rect x="190" y="70" width="22" height="25" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="230" y="70" width="22" height="25" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="190" y="110" width="22" height="25" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="230" y="110" width="22" height="25" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="190" y="150" width="22" height="25" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  <rect x="230" y="150" width="22" height="25" rx="2" fill="#F4EEE6" opacity="0.8"/>
+  
+  <!-- Network / Camera node badges -->
+  <circle cx="200" cy="50" r="14" fill="#141210" />
+  <circle cx="200" cy="50" r="5" fill="#F15A24" />
+  
+  <!-- Label badge -->
+  <rect x="130" y="185" width="140" height="28" rx="14" fill="#141210" opacity="0.9"/>
+  <text x="200" y="203" fill="#FAF7F2" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">DEPLOYMENT SITE</text>
+</svg>

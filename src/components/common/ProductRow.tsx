@@ -60,47 +60,51 @@ export const ProductRow: React.FC<ProductRowProps> = ({
           className="mb-0"
         />
 
-        {/* Desktop Arrow Controls */}
-        <div className="hidden sm:flex items-center gap-2 flex-shrink-0 self-end">
-          <button
-            type="button"
-            onClick={() => scroll('left')}
-            className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-[#EDE8E1] text-[#111827] flex items-center justify-center shadow-2xs hover:shadow-sm transition-all focus:outline-none"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll('right')}
-            className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-[#EDE8E1] text-[#111827] flex items-center justify-center shadow-2xs hover:shadow-sm transition-all focus:outline-none"
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Desktop Arrow Controls: ONLY when more than 4 items */}
+        {totalItems > 4 && (
+          <div className="hidden sm:flex items-center gap-2 flex-shrink-0 self-end">
+            <button
+              type="button"
+              onClick={() => scroll('left')}
+              className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-[#EDE8E1] text-[#111827] flex items-center justify-center shadow-2xs hover:shadow-sm transition-all focus:outline-none"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scroll('right')}
+              className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-[#EDE8E1] text-[#111827] flex items-center justify-center shadow-2xs hover:shadow-sm transition-all focus:outline-none"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Horizontal Scroll Snap Container (centered if < 3 items) */}
+      {/* Horizontal Container (exact 4-card fit desktop, scroll with arrows only when > 4) */}
       <div
         ref={scrollRef}
-        className={`flex gap-5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4 pt-1 ${
-          totalItems < 3 ? 'justify-center' : ''
-        }`}
+        className={`flex gap-5 no-scrollbar ${
+          totalItems > 4 ? 'overflow-x-auto snap-x snap-mandatory' : 'overflow-x-hidden'
+        } ${totalItems < 4 ? 'justify-center' : ''}`}
       >
         {/* Optional Promo Tile as First Item */}
         {promoTile && (
-          <div className="snap-start w-[260px] sm:w-[280px] flex-shrink-0 bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 rounded-[20px] border border-[#EDE8E1] p-6 flex flex-col justify-between shadow-2xs">
+          <div className={`snap-start ${
+            totalItems < 4 ? 'w-[260px] sm:w-[280px]' : 'w-[260px] sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]'
+          } flex-shrink-0 min-w-0 bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 rounded-[20px] border border-[#EDE8E1] p-6 flex flex-col justify-between shadow-2xs`}>
             <div>
               {promoTile.badge && (
                 <span className="inline-block px-3 py-1 bg-[#F15A24] text-white text-[10px] font-black uppercase tracking-wider rounded-full mb-3">
                   {promoTile.badge}
                 </span>
               )}
-              <h3 className="text-lg font-bold text-[#111827] font-heading mb-2">
+              <h3 className="text-lg font-bold text-[#111827] font-heading mb-2 [overflow-wrap:anywhere] break-words">
                 {promoTile.title}
               </h3>
-              <p className="text-xs text-[#5B6472] leading-relaxed">
+              <p className="text-xs text-[#5B6472] leading-relaxed [overflow-wrap:anywhere] break-words">
                 {promoTile.description}
               </p>
             </div>
@@ -125,7 +129,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
         {/* Product Cards */}
         {products.map((prod) => (
-          <div key={prod.id} className="snap-start w-[260px] sm:w-[280px] flex-shrink-0">
+          <div
+            key={prod.id}
+            className={`snap-start ${
+              totalItems < 4 ? 'w-[260px] sm:w-[280px]' : 'w-[260px] sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]'
+            } flex-shrink-0 min-w-0`}
+          >
             <ProductCard product={prod} onNavigate={onNavigate} />
           </div>
         ))}
@@ -135,7 +144,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
   if (variant === 'panel') {
     return (
-      <section className="w-full bg-white py-12 md:py-16 border-y border-[#EDE8E1]">
+      <section className="w-full bg-white py-12 md:py-[72px] border-y border-[#EDE8E1]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           {content}
         </div>
@@ -144,7 +153,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   }
 
   return (
-    <section className="w-full bg-[#FAF7F2] py-12 md:py-16">
+    <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {content}
       </div>

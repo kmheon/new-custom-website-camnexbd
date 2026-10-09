@@ -531,7 +531,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
                         <strong className="text-[#111827] block">
                           Include On-Site Installation {siteSettings?.installationBaseFee != null && siteSettings.installationBaseFee > 0 ? `(+৳${siteSettings.installationBaseFee} / device)` : '(Quoted on site survey)'}
                         </strong>
-                        <span className="text-slate-500">Concealed cabling, testing, and Hik-Connect smartphone setup in Dhaka.</span>
+                        <span className="text-slate-500">Cabling and installation, testing, and Hik-Connect smartphone setup in Dhaka.</span>
                       </label>
                     </div>
 

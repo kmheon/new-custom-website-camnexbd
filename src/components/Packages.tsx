@@ -22,7 +22,7 @@ export const Packages: React.FC<PackagesProps> = ({ onBookPackage }) => {
         { label: 'Mobile App Access', value: 'Hik-Connect (iOS & Android) with Push Alerts' },
         { label: 'Installation', value: 'Complete Clean Installation with Survey' },
         { label: 'Cables & Hardware', value: 'Cat6 Cable + Connectors' },
-        { label: 'Warranty', value: '1-Year Hardware Warranty' }
+        { label: 'Warranty', value: '1-Year Warranty' }
       ]
     },
     {

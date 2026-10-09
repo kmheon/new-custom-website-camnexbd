@@ -22,15 +22,16 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   actionText,
   onAction,
   dark = false,
-  className = ''
+  className
 }) => {
   const isCentered = align === 'center';
+  const marginClass = className !== undefined ? className : 'mb-8';
 
   return (
     <div
       className={`flex flex-col ${
         isCentered ? 'items-center text-center' : 'sm:flex-row sm:items-end sm:justify-between'
-      } gap-4 ${className}`}
+      } gap-4 ${marginClass}`}
     >
       <div className={`space-y-2 max-w-2xl ${isCentered ? 'mx-auto' : ''}`}>
         {/* Small Orange Eyebrow: tiny line icon + UPPERCASE 12px tracking label */}

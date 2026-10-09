@@ -481,10 +481,10 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               </div>
             </div>
 
-            {/* Quick Consultation Tag */}
+            {/* Engineering Support Tag */}
             <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-[#5B6472]">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Dhaka On-Site Surveys & Concealed Wiring</span>
+              <span>Security & Surveillance Engineering</span>
             </div>
           </div>
         </div>
