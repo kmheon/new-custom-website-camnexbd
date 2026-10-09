@@ -192,45 +192,152 @@ async function runRevision3Tests() {
     if (!fRes.hasLockSvg) throw new Error('Staff login link missing lock icon');
     console.log(`  ✓ PASS: Staff login pill present with rel="nofollow", lock icon, and outlined pill styling`);
 
-    // 3. Categories 8-Tile Grid
-    console.log('\n--- 3. Testing Categories Grid & Cards (Reference b) ---');
-    const catsEval = await send('Runtime.evaluate', {
-      expression: `
-        (() => {
-          const sec = Array.from(document.querySelectorAll('section')).find(s => s.innerText.includes('Shop by Category'));
-          if (!sec) return { found: false };
+    // 3. Categories Adaptive Grid (Item 3 Replacement)
+    console.log('\n--- 3. Testing Categories Adaptive Grid (Item 3 Replacement) ---');
+    const sampleTestCats = [
+      { id: 'c1', name: 'CCTV Cameras', slug: 'cctv-cameras', description: 'High-definition bullet, dome and turret cameras for residential and commercial security.', image: '/images/products/hikvision-bullet.svg', order: 1, displayOrder: 1, showOnHomepage: true },
+      { id: 'c2', name: 'DVR', slug: 'dvr', description: 'Turbo HD digital video recorders with H.265+ smart stream compression.', image: '/images/products/hikvision-dvr.svg', order: 2, displayOrder: 2, showOnHomepage: true },
+      { id: 'c3', name: 'Recorders', slug: 'recorders', description: 'Digital Video Recorders and Network Video Recorders with cloud app support.', image: '/images/products/hikvision-dvr.svg', order: 3, displayOrder: 3, showOnHomepage: true },
+      { id: 'c4', name: 'Access Control & Biometrics', slug: 'biometrics-access-control', description: 'ZKTeco facial recognition terminals, fingerprint time-attendance, and door locks.', image: '/images/products/zkteco-biometric.svg', order: 4, displayOrder: 4, showOnHomepage: true },
+      { id: 'c5', name: 'Network Switches', slug: 'network-switches', description: 'PoE surveillance switches and gigabit enterprise managed distribution switches.', image: '/images/products/ruijie-switch.svg', order: 5, displayOrder: 5, showOnHomepage: true },
+      { id: 'c6', name: 'Access Points & Wi-Fi', slug: 'access-points-wifi', description: 'Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.', image: '/images/products/ruijie-wifi.svg', order: 6, displayOrder: 6, showOnHomepage: true },
+      { id: 'c7', name: 'Surveillance Storage', slug: 'surveillance-storage', description: 'Western Digital Purple and Seagate SkyHawk 24/7 surveillance hard drives.', image: '/images/products/surveillance-hdd.svg', order: 7, displayOrder: 7, showOnHomepage: true },
+      { id: 'c8', name: 'Cables & Accessories', slug: 'cables-accessories', description: 'Cat6 pure copper cables, waterproof junction boxes, and video baluns.', image: '/images/products/hardware-accessory.svg', order: 8, displayOrder: 8, showOnHomepage: true },
+      { id: 'c9', name: 'IP Video Intercoms', slug: 'ip-video-intercoms', description: 'Touchscreen multi-apartment indoor stations and door entry intercoms.', image: '/images/products/hikvision-dome.svg', order: 9, displayOrder: 9, showOnHomepage: true },
+      { id: 'c10', name: 'Power & Backup Units', slug: 'power-backup-units', description: 'Centralized 12V DC CCTV power supplies, online UPS, and surge protectors.', image: '/images/products/hardware-accessory.svg', order: 10, displayOrder: 10, showOnHomepage: true },
+      { id: 'c11', name: 'Fire Alarms & Sensors', slug: 'fire-alarms-sensors', description: 'Photoelectric smoke detectors, heat sensors, and manual call points.', image: '/images/products/hardware-accessory.svg', order: 11, displayOrder: 11, showOnHomepage: true },
+      { id: 'c12', name: 'Intrusion Alarms', slug: 'intrusion-alarms', description: 'PIR motion detectors, door magnetic contacts, and wireless sirens.', image: '/images/products/hardware-accessory.svg', order: 12, displayOrder: 12, showOnHomepage: true },
+      { id: 'c13', name: 'Fiber Optics & Media', slug: 'fiber-optics-media', description: 'Single-mode optical transceivers, fiber patch cords, and ODF boxes.', image: '/images/products/hardware-accessory.svg', order: 13, displayOrder: 13, showOnHomepage: true },
+      { id: 'c14', name: 'Server Racks & Cabinets', slug: 'server-racks-cabinets', description: 'Wall-mount 6U/9U/12U network racks and 42U floor-standing server enclosures.', image: '/images/products/hardware-accessory.svg', order: 14, displayOrder: 14, showOnHomepage: true }
+    ];
 
-          const grid = sec.querySelector('.grid') || sec.querySelector('.flex-wrap');
-          const cards = grid ? Array.from(grid.children) : [];
-          const cardMetrics = cards.slice(0, 8).map(c => {
-            const h = c.offsetHeight;
-            const computed = window.getComputedStyle(c);
-            const img = c.querySelector('img');
-            const hasWhiteBox = img ? (img.parentElement.className.includes('bg-white') && img.parentElement !== c) : false;
+    for (const n of [1, 2, 3, 5, 7, 8, 9, 11, 14]) {
+      const activeCats = sampleTestCats.slice(0, n);
+      await send('Runtime.evaluate', {
+        expression: `window.__setHomepageCategoriesForTest && window.__setHomepageCategoriesForTest(${JSON.stringify(activeCats)})`
+      });
+      await sleep(100);
+
+      const catEval = await send('Runtime.evaluate', {
+        expression: `
+          (() => {
+            const sec = Array.from(document.querySelectorAll('section')).find(s => s.innerText.includes('Shop by Category'));
+            if (!sec) return { found: false };
+
+            const grid = sec.querySelector('[data-testid="category-grid"]');
+            if (!grid) return { found: false };
+
+            const heading = sec.querySelector('h2');
+            const actionBtn = sec.querySelector('button');
+
+            const gridRect = grid.getBoundingClientRect();
+            const headingRect = heading ? heading.getBoundingClientRect() : null;
+            const actionRect = actionBtn ? actionBtn.getBoundingClientRect() : null;
+
+            const tiles = Array.from(grid.querySelectorAll('[data-category-tile]'));
+
+            // Group tiles by row
+            const rows = [];
+            tiles.forEach(tile => {
+              const r = tile.getBoundingClientRect();
+              const existingRow = rows.find(row => Math.abs(row.top - r.top) < 10);
+              if (existingRow) {
+                existingRow.tiles.push({ el: tile, rect: r });
+              } else {
+                rows.push({ top: r.top, tiles: [{ el: tile, rect: r }] });
+              }
+            });
+
+            rows.forEach(row => row.tiles.sort((a, b) => a.rect.left - b.rect.left));
+
+            const rowChecks = rows.map((row, rowIdx) => {
+              const firstTile = row.tiles[0];
+              const lastTile = row.tiles[row.tiles.length - 1];
+
+              const leftDiff = Math.abs(firstTile.rect.left - gridRect.left);
+              const rightDiff = Math.abs(lastTile.rect.right - gridRect.right);
+
+              const gap = 16;
+              const totalTileWidths = row.tiles.reduce((acc, t) => acc + t.rect.width, 0);
+              const totalGaps = (row.tiles.length - 1) * gap;
+              const rowFullWidth = totalTileWidths + totalGaps;
+              const widthDiff = Math.abs(rowFullWidth - gridRect.width);
+
+              return {
+                rowIdx,
+                tileCount: row.tiles.length,
+                leftDiff,
+                rightDiff,
+                widthDiff,
+                firstLeft: firstTile.rect.left,
+                lastRight: lastTile.rect.right,
+                gridWidth: gridRect.width,
+                rowFullWidth
+              };
+            });
+
+            const overflowCheck = tiles.map(t => {
+              const isOverflow = t.scrollWidth > t.clientWidth || t.scrollHeight > (t.clientHeight + 4);
+              return { isOverflow, scrollWidth: t.scrollWidth, clientWidth: t.clientWidth };
+            });
+
+            const titleChecks = tiles.map(t => {
+              const h3 = t.querySelector('h3');
+              if (!h3) return { ok: true };
+              const text = h3.innerText || '';
+              const hasCutEllipsisBefore2ndLine = text.includes('...') && h3.clientHeight < 24;
+              return { ok: !hasCutEllipsisBefore2ndLine, text };
+            });
+
+            const moreTile = tiles.find(t => t.getAttribute('data-more-tile') === 'true');
+
             return {
-              height: h,
-              borderRadius: computed.borderRadius,
-              hasWhiteBox
+              found: true,
+              n: ${n},
+              tileCount: tiles.length,
+              rowsCount: rows.length,
+              rowChecks,
+              hasOverflow: overflowCheck.some(o => o.isOverflow),
+              allTitlesOk: titleChecks.every(tc => tc.ok),
+              hasMoreTile: !!moreTile,
+              gridLeft: gridRect.left,
+              gridRight: gridRect.right,
+              gridWidth: gridRect.width,
+              headingLeft: headingRect ? headingRect.left : null,
+              actionRight: actionRect ? actionRect.right : null
             };
-          });
+          })()
+        `,
+        returnByValue: true
+      });
 
-          return {
-            found: true,
-            tileCount: cards.length,
-            cardMetrics
-          };
-        })()
-      `,
-      returnByValue: true
-    });
+      const catRes = catEval.result.value;
+      if (!catRes.found) throw new Error(`Category grid not found for n=${n}`);
 
-    const catRes = catsEval.result.value;
-    if (!catRes.found) throw new Error('Shop by Category section not found');
-    console.log(`  Categories tile count: ${catRes.tileCount}`);
-    for (const c of catRes.cardMetrics) {
-      if (c.hasWhiteBox) throw new Error('Category card image has an unwanted white box wrapper');
+      if (n <= 8 && catRes.hasMoreTile) {
+        throw new Error(`FAIL: n=${n} has an 'All Categories' tile when n <= 8!`);
+      }
+      if (n > 8 && !catRes.hasMoreTile) {
+        throw new Error(`FAIL: n=${n} is missing the 'All Categories' / '+N more' tile when n > 8!`);
+      }
+
+      for (const rc of catRes.rowChecks) {
+        if (rc.leftDiff > 2 || rc.rightDiff > 2) {
+          throw new Error(`FAIL: n=${n} row ${rc.rowIdx} does not fill row! leftDiff=${rc.leftDiff}, rightDiff=${rc.rightDiff}`);
+        }
+        if (rc.widthDiff > 3) {
+          throw new Error(`FAIL: n=${n} row ${rc.rowIdx} sum of widths (${rc.rowFullWidth}) != grid width (${rc.gridWidth})! diff=${rc.widthDiff}`);
+        }
+      }
+
+      if (catRes.hasOverflow) {
+        throw new Error(`FAIL: n=${n} has an overflowing child!`);
+      }
+      if (!catRes.allTitlesOk) {
+        throw new Error(`FAIL: n=${n} title cut with '...' before second line!`);
+      }
     }
-    console.log(`  ✓ PASS: Category cards matching reference b (16px radius, soft gradient, floating transparent hardware, no white box)`);
+    console.log(`  ✓ PASS: Adaptive category grid verified for n=1, 2, 3, 5, 7, 8, 9, 11, 14 at 1280px (full row-fill, zero orphans, no premature cut, more-tile logic clean)`);
 
     // 4. Our Solutions Section
     console.log('\n--- 4. Testing Our Solutions (Renamed from Shop by Scenario) ---');

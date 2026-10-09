@@ -785,7 +785,7 @@ app.delete('/api/products/:id', requireAdmin, (req, res) => {
 
 app.get('/api/categories', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM categories ORDER BY display_order ASC').all();
+    const rows = db.prepare('SELECT data_json FROM categories ORDER BY display_order ASC, name ASC').all();
     res.json(rows.map(r => JSON.parse(r.data_json)));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -807,14 +807,21 @@ app.post('/api/categories', requireAdmin, validateBody(schemas.category), (req, 
   try {
     const c = req.body;
     const id = c.id || `cat-${Date.now()}`;
-    const categoryData = { ...c, id };
+    const displayOrder = Number(c.displayOrder ?? c.order ?? 1);
+    const categoryData = {
+      ...c,
+      id,
+      displayOrder,
+      order: displayOrder,
+      showOnHomepage: c.showOnHomepage !== false
+    };
 
     db.prepare(`
       INSERT INTO categories (id, name, slug, description, image, spec_template_id, display_order, status, data_json)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id, categoryData.name, categoryData.slug, categoryData.description || '',
-      categoryData.image || '', categoryData.specTemplateId || '', categoryData.order || 1,
+      categoryData.image || '', categoryData.specTemplateId || '', displayOrder,
       categoryData.status || 'active', JSON.stringify(categoryData)
     );
 
@@ -830,7 +837,17 @@ app.put('/api/categories/:id', requireAdmin, validateBody(schemas.category), (re
     const existing = db.prepare('SELECT data_json FROM categories WHERE id = ?').get(id);
     if (!existing) return res.status(404).json({ error: 'Category not found' });
 
-    const updated = { ...JSON.parse(existing.data_json), ...req.body, id };
+    const existingData = JSON.parse(existing.data_json);
+    const displayOrder = Number(req.body.displayOrder ?? req.body.order ?? existingData.displayOrder ?? existingData.order ?? 1);
+    const updated = {
+      ...existingData,
+      ...req.body,
+      id,
+      displayOrder,
+      order: displayOrder,
+      showOnHomepage: req.body.showOnHomepage !== undefined ? req.body.showOnHomepage : (existingData.showOnHomepage !== false)
+    };
+
     db.prepare(`
       UPDATE categories SET
         name = ?, slug = ?, description = ?, image = ?, spec_template_id = ?,
@@ -838,7 +855,7 @@ app.put('/api/categories/:id', requireAdmin, validateBody(schemas.category), (re
       WHERE id = ?
     `).run(
       updated.name, updated.slug, updated.description || '', updated.image || '',
-      updated.specTemplateId || '', updated.order || 1, updated.status || 'active',
+      updated.specTemplateId || '', displayOrder, updated.status || 'active',
       JSON.stringify(updated), id
     );
 

@@ -35,6 +35,7 @@ import { SectionHeader } from '../components/common/SectionHeader';
 import { ProductRow } from '../components/common/ProductRow';
 import { HeroSlider } from '../components/HeroSlider';
 import { SpecialOfferSlider } from '../components/SpecialOfferSlider';
+import { CategoryGrid } from '../components/CategoryGrid';
 import {
   cmsService,
   productService,
@@ -76,18 +77,6 @@ const CctvKitSvgFallback: React.FC = () => (
       <rect x="58" y="64" width="22" height="4" rx="2" fill="#64748B" />
     </svg>
   </div>
-);
-
-// Crisp Vector SVG Fallback for Category images
-const CategorySvgFallback: React.FC = () => (
-  <svg viewBox="0 0 80 80" className="w-16 h-16 object-contain opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="10" y="24" width="40" height="24" rx="4" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="1.5" />
-    <path d="M50 28 L68 20 L68 52 L50 44 Z" fill="#94A3B8" />
-    <circle cx="22" cy="36" r="6" fill="#0F172A" />
-    <circle cx="22" cy="36" r="2.5" fill="#38BDF8" />
-    <rect x="26" y="48" width="8" height="14" fill="#94A3B8" />
-    <rect x="20" y="62" width="20" height="4" rx="2" fill="#64748B" />
-  </svg>
 );
 
 // Testimonial Card (Reference a): quote tile top-left, 5-star rating top-right, 4-line clamped quote + "Read more",
@@ -285,9 +274,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     loadSettings();
     checkAuth();
 
+    // Expose test hook for headless testing and verification
+    (window as any).__setHomepageCategoriesForTest = (testCats: Category[]) => {
+      setCategories(testCats);
+    };
+
     // Fetch categories
     categoryService.getCategories().then((allCats) => {
-      setCategories(allCats);
+      const initialCats = (window as any).__CAMNEX_TEST_CATEGORIES || allCats;
+      setCategories(initialCats);
 
       // Fetch products for categories configured to show on homepage
       const homepageCats = allCats.filter((c) => c.showOnHomepage);
@@ -474,20 +469,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     'DVR/NVR Repair'
   ];
 
-  // Derive 7 categories for the 8-tile grid
-  const topCategories = categories.slice(0, 7);
-
-  // Category tag lookup helper
-  const getCategoryTag = (slug: string) => {
-    if (slug.includes('cctv') || slug.includes('camera')) return 'SURVEILLANCE';
-    if (slug.includes('recorders') || slug.includes('dvr') || slug.includes('nvr')) return 'RECORDING';
-    if (slug.includes('access') || slug.includes('biometric')) return 'ACCESS CONTROL';
-    if (slug.includes('switch') || slug.includes('network')) return 'NETWORKING';
-    if (slug.includes('wifi') || slug.includes('access-points')) return 'WI-FI 6';
-    if (slug.includes('hard-drive') || slug.includes('storage')) return 'STORAGE';
-    return 'HARDWARE';
-  };
-
   return (
     <div className="bg-[#FAF7F2] text-[#111827] min-h-screen">
       <SEO
@@ -526,85 +507,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             className="mb-8"
           />
 
-          {/* 8-Tile Grid (7 categories + 1 'All categories' tile = 2 full rows on desktop) */}
-          <div className={topCategories.length < 7 ? "flex flex-wrap justify-center gap-4 sm:gap-5" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5"}>
-            {topCategories.map((cat) => (
-              <div
-                key={cat.id}
-                onClick={() => onNavigate('category', cat.slug)}
-                className={`bg-gradient-to-br from-white via-white to-[#F7F3EE] rounded-[16px] border border-[#EDE8E1] p-4 sm:p-5 hover:border-orange-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex justify-between relative overflow-hidden min-h-[155px] h-[160px] min-w-0 ${
-                  topCategories.length < 7 ? 'w-full max-w-[280px]' : ''
-                }`}
-              >
-                {/* Left Side: Tag chip, 18px bold title (max 2 lines), 1-line description (max 60 chars), Explore link */}
-                <div className="flex-1 min-w-0 pr-2 flex flex-col justify-between z-10">
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-black uppercase tracking-wider text-[#F15A24] bg-orange-50 px-2 py-0.5 rounded-full inline-block mb-1 truncate max-w-full">
-                      {getCategoryTag(cat.slug)}
-                    </span>
-                    <h3 className="font-heading font-bold text-base sm:text-[17px] text-[#111827] group-hover:text-[#F15A24] transition-colors leading-snug line-clamp-2 min-w-0 [overflow-wrap:anywhere] break-words">
-                      {cat.name}
-                    </h3>
-                    <p className="text-[11px] text-[#5B6472] leading-tight line-clamp-1 mt-0.5 min-w-0 [overflow-wrap:anywhere] break-words">
-                      {cat.description || 'Hardware & accessories'}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-[#F15A24] pt-1">
-                    <span>Explore Category</span>
-                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-
-                {/* Right Side: Transparent PNG product image (about 40% width, contained, bottom-right, NO white box) */}
-                <div className="w-[38%] sm:w-[40%] flex items-end justify-end pointer-events-none self-end h-full">
-                  {cat.image ? (
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                      className="max-h-[90%] max-w-full object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <CategorySvgFallback />
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* 8th Tile: 'All Categories' */}
-            <div
-              onClick={() => onNavigate('catalog')}
-              className={`bg-gradient-to-br from-white via-white to-[#F7F3EE] rounded-[16px] border border-[#EDE8E1] p-4 sm:p-5 hover:border-orange-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex justify-between relative overflow-hidden min-h-[155px] h-[160px] min-w-0 ${
-                topCategories.length < 7 ? 'w-full max-w-[280px]' : ''
-              }`}
-            >
-              <div className="flex-1 min-w-0 pr-2 flex flex-col justify-between z-10">
-                <div className="min-w-0">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-[#F15A24] bg-orange-50 px-2 py-0.5 rounded-full inline-block mb-1">
-                    CATALOG
-                  </span>
-                  <h3 className="font-heading font-bold text-base sm:text-[17px] text-[#111827] group-hover:text-[#F15A24] transition-colors leading-snug line-clamp-2">
-                    All Categories
-                  </h3>
-                  <p className="text-[11px] text-[#5B6472] leading-tight line-clamp-1 mt-0.5">
-                    Browse our full hardware catalog
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-1 text-[11px] font-bold text-[#F15A24] pt-1">
-                  <span>View All Items</span>
-                  <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-
-              <div className="w-[38%] sm:w-[40%] flex items-center justify-center self-center h-full text-orange-200 group-hover:text-[#F15A24] transition-colors">
-                <Layers className="w-12 h-12 stroke-1" />
-              </div>
-            </div>
-          </div>
+          {/* Adaptive Category Grid (Row-fill algorithm, full width alignment) */}
+          <CategoryGrid categories={categories} onNavigate={onNavigate} />
         </div>
       </section>
 

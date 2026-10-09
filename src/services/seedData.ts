@@ -447,27 +447,45 @@ export const INITIAL_CATEGORIES: Category[] = [
     image: '/images/products/hikvision-bullet.svg',
     specTemplateId: 'tpl-cctv',
     featured: true,
+    showOnHomepage: true,
+    displayOrder: 1,
     order: 1
   },
   {
-    id: 'cat-recorders',
-    name: 'DVR & NVR Recorders',
-    slug: 'dvr-nvr-recorders',
-    description: 'Digital Video Recorders and Network Video Recorders with H.265+ compression and cloud app support.',
+    id: 'cat-dvr',
+    name: 'DVR',
+    slug: 'dvr',
+    description: 'Turbo HD digital video recorders with H.265+ smart stream compression.',
     image: '/images/products/hikvision-dvr.svg',
     specTemplateId: 'tpl-dvr',
     featured: true,
+    showOnHomepage: true,
+    displayOrder: 2,
     order: 2
+  },
+  {
+    id: 'cat-recorders',
+    name: 'Recorders',
+    slug: 'recorders',
+    description: 'Digital Video Recorders and Network Video Recorders with cloud app support.',
+    image: '/images/products/hikvision-dvr.svg',
+    specTemplateId: 'tpl-dvr',
+    featured: true,
+    showOnHomepage: true,
+    displayOrder: 3,
+    order: 3
   },
   {
     id: 'cat-access',
     name: 'Access Control & Biometrics',
     slug: 'biometrics-access-control',
-    description: 'ZKTeco facial recognition terminals, biometric fingerprint time-attendance, and electronic door locks.',
+    description: 'ZKTeco facial recognition terminals, fingerprint time-attendance, and door locks.',
     image: '/images/products/zkteco-biometric.svg',
     specTemplateId: 'tpl-biometric',
     featured: true,
-    order: 3
+    showOnHomepage: true,
+    displayOrder: 4,
+    order: 4
   },
   {
     id: 'cat-networking',
@@ -477,7 +495,9 @@ export const INITIAL_CATEGORIES: Category[] = [
     image: '/images/products/ruijie-switch.svg',
     specTemplateId: 'tpl-switch',
     featured: true,
-    order: 4
+    showOnHomepage: true,
+    displayOrder: 5,
+    order: 5
   },
   {
     id: 'cat-wifi',
@@ -487,7 +507,57 @@ export const INITIAL_CATEGORIES: Category[] = [
     image: '/images/products/ruijie-wifi.svg',
     specTemplateId: 'tpl-wifi',
     featured: true,
-    order: 5
+    showOnHomepage: true,
+    displayOrder: 6,
+    order: 6
+  },
+  {
+    id: 'cat-storage',
+    name: 'Surveillance Storage',
+    slug: 'surveillance-storage',
+    description: 'Western Digital Purple and Seagate SkyHawk 24/7 surveillance hard drives.',
+    image: '/images/products/surveillance-hdd.svg',
+    specTemplateId: 'tpl-generic',
+    featured: true,
+    showOnHomepage: true,
+    displayOrder: 7,
+    order: 7
+  },
+  {
+    id: 'cat-cables',
+    name: 'Cables & Accessories',
+    slug: 'cables-accessories',
+    description: 'Cat6 pure copper cables, waterproof junction boxes, and video baluns.',
+    image: '/images/products/hardware-accessory.svg',
+    specTemplateId: 'tpl-generic',
+    featured: true,
+    showOnHomepage: true,
+    displayOrder: 8,
+    order: 8
+  },
+  {
+    id: 'cat-intercom',
+    name: 'IP Video Intercoms',
+    slug: 'ip-video-intercoms',
+    description: 'Touchscreen multi-apartment indoor stations and door entry intercoms.',
+    image: '/images/products/hikvision-dome.svg',
+    specTemplateId: 'tpl-generic',
+    featured: true,
+    showOnHomepage: true,
+    displayOrder: 9,
+    order: 9
+  },
+  {
+    id: 'cat-power',
+    name: 'Power & Backup Units',
+    slug: 'power-backup-units',
+    description: 'Centralized 12V DC CCTV power supplies, online UPS, and surge protectors.',
+    image: '/images/products/hardware-accessory.svg',
+    specTemplateId: 'tpl-generic',
+    featured: true,
+    showOnHomepage: true,
+    displayOrder: 10,
+    order: 10
   }
 ];
 

@@ -260,8 +260,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       name: '',
       slug: '',
       description: '',
+      image: '',
       specTemplateId: templates[0]?.id || 'tpl-cctv',
       status: 'active',
+      showOnHomepage: true,
       displayOrder: categories.length + 1
     });
     setCategoryModalOpen(true);
@@ -271,14 +273,21 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     if (!editingCategory || !editingCategory.name?.trim()) return;
     const slug = editingCategory.slug?.trim() || editingCategory.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     if (editingCategory.id) {
-      await categoryService.updateCategory(editingCategory.id, { ...editingCategory, slug });
+      await categoryService.updateCategory(editingCategory.id, {
+        ...editingCategory,
+        slug,
+        showOnHomepage: editingCategory.showOnHomepage !== false,
+        image: editingCategory.image || ''
+      });
     } else {
       await categoryService.createCategory({
         name: editingCategory.name,
         slug,
         description: editingCategory.description || '',
+        image: editingCategory.image || '',
         specTemplateId: editingCategory.specTemplateId || templates[0]?.id || 'tpl-cctv',
         status: editingCategory.status || 'active',
+        showOnHomepage: editingCategory.showOnHomepage !== false,
         displayOrder: editingCategory.displayOrder || categories.length + 1,
         subcategories: []
       } as any);
@@ -799,6 +808,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       <th className="p-3.5">Category Name</th>
                       <th className="p-3.5">Slug</th>
                       <th className="p-3.5">Linked Spec Template</th>
+                      <th className="p-3.5 text-center">Homepage</th>
                       <th className="p-3.5">Order</th>
                       <th className="p-3.5">Status</th>
                       <th className="p-3.5 text-right">Actions</th>
@@ -810,7 +820,12 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       return (
                         <tr key={c.id} className="hover:bg-slate-900/40">
                           <td className="p-3.5 font-bold text-white">
-                            <div>{c.name}</div>
+                            <div className="flex items-center gap-2">
+                              {c.image && (
+                                <img src={c.image} alt={c.name} className="w-6 h-6 object-contain rounded bg-slate-800 p-0.5" />
+                              )}
+                              <span>{c.name}</span>
+                            </div>
                             {c.description && <div className="text-[11px] text-slate-500 font-normal line-clamp-1">{c.description}</div>}
                           </td>
                           <td className="p-3.5 font-mono text-slate-400">{c.slug}</td>
@@ -821,7 +836,18 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                               <span className="text-slate-500">None assigned</span>
                             )}
                           </td>
-                          <td className="p-3.5 text-slate-400">{c.displayOrder || 1}</td>
+                          <td className="p-3.5 text-center">
+                            {c.showOnHomepage !== false ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                Yes
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-400">
+                                No
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3.5 text-slate-400 font-medium">#{c.displayOrder || c.order || 1}</td>
                           <td className="p-3.5">
                             <Badge variant={c.status === 'active' ? 'success' : 'gray'}>{c.status || 'active'}</Badge>
                           </td>
@@ -3151,14 +3177,49 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Description</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Category Image URL (Transparent PNG or SVG)</label>
+              <input
+                type="text"
+                value={editingCategory.image || ''}
+                onChange={(e) => setEditingCategory({ ...editingCategory, image: e.target.value })}
+                placeholder="e.g. /images/products/hikvision-bullet.svg"
+                className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+              />
+              <p className="text-[10px] text-slate-500 mt-0.5">
+                Leave empty to use automatic consistent SVG hardware illustration fallback. Never use unrelated stock photos.
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-700">Description (Max 70 chars for 2-line cards)</label>
+                <span className={`text-[10px] font-mono ${(editingCategory.description || '').length > 70 ? 'text-amber-600 font-bold' : 'text-slate-400'}`}>
+                  {(editingCategory.description || '').length}/70
+                </span>
+              </div>
               <textarea
                 rows={2}
+                maxLength={90}
                 value={editingCategory.description || ''}
                 onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
-                placeholder="Summary for catalog category banner and SEO"
+                placeholder="Summary for homepage category card and catalog SEO"
                 className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
               />
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editingCategory.showOnHomepage !== false}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, showOnHomepage: e.target.checked })}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4"
+                />
+                <span className="text-xs font-bold text-slate-800">Show on Homepage Category Grid</span>
+              </label>
+              <p className="text-[10px] text-slate-500 ml-6 mt-0.5">
+                Displays this category in the homepage "Shop by Category" section (at most 8 categories are shown; ordered by Display Order).
+              </p>
             </div>
 
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
