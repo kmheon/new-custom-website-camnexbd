@@ -7,6 +7,7 @@ interface SectionHeaderProps {
   title: string;
   subtitle?: string;
   align?: 'left' | 'center';
+  centered?: boolean;
   actionText?: string;
   onAction?: () => void;
   dark?: boolean;
@@ -19,12 +20,13 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   subtitle,
   align = 'left',
+  centered,
   actionText,
   onAction,
   dark = false,
   className
 }) => {
-  const isCentered = align === 'center';
+  const isCentered = align === 'center' || centered === true;
   const marginClass = className !== undefined ? className : 'mb-8';
 
   return (

@@ -8,17 +8,22 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   isLoading = false,
+  loading = false,
+  fullWidth = false,
   children,
   className = '',
   disabled,
   ...props
 }) => {
+  const isBusy = isLoading || loading;
   const base = 'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
@@ -37,11 +42,11 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
-      disabled={disabled || isLoading}
+      className={`${base} ${fullWidth ? 'w-full' : ''} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={disabled || isBusy}
       {...props}
     >
-      {isLoading && (
+      {isBusy && (
         <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
       )}
       {children}
@@ -53,7 +58,7 @@ export const Button: React.FC<ButtonProps> = ({
 // Badge
 // ----------------------------------------------------------------------------
 export interface BadgeProps {
-  variant?: 'orange' | 'dark' | 'success' | 'warning' | 'info' | 'gray';
+  variant?: 'orange' | 'dark' | 'success' | 'warning' | 'info' | 'gray' | 'danger' | 'yellow';
   children: React.ReactNode;
   className?: string;
 }
@@ -69,7 +74,9 @@ export const Badge: React.FC<BadgeProps> = ({
     success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
     warning: 'bg-amber-50 text-amber-700 border border-amber-200',
     info: 'bg-blue-50 text-blue-700 border border-blue-200',
-    gray: 'bg-slate-100 text-slate-700 border border-slate-200'
+    gray: 'bg-slate-100 text-slate-700 border border-slate-200',
+    danger: 'bg-rose-50 text-rose-700 border border-rose-200',
+    yellow: 'bg-amber-50 text-amber-700 border border-amber-200'
   };
 
   return (
@@ -220,9 +227,11 @@ export const Breadcrumbs: React.FC<{
 // ----------------------------------------------------------------------------
 export const Alert: React.FC<{
   type?: 'info' | 'success' | 'warning' | 'danger';
+  variant?: 'info' | 'success' | 'warning' | 'danger';
   title?: string;
   children: React.ReactNode;
-}> = ({ type = 'info', title, children }) => {
+}> = ({ type, variant, title, children }) => {
+  const effectiveType = variant || type || 'info';
   const styles = {
     info: 'bg-blue-50 border-blue-200 text-blue-900',
     success: 'bg-emerald-50 border-emerald-200 text-emerald-900',
@@ -231,11 +240,11 @@ export const Alert: React.FC<{
   };
 
   return (
-    <div className={`p-4 rounded-xl border flex items-start gap-3 ${styles[type]}`}>
-      {type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />}
-      {type === 'warning' && <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />}
-      {type === 'danger' && <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />}
-      {type === 'info' && <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />}
+    <div className={`p-4 rounded-xl border flex items-start gap-3 ${styles[effectiveType]}`}>
+      {effectiveType === 'success' && <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />}
+      {effectiveType === 'warning' && <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />}
+      {effectiveType === 'danger' && <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />}
+      {effectiveType === 'info' && <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />}
       <div className="text-sm">
         {title && <div className="font-bold mb-0.5">{title}</div>}
         <div>{children}</div>

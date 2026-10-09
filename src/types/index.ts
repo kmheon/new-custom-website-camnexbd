@@ -42,6 +42,7 @@ export type SpecFieldType = 'text' | 'number' | 'boolean' | 'enum' | 'unit';
 export interface SpecFieldDefinition {
   id: string;
   name: string; // e.g. "Resolution", "Night Vision Range"
+  label?: string;
   key: string;  // e.g. "resolution", "night_vision_range"
   type: SpecFieldType;
   unit?: string; // e.g. "MP", "Meters", "Gbps", "Ports"
@@ -101,6 +102,9 @@ export interface Category {
   featured?: boolean;
   showOnHomepage?: boolean;
   order: number;
+  displayOrder?: number;
+  status?: 'active' | 'inactive' | string;
+  subcategories?: any[];
 }
 
 export interface ProductPrice {
@@ -139,6 +143,7 @@ export interface Product {
   brand: string;
   brandId: string;
   modelNumber: string;
+  model?: string;
   sku: string;
   category: string;
   categoryId: string;
@@ -148,16 +153,19 @@ export interface Product {
   websiteVisible: boolean;
   posAvailable: boolean;
   images: string[];
+  gallery?: string[];
   primaryImage: string;
   shortDescription: string;
   description: string;
   keyFeatures: string[];
   specifications: ProductSpecValues;
+  specs?: Record<string, any>;
   pricing: ProductPrice;
   inventory: ProductInventory;
   unit: string; // "Piece", "Meter", "Box", "Set"
   warrantyMonths?: number;
   warrantyText?: string;
+  warranty?: string;
   documents?: ProductDocument[];
   compatibleProductIds?: string[];
   relatedProductIds?: string[];
@@ -190,12 +198,21 @@ export interface SecurityPackage {
   slug: string;
   badge?: string; // "Most Popular", "Best for Small Homes"
   description: string;
-  cameraCountsSupported: number[]; // [2, 4, 8, 16]
-  defaultCameraCount: number;
-  supportedFormFactors: CameraFormFactor[];
-  isNightVisionIrOnly: boolean; // Uses IRPF series, no fake color/audio
-  rules: PackageComponentRule[];
+  image?: string;
+  cameraResolution?: string;
+  cameraModel?: string;
+  dvrModel?: string;
+  storageDescription?: string;
+  inclusions?: string[];
+  cameraCountsSupported?: number[]; // [2, 4, 8, 16]
+  defaultCameraCount?: number;
+  cameraCount?: number;
+  supportedFormFactors?: CameraFormFactor[];
+  isNightVisionIrOnly?: boolean; // Uses IRPF series, no fake color/audio
+  rules?: PackageComponentRule[];
+  pricingRules?: Record<string, any>;
   basePrice?: number;
+  isActive?: boolean;
   isFeatured?: boolean;
   isDemo?: boolean;
 }
@@ -396,9 +413,12 @@ export interface SiteSettings {
   servicesSectionPhoto?: string;
   howItWorks?: {
     enabled: boolean;
+    title?: string;
+    subtitle?: string;
     steps: HowItWorksStep[];
   };
   scenarios?: ScenarioItem[];
+  reassurances?: string[];
 
   // Global SEO Configuration
   seoTitle?: string;
@@ -413,6 +433,7 @@ export interface SiteSettings {
     accountName?: string;
     accountNumber?: string;
     branchName?: string;
+    branch?: string;
     routingNumber?: string;
   } | null;
   deliveryFeeInsideDhaka?: number | null;
@@ -488,24 +509,30 @@ export interface BlogPost {
 export interface ProjectCaseStudy {
   id: string;
   title: string;
-  category: 'Home' | 'Office' | 'Commercial';
-  location: string;
-  systemSummary: string;
-  cameraCount: string;
+  category: 'Home' | 'Office' | 'Commercial' | string;
+  location?: string;
+  description?: string;
+  systemSummary?: string;
+  cameraCount?: string;
   clientQuote?: string;
   clientAuthor?: string;
-  image: string;
+  image?: string;
   isDemo?: boolean;
 }
 
 export interface Testimonial {
   id: string;
-  name: string;
-  role: string;
-  location: string;
-  comment: string;
-  rating: number;
-  verified: boolean;
+  name?: string;
+  clientName?: string;
+  client_name?: string;
+  role?: string;
+  clientRole?: string;
+  company?: string;
+  location?: string;
+  comment?: string;
+  content?: string;
+  rating?: number;
+  verified?: boolean;
   isDemo?: boolean;
 }
 
@@ -543,7 +570,7 @@ export interface ProductResearchResult {
 // ----------------------------------------------------------------------------
 // Hero Slider & Banner Models (Phase 1 Light & Airy Master Slider)
 // ----------------------------------------------------------------------------
-export type HeroSlideBadge = 'New' | 'Featured' | 'Hot';
+export type HeroSlideBadge = 'New' | 'Featured' | 'Hot' | string;
 export type HeroSlideSourceMode = 'manual' | 'product' | 'collection';
 export type HeroCollectionRule = 'newest' | 'featured' | 'hot' | 'category';
 
@@ -601,6 +628,7 @@ export interface HeroSlide {
 
   // Mode 3: Auto Collection
   collectionRule?: HeroCollectionRule;
+  collectionCategoryId?: string;
   categorySlug?: string;
   collectionCount?: number;
 }

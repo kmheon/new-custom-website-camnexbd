@@ -23,12 +23,14 @@ import {
 
 export interface ProductFilterParams {
   categorySlug?: string;
+  category?: string;
   brandSlug?: string;
   minPrice?: number;
   maxPrice?: number;
   search?: string;
   specFilters?: Record<string, string | number | boolean>;
-  sortBy?: 'price_asc' | 'price_desc' | 'name_asc' | 'popular' | 'newest';
+  sortBy?: 'price_asc' | 'price_desc' | 'name_asc' | 'popular' | 'newest' | 'created_at';
+  sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }

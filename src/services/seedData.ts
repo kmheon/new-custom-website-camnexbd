@@ -17,130 +17,6 @@ import {
   ScenarioItem
 } from '../types';
 
-export const INITIAL_SITE_SETTINGS: SiteSettings = {
-  companyName: 'CamneX Bangladesh',
-  phone: '+880 1540-535150',
-  email: 'contact@camnexbd.com',
-  secondaryEmail: 'camnexbd@gmail.com',
-  website: 'https://camnexbd.com',
-  facebookUrl: 'https://facebook.com/camnexbd',
-  youtubeUrl: 'https://youtube.com/@camnexbd',
-  linkedinUrl: 'https://linkedin.com/company/camnexbd',
-  whatsappNumber: '8801540535150',
-  address: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207',
-  credentials: [
-    'Hikvision Authorized Partner',
-    'ZKTeco Authorized Installer'
-  ],
-  services: [
-    'CCTV/video surveillance',
-    'Wi-Fi cameras',
-    'Networking',
-    'IT support and maintenance',
-    'Access control',
-    'Biometrics',
-    'Smart security',
-    'Installation',
-    'Maintenance',
-    'Site survey',
-    'Configuration',
-    'Network deployment',
-    'IT infrastructure'
-  ],
-  businessHours: 'Sat-Thu 9:30 AM - 7:30 PM, Friday on-call',
-  enableStockBadges: true,
-  sampleDataBanner: true,
-  showSampleContent: false,
-  announcementBar: {
-    enabled: false,
-    text: '',
-    link: '',
-    dismissible: true
-  },
-  servicesList: DEFAULT_SERVICES_LIST,
-  processSteps: DEFAULT_PROCESS_STEPS,
-  howItWorks: {
-    enabled: true,
-    steps: DEFAULT_HOW_IT_WORKS
-  },
-  footer: {
-    description: 'Security, surveillance, enterprise networking and IT infrastructure engineering in Dhaka, Bangladesh.',
-    quickLinks: [
-      { label: 'Home', route: 'home' },
-      { label: 'Shop', route: 'catalog' },
-      { label: 'Solutions', route: 'solutions' },
-      { label: 'Services', route: 'services' },
-      { label: 'Installations', route: 'projects' },
-      { label: 'About Us', route: 'about' },
-      { label: 'Contact', route: 'contact' }
-    ],
-    products: [
-      { label: 'CCTV Cameras', route: 'category', param: 'cctv-cameras' },
-      { label: 'IP Cameras', route: 'category', param: 'cctv-cameras' },
-      { label: 'Network Equipment', route: 'category', param: 'network-switches' },
-      { label: 'Access Control', route: 'category', param: 'biometrics-access-control' },
-      { label: 'Time Attendance', route: 'category', param: 'biometrics-access-control' },
-      { label: 'Smart Home', route: 'category', param: 'cctv-cameras' },
-      { label: 'Accessories', route: 'category', param: 'cctv-accessories' }
-    ],
-    customerSupport: [
-      { label: 'Warranty Policy', route: 'warranty' },
-      { label: 'Technical Support', route: 'contact' },
-      { label: 'FAQs', route: 'faq' },
-      { label: 'Track Order', route: 'tracking' },
-      { label: 'Privacy Policy', route: 'privacy' },
-      { label: 'Terms & Conditions', route: 'terms' },
-      { label: 'Refund Policy', route: 'refund' }
-    ],
-    newsletterText: 'Subscribe for engineering updates, new product releases, and security advisories.',
-    copyrightText: '© 2026 CamneX Bangladesh. All Rights Reserved.',
-    developerCredit: 'Designed & Developed by CamneX'
-  },
-  // Real Financial & Policy Settings (EMPTY by default until configured by admin)
-  bkashMerchantNumber: '',
-  nagadMerchantNumber: '',
-  bankDetails: null,
-  deliveryFeeInsideDhaka: null,
-  deliveryFeeOutsideDhaka: null,
-  installationBaseFee: null,
-  enableCashOnDelivery: false,
-  warrantyPolicyText: '',
-  returnPolicyText: '',
-  termsPolicyText: '',
-  privacyPolicyText: ''
-};
-
-export const INITIAL_CTA_DATA = {
-  eyebrow: 'Ready to get started',
-  heading: 'Need Help Choosing the Right Security Solution?',
-  subtext: 'Our specialists are ready to help you choose the perfect CCTV, networking, access control or smart security solution for your home or business.',
-  cards: [
-    {
-      id: 'cta-wa',
-      type: 'whatsapp' as const,
-      title: 'WhatsApp Us',
-      description: 'Chat directly with our Dhaka engineering support desk',
-      actionUrl: 'https://wa.me/8801540535150?text=Hello%20CamneX%20Bangladesh,%20I%20would%20like%20to%20discuss%20a%20security%20solution'
-    },
-    {
-      id: 'cta-call',
-      type: 'call' as const,
-      title: 'Call Now',
-      phoneDisplay: '+880 1540-535150',
-      description: 'Speak directly with a certified security consultant',
-      actionUrl: 'tel:+8801540535150'
-    },
-    {
-      id: 'cta-survey',
-      type: 'survey' as const,
-      title: 'Book Site Visit',
-      description: 'Schedule a physical premise and cable audit',
-      actionUrl: '/quote'
-    }
-  ],
-  reassurances: []
-};
-
 export const DEFAULT_SERVICES_LIST: ServiceItem[] = [
   {
     id: 'srv-cctv',
@@ -239,6 +115,134 @@ export const DEFAULT_HOW_IT_WORKS: HowItWorksStep[] = [
     icon: 'wrench'
   }
 ];
+
+export const DEFAULT_HOW_IT_WORKS_CONFIG = {
+  enabled: true,
+  title: 'How It Works',
+  subtitle: 'Transparent workflow from consultation to post-installation support',
+  steps: DEFAULT_HOW_IT_WORKS
+};
+
+export const INITIAL_SITE_SETTINGS: SiteSettings = {
+  companyName: 'CamneX Bangladesh',
+  phone: '+880 1540-535150',
+  email: 'contact@camnexbd.com',
+  secondaryEmail: 'camnexbd@gmail.com',
+  website: 'https://camnexbd.com',
+  facebookUrl: 'https://facebook.com/camnexbd',
+  youtubeUrl: 'https://youtube.com/@camnexbd',
+  linkedinUrl: 'https://linkedin.com/company/camnexbd',
+  whatsappNumber: '8801540535150',
+  address: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207',
+  credentials: [
+    'Hikvision Authorized Partner',
+    'ZKTeco Authorized Installer'
+  ],
+  services: [
+    'CCTV/video surveillance',
+    'Wi-Fi cameras',
+    'Networking',
+    'IT support and maintenance',
+    'Access control',
+    'Biometrics',
+    'Smart security',
+    'Installation',
+    'Maintenance',
+    'Site survey',
+    'Configuration',
+    'Network deployment',
+    'IT infrastructure'
+  ],
+  businessHours: 'Sat-Thu 9:30 AM - 7:30 PM, Friday on-call',
+  enableStockBadges: true,
+  sampleDataBanner: true,
+  showSampleContent: false,
+  announcementBar: {
+    enabled: false,
+    text: '',
+    link: '',
+    dismissible: true
+  },
+  servicesList: DEFAULT_SERVICES_LIST,
+  processSteps: DEFAULT_PROCESS_STEPS,
+  howItWorks: DEFAULT_HOW_IT_WORKS_CONFIG,
+  footer: {
+    description: 'Security, surveillance, enterprise networking and IT infrastructure engineering in Dhaka, Bangladesh.',
+    quickLinks: [
+      { label: 'Home', route: 'home' },
+      { label: 'Shop', route: 'catalog' },
+      { label: 'Solutions', route: 'solutions' },
+      { label: 'Services', route: 'services' },
+      { label: 'Installations', route: 'projects' },
+      { label: 'About Us', route: 'about' },
+      { label: 'Contact', route: 'contact' }
+    ],
+    products: [
+      { label: 'CCTV Cameras', route: 'category', param: 'cctv-cameras' },
+      { label: 'IP Cameras', route: 'category', param: 'cctv-cameras' },
+      { label: 'Network Equipment', route: 'category', param: 'network-switches' },
+      { label: 'Access Control', route: 'category', param: 'biometrics-access-control' },
+      { label: 'Time Attendance', route: 'category', param: 'biometrics-access-control' },
+      { label: 'Smart Home', route: 'category', param: 'cctv-cameras' },
+      { label: 'Accessories', route: 'category', param: 'cctv-accessories' }
+    ],
+    customerSupport: [
+      { label: 'Warranty Policy', route: 'warranty' },
+      { label: 'Technical Support', route: 'contact' },
+      { label: 'FAQs', route: 'faq' },
+      { label: 'Track Order', route: 'tracking' },
+      { label: 'Privacy Policy', route: 'privacy' },
+      { label: 'Terms & Conditions', route: 'terms' },
+      { label: 'Refund Policy', route: 'refund' }
+    ],
+    newsletterText: 'Subscribe for engineering updates, new product releases, and security advisories.',
+    copyrightText: '© 2026 CamneX Bangladesh. All Rights Reserved.',
+    developerCredit: 'Designed & Developed by CamneX'
+  },
+  // Real Financial & Policy Settings (EMPTY by default until configured by admin)
+  bkashMerchantNumber: '',
+  nagadMerchantNumber: '',
+  bankDetails: null,
+  deliveryFeeInsideDhaka: null,
+  deliveryFeeOutsideDhaka: null,
+  installationBaseFee: null,
+  enableCashOnDelivery: false,
+  warrantyPolicyText: '',
+  returnPolicyText: '',
+  termsPolicyText: '',
+  privacyPolicyText: ''
+};
+
+export const INITIAL_CTA_DATA = {
+  eyebrow: 'Ready to get started',
+  heading: 'Need Help Choosing the Right Security Solution?',
+  subtext: 'Our specialists are ready to help you choose the perfect CCTV, networking, access control or smart security solution for your home or business.',
+  cards: [
+    {
+      id: 'cta-wa',
+      type: 'whatsapp' as const,
+      title: 'WhatsApp Us',
+      description: 'Chat directly with our Dhaka engineering support desk',
+      actionUrl: 'https://wa.me/8801540535150?text=Hello%20CamneX%20Bangladesh,%20I%20would%20like%20to%20discuss%20a%20security%20solution'
+    },
+    {
+      id: 'cta-call',
+      type: 'call' as const,
+      title: 'Call Now',
+      phoneDisplay: '+880 1540-535150',
+      description: 'Speak directly with a certified security consultant',
+      actionUrl: 'tel:+8801540535150'
+    },
+    {
+      id: 'cta-survey',
+      type: 'survey' as const,
+      title: 'Book Site Visit',
+      description: 'Schedule a physical premise and cable audit',
+      actionUrl: '/quote'
+    }
+  ],
+  reassurances: []
+};
 
 export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [
   { id: 'sec-hero', type: 'hero', title: 'Enterprise Hero Banner', enabled: true, order: 1 },

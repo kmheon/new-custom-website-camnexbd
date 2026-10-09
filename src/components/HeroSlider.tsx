@@ -29,7 +29,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check prefers-reduced-motion
   useEffect(() => {

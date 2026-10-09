@@ -49,7 +49,8 @@ import {
 import { useSettingsStore, useAdminAuthStore, useCartStore } from '../store';
 import {
   DEFAULT_SCENARIOS,
-  DEFAULT_HOW_IT_WORKS
+  DEFAULT_HOW_IT_WORKS,
+  DEFAULT_HOW_IT_WORKS_CONFIG
 } from '../services/seedData';
 
 interface HomePageProps {
@@ -310,7 +311,26 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     }
   };
 
-  const howItWorks = settings?.howItWorks || DEFAULT_HOW_IT_WORKS;
+  const howItWorks = React.useMemo(() => {
+    const raw = settings?.howItWorks;
+    if (Array.isArray(raw)) {
+      return {
+        enabled: true,
+        title: 'How It Works',
+        subtitle: 'Transparent workflow from consultation to post-installation support',
+        steps: raw
+      };
+    }
+    if (raw && typeof raw === 'object' && Array.isArray((raw as any).steps)) {
+      return raw as {
+        enabled: boolean;
+        title?: string;
+        subtitle?: string;
+        steps: typeof DEFAULT_HOW_IT_WORKS;
+      };
+    }
+    return DEFAULT_HOW_IT_WORKS_CONFIG;
+  }, [settings?.howItWorks]);
   const phone = settings?.phone || '+880 1540-535150';
   const whatsappNumber = settings?.whatsappNumber || '8801540535150';
   const waUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hello%20CamneX,%20I%20would%20like%20to%20inquire%20about%20a%20security%20system`;
