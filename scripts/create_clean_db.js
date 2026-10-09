@@ -302,6 +302,11 @@ const cleanSiteSettings = {
   enableStockBadges: true,
   sampleDataBanner: false,
   showSampleContent: false,
+  specialOfferSlider: {
+    enabled: true,
+    interval: 5,
+    maxOffers: 5
+  },
   enableCashOnDelivery: false, // Explicitly OFF by default in clean DB
   reassurances: [], // Explicitly empty in clean DB
   bkashMerchantNumber: '',

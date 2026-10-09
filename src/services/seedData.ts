@@ -135,6 +135,11 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
     link: '',
     dismissible: true
   },
+  specialOfferSlider: {
+    enabled: true,
+    interval: 5,
+    maxOffers: 5
+  },
   servicesList: DEFAULT_SERVICES_LIST,
   processSteps: DEFAULT_PROCESS_STEPS,
   footer: {

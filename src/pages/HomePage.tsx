@@ -34,6 +34,7 @@ import { SEO } from '../components/common/SEO';
 import { SectionHeader } from '../components/common/SectionHeader';
 import { ProductRow } from '../components/common/ProductRow';
 import { HeroSlider } from '../components/HeroSlider';
+import { SpecialOfferSlider } from '../components/SpecialOfferSlider';
 import {
   cmsService,
   productService,
@@ -311,7 +312,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     // Fetch all products to identify REAL special offers and Trending items
     productService.getProducts({ limit: 40 }).then((res) => {
       const discounted = res.items.filter(
-        (p) => p.pricing.salePrice && p.pricing.regularPrice && p.pricing.salePrice < p.pricing.regularPrice
+        (p) => p.status === 'active' && p.websiteVisible !== false && p.pricing.salePrice && p.pricing.regularPrice && p.pricing.salePrice < p.pricing.regularPrice
       );
       setSpecialOffers(discounted);
 
@@ -420,12 +421,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // ============================================================================
   const displayedProductIds = new Set<string>();
 
-  // 1. Special Offers claims first (products with genuine salePrice < regularPrice)
-  const dedupSpecialOffers = specialOffers.filter((p) => {
-    if (displayedProductIds.has(p.id)) return false;
-    displayedProductIds.add(p.id);
-    return true;
-  });
+  // 1. Special Offers claims first (products with genuine salePrice < regularPrice, up to maxOffers)
+  const maxSpecialOffers = Math.max(1, settings?.specialOfferSlider?.maxOffers ?? 5);
+  const dedupSpecialOffers = specialOffers
+    .filter((p) => !displayedProductIds.has(p.id))
+    .slice(0, maxSpecialOffers);
+
+  // Mark all active special offer products as displayed to prevent row duplication
+  dedupSpecialOffers.forEach((p) => displayedProductIds.add(p.id));
 
   // 2. Popular Products claims next
   const dedupPopular = popularProducts.filter((p) => {
@@ -619,184 +622,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         />
       )}
 
-      {/* 4. SPECIAL OFFERS (With 1 item: show wide highlighted card; with > 1: show grid) */}
-      {dedupSpecialOffers.length === 1 && (
-        <section className="w-full bg-gradient-to-r from-[#FFF1E8] via-[#FFEADB] to-[#FFE0CC] py-10 md:py-14 border-y border-orange-200/60">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-            <SectionHeader
-              eyebrow="Special Deal"
-              title="Special Offer"
-              subtitle="Promotional pricing on security hardware"
-              actionText="View catalog"
-              onAction={() => onNavigate('catalog')}
-              className="mb-6"
-            />
-            {(() => {
-              const p = dedupSpecialOffers[0];
-              const discountPct = p.pricing.regularPrice && p.pricing.salePrice
-                ? Math.round(((p.pricing.regularPrice - p.pricing.salePrice) / p.pricing.regularPrice) * 100)
-                : 0;
-              const savings = (p.pricing.regularPrice || 0) - (p.pricing.salePrice || 0);
-
-              return (
-                <div className="bg-white rounded-[24px] border border-orange-200/80 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="flex-1 min-w-0 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider bg-red-600 text-white px-2.5 py-0.5 rounded-full">
-                        -{discountPct}% OFF
-                      </span>
-                      <span className="text-xs font-bold text-[#5B6472] uppercase">
-                        {p.brand}
-                      </span>
-                    </div>
-                    <div className="text-xs font-mono text-[#5B6472]">
-                      {p.model}
-                    </div>
-                    <h3
-                      onClick={() => onNavigate('product', p.id)}
-                      className="text-xl sm:text-2xl font-black font-heading text-[#111827] hover:text-[#F15A24] cursor-pointer transition-colors"
-                    >
-                      {p.name}
-                    </h3>
-                    <p className="text-xs text-[#5B6472] max-w-xl line-clamp-2">
-                      {p.shortDescription || p.description}
-                    </p>
-                    <div className="flex items-baseline gap-3 pt-2">
-                      <span className="text-2xl sm:text-3xl font-black text-[#111827] font-heading">
-                        ৳{p.pricing.salePrice?.toLocaleString()}
-                      </span>
-                      <span className="text-sm text-[#5B6472] line-through">
-                        ৳{p.pricing.regularPrice?.toLocaleString()}
-                      </span>
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                        Save ৳{savings.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="pt-2 flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        onClick={() => addItem(p, 1)}
-                        className="min-h-[44px] px-6 py-2.5 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
-                      >
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>Add to cart</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onNavigate('product', p.id)}
-                        className="min-h-[44px] px-6 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[#111827] text-xs font-bold transition-all flex items-center gap-1.5"
-                      >
-                        <span>View details</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    onClick={() => onNavigate('product', p.id)}
-                    className="w-full md:w-80 h-56 bg-gradient-to-b from-[#FFF8F4] to-[#F4EEE6] rounded-2xl flex items-center justify-center p-4 cursor-pointer overflow-hidden shrink-0"
-                  >
-                    <img
-                      src={p.images?.[0] || '/images/hero/hikvision-bullet.jpg'}
-                      alt={p.name}
-                      className="max-h-full max-w-full object-contain mix-blend-multiply hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </section>
-      )}
-
-      {dedupSpecialOffers.length > 1 && (
-        <section className="w-full bg-gradient-to-r from-[#FFF1E8] via-[#FFEADB] to-[#FFE0CC] py-12 md:py-[72px] border-y border-orange-200/60">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-            <SectionHeader
-              eyebrow="Special Deals"
-              title="Special Offers"
-              subtitle="Promotional pricing on security and networking equipment"
-              actionText={`View all deals (${dedupSpecialOffers.length})`}
-              onAction={() => onNavigate('catalog')}
-              className="mb-8"
-            />
-
-            <div className={dedupSpecialOffers.length === 2 ? "flex flex-wrap justify-center gap-5 pt-2" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2"}>
-              {dedupSpecialOffers.slice(0, 4).map((p) => {
-                const discountPct = p.pricing.regularPrice && p.pricing.salePrice
-                  ? Math.round(((p.pricing.regularPrice - p.pricing.salePrice) / p.pricing.regularPrice) * 100)
-                  : 0;
-                const savings = (p.pricing.regularPrice || 0) - (p.pricing.salePrice || 0);
-
-                return (
-                  <div
-                    key={p.id}
-                    className={`bg-white rounded-[20px] border border-orange-200/80 p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group min-w-0 ${
-                      dedupSpecialOffers.length === 2 ? 'w-full max-w-[320px]' : ''
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-red-600 text-white px-2.5 py-0.5 rounded-full shadow-2xs">
-                          -{discountPct}% OFF
-                        </span>
-                        <span className="text-[10px] font-bold text-[#5B6472] uppercase truncate">
-                          {p.brand}
-                        </span>
-                      </div>
-
-                      <div
-                        onClick={() => onNavigate('product', p.id)}
-                        className="bg-gradient-to-b from-[#FFF8F4] to-[#F4EEE6] rounded-2xl h-40 flex items-center justify-center p-3 mb-3 cursor-pointer overflow-hidden"
-                      >
-                        <img
-                          src={p.images?.[0] || '/images/hero/hikvision-bullet.jpg'}
-                          alt={p.name}
-                          className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-
-                      <div className="text-[11px] font-mono font-medium text-[#5B6472] mb-1 line-clamp-1 [overflow-wrap:anywhere] break-words">
-                        {p.model}
-                      </div>
-
-                      <h3
-                        onClick={() => onNavigate('product', p.id)}
-                        className="font-heading font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2 line-clamp-2 cursor-pointer [overflow-wrap:anywhere] break-words"
-                      >
-                        {p.name}
-                      </h3>
-                    </div>
-
-                    <div className="pt-3 border-t border-[#EDE8E1]">
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-xl font-black text-[#111827] font-heading">
-                          ৳{p.pricing.salePrice?.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-[#5B6472] line-through">
-                          ৳{p.pricing.regularPrice?.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="text-[11px] font-bold text-emerald-600 mb-3">
-                        You save ৳{savings.toLocaleString()}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => addItem(p, 1)}
-                        className="w-full min-h-[40px] py-2 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Add to cart</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* 4. SPECIAL OFFERS (Auto-sliding single card with smooth transition & admin controls) */}
+      <SpecialOfferSlider
+        offers={dedupSpecialOffers}
+        onNavigate={onNavigate}
+        onAddToCart={(p) => addItem(p, 1)}
+        sliderConfig={settings?.specialOfferSlider}
+      />
 
       {/* 5. NEW ARRIVALS (Definitive Deduplicated Row on White #FFFFFF) */}
       {dedupNewArrivals.length > 0 && (

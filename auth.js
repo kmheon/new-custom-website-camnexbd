@@ -294,7 +294,13 @@ const schemas = {
     to_path: z.string().min(1, 'Destination path is required')
   }).passthrough(),
 
-  settings: z.record(z.any())
+  settings: z.object({
+    specialOfferSlider: z.object({
+      enabled: z.boolean().optional(),
+      interval: z.coerce.number().int().min(1, 'Slide interval must be at least 1 second').max(60, 'Slide interval cannot exceed 60 seconds').optional(),
+      maxOffers: z.coerce.number().int().min(1, 'Max offers must be at least 1').max(50, 'Max offers cannot exceed 50').optional()
+    }).optional()
+  }).passthrough()
 };
 
 function validateBody(schema) {

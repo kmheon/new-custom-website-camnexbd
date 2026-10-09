@@ -408,6 +408,11 @@ export interface SiteSettings {
     text: string;
     link?: string;
   };
+  specialOfferSlider?: {
+    enabled?: boolean;
+    interval?: number;
+    maxOffers?: number;
+  };
   footer?: FooterNavigationSettings;
   servicesList?: ServiceItem[];
   processSteps?: ProcessStep[];

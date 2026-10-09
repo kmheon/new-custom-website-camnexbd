@@ -104,6 +104,53 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       alert(err.message || 'Failed to delete product');
     }
   };
+
+  // Special Offer Slider & Management State
+  const [quickOfferProductId, setQuickOfferProductId] = useState<string>('');
+  const [quickOfferSalePrice, setQuickOfferSalePrice] = useState<string>('');
+  const [quickOfferError, setQuickOfferError] = useState<string>('');
+
+  const handleApplyQuickOffer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickOfferProductId || !quickOfferSalePrice) {
+      setQuickOfferError('Please select a product and enter a promotional price.');
+      return;
+    }
+    const targetProduct = products.find(p => p.id === quickOfferProductId);
+    if (!targetProduct) return;
+    const saleNum = parseFloat(quickOfferSalePrice);
+    if (isNaN(saleNum) || saleNum <= 0) {
+      setQuickOfferError('Please enter a valid positive sale price.');
+      return;
+    }
+    if (targetProduct.pricing?.regularPrice && saleNum >= targetProduct.pricing.regularPrice) {
+      setQuickOfferError(`Sale price (৳${saleNum}) must be less than regular price (৳${targetProduct.pricing.regularPrice}).`);
+      return;
+    }
+    try {
+      setQuickOfferError('');
+      const updatedPricing = { ...targetProduct.pricing, currency: 'BDT' as const, salePrice: saleNum };
+      await productService.updateProduct(targetProduct.id, { pricing: updatedPricing });
+      const res = await productService.getProducts({ limit: 100 });
+      setProducts(res.items);
+      setQuickOfferProductId('');
+      setQuickOfferSalePrice('');
+    } catch (err: any) {
+      setQuickOfferError(`Failed to apply offer: ${err.message}`);
+    }
+  };
+
+  const handleRemoveOfferFromProduct = async (p: Product) => {
+    if (!confirm(`Remove special offer discount from "${p.name}"?`)) return;
+    try {
+      const updatedPricing = { ...p.pricing, currency: 'BDT' as const, salePrice: undefined };
+      await productService.updateProduct(p.id, { pricing: updatedPricing });
+      const res = await productService.getProducts({ limit: 100 });
+      setProducts(res.items);
+    } catch (err: any) {
+      alert(`Failed to remove offer: ${err.message}`);
+    }
+  };
   
   // Product Creation Assistant State
   const [assistantModalOpen, setAssistantModalOpen] = useState(false);
@@ -1237,6 +1284,22 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           </div>
                         </div>
                       )}
+
+                      {/* SPECIAL OFFERS SLIDER SHORTCUT */}
+                      {s.type === 'special_offers' && (
+                        <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                          <div className="text-slate-400">
+                            Auto-slide: <span className="font-bold text-white">{settings?.specialOfferSlider?.enabled !== false ? 'Enabled' : 'Disabled'}</span> · Interval: <span className="font-bold text-white">{settings?.specialOfferSlider?.interval ?? 5}s</span> · Max: <span className="font-bold text-white">{settings?.specialOfferSlider?.maxOffers ?? 5}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveModule('settings')}
+                            className="text-xs text-[#F15A24] hover:underline font-bold cursor-pointer"
+                          >
+                            Manage Slider & Offers in Settings →
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1489,8 +1552,246 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 <p className="text-xs text-slate-400">Edit company details, business hours, and footer CMS configuration.</p>
               </div>
 
-              {settings && (
-                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 max-w-3xl text-xs">
+              {settings && (() => {
+                const activeSpecialOffers = products.filter(
+                  p => p.status === 'active' && p.websiteVisible !== false && p.pricing?.salePrice && p.pricing?.regularPrice && p.pricing.salePrice < p.pricing.regularPrice
+                );
+                const productsEligibleForOffer = products.filter(
+                  p => p.status === 'active' && p.pricing?.regularPrice && (!p.pricing?.salePrice || p.pricing.salePrice >= p.pricing.regularPrice)
+                );
+
+                return (
+                  <div className="space-y-6 max-w-4xl text-xs">
+                    {/* HOMEPAGE SPECIAL OFFER SLIDER CONTROLLER */}
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-5">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Tag className="w-4 h-4 text-[#F15A24]" />
+                            <h3 className="text-sm font-bold font-heading text-white">
+                              Homepage Special Offer Slider Settings
+                            </h3>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Configure automatic rotation, slide interval, maximum displayed cards, and manage active promotional offers.
+                          </p>
+                        </div>
+                        <Badge variant="orange">
+                          {activeSpecialOffers.length} Active {activeSpecialOffers.length === 1 ? 'Offer' : 'Offers'}
+                        </Badge>
+                      </div>
+
+                      {/* Slider Configuration Controls */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-900/80 rounded-xl border border-slate-800">
+                        <div className="flex items-center justify-between sm:flex-col sm:items-start gap-2">
+                          <div>
+                            <span className="font-bold text-white block text-xs">Automatic Sliding</span>
+                            <span className="text-[11px] text-slate-400">Rotate offers automatically</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={settings.specialOfferSlider?.enabled !== false}
+                              onChange={(e) => updateSettings({
+                                specialOfferSlider: {
+                                  ...(settings.specialOfferSlider || { enabled: true, interval: 5, maxOffers: 5 }),
+                                  enabled: e.target.checked
+                                }
+                              })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F15A24]"></div>
+                          </label>
+                        </div>
+
+                        <div>
+                          <span className="font-bold text-slate-400 block mb-1 text-xs">Slide Interval (seconds)</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={60}
+                            value={settings.specialOfferSlider?.interval ?? 5}
+                            onChange={(e) => updateSettings({
+                              specialOfferSlider: {
+                                ...(settings.specialOfferSlider || { enabled: true, interval: 5, maxOffers: 5 }),
+                                interval: Math.max(1, parseInt(e.target.value) || 5)
+                              }
+                            })}
+                            placeholder="5"
+                            className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs font-mono"
+                          />
+                          <span className="text-[10px] text-slate-500 block mt-1">Default: 5s (Pauses on hover/focus)</span>
+                        </div>
+
+                        <div>
+                          <span className="font-bold text-slate-400 block mb-1 text-xs">Max Offers in Slider</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={50}
+                            value={settings.specialOfferSlider?.maxOffers ?? 5}
+                            onChange={(e) => updateSettings({
+                              specialOfferSlider: {
+                                ...(settings.specialOfferSlider || { enabled: true, interval: 5, maxOffers: 5 }),
+                                maxOffers: Math.max(1, parseInt(e.target.value) || 5)
+                              }
+                            })}
+                            placeholder="5"
+                            className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs font-mono"
+                          />
+                          <span className="text-[10px] text-slate-500 block mt-1">Configurable limit of cards shown</span>
+                        </div>
+                      </div>
+
+                      {/* Active Offers Eligible for Display */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white text-xs">
+                            Active Offers Eligible for Display ({activeSpecialOffers.length})
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            Max {settings.specialOfferSlider?.maxOffers ?? 5} displayed in slider
+                          </span>
+                        </div>
+
+                        {activeSpecialOffers.length === 0 ? (
+                          <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 text-center text-slate-400 text-xs">
+                            No active special offers currently configured. Apply a promotional sale price below to activate an offer on the homepage.
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl bg-slate-900/60 overflow-hidden">
+                            {activeSpecialOffers.map((p, idx) => {
+                              const isWithinMax = idx < (settings.specialOfferSlider?.maxOffers ?? 5);
+                              const discountPct = p.pricing?.regularPrice && p.pricing?.salePrice
+                                ? Math.round(((p.pricing.regularPrice - p.pricing.salePrice) / p.pricing.regularPrice) * 100)
+                                : 0;
+
+                              return (
+                                <div key={p.id} className="p-3 flex items-center justify-between gap-3 hover:bg-slate-900 transition flex-wrap sm:flex-nowrap">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <img
+                                      src={p.primaryImage || '/images/hero/hikvision-bullet.jpg'}
+                                      alt=""
+                                      className="w-9 h-9 object-contain rounded bg-slate-800 p-1 shrink-0"
+                                    />
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-white truncate text-xs">{p.name}</div>
+                                      <div className="text-[11px] text-slate-400 font-mono">
+                                        {p.brand} · {p.modelNumber}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2.5 shrink-0 ml-auto sm:ml-0">
+                                    <div className="text-right">
+                                      <div className="font-bold text-[#F15A24] text-xs">
+                                        ৳{p.pricing?.salePrice?.toLocaleString()}
+                                      </div>
+                                      <div className="text-[10px] text-slate-500 line-through">
+                                        ৳{p.pricing?.regularPrice?.toLocaleString()}
+                                      </div>
+                                    </div>
+
+                                    <Badge variant="orange">
+                                      -{discountPct}%
+                                    </Badge>
+
+                                    <Badge variant={isWithinMax ? 'success' : 'warning'}>
+                                      {isWithinMax ? `Slot #${idx + 1}` : 'Queued'}
+                                    </Badge>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenProductEdit(p)}
+                                      className="text-xs text-amber-400 hover:text-amber-300 font-semibold px-2 py-1 cursor-pointer"
+                                    >
+                                      Edit
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveOfferFromProduct(p)}
+                                      className="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 cursor-pointer"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Quick Add Offer from Existing Catalog */}
+                      <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
+                        <span className="font-bold text-slate-300 block text-xs">
+                          + Add Special Offer from Existing Products
+                        </span>
+                        <form onSubmit={handleApplyQuickOffer} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                          <div className="sm:col-span-6">
+                            <label className="text-[11px] text-slate-400 block mb-1">Select Catalog Product</label>
+                            <select
+                              value={quickOfferProductId}
+                              onChange={(e) => {
+                                setQuickOfferProductId(e.target.value);
+                                setQuickOfferError('');
+                              }}
+                              className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs"
+                            >
+                              <option value="">-- Choose a product to discount --</option>
+                              {productsEligibleForOffer.map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} ({p.brand}) - Reg: ৳{p.pricing?.regularPrice?.toLocaleString()}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-3">
+                            <label className="text-[11px] text-slate-400 block mb-1">Promotional Sale Price (৳)</label>
+                            <input
+                              type="number"
+                              value={quickOfferSalePrice}
+                              onChange={(e) => {
+                                setQuickOfferSalePrice(e.target.value);
+                                setQuickOfferError('');
+                              }}
+                              placeholder="e.g. 1950"
+                              className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs font-mono font-bold text-emerald-400"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-3 flex gap-2">
+                            <Button
+                              type="submit"
+                              size="sm"
+                              className="w-full bg-[#F15A24] hover:bg-[#D94D1C] text-white"
+                            >
+                              Apply Offer
+                            </Button>
+                          </div>
+                        </form>
+
+                        {quickOfferError && (
+                          <p className="text-xs text-rose-400 font-semibold">{quickOfferError}</p>
+                        )}
+
+                        <div className="pt-2 border-t border-slate-800 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={handleOpenProductCreate}
+                            className="text-xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Create new discounted product from scratch</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Standard Site Settings Form */}
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <span className="font-bold text-slate-400 block mb-1">Company Name</span>
@@ -1898,7 +2199,9 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            );
+          })()}
             </div>
           )}
 
