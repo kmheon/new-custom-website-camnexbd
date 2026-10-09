@@ -5,38 +5,38 @@ export const WhyCamnex: React.FC = () => {
   const points = [
     {
       title: 'No Gray Market Hardware',
-      subtitle: '100% Genuine with Official Serial Numbers',
-      desc: 'Many local shops sell refurbished or cloned cameras with blocked cloud firmware. Every CamneX unit comes direct from authorized Bangladesh distributors with verified serial numbers and official brand warranties.',
+      subtitle: 'Genuine Hardware with Serial Numbers',
+      desc: 'Every CamneX unit is sourced from authorized Bangladesh channels with verified serial numbers and brand warranties.',
       icon: <ShieldCheck className="w-6 h-6 text-[#F25C2A]" />
     },
     {
       title: 'Concealed Wiring Standard',
-      subtitle: 'We Refuse to Leave Messy Wires on Walls',
-      desc: 'No scotch tape, no dangling wires, and no loose connections across your living room or office reception. We use neat PVC conduits, concealed wall channels, and waterproof junction boxes.',
+      subtitle: 'Structured Cable Management',
+      desc: 'No dangling wires across your room or office reception. We use neat PVC conduits, concealed wall channels, and waterproof junction boxes.',
       icon: <Sparkles className="w-6 h-6 text-blue-600" />
     },
     {
       title: 'Local Dhaka Support Desk',
-      subtitle: 'Physically Based in Dhaka with Field Techs',
-      desc: 'Not an anonymous Facebook page or unreachable call center. Our technical operations office is located in Dhanmondi, Dhaka with field vans and certified technicians ready to service your system.',
+      subtitle: 'Physically Based in Dhaka',
+      desc: 'Our technical operations office is located in Dhaka with field support ready to service your installations.',
       icon: <MapPin className="w-6 h-6 text-emerald-600" />
     },
     {
-      title: 'Mobile App That Actually Works',
+      title: 'Mobile App Configuration',
       subtitle: 'Hik-Connect & DMSS Configured on All Devices',
-      desc: 'We configure real-time streaming on your iPhone, Android, iPad, and PC. We handle your router port-mapping, set up intrusion push notifications, and train your staff or family members.',
+      desc: 'We configure real-time streaming on your smartphone and PC, set up push notifications, and verify remote connectivity.',
       icon: <Smartphone className="w-6 h-6 text-purple-600" />
     },
     {
-      title: 'Transparent Pricing Guarantee',
-      subtitle: 'Zero Hidden Per-Meter Cable Surprises',
-      desc: 'Common shady contractors quote low, then bill triple for cables, screws, and power pins. CamneX provides comprehensive itemized quotes before we turn a single screw. What we quote is what you pay.',
+      title: 'Itemized Quotations',
+      subtitle: 'Clear Bill of Materials',
+      desc: 'CamneX provides comprehensive itemized quotes before installation begins. What we quote is what you pay.',
       icon: <Receipt className="w-6 h-6 text-amber-600" />
     },
     {
-      title: 'Free On-Site Survey in Dhaka',
-      subtitle: 'No Obligation Engineer Property Inspection',
-      desc: 'Blind spots cannot be guessed over the phone. A certified engineer visits your property anywhere in Dhaka to measure angles, check lighting, and formulate the exact camera layout for free.',
+      title: 'On-Site Survey in Dhaka',
+      subtitle: 'Engineer Premise Inspection',
+      desc: 'An engineer visits your property in Dhaka to measure angles, evaluate lighting, and design the camera layout.',
       icon: <Compass className="w-6 h-6 text-teal-600" />
     }
   ];

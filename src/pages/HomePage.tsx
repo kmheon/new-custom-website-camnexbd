@@ -233,7 +233,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const howItWorks = settings?.howItWorks || DEFAULT_HOW_IT_WORKS;
   const phone = settings?.phone || '+880 1540-535150';
   const whatsappNumber = settings?.whatsappNumber || '8801540535150';
-  const waUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hello%20CamneX,%20I%20would%20like%20to%20consult%20about%20a%20security%20system`;
+  const waUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hello%20CamneX,%20I%20would%20like%20to%20inquire%20about%20a%20security%20system`;
+
+  const configuredReassurances = settings?.reassurances
+    ? (settings.reassurances as any[]).filter(r => r && r.enabled).map(r => r.label)
+    : [];
+  const reassuranceItems = configuredReassurances.length > 0
+    ? configuredReassurances
+    : ['Inquiry support', 'On-site survey', 'Itemized quotation', 'Hardware warranty'];
 
   // Helper for Category image fallback
   const handleCatImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -363,218 +370,223 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* 3. SHOP BY SCENARIO (Definitive Section: Full-Width Soft Band #F4EEE6) */}
-      <section className="w-full bg-[#F4EEE6] py-14 md:py-20 border-y border-[#EDE8E1]">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            eyebrow="Tailored Engineering"
-            title="Shop by Scenario"
-            subtitle="Recommended turnkey surveillance and networking setups engineered for specific deployment environments"
-            centered
-          />
+      {scenarios.length > 1 && (
+        <section className="w-full bg-[#F4EEE6] py-14 md:py-20 border-y border-[#EDE8E1]">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionHeader
+              eyebrow="Tailored Engineering"
+              title="Shop by Scenario"
+              subtitle="Recommended turnkey surveillance and networking setups engineered for specific deployment environments"
+              centered
+            />
 
-          {/* 4-6 Large Scenario Tiles */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-            {scenarios.map((scenario) => (
-              <div
-                key={scenario.id}
-                onClick={() => onNavigate('solutions', scenario.slug)}
-                className="bg-white rounded-[24px] border border-[#EDE8E1] p-6 sm:p-7 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between"
-              >
-                <div>
-                  {/* Large Line Icon on Soft Circle */}
-                  <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                    {renderScenarioIcon(scenario.iconName)}
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-heading font-bold text-lg text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2">
-                    {scenario.title}
-                  </h3>
-
-                  {/* 1-Line Description */}
-                  <p className="text-xs text-[#5B6472] leading-relaxed line-clamp-2 mb-4">
-                    {scenario.description}
-                  </p>
-
-                  {/* "Recommended" Chips pointing to real categories/packages/products */}
-                  {scenario.recommendedCategories && scenario.recommendedCategories.length > 0 && (
-                    <div className="space-y-1.5 pt-2 border-t border-[#EDE8E1]/80 mb-4">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
-                        Recommended Setup:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {scenario.recommendedCategories.slice(0, 3).map((catSlug) => (
-                          <span
-                            key={catSlug}
-                            className="text-[10px] font-medium bg-[#FAF7F2] text-[#111827] border border-[#EDE8E1] px-2 py-0.5 rounded-full capitalize"
-                          >
-                            {catSlug.replace(/-/g, ' ')}
-                          </span>
-                        ))}
-                      </div>
+            {/* Large Scenario Tiles (centered if < 3 items) */}
+            <div className={scenarios.length === 2 ? "flex flex-wrap justify-center gap-6 pt-2" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2"}>
+              {scenarios.map((scenario) => (
+                <div
+                  key={scenario.id}
+                  onClick={() => onNavigate('solutions', scenario.slug)}
+                  className={`bg-white rounded-[24px] border border-[#EDE8E1] p-6 sm:p-7 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between ${
+                    scenarios.length === 2 ? 'w-full max-w-[380px]' : ''
+                  }`}
+                >
+                  <div>
+                    {/* Large Line Icon on Soft Circle */}
+                    <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                      {renderScenarioIcon(scenario.iconName)}
                     </div>
-                  )}
-                </div>
 
-                {/* Explore Scenario Link */}
-                <div className="pt-3 border-t border-[#EDE8E1] flex items-center justify-between text-xs font-bold text-[#F15A24]">
-                  <span>Explore Scenario</span>
-                  <div className="w-7 h-7 rounded-full bg-orange-50 text-[#F15A24] group-hover:bg-[#F15A24] group-hover:text-white flex items-center justify-center transition-colors">
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+                    {/* Title */}
+                    <h3 className="font-heading font-bold text-lg text-[#111827] group-hover:text-[#F15A24] transition-colors mb-2">
+                      {scenario.title}
+                    </h3>
 
-      {/* 4. CCTV PACKAGE SELECTOR (Definitive Section: Full-Width Band #FAF7F2) */}
-      <section className="w-full bg-[#FAF7F2] py-14 md:py-20">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            eyebrow="Turnkey Bundles"
-            title="Complete CCTV Packages"
-            subtitle="Configurable camera kits with genuine storage, wiring, and certified technician installation"
-            actionText="All packages"
-            onAction={() => onNavigate('packages')}
-          />
+                    {/* 1-Line Description (no mid-sentence ellipsis) */}
+                    <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
+                      {scenario.description}
+                    </p>
 
-          {/* Camera Count Tabs & Type Chips */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-            {/* Camera Count Tabs (2 / 4 / 8 / 16 / All) */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-full border border-[#EDE8E1] shadow-2xs">
-              {['All', '2 Camera', '4 Camera', '8 Camera', '16 Camera'].map((tab) => {
-                const isActive = packageCountFilter === tab;
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setPackageCountFilter(tab)}
-                    className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
-                      isActive
-                        ? 'bg-[#F15A24] text-white shadow-xs'
-                        : 'text-[#5B6472] hover:text-[#111827]'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Type Chips */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {['All Types', 'Bullet Series', 'Dome Series', 'PoE IP Systems'].map((chip) => {
-                const isActive = packageTypeFilter === chip;
-                return (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() => setPackageTypeFilter(chip)}
-                    className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
-                      isActive
-                        ? 'bg-[#141210] text-white'
-                        : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
-                    }`}
-                  >
-                    {chip}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Package Cards Grid (4 across desktop) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {displayPackages.map((pkg) => (
-              <div
-                key={pkg.id}
-                className="bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all h-full group"
-              >
-                <div>
-                  {/* Package Kit Image or Crisp Vector SVG Kit Fallback */}
-                  <div className="mb-4 overflow-hidden rounded-2xl">
-                    {pkg.image ? (
-                      <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
-                        <img
-                          src={pkg.image}
-                          alt={pkg.name}
-                          className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
+                    {/* "Recommended" Chips pointing to real categories/packages/products */}
+                    {scenario.recommendedCategories && scenario.recommendedCategories.length > 0 && (
+                      <div className="space-y-1.5 pt-2 border-t border-[#EDE8E1]/80 mb-4">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
+                          Recommended Setup:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {scenario.recommendedCategories.slice(0, 3).map((catSlug) => (
+                            <span
+                              key={catSlug}
+                              className="text-[10px] font-medium bg-[#FAF7F2] text-[#111827] border border-[#EDE8E1] px-2 py-0.5 rounded-full capitalize"
+                            >
+                              {catSlug.replace(/-/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    ) : (
-                      <CctvKitSvgFallback />
                     )}
                   </div>
 
-                  {/* Manual Admin Tag Ribbon / Badge */}
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
-                      {pkg.badge || 'Complete Kit'}
-                    </span>
-                    <span className="text-[11px] font-bold text-[#5B6472]">
-                      Genuine Kit
-                    </span>
-                  </div>
-
-                  {/* Title & Description */}
-                  <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
-                    {pkg.name}
-                  </h3>
-                  <p className="text-xs text-[#5B6472] leading-relaxed mb-4 line-clamp-2">
-                    {pkg.description}
-                  </p>
-
-                  {/* Real Component Models Checklist */}
-                  <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                      <span className="line-clamp-1 font-mono text-[11px]">Hikvision DS-2CE16D0T-IRPF (2MP)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                      <span className="line-clamp-1 font-mono text-[11px]">WD Purple Surveillance HDD</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                      <span className="line-clamp-1">Pure Copper Cat6 Cabling</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                      <span className="line-clamp-1">Hik-Connect Smartphone App Live View</span>
+                  {/* Explore Scenario Link */}
+                  <div className="pt-3 border-t border-[#EDE8E1] flex items-center justify-between text-xs font-bold text-[#F15A24]">
+                    <span>Explore Scenario</span>
+                    <div className="w-7 h-7 rounded-full bg-orange-50 text-[#F15A24] group-hover:bg-[#F15A24] group-hover:text-white flex items-center justify-center transition-colors">
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
                 </div>
-
-                {/* Price & Action Button */}
-                <div>
-                  <div className="mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
-                      Starting From
-                    </span>
-                    <div className="text-xl font-black text-[#111827] font-heading">
-                      {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('packages', pkg.slug)}
-                    className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                  >
-                    <span>Configure Package</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* 4. CCTV PACKAGE SELECTOR (Definitive Section: Full-Width Band #FAF7F2) */}
+      {displayPackages.length > 1 && (
+        <section className="w-full bg-[#FAF7F2] py-14 md:py-20">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionHeader
+              eyebrow="Turnkey Bundles"
+              title="Complete CCTV Packages"
+              subtitle="Configurable camera kits with storage, wiring, and professional installation options"
+              actionText="All packages"
+              onAction={() => onNavigate('packages')}
+            />
+
+            {/* Camera Count Tabs & Type Chips */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+              {/* Camera Count Tabs (2 / 4 / 8 / 16 / All) */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-full border border-[#EDE8E1] shadow-2xs">
+                {['All', '2 Camera', '4 Camera', '8 Camera', '16 Camera'].map((tab) => {
+                  const isActive = packageCountFilter === tab;
+                  return (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setPackageCountFilter(tab)}
+                      className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
+                        isActive
+                          ? 'bg-[#F15A24] text-white shadow-xs'
+                          : 'text-[#5B6472] hover:text-[#111827]'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Type Chips */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {['All Types', 'Bullet Series', 'Dome Series', 'PoE IP Systems'].map((chip) => {
+                  const isActive = packageTypeFilter === chip;
+                  return (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setPackageTypeFilter(chip)}
+                      className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
+                        isActive
+                          ? 'bg-[#141210] text-white'
+                          : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
+                      }`}
+                    >
+                      {chip}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Package Cards Grid (centered if < 3 items) */}
+            <div className={displayPackages.length === 2 ? "flex flex-wrap justify-center gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"}>
+              {displayPackages.map((pkg) => (
+                <div
+                  key={pkg.id}
+                  className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all h-full group ${
+                    displayPackages.length === 2 ? 'w-full max-w-[360px]' : ''
+                  }`}
+                >
+                  <div>
+                    {/* Package Kit Image or Crisp Vector SVG Kit Fallback */}
+                    <div className="mb-4 overflow-hidden rounded-2xl">
+                      {pkg.image ? (
+                        <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
+                          <img
+                            src={pkg.image}
+                            alt={pkg.name}
+                            className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <CctvKitSvgFallback />
+                      )}
+                    </div>
+
+                    {/* Manual Admin Tag Ribbon / Badge */}
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
+                        {pkg.badge || 'Complete Kit'}
+                      </span>
+                      <span className="text-[11px] font-bold text-[#5B6472]">
+                        Hardware Kit
+                      </span>
+                    </div>
+
+                    {/* Title & Description */}
+                    <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
+                      {pkg.description}
+                    </p>
+
+                    {/* Real Component Models Checklist */}
+                    <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
+                      {pkg.rules && pkg.rules.length > 0 ? (
+                        pkg.rules.slice(0, 4).map((rule: any, rIdx: number) => (
+                          <div key={rIdx} className="flex items-center gap-2">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                            <span className="line-clamp-1 font-mono text-[11px]">{rule.name}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex items-center gap-2 text-[#5B6472]">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#5B6472] shrink-0" />
+                          <span className="text-[11px]">Components to be confirmed</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Price & Action Button */}
+                  <div>
+                    <div className="mb-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
+                        Starting From
+                      </span>
+                      <div className="text-xl font-black text-[#111827] font-heading">
+                        {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('packages', pkg.slug)}
+                      className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      <span>Configure Package</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 5. SERVICES: QUICK SERVICE REQUEST (Definitive Short surface-dark Band #141210) */}
       <section className="w-full bg-[#141210] text-white py-12 md:py-16">
@@ -771,7 +783,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       )}
 
       {/* 8. SPECIAL OFFERS (Definitive Section: Full-Width Warm Orange-Tint Gradient) */}
-      {specialOffers.length > 0 && (
+      {specialOffers.length > 1 && (
         <section className="w-full bg-gradient-to-r from-[#FFF1E8] via-[#FFEADB] to-[#FFE0CC] py-14 md:py-20 border-y border-orange-200/60">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
@@ -782,7 +794,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               onAction={() => onNavigate('catalog')}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
+            <div className={specialOffers.length === 2 ? "flex flex-wrap justify-center gap-5 pt-2" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2"}>
               {specialOffers.slice(0, 4).map((p) => {
                 const discountPct = p.pricing.regularPrice && p.pricing.salePrice
                   ? Math.round(((p.pricing.regularPrice - p.pricing.salePrice) / p.pricing.regularPrice) * 100)
@@ -792,7 +804,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 return (
                   <div
                     key={p.id}
-                    className="bg-white rounded-[20px] border border-orange-200/80 p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                    className={`bg-white rounded-[20px] border border-orange-200/80 p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group ${
+                      specialOffers.length === 2 ? 'w-full max-w-[320px]' : ''
+                    }`}
                   >
                     <div>
                       {/* Badge Row: Bold -X% Badge & Brand Chip */}
@@ -917,7 +931,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 11. PROOF SECTIONS (Testimonials & Projects) */}
       {/* Testimonials */}
-      {testimonials.length > 0 ? (
+      {testimonials.length > 1 ? (
         <section className="w-full bg-[#FAF7F2] py-14 md:py-20">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
@@ -925,11 +939,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               title="Verified Client Feedback"
               subtitle="Real deployment feedback from commercial and residential project owners"
             />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={testimonials.length === 2 ? "flex flex-wrap justify-center gap-6" : "grid grid-cols-1 md:grid-cols-3 gap-6"}>
               {testimonials.map((t) => (
                 <div
                   key={t.id}
-                  className="bg-white rounded-[20px] border border-[#EDE8E1] p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                  className={`bg-white rounded-[20px] border border-[#EDE8E1] p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
+                    testimonials.length === 2 ? 'w-full max-w-[380px]' : ''
+                  }`}
                 >
                   <div>
                     <div className="flex items-center gap-1 text-amber-400 mb-3">
@@ -968,7 +984,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       ) : null}
 
       {/* Projects */}
-      {projects.length > 0 ? (
+      {projects.length > 1 ? (
         <section className="w-full bg-white py-14 md:py-20 border-y border-[#EDE8E1]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
@@ -978,12 +994,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               actionText="View all projects"
               onAction={() => onNavigate('projects')}
             />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={projects.length === 2 ? "flex flex-wrap justify-center gap-6" : "grid grid-cols-1 md:grid-cols-3 gap-6"}>
               {projects.map((p) => (
                 <div
                   key={p.id}
                   onClick={() => onNavigate('projects')}
-                  className="bg-white rounded-[20px] border border-[#EDE8E1] overflow-hidden shadow-xs hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                  className={`bg-white rounded-[20px] border border-[#EDE8E1] overflow-hidden shadow-xs hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between ${
+                    projects.length === 2 ? 'w-full max-w-[380px]' : ''
+                  }`}
                 >
                   <div className="h-44 bg-slate-100 overflow-hidden relative">
                     <img
@@ -1001,7 +1019,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <h3 className="font-heading font-bold text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors mb-1 line-clamp-1">
                       {p.title}
                     </h3>
-                    <p className="text-xs text-[#5B6472] line-clamp-2">
+                    <p className="text-xs text-[#5B6472] leading-relaxed">
                       {p.description}
                     </p>
                   </div>
@@ -1044,7 +1062,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
             {/* White 90% Subtext */}
             <p className="text-base sm:text-lg text-white/90 max-w-2xl mx-auto font-normal leading-relaxed">
-              Our certified technicians perform on-site surveys and provide transparent quotations across Dhaka and nationwide.
+              Our engineering team performs on-site surveys and provides itemized quotations across Dhaka.
             </p>
           </div>
 
@@ -1083,22 +1101,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
           {/* Reassurance Row Below */}
           <div className="relative z-10 border-t border-white/20 pt-6 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 sm:gap-x-10 text-xs sm:text-sm font-medium text-white/95">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-              <span>Authorized Hikvision & ZKTeco Partner</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-              <span>Genuine Warranty with Serial Tracking</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-              <span>Concealed Trunking & Neat Cabling</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-              <span>Free Mobile Viewing Setup</span>
-            </div>
+            {reassuranceItems.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>

@@ -130,15 +130,21 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
     }
   };
 
-  if (slides.length === 0) {
-    return (
-      <section className="bg-[#FAF7F2] min-h-[520px] flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-[#F15A24] border-t-transparent rounded-full animate-spin"></div>
-      </section>
-    );
-  }
+const FALLBACK_SLIDE: HeroSlide = {
+  id: 'slide-fallback',
+  title: 'Professional Security Hardware',
+  headline: 'Commercial Security & Network Hardware',
+  description: 'Enterprise CCTV surveillance, biometric access control, and structured networking equipment with professional installation.',
+  image: '/images/hero/hikvision-bullet.png',
+  buttonText: 'Shop Catalog',
+  buttonLink: '/catalog',
+  badge: 'Hardware Solutions',
+  enabled: true,
+  order: 1,
+  sourceMode: 'manual'
+};
 
-  const currentSlide = slides[currentIndex];
+  const currentSlide = slides.length > 0 ? slides[currentIndex] : FALLBACK_SLIDE;
   const primaryHighlight = currentSlide.highlights?.[0];
 
   return (
@@ -194,8 +200,18 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
                 </div>
               )}
 
-              {/* Big Bold H1 (56-64px desktop) */}
-              <h1 className="text-3xl sm:text-4xl lg:text-[54px] xl:text-[60px] font-black font-heading text-[#111827] leading-[1.08] tracking-tight">
+              {/* Big Bold H1 (clamp(34px, 5vw, 60px), line-height >= 1.1, max 2 lines clean wrapping, no overlap) */}
+              <h1
+                style={{
+                  fontSize: (currentSlide.headline && currentSlide.headline.length > 38)
+                    ? 'clamp(32px, 3.2vw, 36px)'
+                    : (currentSlide.headline && currentSlide.headline.length > 25)
+                    ? 'clamp(34px, 4vw, 44px)'
+                    : 'clamp(34px, 5vw, 60px)',
+                  lineHeight: 1.18
+                }}
+                className="font-black font-heading text-[#111827] tracking-tight line-clamp-2 overflow-hidden break-words"
+              >
                 {currentSlide.headline}
               </h1>
 
@@ -234,7 +250,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
                   onClick={() => onNavigate('quote')}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-7 py-3 rounded-full bg-white hover:bg-slate-50 text-[#111827] border border-[#EDE8E1] font-bold text-sm shadow-2xs transition-all"
                 >
-                  <span>Get free quote</span>
+                  <span>Get Quote</span>
                 </button>
 
               </div>
@@ -243,7 +259,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
 
             {/* RIGHT COLUMN: Transparent Floating Product & Frosted Glass Mini-Cards */}
             <div className="w-full lg:w-[50%] flex flex-col items-center justify-center relative">
-              <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[520px] flex flex-col items-center justify-center group">
+              <div className="relative w-full max-w-[480px] sm:max-w-[540px] lg:max-w-[580px] flex flex-col items-center justify-center group">
                 
                 {/* Overlapping Frosted Glass Chip (Top Right) - Only if real highlight exists */}
                 {primaryHighlight && (
@@ -254,16 +270,17 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
                   </div>
                 )}
 
-                {/* Transparent Product Image: NO box, NO border */}
-                <div className="relative w-full h-[280px] sm:h-[340px] lg:h-[400px] flex items-center justify-center">
+                {/* Transparent Product Image: NO box, NO border, floats directly on hero background */}
+                <div className="relative w-full h-[300px] sm:h-[380px] lg:h-[440px] flex items-center justify-center bg-transparent border-0 shadow-none">
                   <img
+                    id="hero-product-image"
                     key={currentSlide.id}
-                    src={currentSlide.image || '/images/hero/hikvision-bullet.jpg'}
+                    src={currentSlide.image || '/images/hero/hikvision-bullet.png'}
                     alt={currentSlide.headline || 'Product Hardware'}
                     loading={currentIndex === 0 ? 'eager' : 'lazy'}
                     decoding="async"
-                    style={{ mixBlendMode: 'multiply' }}
-                    className={`max-w-full max-h-full object-contain filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.12)] transition-all duration-700 ease-out ${
+                    style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                    className={`max-w-full max-h-full object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.12)] transition-all duration-700 ease-out ${
                       reducedMotion ? '' : 'motion-safe:hover:-translate-y-1'
                     }`}
                   />
@@ -289,7 +306,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
                 {/* Ground Shadow */}
                 <div
                   aria-hidden="true"
-                  className="w-3/4 max-w-[320px] h-4 bg-black/15 blur-md rounded-[100%] mx-auto mt-[-10px] pointer-events-none"
+                  className="w-3/4 max-w-[360px] h-4 bg-black/15 blur-md rounded-[100%] mx-auto mt-[-10px] pointer-events-none"
                 />
 
               </div>

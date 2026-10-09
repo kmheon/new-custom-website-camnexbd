@@ -419,7 +419,7 @@ export class MockPackageService implements IPackageService {
       { role: 'camera', sku: camSku, qty: count, fallback: `Hikvision 2MP ${ff.toUpperCase()} Camera` },
       { role: 'recorder', sku: dvrSku, qty: 1, fallback: `Hikvision Turbo HD DVR (${count > 8 ? '16-Ch' : count > 4 ? '8-Ch' : '4-Ch'})` },
       { role: 'storage', sku: hddSku, qty: 1, fallback: `Western Digital Purple Surveillance HDD (${count >= 16 ? '2TB' : count >= 8 ? '1TB' : '500GB'})` },
-      { role: 'cable', sku: 'cable-cat6', qty: cableMeters, fallback: `Pure Copper Cat6 UTP Cable (${cableMeters}m)` },
+      { role: 'cable', sku: 'cable-cat6', qty: cableMeters, fallback: `Cat6 UTP Cable (${cableMeters}m)` },
       { role: 'power', sku: powerSku, qty: 1, fallback: 'Centralized 12V Regulated DC Power Supply Unit' },
       { role: 'connectors', sku: 'acc-balun', qty: count, fallback: `HD Video Baluns & DC Connectors (${count} Sets)` }
     ];

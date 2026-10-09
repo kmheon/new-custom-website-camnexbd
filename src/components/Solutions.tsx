@@ -71,7 +71,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
                 </div>
                 <div className="flex items-start gap-2 text-sm text-slate-200">
                   <Check className="w-4 h-4 text-[#F25C2A] mt-0.5 flex-shrink-0" />
-                  <span>Surveillance-Grade WD Purple HDD</span>
+                  <span>Surveillance-Grade HDD</span>
                 </div>
                 <div className="flex items-start gap-2 text-sm text-slate-200">
                   <Check className="w-4 h-4 text-[#F25C2A] mt-0.5 flex-shrink-0" />

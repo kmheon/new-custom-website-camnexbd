@@ -251,7 +251,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   className="w-full flex items-center justify-between text-left md:pointer-events-none pb-2 border-b border-white/10 md:border-none"
                 >
                   <span className="text-xs font-bold uppercase tracking-wider text-white">
-                    Hardware
+                    Products
                   </span>
                   <ChevronDown className={`w-4 h-4 text-slate-400 md:hidden transition-transform ${openAccordions.products ? 'rotate-180 text-[#F15A24]' : ''}`} />
                 </button>
@@ -277,7 +277,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   className="w-full flex items-center justify-between text-left md:pointer-events-none pb-2 border-b border-white/10 md:border-none"
                 >
                   <span className="text-xs font-bold uppercase tracking-wider text-white">
-                    Support & SLA
+                    Support
                   </span>
                   <ChevronDown className={`w-4 h-4 text-slate-400 md:hidden transition-transform ${openAccordions.support ? 'rotate-180 text-[#F15A24]' : ''}`} />
                 </button>

@@ -11,8 +11,8 @@ let inMemoryCsrfToken: string | null = null;
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
     const { protocol, hostname, port } = window.location;
-    // When served via Live Server (:5500) or other frontend dev ports, route to Express on port 3000
-    if (port && port !== '3000') {
+    // Only route to Express on port 3000 when served via external static dev servers (e.g. Live Server :5500 or Vite :5173)
+    if (port === '5500' || port === '5173') {
       const targetHost = hostname === '0.0.0.0' ? 'localhost' : hostname;
       return `${protocol}//${targetHost}:3000/api`;
     }

@@ -122,7 +122,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
               Interactive CCTV Package Builder
             </h1>
             <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Build your customized system with genuine hardware. Hard drive storage and pure copper Cat6 cable lengths are calculated dynamically using official engineering rules.
+              Build your customized system. Hard drive storage and Cat6 cable lengths are calculated dynamically using engineering rules.
             </p>
           </div>
 
@@ -209,11 +209,11 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
               </span>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5" />
-                <span>Storage rule: 2-4 cams = 500GB, 8 cams = 1TB, 16 cams = 2TB WD Purple HDD.</span>
+                <span>Storage rule: 2-4 cams = 500GB, 8 cams = 1TB, 16 cams = 2TB surveillance HDD.</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5" />
-                <span>Cabling rule: 10 meters of 100% pure copper Cat6 cable per camera.</span>
+                <span>Cabling rule: 10 meters of Cat6 network cable per camera.</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5" />

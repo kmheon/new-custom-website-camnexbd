@@ -327,7 +327,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                       >
                         {prod.name}
                       </h3>
-                      <p className="text-xs text-slate-600 line-clamp-2 mb-4 leading-relaxed">
+                      <p className="text-xs text-slate-600 mb-4 leading-relaxed">
                         {prod.shortDescription}
                       </p>
                     </div>
@@ -345,7 +345,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                           </div>
                         )}
                         <span className="text-[11px] font-semibold text-emerald-600">
-                          Official Warranty
+                          Hardware Warranty
                         </span>
                       </div>
 

@@ -135,24 +135,24 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
               {/* Engineering Standards */}
               <div className="bg-white p-6 sm:p-8 rounded-[24px] border border-[#EDE8E1] space-y-4">
                 <h3 className="font-heading font-bold text-lg text-[#111827]">
-                  Standard SLA & Engineering
+                  Standard Installation & Engineering
                 </h3>
                 <div className="space-y-3 text-xs text-[#5B6472]">
                   <div className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
-                    <span>Concealed PVC pipe trunking without hanging cables</span>
+                    <span>PVC pipe trunking and cabling</span>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
-                    <span>Pure copper Cat6 wiring with waterproof junction boxes</span>
+                    <span>Cat6 network cabling with waterproof junction boxes</span>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
-                    <span>Authorized distributor warranty with serial number tracking</span>
+                    <span>Hardware warranty with serial number record</span>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
-                    <span>Free smartphone live-view setup & NVR playback training</span>
+                    <span>Mobile live-view configuration & NVR playback guidance</span>
                   </div>
                 </div>
               </div>
@@ -523,7 +523,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
               </div>
               <h3 className="font-bold text-base text-[#111827]">Authorized Partnerships</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                We are a recognized <strong>Hikvision Authorized Partner</strong> and <strong>ZKTeco Authorized Installer</strong> in Bangladesh. All hardware supplied through our store and turnkey packages carries genuine manufacturer serial numbers with official warranty registration.
+                We are a recognized <strong>Hikvision Authorized Partner</strong> and <strong>ZKTeco Authorized Installer</strong> in Bangladesh. All hardware supplied through our store and turnkey packages carries genuine manufacturer serial numbers with warranty registration.
               </p>
             </div>
 
@@ -533,7 +533,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
               </div>
               <h3 className="font-bold text-base text-[#111827]">Dhaka Engineering Standards</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Unlike informal traders, CamneX adheres to strict cabling standards. We use 100% pure copper Cat6 cabling run through heavy-duty PVC conduits or interior trunking with waterproof junction boxes, backed by an on-site 1-Year SLA service guarantee.
+                Unlike informal traders, CamneX adheres to strict cabling standards. We use Cat6 cabling run through heavy-duty PVC conduits or interior trunking with waterproof junction boxes, backed by 1-Year warranty service.
               </p>
             </div>
           </div>
@@ -559,17 +559,17 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
   if (type === 'warranty') {
     return (
       <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO title="Warranty & SLA Policy | CamneX Bangladesh" description="Official manufacturer warranty and service policy." />
+        <SEO title="Warranty Policy | CamneX Bangladesh" description="Manufacturer hardware warranty and service policy." />
         <div className="max-w-4xl mx-auto px-4 space-y-8">
           <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Warranty Policy' }]} />
 
           <div className="bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <Badge variant="success">Official Warranty Information</Badge>
+            <Badge variant="success">Warranty Information</Badge>
             <h1 className="text-3xl font-black text-[#111827] font-heading">
-              Warranty & Service SLA Policy
+              Warranty & Service Policy
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Every system supplied by CamneX Bangladesh carries official manufacturer hardware warranty coverage verifiable via authentic serial numbers.
+              Every system supplied by CamneX Bangladesh carries manufacturer hardware warranty coverage verifiable via authentic serial numbers.
             </p>
           </div>
 
@@ -579,7 +579,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
             </div>
           ) : (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-12 text-slate-600 space-y-3">
-              <p className="font-semibold text-slate-800">Official warranty terms are established per equipment model upon quotation and delivery.</p>
+              <p className="font-semibold text-slate-800">Warranty terms are established per equipment model upon quotation and delivery.</p>
               <p className="text-xs text-slate-500">Please reach our engineering desk directly at <a href={`tel:${settings?.phone || '+8801540535150'}`} className="text-[#F15A24] font-bold">{settings?.phone || '+880 1540-535150'}</a> or email <a href={`mailto:${settings?.email || 'contact@camnexbd.com'}`} className="text-[#F15A24] font-bold">{settings?.email || 'contact@camnexbd.com'}</a>.</p>
             </div>
           )}
@@ -650,7 +650,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
           ) : (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-12 text-slate-600 space-y-3">
               <p className="font-semibold text-slate-800">CamneX Bangladesh does not sell, rent, or share customer contact lists or site engineering details.</p>
-              <p className="text-xs text-slate-500">Our technicians configure mobile access directly on the client's own device; CamneX does not retain passwords or remote stream access post-handover.</p>
+              <p className="text-xs text-slate-500">Our engineering staff configures mobile access directly on the client's own device; CamneX does not retain passwords or remote stream access post-handover.</p>
             </div>
           )}
         </div>

@@ -35,7 +35,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  if (!products || products.length === 0) {
+  const totalItems = (products ? products.length : 0) + (promoTile ? 1 : 0);
+  if (!products || totalItems <= 1) {
     return null;
   }
 
@@ -80,10 +81,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         </div>
       </div>
 
-      {/* Horizontal Scroll Snap Container */}
+      {/* Horizontal Scroll Snap Container (centered if < 3 items) */}
       <div
         ref={scrollRef}
-        className="flex gap-5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4 pt-1"
+        className={`flex gap-5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4 pt-1 ${
+          totalItems < 3 ? 'justify-center' : ''
+        }`}
       >
         {/* Optional Promo Tile as First Item */}
         {promoTile && (

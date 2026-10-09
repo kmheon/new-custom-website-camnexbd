@@ -374,7 +374,7 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({
                         ))}
                       </div>
                       <span className="text-xs text-slate-400">
-                        Surveillance-grade WD Purple / Seagate SkyHawk
+                        Surveillance-grade continuous recording HDD
                       </span>
                     </div>
                   </div>

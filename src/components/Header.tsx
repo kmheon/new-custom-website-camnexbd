@@ -210,7 +210,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenQuote, lang, setLang }) =>
               onClick={() => onOpenQuote()}
               className="bg-[#F25C2A] hover:bg-[#D84818] text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-[#F25C2A]/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              Get Free Quote
+              Get Quote
             </button>
           </div>
 
@@ -272,7 +272,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenQuote, lang, setLang }) =>
               }}
               className="w-full py-3 bg-[#F25C2A] font-bold text-white text-sm rounded-xl text-center shadow-lg shadow-orange-500/20"
             >
-              Get Free Quote
+              Get Quote
             </button>
           </div>
         </div>

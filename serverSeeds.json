@@ -68,7 +68,7 @@
       "name": "Western Digital",
       "slug": "western-digital",
       "logo": "/images/brands/western-digital.svg",
-      "description": "WD Purple surveillance-grade continuous write hard disk drives.",
+      "description": "Surveillance-grade continuous write hard disk drives.",
       "website": "https://www.westerndigital.com",
       "featured": false,
       "badgeText": "",
@@ -150,30 +150,30 @@
       {
         "id": "cta-survey",
         "type": "survey",
-        "title": "Book Free Site Visit",
-        "description": "Schedule an on-site physical premise and cable audit",
+        "title": "Schedule Site Visit",
+        "description": "Request an on-site premise survey and cable audit",
         "actionUrl": "/quote"
       }
     ],
     "reassurances": [
       {
         "id": "reassure-1",
-        "label": "Free Consultation",
+        "label": "Inquiry support",
         "enabled": true
       },
       {
         "id": "reassure-2",
-        "label": "Fast Response",
+        "label": "On-site survey",
         "enabled": true
       },
       {
         "id": "reassure-3",
-        "label": "Nationwide Service",
+        "label": "Itemized quotation",
         "enabled": true
       },
       {
         "id": "reassure-4",
-        "label": "Genuine Products",
+        "label": "Hardware warranty",
         "enabled": true
       }
     ]
@@ -340,30 +340,30 @@
           {
             "id": "cta-survey",
             "type": "survey",
-            "title": "Book Free Site Visit",
-            "description": "Schedule an on-site physical premise and cable audit",
+            "title": "Schedule Site Visit",
+            "description": "Request an on-site premise survey and cable audit",
             "actionUrl": "/quote"
           }
         ],
         "reassurances": [
           {
             "id": "reassure-1",
-            "label": "Free Consultation",
+            "label": "Inquiry support",
             "enabled": true
           },
           {
             "id": "reassure-2",
-            "label": "Fast Response",
+            "label": "On-site survey",
             "enabled": true
           },
           {
             "id": "reassure-3",
-            "label": "Nationwide Service",
+            "label": "Itemized quotation",
             "enabled": true
           },
           {
             "id": "reassure-4",
-            "label": "Genuine Products",
+            "label": "Hardware warranty",
             "enabled": true
           }
         ]
@@ -433,7 +433,7 @@
         {
           "role": "cable",
           "defaultModelId": "cable-cat6",
-          "name": "Pure Copper Cat6 Cable (10m per camera)",
+          "name": "Cat6 Cable (10m per camera)",
           "quantityFormula": "per_camera",
           "qtyPerCamera": 10
         },
@@ -560,7 +560,7 @@
       },
       "unit": "Piece",
       "warrantyMonths": 12,
-      "warrantyText": "1-Year Official Warranty",
+      "warrantyText": "1-Year Warranty",
       "createdAt": "2026-01-15T10:00:00Z",
       "updatedAt": "2026-02-01T12:00:00Z",
       "isFeatured": true,
@@ -607,7 +607,7 @@
       },
       "unit": "Piece",
       "warrantyMonths": 12,
-      "warrantyText": "1-Year Official Warranty",
+      "warrantyText": "1-Year Warranty",
       "createdAt": "2026-01-15T10:00:00Z",
       "updatedAt": "2026-02-01T12:00:00Z",
       "isFeatured": true,
@@ -653,7 +653,7 @@
       },
       "unit": "Piece",
       "warrantyMonths": 12,
-      "warrantyText": "1-Year Official Warranty & Free Software Setup",
+      "warrantyText": "1-Year Warranty & Software Setup",
       "createdAt": "2026-01-15T10:00:00Z",
       "updatedAt": "2026-02-01T12:00:00Z",
       "isFeatured": true,
@@ -985,11 +985,11 @@
     },
     {
       "id": "cable-cat6",
-      "name": "Pure Copper Cat6 UTP Surveillance Cable (Per Meter)",
+      "name": "Cat6 UTP Surveillance Cable (Per Meter)",
       "brand": "Hikvision",
       "brandId": "b-hikvision",
       "modelNumber": "DS-1LN6-UU",
-      "sku": "CAT6-COPPER-MTR",
+      "sku": "CAT6-UTP-MTR",
       "category": "CCTV Cameras",
       "categoryId": "cat-cctv",
       "productType": "physical",
@@ -1000,10 +1000,10 @@
         "/images/products/hardware-accessory.svg"
       ],
       "primaryImage": "/images/products/hardware-accessory.svg",
-      "shortDescription": "100% solid oxygen-free pure copper 23 AWG 4-pair unshielded twisted pair cable.",
-      "description": "Genuine Hikvision DS-1LN6-UU 100% solid oxygen-free pure copper Cat6 cable. Guaranteed high bandwidth transmission up to 250MHz without signal drop.",
+      "shortDescription": "Solid oxygen-free copper 23 AWG 4-pair unshielded twisted pair cable.",
+      "description": "Hikvision DS-1LN6-UU Cat6 cable designed for surveillance and networking installations up to 250MHz bandwidth.",
       "keyFeatures": [
-        "100% Solid Pure Copper Conductor",
+        "Solid Copper Conductor",
         "23 AWG Gauge",
         "Custom PVC Flame-Retardant Sheath",
         "Full 250 MHz Bandwidth"

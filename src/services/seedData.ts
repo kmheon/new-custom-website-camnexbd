@@ -139,10 +139,10 @@ export const INITIAL_CTA_DATA = {
     }
   ],
   reassurances: [
-    { id: 'reassure-1', label: 'Free Consultation', enabled: true },
-    { id: 'reassure-2', label: 'Fast Response', enabled: true },
-    { id: 'reassure-3', label: 'Nationwide Service', enabled: true },
-    { id: 'reassure-4', label: 'Genuine Products', enabled: true }
+    { id: 'reassure-1', label: 'Inquiry support', enabled: true },
+    { id: 'reassure-2', label: 'On-site survey', enabled: true },
+    { id: 'reassure-3', label: 'Itemized quotation', enabled: true },
+    { id: 'reassure-4', label: 'Hardware warranty', enabled: true }
   ]
 };
 
@@ -186,7 +186,7 @@ export const DEFAULT_SERVICES_LIST: ServiceItem[] = [
   {
     id: 'srv-it',
     title: 'IT Support & Maintenance',
-    description: 'Preventative quarterly lens cleaning, storage health checks, firmware security patches, and rapid breakdown response SLA.',
+    description: 'Preventative quarterly lens cleaning, storage health checks, firmware security patches, and breakdown troubleshooting.',
     icon: 'wrench',
     link: '/services',
     enabled: true,
@@ -207,20 +207,20 @@ export const DEFAULT_PROCESS_STEPS: ProcessStep[] = [
   {
     id: 'step-1',
     stepNumber: 1,
-    title: 'Requirement & Consultation',
-    description: 'Share your property layout or security requirements online, or request an engineer consultation.'
+    title: 'Request',
+    description: 'Submit your requirements online or request a survey.'
   },
   {
     id: 'step-2',
     stepNumber: 2,
-    title: 'On-Site Survey & BOM Quote',
-    description: 'Certified engineers inspect your site, map optical angles, and prepare an itemized Bill of Materials.'
+    title: 'Survey and quote',
+    description: 'Site assessment and itemized quotation.'
   },
   {
     id: 'step-3',
     stepNumber: 3,
-    title: 'Deployment & Lifetime SLA',
-    description: 'Neat concealed cabling, app live-view configuration, testing, and dedicated warranty support.'
+    title: 'Installation and support',
+    description: 'System setup, testing, and standard warranty support.'
   }
 ];
 
@@ -228,19 +228,19 @@ export const DEFAULT_HOW_IT_WORKS: HowItWorksStep[] = [
   {
     id: 'hiw-1',
     title: 'Choose Hardware or Turnkey Bundle',
-    description: 'Explore individual verified models or select from our rules-based 2, 4, 8, or 16 camera packages with genuine storage.',
+    description: 'Explore verified models or select from our rules-based 2, 4, 8, or 16 camera packages with dedicated storage.',
     icon: 'layers'
   },
   {
     id: 'hiw-2',
     title: 'Order Online or Request Quote',
-    description: 'Instant checkout for standalone devices or request a custom engineer quotation with physical site survey.',
+    description: 'Direct checkout for standalone devices or request an engineer quotation with on-site inspection.',
     icon: 'shopping-cart'
   },
   {
     id: 'hiw-3',
     title: 'Professional Installation & Support',
-    description: 'Concealed cabling, Hik-Connect mobile live-view setup, and authorized manufacturer warranty service.',
+    description: 'Structured cabling, smartphone app setup, and warranty support.',
     icon: 'wrench'
   }
 ];
@@ -365,7 +365,7 @@ export const INITIAL_BRANDS: Brand[] = [
     id: 'b-wd',
     name: 'Western Digital',
     slug: 'western-digital',
-    description: 'WD Purple surveillance-grade continuous write hard disk drives.',
+    description: 'Surveillance-grade continuous write hard disk drives.',
     website: 'https://www.westerndigital.com',
     featured: false
   }
@@ -522,7 +522,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     },
     unit: 'Piece',
     warrantyMonths: 12,
-    warrantyText: '1-Year Official Warranty',
+    warrantyText: '1-Year Warranty',
     createdAt: '2026-01-15T10:00:00Z',
     updatedAt: '2026-02-01T12:00:00Z',
     isFeatured: true,
@@ -569,7 +569,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     },
     unit: 'Piece',
     warrantyMonths: 12,
-    warrantyText: '1-Year Official Warranty',
+    warrantyText: '1-Year Warranty',
     createdAt: '2026-01-15T10:00:00Z',
     updatedAt: '2026-02-01T12:00:00Z',
     isFeatured: true,
@@ -615,7 +615,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     },
     unit: 'Piece',
     warrantyMonths: 12,
-    warrantyText: '1-Year Official Warranty & Free Software Setup',
+    warrantyText: '1-Year Warranty & Software Setup',
     createdAt: '2026-01-15T10:00:00Z',
     updatedAt: '2026-02-01T12:00:00Z',
     isFeatured: true,
@@ -759,7 +759,7 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
       {
         role: 'cable',
         defaultModelId: 'cable-cat6',
-        name: 'Pure Copper Cat6 Cable (10m per camera)',
+        name: 'Cat6 Cable (10m per camera)',
         quantityFormula: 'per_camera',
         qtyPerCamera: 10
       },
@@ -837,7 +837,7 @@ export const INITIAL_HERO_SLIDES: HeroSlide[] = [
     badge: 'New',
     headline: 'Hikvision Smart Hybrid Light 4K Bullet',
     description: 'Enterprise 4K Ultra HD surveillance featuring dual smart lighting, AcuSense AI vehicle classification, and IP67 weather-sealed all-metal housing.',
-    image: '/images/hero/hikvision-bullet.jpg',
+    image: '/images/hero/hikvision-bullet.png',
     priceText: '৳4,850',
     buttonText: 'View Product',
     buttonLink: '/product/prod-hik-irpf-2mp',
@@ -858,7 +858,7 @@ export const INITIAL_HERO_SLIDES: HeroSlide[] = [
     sourceMode: 'product',
     productId: 'prod-rui-rap2200e',
     badge: 'Featured',
-    image: '/images/hero/ruijie-wifi6.jpg',
+    image: '/images/hero/ruijie-wifi6.png',
     buttonText: 'View Product',
     buttonLink: '/product/prod-rui-rap2200e',
     secondaryText: 'Add to cart',

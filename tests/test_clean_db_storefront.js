@@ -68,6 +68,38 @@ async function run() {
   }
   console.log('[PASS] Storefront HTML served with dynamic metadata and cache headers');
 
+  // 6. Assert none of the 15 banned phrases appear in rendered HTML on clean DB
+  const BANNED_PHRASES = [
+    'Genuine Warranty with Serial Tracking',
+    'Concealed Trunking & Neat Cabling',
+    'Free Mobile Viewing Setup',
+    'Lifetime SLA',
+    'maintenance agreements',
+    'dedicated maintenance agreements',
+    'Transparent estimates without surprise charges',
+    'without inflated baselines',
+    'Verified discounts',
+    'Official Warranty',
+    'certified technicians',
+    'Nationwide Service',
+    'Genuine Products',
+    'Fast Response',
+    'Free Consultation',
+    'Authorized Hardware Partners'
+  ];
+
+  const routesToCheck = ['/', '/product/prod-hik-irpf-2mp', '/checkout'];
+  for (const route of routesToCheck) {
+    const res = await fetch(`${BASE_URL}${route}`);
+    const html = await res.text();
+    for (const phrase of BANNED_PHRASES) {
+      if (html.toLowerCase().includes(phrase.toLowerCase())) {
+        throw new Error(`Banned phrase "${phrase}" found in HTML of ${route}`);
+      }
+    }
+  }
+  console.log('[PASS] Rendered HTML of /, /product/:id, and /checkout contains 0 banned claims');
+
   console.log('\nALL CLEAN DATABASE STOREFRONT TESTS PASSED SUCCESSFULLY!');
 }
 

@@ -5,30 +5,30 @@ export const HowItWorks: React.FC = () => {
   const steps = [
     {
       num: '01',
-      title: 'Free On-Site Survey',
-      subtitle: 'Free across Dhaka',
-      desc: 'Our certified engineer visits your site to audit blind spots, measure exact cable lengths, and evaluate lighting & power requirements.',
+      title: 'On-Site Survey',
+      subtitle: 'Premise Assessment',
+      desc: 'Our engineer visits your site to inspect optical angles, measure cable runs, and review power requirements.',
       icon: <ClipboardCheck className="w-6 h-6 text-[#F25C2A]" />
     },
     {
       num: '02',
       title: 'Itemized Proposal',
-      subtitle: 'Transparent Bill of Materials',
-      desc: 'You receive an exact quotation detailing genuine camera models, storage days, and setup fees. Zero unexpected per-meter cable surprises.',
+      subtitle: 'Bill of Materials',
+      desc: 'You receive a detailed quotation outlining equipment model numbers, storage capacity, and setup fees.',
       icon: <FileSpreadsheet className="w-6 h-6 text-blue-600" />
     },
     {
       num: '03',
-      title: 'Concealed Installation',
-      subtitle: 'No Dangling Wires Standard',
-      desc: 'Certified technicians install your system using clean PVC conduits, waterproof junction boxes, tidy crimping, and structured rack termination.',
+      title: 'Structured Installation',
+      subtitle: 'Neat Conduit Cabling',
+      desc: 'Our technicians install your system using clean PVC conduits, waterproof junction boxes, and rack termination.',
       icon: <Sparkles className="w-6 h-6 text-emerald-600" />
     },
     {
       num: '04',
-      title: 'Handover & Training',
-      subtitle: '1-Year On-Site SLA',
-      desc: 'We configure Hik-Connect / DMSS on your phones, hand over master passwords, provide usage training, and issue your official warranty card.',
+      title: 'Handover & Testing',
+      subtitle: '1-Year Warranty',
+      desc: 'We configure smartphone viewing, verify all channels, hand over documentation, and register your hardware warranty.',
       icon: <ShieldCheck className="w-6 h-6 text-purple-600" />
     }
   ];

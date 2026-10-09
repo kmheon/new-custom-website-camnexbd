@@ -18,11 +18,11 @@ export const Packages: React.FC<PackagesProps> = ({ onBookPackage }) => {
       specs: [
         { label: 'Camera Resolution', value: '2MP Full HD 1080p Crystal Clear' },
         { label: 'Night Vision', value: 'Smart IR Night Vision up to 20 Meters' },
-        { label: 'Storage Included', value: 'Surveillance-Grade WD Purple HDD' },
+        { label: 'Storage Included', value: 'Surveillance-Grade HDD' },
         { label: 'Mobile App Access', value: 'Hik-Connect (iOS & Android) with Push Alerts' },
         { label: 'Installation', value: 'Complete Clean Installation with Survey' },
-        { label: 'Cables & Hardware', value: '100% Pure Copper Cat6 Cable + Connectors' },
-        { label: 'Warranty', value: '1-Year Official Manufacturer Hardware Warranty' }
+        { label: 'Cables & Hardware', value: 'Cat6 Cable + Connectors' },
+        { label: 'Warranty', value: '1-Year Hardware Warranty' }
       ]
     },
     {
@@ -36,11 +36,11 @@ export const Packages: React.FC<PackagesProps> = ({ onBookPackage }) => {
       specs: [
         { label: 'Camera Resolution', value: '2MP Full HD 1080p Smart IR' },
         { label: 'Night Vision', value: 'Smart IR Night Vision up to 20 Meters' },
-        { label: 'Storage Included', value: 'Continuous Recording (1TB WD Purple HDD)' },
+        { label: 'Storage Included', value: 'Continuous Recording (1TB Surveillance HDD)' },
         { label: 'Mobile App Access', value: 'Multi-User Smartphone App + PC Central CMS' },
-        { label: 'Installation', value: 'Certified Installation with Concealed Runs' },
-        { label: 'Cables & Hardware', value: 'Centralized 12V Power Unit + Pure Cat6 Runs' },
-        { label: 'Warranty', value: '1-Year Official Replacement Warranty' }
+        { label: 'Installation', value: 'Professional Installation with Concealed Runs' },
+        { label: 'Cables & Hardware', value: 'Centralized 12V Power Unit + Cat6 Runs' },
+        { label: 'Warranty', value: '1-Year Replacement Warranty' }
       ]
     },
     {
@@ -58,7 +58,7 @@ export const Packages: React.FC<PackagesProps> = ({ onBookPackage }) => {
         { label: 'Mobile App Access', value: 'Centralized Control Room Video Wall & Cloud Stream' },
         { label: 'Installation', value: 'Industrial Heavy-Duty Installation & Trunking' },
         { label: 'Cables & Hardware', value: 'Centralized Power Distribution & Rack Mounts' },
-        { label: 'Warranty', value: 'Official Manufacturer Partner Warranty' }
+        { label: 'Warranty', value: 'Manufacturer Partner Warranty' }
       ]
     }
   ];

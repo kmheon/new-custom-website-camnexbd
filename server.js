@@ -962,7 +962,7 @@ function calculateDynamicPackagePrice(packageId, cameraCount = 4, formFactor = '
     { role: 'camera', sku: camSku, qty: count, fallbackName: `Hikvision 2MP ${ff.toUpperCase()} Camera` },
     { role: 'recorder', sku: dvrSku, qty: 1, fallbackName: `Hikvision Turbo HD DVR (${count > 8 ? '16-Ch' : count > 4 ? '8-Ch' : '4-Ch'})` },
     { role: 'storage', sku: hddSku, qty: 1, fallbackName: `Western Digital Purple Surveillance HDD (${count >= 16 ? '2TB' : count >= 8 ? '1TB' : '500GB'})` },
-    { role: 'cable', sku: cableSku, qty: cableMeters, fallbackName: `Pure Copper Cat6 UTP Cable (${cableMeters}m)` },
+    { role: 'cable', sku: cableSku, qty: cableMeters, fallbackName: `Cat6 UTP Cable (${cableMeters}m)` },
     { role: 'power', sku: powerSku, qty: powerQty, fallbackName: 'Centralized 12V Regulated DC Power Supply Unit' },
     { role: 'connectors', sku: balunSku, qty: balunQty, fallbackName: `HD Video Baluns & DC Connectors (${balunQty} Sets)` }
   ];
@@ -2515,7 +2515,7 @@ function resolveRouteMetadata(reqPath) {
     return {
       ...defaultMeta,
       title: 'Turnkey CCTV Security Packages | CamneX Bangladesh',
-      description: 'Itemized turnkey Hikvision camera bundles complete with DVR, continuous storage, Pure Copper Cat6 cables, power supply, and Dhaka installation.'
+      description: 'Itemized turnkey Hikvision camera bundles complete with DVR, continuous storage, Cat6 cables, power supply, and Dhaka installation.'
     };
   }
 

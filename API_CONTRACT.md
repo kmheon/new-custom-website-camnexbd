@@ -56,7 +56,7 @@ Response `200 OK`:
       },
       "unit": "Piece",
       "warrantyMonths": 12,
-      "warrantyText": "1-Year Official Warranty",
+      "warrantyText": "1-Year Warranty",
       "createdAt": "2026-01-15T10:00:00Z"
     }
   ],
@@ -124,7 +124,7 @@ Response `200 OK`:
   "components": [
     { "name": "Hikvision 2MP IRPF BULLET Camera", "model": "DS-2CE1AD0T-IRPF", "qty": 8, "unitPrice": 2450 },
     { "name": "Hikvision Turbo HD DVR", "model": "DS-7104HQHI-K1", "qty": 1, "unitPrice": 5800 },
-    { "name": "WD Purple 1TB Surveillance HDD", "model": "1TB HDD", "qty": 1, "unitPrice": 4500 },
+    { "name": "1TB Surveillance HDD", "model": "1TB HDD", "qty": 1, "unitPrice": 4500 },
     { "name": "Cat6 100% Pure Copper Cable", "model": "Cat6 UTP", "qty": 80, "unitPrice": 50 }
   ]
 }

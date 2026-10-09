@@ -347,9 +347,232 @@ async function runRevision2Tests() {
       console.log(`  ✓ PASS: Zero duplicate products across all homepage rows`);
     }
 
-    // Capture Desktop Screenshot
-    console.log('\n--- Capturing Desktop Screenshot (1280px) ---');
-    await send('Runtime.evaluate', { expression: `window.scrollTo(0, 0);` });
+    // 8. Hero Headline Overlap & Line-Height Assertion
+    console.log('\n--- Checking Hero Headline Line Boxes & Overlap ---');
+    const heroH1Res = await send('Runtime.evaluate', {
+      expression: `
+        (() => {
+          const h1 = document.querySelector('section h1') || document.querySelector('h1');
+          if (!h1) return { found: false };
+          const cs = window.getComputedStyle(h1);
+          const fontSize = parseFloat(cs.fontSize);
+          const lineHeight = parseFloat(cs.lineHeight);
+          const lineHeightRatio = lineHeight / fontSize;
+
+          const range = document.createRange();
+          range.selectNodeContents(h1);
+          const rects = Array.from(range.getClientRects()).filter(r => r.width > 0);
+          let overlap = false;
+          let minLineDelta = 999;
+          for (let i = 0; i < rects.length - 1; i++) {
+            const lineDelta = rects[i + 1].top - rects[i].top;
+            if (lineDelta < minLineDelta) minLineDelta = lineDelta;
+            // In CSS, line box separation must be at least fontSize * 1.08
+            if (lineDelta < fontSize * 1.08) {
+              overlap = true;
+            }
+          }
+
+          return {
+            found: true,
+            fontSize,
+            lineHeight,
+            lineHeightRatio,
+            rectCount: rects.length,
+            overlap,
+            minLineDelta: rects.length > 1 ? minLineDelta : 0,
+            text: h1.innerText
+          };
+        })()
+      `,
+      returnByValue: true
+    });
+
+    const h1Metrics = heroH1Res.result.value;
+    if (!h1Metrics.found) {
+      throw new Error('Hero H1 headline not found on homepage');
+    }
+    console.log(`  H1 Text: "${h1Metrics.text}"`);
+    console.log(`  H1 Font Size: ${h1Metrics.fontSize}px, Line Height: ${h1Metrics.lineHeight}px (Ratio: ${h1Metrics.lineHeightRatio.toFixed(2)})`);
+    console.log(`  H1 Line Box Count: ${h1Metrics.rectCount}, Overlap: ${h1Metrics.overlap}`);
+
+    if (h1Metrics.lineHeightRatio < 1.09) {
+      throw new Error(`Hero headline line-height ratio is ${h1Metrics.lineHeightRatio.toFixed(2)}, expected >= 1.1`);
+    }
+    if (h1Metrics.overlap) {
+      throw new Error(`Hero headline line boxes overlap! Min line delta: ${h1Metrics.minLineDelta}px`);
+    }
+    if (h1Metrics.rectCount > 2) {
+      throw new Error(`Hero headline has ${h1Metrics.rectCount} lines, expected maximum 2 lines`);
+    }
+    console.log(`  ✓ PASS: Hero headline lines do not overlap (lineHeight >= 1.1, max 2 lines clean wrapping)`);
+
+    // 9. Hero Product Image: no box, card, frame or border
+    console.log('\n--- Checking Hero Product Image (No Box / Border / Frame) ---');
+    const heroImgRes = await send('Runtime.evaluate', {
+      expression: `
+        (() => {
+          const img = document.getElementById('hero-product-image');
+          if (!img) return { found: false };
+          const container = img.parentElement;
+          const imgCs = window.getComputedStyle(img);
+          const contCs = container ? window.getComputedStyle(container) : null;
+
+          return {
+            found: true,
+            imgBorder: imgCs.borderWidth,
+            imgBg: imgCs.backgroundColor,
+            imgBoxShadow: imgCs.boxShadow,
+            containerBorder: contCs ? contCs.borderWidth : '0px',
+            containerBg: contCs ? contCs.backgroundColor : 'transparent',
+            containerBoxShadow: contCs ? contCs.boxShadow : 'none'
+          };
+        })()
+      `,
+      returnByValue: true
+    });
+
+    const imgMetrics = heroImgRes.result.value;
+    if (!imgMetrics.found) {
+      throw new Error('Hero product image not found');
+    }
+    const isTransparentBg = (bg) => !bg || bg === 'transparent' || bg.includes('rgba(0, 0, 0, 0)');
+    const isNoBorder = (bw) => !bw || bw === '0px';
+    const isNoBoxShadow = (bs) => !bs || bs === 'none' || bs === '' || bs.includes('0px 0px 0px 0px') || bs.includes('rgba(0, 0, 0, 0)');
+
+    if (!isNoBorder(imgMetrics.imgBorder) || !isNoBorder(imgMetrics.containerBorder)) {
+      throw new Error(`Hero image has visible border: img=${imgMetrics.imgBorder}, cont=${imgMetrics.containerBorder}`);
+    }
+    if (!isTransparentBg(imgMetrics.containerBg)) {
+      throw new Error(`Hero image container has non-transparent background: ${imgMetrics.containerBg}`);
+    }
+    if (!isNoBoxShadow(imgMetrics.containerBoxShadow)) {
+      throw new Error(`Hero image container has card frame box-shadow: ${imgMetrics.containerBoxShadow}`);
+    }
+    console.log(`  ✓ PASS: Hero product image has zero border, transparent background, and no box-shadow card frame`);
+
+    // 10. Footer Email Input: no stray icon element
+    console.log('\n--- Checking Footer Email Input ---');
+    const footerEmailRes = await send('Runtime.evaluate', {
+      expression: `
+        (() => {
+          const footer = document.getElementById('site-footer') || document.querySelector('footer');
+          if (!footer) return { found: false };
+          const form = footer.querySelector('form');
+          if (!form) return { found: false };
+          const input = form.querySelector('input[type="email"], input');
+          if (!input) return { found: false };
+          const wrapper = input.parentElement;
+          const icons = wrapper ? Array.from(wrapper.querySelectorAll('svg, i, .lucide')) : [];
+          const submitBtn = form.querySelector('button');
+
+          return {
+            found: true,
+            hasIcon: icons.length > 0,
+            iconCount: icons.length,
+            submitText: submitBtn ? submitBtn.innerText.trim() : ''
+          };
+        })()
+      `,
+      returnByValue: true
+    });
+
+    const fEmailMetrics = footerEmailRes.result.value;
+    if (!fEmailMetrics.found) {
+      throw new Error('Footer email form or input not found');
+    }
+    if (fEmailMetrics.hasIcon) {
+      throw new Error(`Footer email input container has ${fEmailMetrics.iconCount} stray icon(s)! Expected 0.`);
+    }
+    console.log(`  ✓ PASS: Footer email input contains zero icons (plain input + "${fEmailMetrics.submitText}" button)`);
+
+    // 11. Assert none of the 15+ banned phrases appear in rendered DOM
+    console.log('\n--- Checking Rendered DOM for Banned Claims ---');
+    const BANNED_PHRASES = [
+      'Genuine Warranty with Serial Tracking',
+      'Concealed Trunking & Neat Cabling',
+      'Free Mobile Viewing Setup',
+      'Lifetime SLA',
+      'maintenance agreements',
+      'dedicated maintenance agreements',
+      'Transparent estimates without surprise charges',
+      'without inflated baselines',
+      'Verified discounts',
+      'Official Warranty',
+      'certified technicians',
+      'Nationwide Service',
+      'Genuine Products',
+      'Fast Response',
+      'Free Consultation',
+      'Authorized Hardware Partners'
+    ];
+
+    const checkDomForClaims = async (contextName) => {
+      const res = await send('Runtime.evaluate', {
+        expression: `
+          (() => {
+            const bodyText = (document.body ? document.body.innerText : '');
+            const htmlText = (document.documentElement ? document.documentElement.innerHTML : '');
+            return (bodyText + ' ' + htmlText).toLowerCase();
+          })()
+        `,
+        returnByValue: true
+      });
+      const domText = res.result.value;
+      const found = [];
+      for (const phrase of BANNED_PHRASES) {
+        if (domText.includes(phrase.toLowerCase())) {
+          found.push(phrase);
+        }
+      }
+      return found;
+    };
+
+    const homeBanned = await checkDomForClaims('homepage');
+    if (homeBanned.length > 0) {
+      throw new Error(`Banned claim(s) found on homepage: ${homeBanned.join(', ')}`);
+    }
+    console.log(`  ✓ PASS: Rendered homepage contains zero banned claims`);
+
+    // Check footer specifically
+    const footerBannedRes = await send('Runtime.evaluate', {
+      expression: `
+        (() => {
+          const footer = document.getElementById('site-footer') || document.querySelector('footer');
+          return footer ? footer.innerText.toLowerCase() : '';
+        })()
+      `,
+      returnByValue: true
+    });
+    const footerText = footerBannedRes.result.value;
+    for (const phrase of BANNED_PHRASES) {
+      if (footerText.includes(phrase.toLowerCase())) {
+        throw new Error(`Banned claim "${phrase}" found in footer text`);
+      }
+    }
+    console.log(`  ✓ PASS: Rendered footer contains zero banned claims`);
+
+    // Check /checkout for banned claims
+    await send('Page.navigate', { url: `${BASE_URL}/checkout` });
+    await sleep(2000);
+    const checkoutBanned = await checkDomForClaims('checkout');
+    if (checkoutBanned.length > 0) {
+      throw new Error(`Banned claim(s) found on /checkout: ${checkoutBanned.join(', ')}`);
+    }
+    console.log(`  ✓ PASS: Rendered /checkout contains zero banned claims`);
+
+    // Check /product/prod-hik-irpf-2mp for banned claims
+    await send('Page.navigate', { url: `${BASE_URL}/product/prod-hik-irpf-2mp` });
+    await sleep(2000);
+    const prodBanned = await checkDomForClaims('product');
+    if (prodBanned.length > 0) {
+      throw new Error(`Banned claim(s) found on /product/:id: ${prodBanned.join(', ')}`);
+    }
+    console.log(`  ✓ PASS: Rendered /product/:id contains zero banned claims`);
+
+    // Navigate back to homepage for desktop screenshot capture
+    await send('Page.navigate', { url: `${BASE_URL}/` });
+    await sleep(2000);
     await sleep(400);
 
     const desktopCapture = await send('Page.captureScreenshot', {
