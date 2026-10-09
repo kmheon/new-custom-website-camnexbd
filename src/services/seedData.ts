@@ -14,7 +14,8 @@ import {
   ServiceItem,
   ProcessStep,
   HowItWorksStep,
-  ScenarioItem
+  ScenarioItem,
+  CtaReassuranceItem
 } from '../types';
 
 export const DEFAULT_SERVICES_LIST: ServiceItem[] = [
@@ -241,7 +242,7 @@ export const INITIAL_CTA_DATA = {
       actionUrl: '/quote'
     }
   ],
-  reassurances: []
+  reassurances: [] as CtaReassuranceItem[]
 };
 
 export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [

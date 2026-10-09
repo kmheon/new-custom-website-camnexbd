@@ -2477,7 +2477,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           else if (kl.includes('poe') || kl.includes('power') || kl.includes('battery')) icon = 'zap';
                           else if (kl.includes('cpu') || kl.includes('port') || kl.includes('throughput')) icon = 'cpu';
                           else if (kl.includes('ip') || kl.includes('weather') || kl.includes('housing') || kl.includes('protection')) icon = 'shield';
-                          highlights.push({ icon, value: String(v), label: f.label });
+                          highlights.push({ icon, value: String(v), label: f.label || f.name || f.key || 'Specification' });
                         }
                       }
                       if (highlights.length === 0 && prod.keyFeatures?.length) {

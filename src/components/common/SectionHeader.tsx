@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface SectionHeaderProps {
-  eyebrow: string;
+  eyebrow?: string;
   eyebrowIcon?: React.ReactNode;
   title: string;
   subtitle?: string;
@@ -37,14 +37,16 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     >
       <div className={`space-y-2 max-w-2xl ${isCentered ? 'mx-auto' : ''}`}>
         {/* Small Orange Eyebrow: tiny line icon + UPPERCASE 12px tracking label */}
-        <div
-          className={`inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider ${
-            dark ? 'text-[#F15A24]' : 'text-[#F15A24]'
-          } ${isCentered ? 'justify-center' : ''}`}
-        >
-          {eyebrowIcon || <Sparkles className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />}
-          <span>{eyebrow}</span>
-        </div>
+        {eyebrow && (
+          <div
+            className={`inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider ${
+              dark ? 'text-[#F15A24]' : 'text-[#F15A24]'
+            } ${isCentered ? 'justify-center' : ''}`}
+          >
+            {eyebrowIcon || <Sparkles className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />}
+            <span>{eyebrow}</span>
+          </div>
+        )}
 
         {/* H2: 36px desktop / 26px mobile, bold, tight line-height */}
         <h2

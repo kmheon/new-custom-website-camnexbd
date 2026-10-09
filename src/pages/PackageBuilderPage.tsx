@@ -143,7 +143,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
                 1. Select Camera Channels
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {selectedPackage.cameraCountsSupported.map((count) => (
+                {(selectedPackage.cameraCountsSupported || [2, 4, 8, 16]).map((count) => (
                   <button
                     key={count}
                     type="button"
@@ -169,7 +169,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
                 2. Camera Form Factor
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {selectedPackage.supportedFormFactors.map((ff) => (
+                {(selectedPackage.supportedFormFactors || ['bullet', 'dome'] as CameraFormFactor[]).map((ff) => (
                   <button
                     key={ff}
                     type="button"

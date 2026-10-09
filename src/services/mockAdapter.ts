@@ -800,7 +800,8 @@ export class MockCmsService implements ICmsService {
         } else if (rule === 'hot') {
           matched = matched.filter(p => p.isPopular);
         } else if (rule === 'category' && slide.categorySlug) {
-          matched = matched.filter(p => p.categoryId === slide.categorySlug || p.category.toLowerCase().includes(slide.categorySlug.toLowerCase()));
+          const catSlug = slide.categorySlug;
+          matched = matched.filter(p => p.categoryId === catSlug || p.category.toLowerCase().includes(catSlug.toLowerCase()));
         }
 
         matched.slice(0, limit).forEach((p, idx) => {
