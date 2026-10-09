@@ -24,33 +24,39 @@
       "name": "Hikvision",
       "slug": "hikvision",
       "logo": "/images/brands/hikvision.svg",
-      "description": "World-leading provider of security products and solutions. CamneX is an Authorized Partner in Bangladesh.",
+      "description": "World-leading provider of security products and solutions.",
       "website": "https://www.hikvision.com",
       "featured": true,
       "badgeText": "Authorized Support Partner",
-      "showBadge": true
-    },
-    {
-      "id": "b-zkteco",
-      "name": "ZKTeco",
-      "slug": "zkteco",
-      "logo": "/images/brands/zkteco.svg",
-      "description": "Globally renowned biometric verification and smart access control solutions. CamneX is an Authorized Installer.",
-      "website": "https://www.zkteco.com",
-      "featured": true,
-      "badgeText": "",
-      "showBadge": false
+      "showBadge": true,
+      "showInBrandStrip": true,
+      "order": 1
     },
     {
       "id": "b-dahua",
       "name": "Dahua Technology",
       "slug": "dahua",
       "logo": "/images/brands/dahua.svg",
-      "description": "World-leading video-centric smart IoT solution and service provider.",
+      "description": "Video-centric smart IoT solution and service provider.",
       "website": "https://www.dahuasecurity.com",
       "featured": true,
       "badgeText": "Authorized Support Partner",
-      "showBadge": true
+      "showBadge": true,
+      "showInBrandStrip": true,
+      "order": 2
+    },
+    {
+      "id": "b-zkteco",
+      "name": "ZKTeco",
+      "slug": "zkteco",
+      "logo": "/images/brands/zkteco.svg",
+      "description": "Biometric verification and smart access control solutions.",
+      "website": "https://www.zkteco.com",
+      "featured": true,
+      "badgeText": "",
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 3
     },
     {
       "id": "b-ruijie",
@@ -61,7 +67,9 @@
       "website": "https://www.ruijienetworks.com",
       "featured": true,
       "badgeText": "",
-      "showBadge": false
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 4
     },
     {
       "id": "b-wd",
@@ -72,7 +80,74 @@
       "website": "https://www.westerndigital.com",
       "featured": false,
       "badgeText": "",
-      "showBadge": false
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 5
+    },
+    {
+      "id": "b-seagate",
+      "name": "Seagate",
+      "slug": "seagate",
+      "logo": "",
+      "description": "SkyHawk surveillance storage solutions.",
+      "website": "https://www.seagate.com",
+      "featured": false,
+      "badgeText": "",
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 6
+    },
+    {
+      "id": "b-tplink",
+      "name": "TP-Link",
+      "slug": "tp-link",
+      "logo": "",
+      "description": "VIGI security and Omada enterprise networking solutions.",
+      "website": "https://www.tp-link.com",
+      "featured": false,
+      "badgeText": "",
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 7
+    },
+    {
+      "id": "b-uniview",
+      "name": "Uniview",
+      "slug": "uniview",
+      "logo": "",
+      "description": "Pioneer and leader of IP video surveillance technology.",
+      "website": "https://www.uniview.com",
+      "featured": false,
+      "badgeText": "",
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 8
+    },
+    {
+      "id": "b-cisco",
+      "name": "Cisco",
+      "slug": "cisco",
+      "logo": "",
+      "description": "Commercial networking and enterprise IT infrastructure.",
+      "website": "https://www.cisco.com",
+      "featured": false,
+      "badgeText": "",
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 9
+    },
+    {
+      "id": "b-honeywell",
+      "name": "Honeywell",
+      "slug": "honeywell",
+      "logo": "",
+      "description": "Commercial security, sensors and building automation.",
+      "website": "https://www.honeywell.com",
+      "featured": false,
+      "badgeText": "",
+      "showBadge": false,
+      "showInBrandStrip": true,
+      "order": 10
     }
   ],
   "INITIAL_CATEGORIES": [

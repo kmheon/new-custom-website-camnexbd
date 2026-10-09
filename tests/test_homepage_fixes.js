@@ -370,44 +370,116 @@ async function runHomepageFixesTests() {
     // ========================================================================
     // (e) TEST: BRAND STRIP FIRST LOGO & BADGE POSITIONING
     // ========================================================================
-    console.log('\n--- Assertion (e): Brand Strip 1st Logo Alignment & Badge Pill ---');
+    // ========================================================================
+    // (e) TEST: ONE-LINE SCROLLING BRAND STRIP & MARQUEE BEHAVIOR
+    // ========================================================================
+    console.log('\n--- Assertion (e): One-Line Scrolling Brand Strip & Marquee ---');
     const brandStripEval = await send('Runtime.evaluate', {
       expression: `
         (() => {
           const brandStrip = document.getElementById('hero-brands') || document.querySelector('section#hero-brands');
           if (!brandStrip) return { stripFound: false };
 
-          const brandItems = Array.from(brandStrip.querySelectorAll('button, a'));
-          const logos = Array.from(brandStrip.querySelectorAll('img, svg'));
-          const firstElement = logos[0] || brandItems[0];
-          if (!firstElement) return { stripFound: true, elementsFound: 0 };
-
-          const firstRect = firstElement.getBoundingClientRect();
+          const stripRect = brandStrip.getBoundingClientRect();
+          const stripStyle = window.getComputedStyle(brandStrip);
           const docWidth = document.documentElement.clientWidth;
 
-          // Check badge pills
-          const badges = Array.from(brandStrip.querySelectorAll('span')).filter(s =>
-            s.innerText.includes('Authorized Support Partner')
-          );
+          // 1. Band height & container styling constraints
+          const bandHeight = stripRect.height;
+          const borderRadius = stripStyle.borderRadius;
+          const boxShadow = stripStyle.boxShadow;
 
-          const brandDetails = brandItems.map(item => {
-            const hasBadge = Boolean(item.innerText.includes('Authorized Support Partner'));
-            const img = item.querySelector('img, svg');
-            const imgRect = img ? img.getBoundingClientRect() : null;
+          // 2. Check no boxed panel, large card radius or container shadow
+          const allElements = Array.from(brandStrip.querySelectorAll('*'));
+          const hasBigShadow = allElements.some(el => {
+            const cs = window.getComputedStyle(el);
+            return cs.boxShadow && cs.boxShadow !== 'none' && !el.matches('button');
+          });
+          const hasBigRadius = allElements.some(el => {
+            const r = parseFloat(window.getComputedStyle(el).borderRadius) || 0;
+            return r > 20 && !el.matches('img, button, input');
+          });
+
+          // 3. Check no banned text in strip
+          const stripText = brandStrip.innerText;
+          const hasTrustedEco = stripText.includes('Trusted Ecosystem');
+          const hasCertifiedHardware = stripText.includes('certified hardware integration') || stripText.includes('Authorized support & certified hardware');
+
+          // 4. Marquee container & track animation
+          const track = brandStrip.querySelector('.brand-marquee-track');
+          const trackStyle = track ? window.getComputedStyle(track) : null;
+          const animationName = trackStyle ? trackStyle.animationName : 'none';
+          const animationPlayState = trackStyle ? trackStyle.animationPlayState : 'running';
+
+          // 5. Brand items & logos
+          const brandItems = Array.from(brandStrip.querySelectorAll('a, button'));
+          const logos = Array.from(brandStrip.querySelectorAll('img'));
+          const firstElement = logos[0] || brandItems[0];
+          const firstRect = firstElement ? firstElement.getBoundingClientRect() : { left: 0, right: 0 };
+
+          // 6. Vertical centers of items share the same single line
+          const verticalCenters = brandItems.slice(0, 10).map(item => {
+            const r = item.getBoundingClientRect();
+            return r.top + r.height / 2;
+          });
+          const maxVDiff = verticalCenters.length > 1
+            ? Math.max(...verticalCenters) - Math.min(...verticalCenters)
+            : 0;
+
+          // 7. Check dimensions and alt text of logos
+          const logoValidations = logos.map(img => {
+            const r = img.getBoundingClientRect();
+            const alt = img.getAttribute('alt') || '';
             return {
-              text: item.innerText.replace(/\s+/g, ' ').trim(),
-              hasBadge,
-              height: imgRect ? imgRect.height : 0
+              alt,
+              hasAlt: alt.trim().length > 0,
+              width: r.width,
+              height: r.height,
+              isSizeValid: r.height <= 36 && r.width <= 140
+            };
+          });
+
+          // 8. Brand links to brand pages
+          const brandLinks = Array.from(brandStrip.querySelectorAll('a')).map(a => ({
+            href: a.getAttribute('href') || '',
+            title: a.getAttribute('title') || '',
+            ariaLabel: a.getAttribute('aria-label') || ''
+          }));
+
+          // 9. Brand badges
+          const brandDetails = brandItems.map(item => {
+            const text = item.innerText.replace(/\\s+/g, ' ').trim();
+            const hasBadge = Boolean(
+              item.querySelector('.lucide-shield-check') ||
+              item.innerHTML.includes('Authorized Support Partner') ||
+              item.getAttribute('title')?.includes('Authorized Support Partner')
+            );
+            return {
+              text,
+              hasBadge
             };
           });
 
           return {
             stripFound: true,
             docWidth,
+            bandHeight,
+            borderRadius,
+            boxShadow,
+            hasBigShadow,
+            hasBigRadius,
+            hasTrustedEco,
+            hasCertifiedHardware,
+            animationName,
+            animationPlayState,
             firstLogoLeft: firstRect.left,
             firstLogoRight: firstRect.right,
             isFirstLogoInside: firstRect.left >= 0 && firstRect.right <= docWidth,
-            badgeCount: badges.length,
+            brandItemsCount: brandItems.length,
+            logosCount: logos.length,
+            maxVDiff,
+            logoValidations,
+            brandLinks,
             brandDetails
           };
         })()
@@ -419,26 +491,115 @@ async function runHomepageFixesTests() {
     if (!bMetrics.stripFound) {
       console.log('  (Brand strip not present, skipping)');
     } else {
-      console.log(`  First logo left: ${bMetrics.firstLogoLeft.toFixed(1)}px, Doc width: ${bMetrics.docWidth}px`);
-      if (!bMetrics.isFirstLogoInside) {
-        throw new Error(`First brand logo is clipped: left = ${bMetrics.firstLogoLeft}`);
+      console.log(`  Band height: ${bMetrics.bandHeight}px (must be <= 96px)`);
+      if (bMetrics.bandHeight > 96) {
+        throw new Error(`Brand strip band height exceeded 96px: ${bMetrics.bandHeight}px`);
       }
-      console.log(`  ✓ PASS (e-1): Brand strip first logo is fully inside the viewport without left clipping`);
 
-      console.log(`  Brands detected: ${bMetrics.brandDetails.map(b => `${b.text} (badge: ${b.hasBadge})`).join(', ')}`);
-      // Hikvision and Dahua should have badge; others shouldn't
-      for (const b of bMetrics.brandDetails) {
-        if (b.text.toLowerCase().includes('hikvision') || b.text.toLowerCase().includes('dahua')) {
-          if (!b.hasBadge) {
-            console.warn(`  Notice: ${b.text} did not have Authorized Support Partner badge pill`);
-          }
-        } else if (b.text.toLowerCase().includes('zkteco') || b.text.toLowerCase().includes('ruijie')) {
-          if (b.hasBadge) {
-            throw new Error(`Unexpected Authorized Support Partner badge on brand: ${b.text}`);
-          }
+      if (bMetrics.hasBigRadius || bMetrics.hasBigShadow) {
+        throw new Error(`Brand strip must not contain large boxed panels or card shadows`);
+      }
+
+      if (bMetrics.hasTrustedEco || bMetrics.hasCertifiedHardware) {
+        throw new Error(`Brand strip contains banned heading/subtitle text (Trusted Ecosystem / certified hardware integration)`);
+      }
+
+      console.log(`  Vertical center variance: ${bMetrics.maxVDiff.toFixed(2)}px`);
+      if (bMetrics.maxVDiff > 4) {
+        throw new Error(`Brand strip logos do not share the same vertical center line (diff=${bMetrics.maxVDiff}px)`);
+      }
+      console.log(`  ✓ PASS (e-1): Brand strip is exactly one row <= 96px with no boxed panel or banned headings`);
+
+      // Verify track animates with 10 brands
+      console.log(`  Marquee animation-name: ${bMetrics.animationName}`);
+      if (bMetrics.brandItemsCount > 3 && bMetrics.animationName === 'none') {
+        throw new Error(`Marquee track should animate when brands > 3`);
+      }
+      console.log(`  ✓ PASS (e-2): Marquee track animation active`);
+
+      // Verify hovering pauses the animation
+      const containerBox = await send('Runtime.evaluate', {
+        expression: `
+          (() => {
+            const container = document.querySelector('.brand-marquee-container') || document.getElementById('hero-brands');
+            if (!container) return null;
+            const r = container.getBoundingClientRect();
+            return { x: Math.floor(r.left + r.width / 2), y: Math.floor(r.top + r.height / 2) };
+          })()
+        `,
+        returnByValue: true
+      });
+
+      if (containerBox.result.value) {
+        await send('Input.dispatchMouseEvent', {
+          type: 'mouseMoved',
+          x: containerBox.result.value.x,
+          y: containerBox.result.value.y
+        });
+        await sleep(300);
+      }
+
+      const hoverEval = await send('Runtime.evaluate', {
+        expression: `
+          (() => {
+            const track = document.querySelector('.brand-marquee-track');
+            return track ? window.getComputedStyle(track).animationPlayState : 'running';
+          })()
+        `,
+        returnByValue: true
+      });
+
+      // Move mouse away
+      await send('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: 0,
+        y: 0
+      });
+      await sleep(200);
+
+      console.log(`  Hover animation-play-state: ${hoverEval.result.value}`);
+      if (hoverEval.result.value !== 'paused') {
+        throw new Error(`Hovering brand strip container did not pause marquee animation (state=${hoverEval.result.value})`);
+      }
+      console.log(`  ✓ PASS (e-3): Hovering pauses the marquee animation`);
+
+      // Verify prefers-reduced-motion emulation
+      await send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-motion', value: 'reduce' }]
+      });
+      await sleep(300);
+      const reducedEval = await send('Runtime.evaluate', {
+        expression: `
+          (() => {
+            const track = document.querySelector('.brand-marquee-track');
+            const animName = track ? window.getComputedStyle(track).animationName : 'none';
+            return animName;
+          })()
+        `,
+        returnByValue: true
+      });
+      await send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-motion', value: '' }]
+      });
+      console.log(`  Reduced-motion animation-name: ${reducedEval.result.value}`);
+      if (reducedEval.result.value !== 'none') {
+        throw new Error(`Prefers-reduced-motion should disable marquee animation`);
+      }
+      console.log(`  ✓ PASS (e-4): prefers-reduced-motion disables animation`);
+
+      // Verify brand logos have non-empty alt text and link to brand pages
+      for (const lv of bMetrics.logoValidations) {
+        if (!lv.hasAlt) {
+          throw new Error(`Brand logo missing non-empty alt text: ${JSON.stringify(lv)}`);
         }
       }
-      console.log(`  ✓ PASS (e-2): Brand badge rules applied accurately`);
+      for (const link of bMetrics.brandLinks) {
+        if (!link.href.includes('/brand/')) {
+          throw new Error(`Brand item must link to its brand page: ${link.href}`);
+        }
+      }
+      console.log(`  ✓ PASS (e-5): Every logo has valid alt text and links to /brand/:slug`);
+      console.log(`  ✓ PASS (e): All One-Line Scrolling Brand Strip assertions passed successfully`);
     }
 
     // ========================================================================

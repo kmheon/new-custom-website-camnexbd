@@ -95,19 +95,28 @@ export const BrandsModule: React.FC = () => {
                   )}
                 </div>
 
-                {/* Badge Status */}
-                <div className="mt-4 pt-3 border-t border-slate-800/80">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Storefront Badge
-                  </div>
-                  {b.showBadge && b.badgeText ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F15A24]/20 text-[#F15A24] border border-[#F15A24]/30">
-                      <ShieldCheck className="w-3 h-3" />
-                      <span>{b.badgeText}</span>
+                {/* Brand Strip & Badge Status */}
+                <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400 font-medium">Strip Display:</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      b.showInBrandStrip !== false ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'
+                    }`}>
+                      {b.showInBrandStrip !== false ? `Active (Order #${b.order ?? 1})` : 'Hidden'}
                     </span>
-                  ) : (
-                    <span className="text-[11px] text-slate-500 italic">No badge displayed</span>
-                  )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400 font-medium">Partner Badge:</span>
+                    {b.showBadge && b.badgeText ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#F15A24]/20 text-[#F15A24] border border-[#F15A24]/30">
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>{b.badgeText}</span>
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 italic text-[10px]">None</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -139,15 +148,28 @@ export const BrandsModule: React.FC = () => {
             </h3>
 
             <form onSubmit={handleSave} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Brand Name *</label>
-                <input
-                  type="text"
-                  value={editingBrand.name}
-                  onChange={e => setEditingBrand({ ...editingBrand, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#F15A24]"
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Brand Name *</label>
+                  <input
+                    type="text"
+                    value={editingBrand.name}
+                    onChange={e => setEditingBrand({ ...editingBrand, name: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#F15A24]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Display Order</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editingBrand.order ?? 1}
+                    onChange={e => setEditingBrand({ ...editingBrand, order: parseInt(e.target.value, 10) || 1 })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#F15A24]"
+                  />
+                </div>
               </div>
 
               <div>
@@ -168,7 +190,14 @@ export const BrandsModule: React.FC = () => {
                   <input
                     type="text"
                     value={editingBrand.logo || ''}
-                    onChange={e => setEditingBrand({ ...editingBrand, logo: e.target.value })}
+                    onChange={e => {
+                      const newLogo = e.target.value;
+                      setEditingBrand({
+                        ...editingBrand,
+                        logo: newLogo,
+                        showInBrandStrip: newLogo ? true : (editingBrand.showInBrandStrip ?? true)
+                      });
+                    }}
                     placeholder="/images/brands/hikvision.svg"
                     className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#F15A24]"
                   />
@@ -188,10 +217,29 @@ export const BrandsModule: React.FC = () => {
                 )}
               </div>
 
+              {/* Show in Brand Strip Checkbox */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-bold text-white block">Show in Brand Strip</label>
+                    <span className="text-[11px] text-slate-400">Display this brand in the homepage scrolling marquee</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={editingBrand.showInBrandStrip !== false}
+                    onChange={e => setEditingBrand({ ...editingBrand, showInBrandStrip: e.target.checked })}
+                    className="w-4 h-4 accent-[#F15A24] cursor-pointer"
+                  />
+                </div>
+              </div>
+
               {/* Storefront Badge Settings */}
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-white">Enable Partner Badge</label>
+                  <div>
+                    <label className="text-xs font-bold text-white block">Enable Partner Badge</label>
+                    <span className="text-[11px] text-slate-400">Small shield icon at top-right of logo</span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={!!editingBrand.showBadge}
@@ -201,12 +249,12 @@ export const BrandsModule: React.FC = () => {
                 </div>
                 {editingBrand.showBadge && (
                   <div>
-                    <label className="text-[11px] font-bold text-slate-400 block mb-1">Badge Text</label>
+                    <label className="text-[11px] font-bold text-slate-400 block mb-1">Badge Title</label>
                     <input
                       type="text"
                       value={editingBrand.badgeText || ''}
                       onChange={e => setEditingBrand({ ...editingBrand, badgeText: e.target.value })}
-                      placeholder="e.g. Authorized Support Partner"
+                      placeholder="Authorized Support Partner"
                       className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
@@ -261,7 +309,7 @@ export const BrandsModule: React.FC = () => {
           onClose={() => setShowMediaModal(false)}
           onSelect={(url) => {
             if (editingBrand) {
-              setEditingBrand({ ...editingBrand, logo: url });
+              setEditingBrand({ ...editingBrand, logo: url, showInBrandStrip: true });
             }
             setShowMediaModal(false);
           }}

@@ -864,7 +864,9 @@ app.delete('/api/categories/:id', requireAdmin, (req, res) => {
 app.get('/api/brands', (req, res) => {
   try {
     const rows = db.prepare('SELECT data_json FROM brands').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const brands = rows.map(r => JSON.parse(r.data_json));
+    brands.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    res.json(brands);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -76,6 +76,8 @@ export interface Brand {
   featured?: boolean;
   badgeText?: string;
   showBadge?: boolean;
+  showInBrandStrip?: boolean;
+  order?: number;
 }
 
 export interface ScenarioItem {

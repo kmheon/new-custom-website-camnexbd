@@ -315,18 +315,9 @@ export const INITIAL_BRANDS: Brand[] = [
     website: 'https://www.hikvision.com',
     featured: true,
     showBadge: true,
-    badgeText: 'Authorized Support Partner'
-  },
-  {
-    id: 'b-zkteco',
-    name: 'ZKTeco',
-    slug: 'zkteco',
-    logo: '/images/brands/zkteco.svg',
-    description: 'Biometric verification and smart access control solutions.',
-    website: 'https://www.zkteco.com',
-    featured: true,
-    showBadge: false,
-    badgeText: ''
+    badgeText: 'Authorized Support Partner',
+    showInBrandStrip: true,
+    order: 1
   },
   {
     id: 'b-dahua',
@@ -337,7 +328,22 @@ export const INITIAL_BRANDS: Brand[] = [
     website: 'https://www.dahuasecurity.com',
     featured: true,
     showBadge: true,
-    badgeText: 'Authorized Support Partner'
+    badgeText: 'Authorized Support Partner',
+    showInBrandStrip: true,
+    order: 2
+  },
+  {
+    id: 'b-zkteco',
+    name: 'ZKTeco',
+    slug: 'zkteco',
+    logo: '/images/brands/zkteco.svg',
+    description: 'Biometric verification and smart access control solutions.',
+    website: 'https://www.zkteco.com',
+    featured: true,
+    showBadge: false,
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 3
   },
   {
     id: 'b-ruijie',
@@ -348,7 +354,9 @@ export const INITIAL_BRANDS: Brand[] = [
     website: 'https://www.ruijienetworks.com',
     featured: true,
     showBadge: false,
-    badgeText: ''
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 4
   },
   {
     id: 'b-wd',
@@ -359,7 +367,74 @@ export const INITIAL_BRANDS: Brand[] = [
     website: 'https://www.westerndigital.com',
     featured: false,
     showBadge: false,
-    badgeText: ''
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 5
+  },
+  {
+    id: 'b-seagate',
+    name: 'Seagate',
+    slug: 'seagate',
+    logo: '',
+    description: 'SkyHawk surveillance storage solutions.',
+    website: 'https://www.seagate.com',
+    featured: false,
+    showBadge: false,
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 6
+  },
+  {
+    id: 'b-tplink',
+    name: 'TP-Link',
+    slug: 'tp-link',
+    logo: '',
+    description: 'VIGI security and Omada enterprise networking solutions.',
+    website: 'https://www.tp-link.com',
+    featured: false,
+    showBadge: false,
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 7
+  },
+  {
+    id: 'b-uniview',
+    name: 'Uniview',
+    slug: 'uniview',
+    logo: '',
+    description: 'Pioneer and leader of IP video surveillance technology.',
+    website: 'https://www.uniview.com',
+    featured: false,
+    showBadge: false,
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 8
+  },
+  {
+    id: 'b-cisco',
+    name: 'Cisco',
+    slug: 'cisco',
+    logo: '',
+    description: 'Commercial networking and enterprise IT infrastructure.',
+    website: 'https://www.cisco.com',
+    featured: false,
+    showBadge: false,
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 9
+  },
+  {
+    id: 'b-honeywell',
+    name: 'Honeywell',
+    slug: 'honeywell',
+    logo: '',
+    description: 'Commercial security, sensors and building automation.',
+    website: 'https://www.honeywell.com',
+    featured: false,
+    showBadge: false,
+    badgeText: '',
+    showInBrandStrip: true,
+    order: 10
   }
 ];
 

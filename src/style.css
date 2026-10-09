@@ -30,3 +30,31 @@ img, svg, video, canvas, audio, iframe, embed, object {
   height: auto;
 }
 
+/* Brand Logo Marquee Seamless Infinite Loop */
+@keyframes brand-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-brand-marquee {
+  animation: brand-marquee 45s linear infinite;
+}
+
+.brand-marquee-container:hover .brand-marquee-track,
+.brand-marquee-container:hover .animate-brand-marquee,
+.brand-marquee-track:hover,
+.brand-marquee-container:focus-within .brand-marquee-track,
+.brand-marquee-container:focus-within .animate-brand-marquee {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-brand-marquee {
+    animation: none !important;
+  }
+}
+

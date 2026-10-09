@@ -21,42 +21,68 @@ interface HeroSliderProps {
 }
 
 const DEFAULT_BRAND_DATA: Brand[] = [
-  { id: 'b-hikvision', name: 'Hikvision', slug: 'hikvision', logo: '/images/brands/hikvision.svg', description: '', website: '', featured: true },
-  { id: 'b-zkteco', name: 'ZKTeco', slug: 'zkteco', logo: '/images/brands/zkteco.svg', description: '', website: '', featured: true },
-  { id: 'b-dahua', name: 'Dahua Technology', slug: 'dahua', logo: '/images/brands/dahua.svg', description: '', website: '', featured: true },
-  { id: 'b-wd', name: 'Western Digital', slug: 'western-digital', logo: '/images/brands/western-digital.svg', description: '', website: '', featured: true },
+  { id: 'b-hikvision', name: 'Hikvision', slug: 'hikvision', logo: '/images/brands/hikvision.svg', showBadge: true, badgeText: 'Authorized Support Partner', showInBrandStrip: true, order: 1 },
+  { id: 'b-dahua', name: 'Dahua Technology', slug: 'dahua', logo: '/images/brands/dahua.svg', showBadge: true, badgeText: 'Authorized Support Partner', showInBrandStrip: true, order: 2 },
+  { id: 'b-zkteco', name: 'ZKTeco', slug: 'zkteco', logo: '/images/brands/zkteco.svg', showBadge: false, showInBrandStrip: true, order: 3 },
+  { id: 'b-ruijie', name: 'Ruijie Reyee', slug: 'ruijie-reyee', logo: '/images/brands/ruijie.svg', showBadge: false, showInBrandStrip: true, order: 4 },
+  { id: 'b-wd', name: 'Western Digital', slug: 'western-digital', logo: '/images/brands/western-digital.svg', showBadge: false, showInBrandStrip: true, order: 5 },
+  { id: 'b-seagate', name: 'Seagate', slug: 'seagate', logo: '', showBadge: false, showInBrandStrip: true, order: 6 },
+  { id: 'b-tplink', name: 'TP-Link', slug: 'tp-link', logo: '', showBadge: false, showInBrandStrip: true, order: 7 },
+  { id: 'b-uniview', name: 'Uniview', slug: 'uniview', logo: '', showBadge: false, showInBrandStrip: true, order: 8 },
+  { id: 'b-cisco', name: 'Cisco', slug: 'cisco', logo: '', showBadge: false, showInBrandStrip: true, order: 9 },
+  { id: 'b-honeywell', name: 'Honeywell', slug: 'honeywell', logo: '', showBadge: false, showInBrandStrip: true, order: 10 },
 ];
 
-const BrandGridItem: React.FC<{
+const BrandMarqueeItem: React.FC<{
   brand: Brand;
   onNavigate: (route: string, param?: string) => void;
 }> = ({ brand, onNavigate }) => {
   const [imgFailed, setImgFailed] = useState(false);
   const hasLogo = Boolean(brand.logo && brand.logo.trim() && !imgFailed);
+  const isAuthorized = Boolean(
+    brand.showBadge &&
+    (brand.slug === 'hikvision' || brand.slug === 'dahua')
+  );
 
   return (
-    <button
-      type="button"
-      onClick={() => onNavigate('brand', brand.slug)}
-      className="group relative flex items-center justify-center p-3.5 sm:p-5 h-20 sm:h-24 rounded-[14px] bg-white/70 hover:bg-white border border-[#EDE8E1] hover:border-[#FF5722]/50 hover:shadow-md transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 w-full"
+    <a
+      href={`/brand/${brand.slug}`}
+      onClick={(e) => {
+        e.preventDefault();
+        onNavigate('brand', brand.slug);
+      }}
       title={brand.name}
+      aria-label={brand.name}
+      className="group relative flex-shrink-0 flex items-center justify-center outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F15A24]/40"
     >
-      <span className="sr-only">{brand.name}</span>
-      <div className="w-full h-full flex items-center justify-center pointer-events-none">
+      <div className="relative flex items-center justify-center h-[24px] md:h-[28px]">
         {hasLogo ? (
           <img
             src={brand.logo}
             alt={brand.name}
-            className="max-h-7 sm:max-h-8 max-w-[110px] sm:max-w-[130px] w-auto object-contain filter grayscale opacity-60 contrast-75 transition-all duration-300 ease-in-out group-hover:grayscale-0 group-hover:opacity-100 group-hover:contrast-100 group-hover:scale-105"
+            width="110"
+            height="28"
+            loading="lazy"
             onError={() => setImgFailed(true)}
+            className="h-[24px] md:h-[28px] max-w-[110px] w-auto object-contain filter grayscale opacity-70 transition-all duration-300 ease-out group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105"
           />
         ) : (
-          <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#5B6472] group-hover:text-[#FF5722] transition-colors">
+          <span className="h-[24px] md:h-[28px] flex items-center text-xs md:text-sm font-extrabold uppercase tracking-wider text-[#5B6472] transition-all duration-300 ease-out whitespace-nowrap filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105">
             {brand.name}
           </span>
         )}
+
+        {isAuthorized && (
+          <span
+            className="absolute -top-1.5 -right-2.5 flex items-center justify-center pointer-events-none"
+            title={brand.badgeText || 'Authorized Support Partner'}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-[#F15A24]" />
+            <span className="sr-only">{brand.badgeText || 'Authorized Support Partner'}</span>
+          </span>
+        )}
       </div>
-    </button>
+    </a>
   );
 };
 
@@ -65,6 +91,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isTickerPaused, setIsTickerPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -187,14 +214,19 @@ const FALLBACK_SLIDE: HeroSlide = {
   const currentSlide = slides.length > 0 ? slides[currentIndex] : FALLBACK_SLIDE;
   const primaryHighlight = currentSlide.highlights?.[0];
 
-  // Target the 4 core surveillance brands in order, falling back gracefully
-  const targetSlugs = ['hikvision', 'zkteco', 'dahua', 'western-digital'];
-  const matchedBrands = targetSlugs.map((slug) => brands.find((b) => b.slug === slug)).filter(Boolean) as Brand[];
-  const displayBrands = matchedBrands.length === 4
-    ? matchedBrands
-    : brands.length > 0
-    ? brands.slice(0, 4)
-    : DEFAULT_BRAND_DATA;
+  // Eligible brands for the one-line scrolling strip (logo exists or marked showInBrandStrip, ordered by order)
+  const eligibleBrands = (brands.length > 0 ? brands : DEFAULT_BRAND_DATA)
+    .filter((b) => (b.showInBrandStrip !== false) || Boolean(b.logo && b.logo.trim()))
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+  const displayStripBrands = eligibleBrands.length > 0 ? eligibleBrands : DEFAULT_BRAND_DATA;
+  const isFew = displayStripBrands.length <= 3;
+
+  // Build duplicated track so Set A + Set B is at least 2x container width and loops seamlessly
+  let baseTrack = [...displayStripBrands];
+  while (baseTrack.length < 8) {
+    baseTrack = [...baseTrack, ...displayStripBrands];
+  }
 
   return (
     <div className="w-full">
@@ -406,32 +438,92 @@ const FALLBACK_SLIDE: HeroSlide = {
         )}
       </section>
 
-      {/* BRAND SECTION DIRECTLY BELOW HERO (Frosted white container with subtle stone border matching Category cards) */}
-      <section id="hero-brands" className="w-full bg-[#FAF6F0] py-8 sm:py-10 border-b border-[#EDE8E1]">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-br from-white/95 via-white/90 to-[#F7F3EE]/80 backdrop-blur-md rounded-[20px] sm:rounded-[24px] border border-[#EDE8E1] p-6 sm:p-8 lg:p-9 shadow-xs">
-            {/* Header: Clean "Trusted Ecosystem" badge header + Title + Unified subtitle on the left */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8 pb-5 sm:pb-6 border-b border-[#EDE8E1]/80">
-              <div className="space-y-1.5 text-left">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-50 text-[#FF5722] border border-orange-200/70 shadow-2xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF5722]" />
-                  <span>Trusted Ecosystem</span>
-                </div>
-                <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-[#111827] tracking-tight">
-                  Brands We Work With
-                </h2>
-                <p className="text-xs sm:text-sm text-[#5B6472] font-medium leading-relaxed">
-                  Authorized support & certified hardware integration partners
-                </p>
-              </div>
-            </div>
+      {/* BRAND STRIP DIRECTLY BELOW HERO (One-line full-width band with seamless marquee) */}
+      <section
+        id="hero-brands"
+        aria-label="Brands we work with"
+        className="w-full bg-[#FAF7F2] border-t border-b border-[#EDE8E1] h-[96px] md:h-[78px] flex items-center overflow-hidden"
+      >
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full h-full flex flex-col md:flex-row items-center justify-between">
+          {/* Mobile Label: sits above the row in 12px, centered */}
+          <div className="md:hidden pt-2 pb-1 text-center w-full flex-shrink-0">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-[#5B6472]">
+              Brands we work with
+            </span>
+          </div>
 
-            {/* Responsive 2-column (mobile) to 4-column (desktop) grid layout */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5">
-              {displayBrands.map((b) => (
-                <BrandGridItem key={b.id} brand={b} onNavigate={onNavigate} />
-              ))}
-            </div>
+          {/* Desktop Left Fixed Label: 13px, uppercase, tracking, no icon, thin vertical divider */}
+          <div className="hidden md:flex items-center flex-shrink-0 mr-6 lg:mr-8 h-full">
+            <span className="text-[13px] font-bold uppercase tracking-wider text-[#5B6472] whitespace-nowrap">
+              Brands we work with
+            </span>
+            <div className="h-6 w-px bg-[#EDE8E1] ml-6 flex-shrink-0" />
+          </div>
+
+          {/* Right Marquee Area filling remaining width */}
+          <div
+            className={`brand-marquee-container relative flex-1 min-w-0 w-full h-full flex items-center overflow-hidden ${
+              reducedMotion ? 'overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar' : ''
+            }`}
+            style={
+              isFew
+                ? undefined
+                : {
+                    maskImage:
+                      'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)',
+                    WebkitMaskImage:
+                      'linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)'
+                  }
+            }
+            onMouseEnter={() => setIsTickerPaused(true)}
+            onMouseLeave={() => setIsTickerPaused(false)}
+            onFocus={() => setIsTickerPaused(true)}
+            onBlur={() => setIsTickerPaused(false)}
+          >
+            {/* Accessibility Play/Pause button (visible on focus) */}
+            {!isFew && (
+              <button
+                type="button"
+                onClick={() => setIsTickerPaused((p) => !p)}
+                aria-label={isTickerPaused ? 'Play brand logo marquee' : 'Pause brand logo marquee'}
+                className="sr-only focus:not-sr-only focus:absolute focus:z-20 focus:left-2 focus:top-1/2 focus:-translate-y-1/2 px-2.5 py-1 text-[11px] font-bold bg-[#111827] text-white rounded shadow-md border border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+              >
+                {isTickerPaused ? 'Play marquee' : 'Pause marquee'}
+              </button>
+            )}
+
+            {isFew ? (
+              /* With 3 or fewer brands: static and centered, no animation */
+              <div className="flex items-center justify-center gap-12 w-full h-full">
+                {displayStripBrands.map((b, idx) => (
+                  <BrandMarqueeItem key={`few-${b.id}-${idx}`} brand={b} onNavigate={onNavigate} />
+                ))}
+              </div>
+            ) : (
+              /* Duplicated track auto-scrolls sideways in a seamless infinite loop */
+              <div
+                className={`brand-marquee-track flex items-center shrink-0 ${
+                  reducedMotion ? '' : 'animate-brand-marquee'
+                }`}
+                style={{
+                  animationPlayState: isTickerPaused ? 'paused' : undefined,
+                  willChange: 'transform'
+                }}
+              >
+                {/* Track Set A */}
+                <div className="flex items-center gap-12 pr-12 shrink-0">
+                  {baseTrack.map((b, idx) => (
+                    <BrandMarqueeItem key={`a-${b.id}-${idx}`} brand={b} onNavigate={onNavigate} />
+                  ))}
+                </div>
+                {/* Track Set B (exact duplicate) */}
+                <div className="flex items-center gap-12 pr-12 shrink-0">
+                  {baseTrack.map((b, idx) => (
+                    <BrandMarqueeItem key={`b-${b.id}-${idx}`} brand={b} onNavigate={onNavigate} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
