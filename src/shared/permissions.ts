@@ -224,7 +224,7 @@ export const SYSTEM_ROLES: Record<string, SystemRoleDefinition> = {
  */
 export function hasPermission(userPermissions: string[] | undefined | null, required: PermissionKey | string): boolean {
   if (!userPermissions || !Array.isArray(userPermissions)) return false;
-  if (userPermissions.includes('*') || userPermissions.includes(PERMISSIONS.SUPER_ADMIN as any)) return true;
+  if (userPermissions.includes('*')) return true;
   return userPermissions.includes(required);
 }
 

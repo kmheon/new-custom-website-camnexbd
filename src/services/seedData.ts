@@ -14,7 +14,9 @@ import {
   ServiceItem,
   ProcessStep,
   ScenarioItem,
-  CtaReassuranceItem
+  CtaReassuranceItem,
+  ServiceOffering,
+  PackageSeries
 } from '../types';
 
 export const DEFAULT_SERVICES_LIST: ServiceItem[] = [

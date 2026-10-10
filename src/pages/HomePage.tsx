@@ -434,7 +434,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         // Filter Wi-Fi / Wireless camera products
         const wifi = res.items.filter((p) => {
           if (p.status !== 'active' || p.websiteVisible === false) return false;
-          if (p.categoryId === 'cat-wifi' || p.categorySlug === 'wifi-cameras') return true;
+          if (p.categoryId === 'cat-wifi' || (p as any).categorySlug === 'wifi-cameras') return true;
           const cat = (p.category || '').toLowerCase();
           const name = (p.name || '').toLowerCase();
           return cat.includes('wi-fi') || cat.includes('wireless') || name.includes('wi-fi') || name.includes('wireless') || name.includes('ezviz');
