@@ -47,11 +47,14 @@ import {
   Product,
   Category,
   SecurityPackage,
+  PackageSeries,
+  ServiceOffering,
   Testimonial,
   ProjectCaseStudy,
   ScenarioItem
 } from '../types';
 import { SmartImage, ImagePlaceholder } from '../components/common/ImagePlaceholder';
+import { IconTile } from '../components/common/IconTile';
 import { useSettingsStore, useAdminAuthStore, useCartStore } from '../store';
 import { DEFAULT_SCENARIOS } from '../services/seedData';
 
@@ -59,15 +62,63 @@ interface HomePageProps {
   onNavigate: (route: string, param?: string) => void;
 }
 
-// Distinct Crisp Vector SVG Fallbacks for CCTV Package kits by type
+// Distinct Crisp Vector SVG Fallbacks for CCTV Package kits by series type
 const CctvPackageSvg: React.FC<{ pkg: SecurityPackage }> = ({ pkg }) => {
   const name = (pkg.name || '').toLowerCase();
   const desc = (pkg.description || '').toLowerCase();
-  const isColor = name.includes('color') || desc.includes('color');
-  const isEnterprise = name.includes('16') || name.includes('enterprise') || name.includes('business');
+  const series = (pkg.seriesName || '').toLowerCase();
+  const isWireless = series.includes('wireless') || name.includes('wireless') || name.includes('wi-fi') || desc.includes('wireless');
+  const isColor = series.includes('full-color') || series.includes('color') || name.includes('color') || desc.includes('color');
+  const isHybrid = series.includes('hybrid') || name.includes('hybrid') || desc.includes('hybrid');
+  const isEnterprise = (pkg.cameraCount && pkg.cameraCount >= 16) || series.includes('enterprise') || series.includes('ptz') || name.includes('enterprise') || name.includes('ptz');
+
+  if (isWireless) {
+    return (
+      <div className="w-full h-36 sm:h-44 bg-[#F0FDF4] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
+        <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Wireless CCTV Kit">
+          <rect x="70" y="40" width="60" height="55" rx="12" fill="#FFFFFF" stroke="#16A34A" strokeWidth="2" />
+          <circle cx="100" cy="65" r="15" fill="#0F172A" />
+          <circle cx="100" cy="65" r="7" fill="#3B82F6" />
+          <circle cx="103" cy="62" r="2.5" fill="#FFFFFF" />
+          <line x1="120" y1="40" x2="135" y2="15" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="137" cy="12" r="3" fill="#16A34A" />
+          <path d="M142 8 A 8 8 0 0 1 148 18" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <path d="M147 4 A 14 14 0 0 1 155 20" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <rect x="25" y="70" width="28" height="24" rx="4" fill="#334155" />
+          <line x1="28" y1="94" x2="28" y2="102" stroke="#64748B" strokeWidth="2" strokeLinecap="round" />
+          <line x1="34" y1="94" x2="34" y2="102" stroke="#64748B" strokeWidth="2" strokeLinecap="round" />
+          <path d="M53 82 C60 82 62 80 70 80" stroke="#94A3B8" strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
+          <rect x="150" y="72" width="22" height="26" rx="3" fill="#0F172A" stroke="#22C55E" strokeWidth="1.5" />
+          <text x="154" y="88" fill="#22C55E" fontSize="7" fontWeight="bold">SD</text>
+        </svg>
+      </div>
+    );
+  }
+
+  if (isHybrid) {
+    return (
+      <div className="w-full h-36 sm:h-44 bg-[#FFFBEB] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
+        <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Smart Hybrid Light CCTV Kit">
+          <rect x="25" y="65" width="150" height="38" rx="6" fill="#1E293B" />
+          <rect x="35" y="74" width="32" height="4" rx="2" fill="#F59E0B" />
+          <circle cx="155" cy="84" r="3" fill="#22C55E" />
+          <circle cx="165" cy="84" r="3" fill="#3B82F6" />
+          <line x1="30" y1="92" x2="170" y2="92" stroke="#334155" strokeWidth="1" />
+          <circle cx="145" cy="40" r="22" stroke="#F59E0B" strokeWidth="3" fill="none" />
+          <circle cx="145" cy="40" r="16" stroke="#EF4444" strokeWidth="3" strokeDasharray="4 3" fill="none" />
+          <circle cx="145" cy="40" r="8" fill="#FEF3C7" />
+          <rect x="42" y="22" width="55" height="26" rx="4" fill="#FFFFFF" stroke="#D97706" strokeWidth="1.5" />
+          <path d="M97 26 L118 18 L118 52 L97 44 Z" fill="#B45309" />
+          <circle cx="52" cy="35" r="7" fill="#0F172A" />
+          <circle cx="52" cy="35" r="3" fill="#F59E0B" />
+          <rect x="65" y="48" width="8" height="18" fill="#94A3B8" />
+          <rect x="58" y="64" width="22" height="4" rx="2" fill="#64748B" />
+        </svg>
+      </div>
+    );
+  }
 
   if (isColor) {
-    // Warm colored LED illuminator bullet camera + NVR
     return (
       <div className="w-full h-36 sm:h-44 bg-[#FFF8F4] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
         <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ColorVu CCTV Kit">
@@ -90,7 +141,6 @@ const CctvPackageSvg: React.FC<{ pkg: SecurityPackage }> = ({ pkg }) => {
   }
 
   if (isEnterprise) {
-    // Rack-mountable 16ch unit + multi-camera array
     return (
       <div className="w-full h-36 sm:h-44 bg-[#F1F5F9] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
         <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Enterprise CCTV Kit">
@@ -100,9 +150,9 @@ const CctvPackageSvg: React.FC<{ pkg: SecurityPackage }> = ({ pkg }) => {
           <circle cx="158" cy="82" r="3" fill="#22C55E" />
           <circle cx="168" cy="82" r="3" fill="#38BDF8" />
           <line x1="24" y1="94" x2="176" y2="94" stroke="#1E293B" strokeWidth="1.5" />
-          <rect x="35" y="20" width="42" height="22" rx="4" fill="#F8FAFC" stroke="#64748B" strokeWidth="1.5" />
-          <path d="M77 24 L94 18 L94 44 L77 38 Z" fill="#475569" />
-          <circle cx="44" cy="31" r="5" fill="#0F172A" />
+          <path d="M40 38 A 20 20 0 0 1 80 38 Z" fill="#E2E8F0" stroke="#475569" strokeWidth="1.5" />
+          <circle cx="60" cy="38" r="8" fill="#0F172A" />
+          <circle cx="60" cy="38" r="3" fill="#38BDF8" />
           <rect x="110" y="20" width="42" height="22" rx="4" fill="#F8FAFC" stroke="#64748B" strokeWidth="1.5" />
           <path d="M152 24 L169 18 L169 44 L152 38 Z" fill="#475569" />
           <circle cx="119" cy="31" r="5" fill="#0F172A" />
@@ -144,9 +194,9 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }
       <div>
         {/* Top Row: Quote tile on top-left, 5-star rating on top-right */}
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#F15A24] flex items-center justify-center shadow-2xs shrink-0">
-            <Quote className="w-4 h-4 fill-[#F15A24]" />
-          </div>
+          <IconTile size="md" rounded="rounded-xl">
+            <Quote className="w-4 h-4 fill-current stroke-none" />
+          </IconTile>
           <div className="flex items-center gap-0.5 text-amber-400">
             {[...Array(testimonial.rating || 5)].map((_, i) => (
               <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
@@ -261,9 +311,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [specialOffers, setSpecialOffers] = useState<Product[]>([]);
+  const [wifiProducts, setWifiProducts] = useState<Product[]>([]);
   const [accessoryProducts, setAccessoryProducts] = useState<Product[]>([]);
   const [categoryRowProducts, setCategoryRowProducts] = useState<{ [catId: string]: Product[] }>({});
   const [packages, setPackages] = useState<SecurityPackage[]>([]);
+  const [packageSeriesList, setPackageSeriesList] = useState<PackageSeries[]>([]);
+  const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [projects, setProjects] = useState<ProjectCaseStudy[]>([]);
 
@@ -271,8 +324,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [packageCountFilter, setPackageCountFilter] = useState<string>('All');
   const [packageTypeFilter, setPackageTypeFilter] = useState<string>('All Types');
 
-  // Quick Service Request callback state
-  const [selectedServiceChip, setSelectedServiceChip] = useState<string>('CCTV Camera Setup');
+  // Quick Service Request callback state (fully dynamic & two-way synced)
+  const [selectedServiceId, setSelectedServiceId] = useState<string>('srv-cctv');
+  const [selectedServiceType, setSelectedServiceType] = useState<string>('CCTV Camera Setup');
+  const [customServiceText, setCustomServiceText] = useState<string>('');
   const [callbackName, setCallbackName] = useState<string>('');
   const [callbackPhone, setCallbackPhone] = useState<string>('');
   const [callbackArea, setCallbackArea] = useState<string>('');
@@ -369,12 +424,22 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       const accessoryCatSlugs = new Set(targetAccessoryCats.map((c) => c.slug.toLowerCase()));
       const accessoryCatIds = new Set(targetAccessoryCats.map((c) => c.id));
 
-      // Fetch all products to identify REAL special offers and Accessories & Add-ons
+      // Fetch all products to identify REAL special offers, Wi-Fi cameras, and Accessories & Add-ons
       productService.getProducts({ limit: 50 }).then((res) => {
         const discounted = res.items.filter(
           (p) => p.status === 'active' && p.websiteVisible !== false && p.pricing.salePrice && p.pricing.regularPrice && p.pricing.salePrice < p.pricing.regularPrice
         );
         setSpecialOffers(discounted);
+
+        // Filter Wi-Fi / Wireless camera products
+        const wifi = res.items.filter((p) => {
+          if (p.status !== 'active' || p.websiteVisible === false) return false;
+          if (p.categoryId === 'cat-wifi' || p.categorySlug === 'wifi-cameras') return true;
+          const cat = (p.category || '').toLowerCase();
+          const name = (p.name || '').toLowerCase();
+          return cat.includes('wi-fi') || cat.includes('wireless') || name.includes('wi-fi') || name.includes('wireless') || name.includes('ezviz');
+        });
+        setWifiProducts(wifi);
 
         // Identify accessories items
         const accessories = res.items.filter((p) => {
@@ -396,8 +461,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       setNewArrivals(res.items);
     });
 
-    // Fetch packages
+    // Fetch packages & package series
     packageService.getPackages().then(setPackages);
+    packageService.getPackageSeries().then(setPackageSeriesList);
+
+    // Fetch dynamic service offerings for Quick Service section
+    quoteService.getServiceOfferings().then((services) => {
+      setServiceOfferings(services || []);
+      if (services && services.length > 0) {
+        setSelectedServiceId(services[0].id);
+        setSelectedServiceType(services[0].title);
+      }
+    });
 
     // Fetch proof sections (testimonials and projects)
     cmsService.getTestimonials().then(setTestimonials);
@@ -417,19 +492,29 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     setCallbackMessage('');
 
     try {
+      const isOther = selectedServiceId === 'other';
+      const serviceTypeToSubmit = isOther
+        ? (customServiceText.trim() || 'Other / not listed')
+        : (selectedServiceType || 'CCTV Camera Setup');
+
       await quoteService.createServiceRequest({
         customerName: callbackName.trim(),
         phone: callbackPhone.trim(),
-        serviceType: selectedServiceChip,
+        serviceId: !isOther ? selectedServiceId : undefined,
+        serviceType: serviceTypeToSubmit,
         area: callbackArea.trim(),
         website: honeypot // Anti-bot honeypot field
       });
 
       setCallbackStatus('success');
-      setCallbackMessage('Thank you! Our engineer will call you back within 15 minutes.');
+      setCallbackMessage(
+        settings?.quickServiceSettings?.successMessage ||
+        'Thank you! Our engineer will call you back within 15 minutes.'
+      );
       setCallbackName('');
       setCallbackPhone('');
       setCallbackArea('');
+      setCustomServiceText('');
     } catch (err: any) {
       setCallbackStatus('error');
       setCallbackMessage(err?.message || 'Could not submit request. Please call +880 1540-535150 directly.');
@@ -463,80 +548,53 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   // Derive dynamic camera count options from existing packages
   const availableCameraCounts = useMemo(() => {
-    const counts = new Set<string>();
+    const counts = new Set<number>();
     packages.forEach((pkg) => {
-      // Check cameraCountsSupported array or name/description
+      if (pkg.cameraCount) counts.add(pkg.cameraCount);
       if (pkg.cameraCountsSupported && Array.isArray(pkg.cameraCountsSupported)) {
-        pkg.cameraCountsSupported.forEach((c) => counts.add(`${c} Camera`));
-      } else {
-        const match = pkg.name.match(/(\d+)[-\s]*camera/i) || pkg.description.match(/(\d+)[-\s]*camera/i);
-        if (match) counts.add(`${match[1]} Camera`);
+        pkg.cameraCountsSupported.forEach((c) => counts.add(c));
       }
     });
-    // Sort numerically
-    const sorted = Array.from(counts).sort((a, b) => parseInt(a) - parseInt(b));
-    return sorted.length >= 1 ? ['All', ...sorted] : [];
+    const sorted = Array.from(counts).sort((a, b) => a - b);
+    return sorted.length >= 1 ? ['All', ...sorted.map((c) => `${c} Camera`)] : [];
   }, [packages]);
 
-  // Derive dynamic package types from existing packages
+  // Derive dynamic package types from series that have packages
   const availablePackageTypes = useMemo(() => {
-    const types = new Set<string>();
+    const seriesNames = new Set<string>();
     packages.forEach((pkg) => {
-      const nameDesc = (pkg.name + ' ' + (pkg.description || '')).toLowerCase();
-      if (nameDesc.includes('color')) types.add('Color Series');
-      if (nameDesc.includes('night vision') || nameDesc.includes('irpf') || nameDesc.includes('infrared')) types.add('Night Vision');
-      if (nameDesc.includes('bullet')) types.add('Bullet Series');
-      if (nameDesc.includes('dome')) types.add('Dome Series');
-      if (nameDesc.includes('enterprise') || nameDesc.includes('business')) types.add('Business / Enterprise');
-      if (nameDesc.includes('poe') || nameDesc.includes('ip')) types.add('PoE IP Systems');
+      if (pkg.seriesName) seriesNames.add(pkg.seriesName);
+      else if (pkg.seriesId) {
+        const found = packageSeriesList.find((s) => s.id === pkg.seriesId);
+        if (found) seriesNames.add(found.name);
+      }
     });
-    return types.size >= 2 ? ['All', ...Array.from(types)] : [];
-  }, [packages]);
+    return seriesNames.size >= 2 ? ['All Types', ...Array.from(seriesNames)] : [];
+  }, [packages, packageSeriesList]);
 
-  // Combined AND filtering for Packages
+  // Combined AND filtering for Packages (strict no-leak logic)
   const filteredPackages = useMemo(() => {
     return packages.filter((pkg) => {
-      const nameDesc = (pkg.name + ' ' + (pkg.description || '')).toLowerCase();
-
       // Camera count filter (AND)
       if (packageCountFilter !== 'All') {
         const countNum = parseInt(packageCountFilter, 10);
-        let matchesCount = false;
-        if (pkg.cameraCountsSupported && Array.isArray(pkg.cameraCountsSupported)) {
-          matchesCount = pkg.cameraCountsSupported.includes(countNum);
-        }
-        if (!matchesCount) {
-          matchesCount = nameDesc.includes(`${countNum} camera`) ||
-            nameDesc.includes(`${countNum}-camera`) ||
-            (countNum === 4 && nameDesc.includes('4 camera')) ||
-            (countNum === 8 && nameDesc.includes('8 camera')) ||
-            (countNum === 16 && nameDesc.includes('16 camera')) ||
-            (countNum === 2 && nameDesc.includes('2 camera'));
-        }
+        const matchesCount = pkg.cameraCount === countNum ||
+          (Array.isArray(pkg.cameraCountsSupported) && pkg.cameraCountsSupported.length > 1 && pkg.cameraCountsSupported.includes(countNum));
         if (!matchesCount) return false;
       }
 
-      // Type filter (AND)
-      if (packageTypeFilter !== 'All') {
-        const t = packageTypeFilter.toLowerCase();
-        if (t.includes('color')) {
-          if (!nameDesc.includes('color')) return false;
-        } else if (t.includes('night vision')) {
-          if (!nameDesc.includes('night vision') && !nameDesc.includes('irpf') && !nameDesc.includes('infrared')) return false;
-        } else if (t.includes('bullet')) {
-          if (!nameDesc.includes('bullet')) return false;
-        } else if (t.includes('dome')) {
-          if (!nameDesc.includes('dome')) return false;
-        } else if (t.includes('business') || t.includes('enterprise')) {
-          if (!nameDesc.includes('business') && !nameDesc.includes('enterprise')) return false;
-        } else if (t.includes('poe') || t.includes('ip')) {
-          if (!nameDesc.includes('ip') && !nameDesc.includes('poe')) return false;
-        }
+      // Series / Type filter (AND)
+      if (packageTypeFilter !== 'All Types' && packageTypeFilter !== 'All') {
+        const target = packageTypeFilter.toLowerCase();
+        const matchesSeries =
+          (pkg.seriesName && pkg.seriesName.toLowerCase() === target) ||
+          (pkg.seriesId && packageSeriesList.some((s) => s.id === pkg.seriesId && s.name.toLowerCase() === target));
+        if (!matchesSeries) return false;
       }
 
       return true;
     });
-  }, [packages, packageCountFilter, packageTypeFilter]);
+  }, [packages, packageCountFilter, packageTypeFilter, packageSeriesList]);
 
   const displayPackages = filteredPackages;
 
@@ -547,7 +605,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   // Helper for Scenario line icons
   const renderScenarioIcon = (iconName?: string) => {
-    const className = "w-5 h-5 text-[#F15A24]";
+    const className = "w-5 h-5 stroke-current fill-none";
     switch (iconName?.toLowerCase()) {
       case 'home': return <Home className={className} />;
       case 'building2':
@@ -571,7 +629,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const reassuranceItems = configuredReassurances;
 
   // ============================================================================
-  // STRICT HOMEPAGE ROW DEDUPLICATION (Special Offers claims first, then Popular, then New Arrivals, then Trending, then Category rows)
+  // STRICT HOMEPAGE ROW DEDUPLICATION (Special Offers -> Wi-Fi Cameras -> Popular -> New Arrivals -> Accessories -> Category rows)
   // ============================================================================
   const displayedProductIds = new Set<string>();
 
@@ -580,31 +638,37 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const dedupSpecialOffers = specialOffers
     .filter((p) => !displayedProductIds.has(p.id))
     .slice(0, maxSpecialOffers);
-
-  // Mark all active special offer products as displayed to prevent row duplication
   dedupSpecialOffers.forEach((p) => displayedProductIds.add(p.id));
 
-  // 2. Popular Products claims next (at least 4 cards per row)
+  // 2. Wi-Fi Cameras claims next (up to 8 cards; hidden if < 2)
+  const dedupWifi = wifiProducts
+    .filter((p) => !displayedProductIds.has(p.id))
+    .slice(0, 8);
+  if (dedupWifi.length >= 2) {
+    dedupWifi.forEach((p) => displayedProductIds.add(p.id));
+  }
+
+  // 3. Popular Products claims next (at least 4 cards per row)
   const dedupPopular = popularProducts
     .filter((p) => !displayedProductIds.has(p.id))
     .slice(0, 4);
   dedupPopular.forEach((p) => displayedProductIds.add(p.id));
 
-  // 3. New Arrivals claims next (at least 4 cards per row)
+  // 4. New Arrivals claims next (at least 4 cards per row)
   const dedupNewArrivals = newArrivals
     .filter((p) => !displayedProductIds.has(p.id))
     .slice(0, 4);
   dedupNewArrivals.forEach((p) => displayedProductIds.add(p.id));
 
-  // 4. Accessories & Add-ons row claims next (categories with isAccessoryCategory, up to 8 cards)
+  // 5. Accessories & Add-ons row claims next (categories with isAccessoryCategory, up to 8 cards)
   const dedupAccessories = accessoryProducts
     .filter((p) => !displayedProductIds.has(p.id))
     .slice(0, 8);
   dedupAccessories.forEach((p) => displayedProductIds.add(p.id));
 
-  // 5. Category rows claim next (show if >= 2 cards, hide only if < 2)
+  // 6. Category rows claim next (show if >= 2 cards, hide only if < 2)
   const dedupCategoryRows = categories
-    .filter((cat) => cat.showOnHomepage && categoryRowProducts[cat.id]?.length > 0)
+    .filter((cat) => (cat.showAsHomepageRow || cat.showOnHomepage) && categoryRowProducts[cat.id]?.length > 0)
     .map((cat) => {
       const items = (categoryRowProducts[cat.id] || []).filter((p) => {
         if (displayedProductIds.has(p.id)) return false;
@@ -614,16 +678,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       return { cat, items };
     })
     .filter((row) => row.items.length >= 2);
-
-  // 6 Quick Service Request Chips (neutral, claim-free)
-  const serviceChips = [
-    'CCTV Camera Setup',
-    'Cabling and installation',
-    'Physical Site Survey',
-    'Wi-Fi 6 Networking',
-    'Biometric Attendance',
-    'DVR/NVR Repair'
-  ];
 
   return (
     <div className="bg-[#FAF7F2] text-[#111827] min-h-screen">
@@ -690,6 +744,27 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         sliderConfig={settings?.specialOfferSlider}
       />
 
+      {/* 4.5. WI-FI / WIRELESS CAMERAS (Lead-in tile + product cards, soft tinted background #FAF7F2) */}
+      {dedupWifi.length >= 2 && (
+        <ProductRow
+          eyebrow="SMART WIRELESS"
+          title="Wi-Fi Cameras"
+          subtitle="Single cameras you control from a phone app"
+          products={dedupWifi}
+          actionText={`View all (${dedupWifi.length})`}
+          onAction={() => onNavigate('category', 'wifi-cameras')}
+          onNavigate={onNavigate}
+          variant="canvas"
+          promoTile={{
+            badge: 'Wireless',
+            title: 'Wi-Fi Cameras',
+            description: 'Single cameras you control from a phone app',
+            buttonText: 'View all',
+            link: '/category/wifi-cameras'
+          }}
+        />
+      )}
+
       {/* 5. NEW ARRIVALS (Definitive Deduplicated Row: show if >= 2 cards, hide only if < 2) */}
       {dedupNewArrivals.length >= 2 && (
         <ProductRow
@@ -706,7 +781,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 6. CCTV PACKAGE SELECTOR */}
       {packages.length >= 1 && (
-        <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
+        <section
+          id="packages"
+          aria-label="CCTV Packages"
+          className="w-full bg-[#FAF7F2] py-12 md:py-[72px]"
+        >
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
               eyebrow="Turnkey Bundles"
@@ -798,16 +877,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </button>
               </div>
             ) : (
-              <div className={displayPackages.length < 3 ? "flex flex-wrap justify-center gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"}>
+              <div className={displayPackages.length < 3 ? "flex flex-wrap justify-center items-stretch gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch"}>
                 {displayPackages.map((pkg) => (
                   <div
                     key={pkg.id}
-                    className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 h-full group ${
+                    data-package-id={pkg.id}
+                    className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 h-full group group/pkg ${
                       displayPackages.length < 3 ? 'w-full max-w-[360px]' : ''
                     }`}
                   >
-                    <div>
-                      <div className="mb-4 overflow-hidden rounded-2xl">
+                    <div className="flex flex-col flex-1">
+                      {/* Image: fixed aspect */}
+                      <div className="mb-4 overflow-hidden rounded-2xl shrink-0">
                         {pkg.image ? (
                           <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
                             <SmartImage
@@ -822,55 +903,82 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
-                          {pkg.badge || 'Complete Kit'}
+                      {/* Tag / Series row */}
+                      <div className="flex items-center justify-between mb-2.5 shrink-0 gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full truncate">
+                          {pkg.technologyLabel || pkg.seriesName || pkg.badge || 'Complete Kit'}
                         </span>
-                        <span className="text-[11px] font-bold text-[#5B6472]">
-                          Hardware Kit
+                        <span className="text-[11px] font-bold text-[#5B6472] shrink-0">
+                          {pkg.cameraCount ? `${pkg.cameraCount} Camera Kit` : 'Hardware Kit'}
                         </span>
                       </div>
 
-                      <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
+                      {/* Title: clamped to 2 lines with fixed min-h */}
+                      <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight line-clamp-2 min-h-[2.8rem]">
                         {pkg.name}
                       </h3>
-                      <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
+
+                      {/* Description: clamped to 2 lines with fixed min-h, never cut mid-word */}
+                      <p className="text-xs text-[#5B6472] leading-relaxed mb-4 line-clamp-2 min-h-[2.4rem] min-w-0 [overflow-wrap:anywhere] break-words">
                         {pkg.description}
                       </p>
 
-                      <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
-                        {pkg.rules && pkg.rules.length > 0 ? (
-                          pkg.rules.slice(0, 4).map((rule: any, rIdx: number) => (
-                            <div key={rIdx} className="flex items-center gap-2">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                              <span className="line-clamp-1 font-mono text-[11px]">{rule.name}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="flex items-center gap-2 text-[#5B6472]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#5B6472] shrink-0" />
-                            <span className="text-[11px]">Standard Bill of Materials included</span>
-                          </div>
-                        )}
+                      {/* Component list: showing max 4 items with height reserved for 4 rows (min-h-[104px]) */}
+                      <div className="py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4 min-h-[104px] flex flex-col justify-center space-y-1.5">
+                        {(() => {
+                          const items = (pkg.inclusions && pkg.inclusions.length > 0)
+                            ? pkg.inclusions
+                            : (pkg.rules && pkg.rules.length > 0)
+                              ? pkg.rules.map((r: any) => r.name)
+                              : ['Standard Bill of Materials included'];
+
+                          const displayItems = items.slice(0, 4);
+                          const extraCount = items.length - 4;
+
+                          return (
+                            <>
+                              {displayItems.map((item: string, rIdx: number) => (
+                                <div key={rIdx} className="flex items-center gap-2">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                                  <span className="truncate text-[11px] font-medium text-slate-700">{item}</span>
+                                </div>
+                              ))}
+                              {extraCount > 0 && (
+                                <div className="text-[10px] font-bold text-[#F15A24] pl-5.5">
+                                  +{extraCount} more components
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 
-                    <div>
+                    {/* Price block and button pinned to bottom with mt-auto */}
+                    <div className="mt-auto pt-2 shrink-0">
                       <div className="mb-3">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
-                          Starting From
+                          {pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32) ? 'Commercial Pricing' : 'Starting From'}
                         </span>
                         <div className="text-xl font-black text-[#111827] font-heading">
-                          {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
+                          {pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32) || !pkg.basePrice
+                            ? 'Request Quotation'
+                            : `৳${pkg.basePrice.toLocaleString()}`}
                         </div>
                       </div>
 
                       <button
                         type="button"
-                        onClick={() => onNavigate('packages', pkg.slug)}
+                        onClick={() => {
+                          if (pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32)) {
+                            onNavigate('quote');
+                          } else {
+                            onNavigate('packages', pkg.slug);
+                          }
+                        }}
                         className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
                       >
-                        <span>Configure Package</span>
+                        <span>{pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32) ? 'Request Quotation' : 'Configure Package'}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -884,7 +992,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 7. OUR SOLUTIONS (Redesigned: 3 cols desktop, 2 cols tablet, 1 col mobile with adaptive row-fill, horizontal tile min-height 112px, 48px tinted icon, 2-line title, 2-line description, whole tile clickable) */}
       {scenarios.length > 0 && (
-        <section className="w-full bg-[#F4EEE6] py-14 border-y border-[#EDE8E1]">
+        <section
+          id="solutions"
+          aria-label="Our Solutions"
+          className="w-full bg-[#F4EEE6] py-14 border-y border-[#EDE8E1]"
+        >
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
               eyebrow="Deployment Profiles"
@@ -920,12 +1032,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                         style={{
                           gridColumn: colSpan > 1 ? `span ${colSpan} / span ${colSpan}` : undefined
                         }}
-                        className="bg-white rounded-[20px] border border-[#EDE8E1] p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer group flex items-start gap-4 min-h-[112px]"
+                        data-solution-id={scenario.id}
+                        className="bg-white rounded-[20px] border border-[#EDE8E1] p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer group group/scenario flex items-start gap-4 min-h-[112px]"
                       >
-                        {/* 48px Tinted Icon Container on Left */}
-                        <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-[#F15A24] group-hover:text-white transition-all duration-300 shadow-2xs">
+                        {/* 48px Tinted Icon Container on Left with built-in contrast and hover */}
+                        <IconTile size="xl" rounded="rounded-2xl" className="group-hover:scale-105 shrink-0">
                           {renderScenarioIcon(scenario.iconName)}
-                        </div>
+                        </IconTile>
 
                         {/* Right: 17px Bold Title (up to 2 lines), Description (up to 2 lines), Learn more link */}
                         <div className="min-w-0 flex-1 flex flex-col justify-between h-full">
@@ -934,7 +1047,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                               {scenario.title}
                             </h3>
                             <p className="text-sm text-[#5B6472] line-clamp-2 leading-relaxed min-w-0 [overflow-wrap:anywhere] break-words">
-                              {scenario.description ? scenario.description.slice(0, 90) : ''}
+                              {scenario.description || ''}
                             </p>
                           </div>
 
@@ -953,40 +1066,50 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </section>
       )}
 
-      {/* 8. QUICK SERVICE REQUEST (Dark Navy Band #0F172A) */}
-      <section className="w-full bg-[#0F172A] text-white py-12 md:py-[72px]">
+      {/* 8. QUICK SERVICE REQUEST (Dark Navy Band #0F172A - Fully Admin-Driven) */}
+      <section
+        id="quick-service"
+        aria-label="Quick Service Request"
+        className="w-full bg-[#0F172A] text-white py-12 md:py-[72px]"
+      >
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
-            {/* LEFT COLUMN: Eyebrow + H2 + 6 Clickable Service Chips */}
+            {/* LEFT COLUMN: Eyebrow + H2 + Clickable Service Chips (from API) */}
             <div className="lg:col-span-6 space-y-4">
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#F15A24]">
                 <Wrench className="w-3.5 h-3.5" />
                 <span>Services</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black font-heading text-white leading-tight">
-                Need a technician?
+                {settings?.quickServiceSettings?.heading || 'Need a technician?'}
               </h2>
               <p className="text-xs sm:text-sm text-[#A0A8B4] leading-relaxed max-w-lg">
-                Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:
+                {settings?.quickServiceSettings?.subtext || 'Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:'}
               </p>
 
-              {/* 6 Service Chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
-                {serviceChips.map((chip) => {
-                  const isSelected = selectedServiceChip === chip;
+              {/* Service Chips (first 6 enabled services) */}
+              <div role="radiogroup" aria-label="Select Service" className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
+                {serviceOfferings.slice(0, 6).map((service) => {
+                  const isSelected = selectedServiceId === service.id;
                   return (
                     <button
-                      key={chip}
+                      key={service.id}
                       type="button"
-                      onClick={() => setSelectedServiceChip(chip)}
-                      className={`min-h-[38px] p-2.5 rounded-xl text-xs font-bold transition-all text-left flex items-center justify-between border ${
+                      role="radio"
+                      aria-checked={isSelected}
+                      data-service-id={service.id}
+                      onClick={() => {
+                        setSelectedServiceId(service.id);
+                        setSelectedServiceType(service.title);
+                      }}
+                      className={`min-h-[38px] p-2.5 rounded-xl text-xs font-bold transition-all text-left flex items-center justify-between border cursor-pointer ${
                         isSelected
                           ? 'bg-[#F15A24] text-white border-[#F15A24] shadow-sm'
                           : 'bg-white/10 hover:bg-white/15 text-white/90 border-white/15'
                       }`}
                     >
-                      <span className="line-clamp-1">{chip}</span>
+                      <span className="line-clamp-1">{service.shortLabel || service.title}</span>
                       {isSelected && <Check className="w-3.5 h-3.5 shrink-0 ml-1" />}
                     </button>
                   );
@@ -998,10 +1121,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <div className="lg:col-span-6 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-7 shadow-xl">
               <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  Request Engineer Callback
+                  {settings?.quickServiceSettings?.buttonText || 'Request Engineer Callback'}
                 </span>
                 <span className="text-[11px] text-[#A0A8B4]">
-                  Selected: <strong className="text-[#F15A24]">{selectedServiceChip}</strong>
+                  Selected: <strong className="text-[#F15A24]">{selectedServiceType || 'CCTV Camera Setup'}</strong>
                 </span>
               </div>
 
@@ -1015,7 +1138,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <button
                     type="button"
                     onClick={() => setCallbackStatus('idle')}
-                    className="mt-3 text-xs text-white/80 hover:text-white underline"
+                    className="mt-3 text-xs text-white/80 hover:text-white underline cursor-pointer"
                   >
                     Submit another request
                   </button>
@@ -1037,42 +1160,74 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                       Service Type
                     </label>
                     <select
-                      value={selectedServiceChip}
-                      onChange={(e) => setSelectedServiceChip(e.target.value)}
+                      id="serviceType"
+                      name="serviceType"
+                      value={selectedServiceId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedServiceId(val);
+                        if (val === 'other') {
+                          setSelectedServiceType('Other / not listed');
+                        } else {
+                          const match = serviceOfferings.find((s) => s.id === val);
+                          if (match) setSelectedServiceType(match.title);
+                        }
+                      }}
                       className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-[#F15A24]"
                     >
-                      {serviceChips.map((chip) => (
-                        <option key={chip} value={chip} className="text-[#111827]">
-                          {chip}
+                      {serviceOfferings.map((service) => (
+                        <option key={service.id} value={service.id} className="text-[#111827]">
+                          {service.title}
                         </option>
                       ))}
+                      {settings?.quickServiceSettings?.enableOtherOption !== false && (
+                        <option value="other" className="text-[#111827]">
+                          Other / not listed
+                        </option>
+                      )}
                     </select>
                   </div>
+
+                  {selectedServiceId === 'other' && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#A0A8B4] mb-1">
+                        Please specify service required *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={customServiceText}
+                        onChange={(e) => setCustomServiceText(e.target.value)}
+                        placeholder="Describe what equipment or assistance you need..."
+                        className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#F15A24]"
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold text-[#A0A8B4] mb-1">
-                        Your Name *
+                        {settings?.quickServiceSettings?.nameLabel || 'Your Name *'}
                       </label>
                       <input
                         type="text"
                         required
                         value={callbackName}
                         onChange={(e) => setCallbackName(e.target.value)}
-                        placeholder="e.g. Tanvir Ahmed"
+                        placeholder={settings?.quickServiceSettings?.namePlaceholder || 'e.g. Tanvir Ahmed'}
                         className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#F15A24]"
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold text-[#A0A8B4] mb-1">
-                        Phone Number *
+                        {settings?.quickServiceSettings?.phoneLabel || 'Phone Number *'}
                       </label>
                       <input
                         type="tel"
                         required
                         value={callbackPhone}
                         onChange={(e) => setCallbackPhone(e.target.value)}
-                        placeholder="017XXXXXXXX"
+                        placeholder={settings?.quickServiceSettings?.phonePlaceholder || '017XXXXXXXX'}
                         className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#F15A24]"
                       />
                     </div>
@@ -1080,13 +1235,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
                   <div>
                     <label className="block text-[11px] font-bold text-[#A0A8B4] mb-1">
-                      Dhaka Area / Location
+                      {settings?.quickServiceSettings?.areaLabel || 'Dhaka Area / Location'}
                     </label>
                     <input
                       type="text"
                       value={callbackArea}
                       onChange={(e) => setCallbackArea(e.target.value)}
-                      placeholder="e.g. Uttara Sector 3, Dhanmondi, Mirpur"
+                      placeholder={settings?.quickServiceSettings?.areaPlaceholder || 'e.g. Uttara Sector 3, Dhanmondi, Mirpur'}
                       className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
@@ -1100,10 +1255,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <button
                     type="submit"
                     disabled={callbackStatus === 'submitting'}
-                    className="w-full min-h-[44px] py-2.5 px-6 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full min-h-[44px] py-2.5 px-6 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>{callbackStatus === 'submitting' ? 'Submitting...' : 'Request Callback'}</span>
+                    <span>
+                      {callbackStatus === 'submitting'
+                        ? 'Submitting...'
+                        : (settings?.quickServiceSettings?.buttonText || 'Request Callback')}
+                    </span>
                   </button>
                 </form>
               )}
@@ -1417,9 +1576,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               className="bg-white text-[#111827] rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 text-left flex flex-col justify-between group cursor-pointer w-full"
             >
               <div>
-                <div className="w-11 h-11 rounded-xl bg-orange-50 text-[#25D366] flex items-center justify-center mb-4 group-hover:bg-[#25D366] group-hover:text-white transition-colors">
-                  <MessageCircle className="w-5 h-5 fill-current" />
-                </div>
+                <IconTile size="lg" rounded="rounded-xl" className="mb-4">
+                  <MessageCircle className="w-5 h-5 fill-current stroke-none" />
+                </IconTile>
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold font-heading text-lg text-[#111827]">Chat on WhatsApp</h3>
                   <ArrowRight className="w-4 h-4 text-[#F15A24] transform group-hover:translate-x-1 transition-transform" />
@@ -1436,9 +1595,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               className="bg-white text-[#111827] rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 text-left flex flex-col justify-between group cursor-pointer w-full"
             >
               <div>
-                <div className="w-11 h-11 rounded-xl bg-orange-50 text-[#F15A24] flex items-center justify-center mb-4 group-hover:bg-[#F15A24] group-hover:text-white transition-colors">
-                  <Phone className="w-5 h-5" />
-                </div>
+                <IconTile size="lg" rounded="rounded-xl" className="mb-4">
+                  <Phone className="w-5 h-5 stroke-current fill-none" />
+                </IconTile>
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold font-heading text-lg text-[#111827]">Call {phone}</h3>
                   <ArrowRight className="w-4 h-4 text-[#F15A24] transform group-hover:translate-x-1 transition-transform" />
@@ -1456,9 +1615,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               className="bg-white text-[#111827] rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 text-left flex flex-col justify-between group cursor-pointer w-full"
             >
               <div>
-                <div className="w-11 h-11 rounded-xl bg-orange-50 text-[#F15A24] flex items-center justify-center mb-4 group-hover:bg-[#F15A24] group-hover:text-white transition-colors">
-                  <Wrench className="w-5 h-5" />
-                </div>
+                <IconTile size="lg" rounded="rounded-xl" className="mb-4">
+                  <Wrench className="w-5 h-5 stroke-current fill-none" />
+                </IconTile>
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold font-heading text-lg text-[#111827]">Book Site Visit</h3>
                   <ArrowRight className="w-4 h-4 text-[#F15A24] transform group-hover:translate-x-1 transition-transform" />

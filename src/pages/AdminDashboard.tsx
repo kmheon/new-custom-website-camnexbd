@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Package, FolderTree, Tag, Sliders, Layers, ShoppingCart, Users,
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
-  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone
+  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
@@ -14,7 +14,7 @@ import {
 } from '../services';
 import { INITIAL_CTA_DATA } from '../services/seedData';
 import {
-  Product, Category, Brand, SpecTemplate, SecurityPackage, Order,
+  Product, Category, Brand, SpecTemplate, SecurityPackage, PackageSeries, ServiceOffering, Order,
   QuoteRequest, SiteSettings, HomepageSection, ProductResearchResult, Role,
   HeroSlide, HeroFeatureHighlight
 } from '../types';
@@ -30,6 +30,7 @@ import { TestimonialsModule } from '../components/admin/TestimonialsModule';
 import { RedirectsModule } from '../components/admin/RedirectsModule';
 import { BrandsModule } from '../components/admin/BrandsModule';
 import { ScenariosModule } from '../components/admin/ScenariosModule';
+import { ServicesModule } from '../components/admin/ServicesModule';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
   const { currentUser, isAdminAuthenticated, checkAuth, login, logout, isLoading: authLoading, error: authError } = useAdminAuthStore();
@@ -48,6 +49,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [brands, setBrands] = useState<Brand[]>([]);
   const [templates, setTemplates] = useState<SpecTemplate[]>([]);
   const [packages, setPackages] = useState<SecurityPackage[]>([]);
+  const [packageSeries, setPackageSeries] = useState<PackageSeries[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [sections, setSections] = useState<HomepageSection[]>([]);
@@ -203,6 +205,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     brandService.getBrands().then(setBrands);
     specTemplateService.getTemplates().then(setTemplates);
     packageService.getPackages().then(setPackages);
+    packageService.getPackageSeries().then(setPackageSeries);
     orderService.getAllOrders().then(setOrders);
     quoteService.getQuotes().then(setQuotes);
     cmsService.getHomepageSections().then(setSections);
@@ -448,6 +451,13 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       storageDescription: editingPackage.storageDescription || '1TB HDD',
       inclusions: editingPackage.inclusions || [],
       isActive: editingPackage.isActive ?? true,
+      seriesId: editingPackage.seriesId,
+      seriesName: editingPackage.seriesName,
+      technologyLabel: editingPackage.technologyLabel,
+      isQuoteOnly: editingPackage.isQuoteOnly,
+      cameraCountsSupported: editingPackage.cameraCountsSupported || (editingPackage.cameraCount ? [editingPackage.cameraCount] : [4]),
+      componentQuantities: editingPackage.componentQuantities,
+      rules: editingPackage.rules,
       pricingRules: editingPackage.pricingRules || {
         twoCamPrice: 11500,
         fourCamPrice: 16500,
@@ -708,6 +718,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             { id: 'heroslides', label: 'Hero Slides (Slider)', icon: <Sparkles className="w-4 h-4 text-[#F15A24]" /> },
             { id: 'sections', label: 'Homepage Sections', icon: <Layers className="w-4 h-4" /> },
             { id: 'projects', label: 'Projects & Portfolio', icon: <Briefcase className="w-4 h-4" /> },
+            { id: 'services', label: 'Technician Services', icon: <Wrench className="w-4 h-4 text-[#F15A24]" /> },
             { id: 'pages', label: 'Pages & Policy CMS', icon: <Globe className="w-4 h-4" /> },
             { id: 'testimonials', label: 'Customer Testimonials', icon: <Star className="w-4 h-4" /> },
             { id: 'brands', label: 'Brands & Badges', icon: <Tag className="w-4 h-4" /> },
@@ -1688,6 +1699,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             <ProjectsModule />
           )}
 
+          {/* TECHNICIAN SERVICES CMS MODULE */}
+          {activeModule === 'services' && (
+            <ServicesModule />
+          )}
+
           {/* CUSTOM PAGES & POLICY CMS MODULE */}
           {activeModule === 'pages' && (
             <PagesModule />
@@ -2047,7 +2063,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           Top Bar Highlights
                         </span>
                         <p className="text-[11px] text-slate-400">
-                          Short factual highlights displayed in the top bar right group (e.g. "Dhaka, Bangladesh", "Sat-Thu: 9:30 AM - 7:30 PM", "Genuine Hikvision Warranty").
+                          Short factual highlights displayed in the top bar (max 60 chars). Never auto-fills address.
                         </p>
                       </div>
                       <Button
@@ -2056,7 +2072,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           const current = settings.topBarHighlights || [];
                           const newItem = {
                             id: `tbh-${Date.now()}`,
-                            text: 'Dhaka, Bangladesh',
+                            text: '',
                             enabled: true,
                             order: current.length + 1
                           };
@@ -2071,7 +2087,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     <div className="space-y-2">
                       {(settings.topBarHighlights || []).length === 0 ? (
                         <p className="text-slate-500 italic text-[11px]">
-                          No custom highlights defined. Clean database displays phone and email.
+                          No custom highlights defined. Clean database keeps right side clean.
                         </p>
                       ) : (
                         settings.topBarHighlights?.map((item, hIdx) => (
@@ -2084,26 +2100,32 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                                 list[hIdx] = { ...list[hIdx], enabled: e.target.checked };
                                 updateSettings({ topBarHighlights: list });
                               }}
-                              className="rounded text-[#F15A24] focus:ring-[#F15A24] w-4 h-4"
+                              className="rounded text-[#F15A24] focus:ring-[#F15A24] w-4 h-4 cursor-pointer"
                             />
-                            <input
-                              type="text"
-                              value={item.text}
-                              onChange={(e) => {
-                                const list = [...(settings.topBarHighlights || [])];
-                                list[hIdx] = { ...list[hIdx], text: e.target.value };
-                                updateSettings({ topBarHighlights: list });
-                              }}
-                              placeholder="Highlight text e.g. Dhaka, Bangladesh"
-                              className="flex-1 bg-slate-950 border border-slate-700 text-white text-xs p-1.5 rounded"
-                            />
+                            <div className="flex-1 flex items-center gap-2">
+                              <input
+                                type="text"
+                                maxLength={60}
+                                value={item.text}
+                                onChange={(e) => {
+                                  const list = [...(settings.topBarHighlights || [])];
+                                  list[hIdx] = { ...list[hIdx], text: e.target.value.slice(0, 60) };
+                                  updateSettings({ topBarHighlights: list });
+                                }}
+                                placeholder="Highlight text e.g. Hikvision & Dahua: Authorized Support Partner"
+                                className="flex-1 bg-slate-950 border border-slate-700 text-white text-xs p-1.5 rounded"
+                              />
+                              <span className="text-[10px] font-mono text-slate-500 w-10 text-right">
+                                {(item.text || '').length}/60
+                              </span>
+                            </div>
                             <button
                               type="button"
                               onClick={() => {
                                 const list = (settings.topBarHighlights || []).filter((_, i) => i !== hIdx);
                                 updateSettings({ topBarHighlights: list });
                               }}
-                              className="text-xs text-rose-400 hover:text-rose-300 p-1"
+                              className="text-xs text-rose-400 hover:text-rose-300 p-1 cursor-pointer"
                               title="Delete highlight"
                             >
                               <X className="w-4 h-4" />
@@ -2111,6 +2133,114 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           </div>
                         ))
                       )}
+                    </div>
+                  </div>
+
+                  {/* Quick Service Section Settings */}
+                  <div className="pt-4 border-t border-slate-800 space-y-3">
+                    <div>
+                      <span className="text-[#F15A24] font-bold block uppercase tracking-wider text-xs">
+                        Quick Service Request Section (Homepage)
+                      </span>
+                      <p className="text-[11px] text-slate-400">
+                        Customise heading, subtext, button copy, and field labels for the homepage callback module.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Section Heading</label>
+                        <input
+                          type="text"
+                          value={settings.quickServiceSettings?.heading || 'Need a technician?'}
+                          onChange={(e) => updateSettings({
+                            quickServiceSettings: {
+                              ...(settings.quickServiceSettings || {}),
+                              heading: e.target.value
+                            }
+                          })}
+                          className="w-full bg-slate-950 border border-slate-700 text-white text-xs p-2 rounded-lg"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Button Copy</label>
+                        <input
+                          type="text"
+                          value={settings.quickServiceSettings?.buttonText || 'Request Callback'}
+                          onChange={(e) => updateSettings({
+                            quickServiceSettings: {
+                              ...(settings.quickServiceSettings || {}),
+                              buttonText: e.target.value
+                            }
+                          })}
+                          className="w-full bg-slate-950 border border-slate-700 text-white text-xs p-2 rounded-lg"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Subtext / Explanatory Text</label>
+                        <textarea
+                          rows={2}
+                          value={settings.quickServiceSettings?.subtext || ''}
+                          onChange={(e) => updateSettings({
+                            quickServiceSettings: {
+                              ...(settings.quickServiceSettings || {}),
+                              subtext: e.target.value
+                            }
+                          })}
+                          placeholder="Technical consultations, cabling and installation..."
+                          className="w-full bg-slate-950 border border-slate-700 text-white text-xs p-2 rounded-lg"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Area Field Label</label>
+                        <input
+                          type="text"
+                          value={settings.quickServiceSettings?.areaLabel || 'Dhaka Area / Location'}
+                          onChange={(e) => updateSettings({
+                            quickServiceSettings: {
+                              ...(settings.quickServiceSettings || {}),
+                              areaLabel: e.target.value
+                            }
+                          })}
+                          className="w-full bg-slate-950 border border-slate-700 text-white text-xs p-2 rounded-lg"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Success Message</label>
+                        <input
+                          type="text"
+                          value={settings.quickServiceSettings?.successMessage || 'Thank you! Our engineer will call you back within 15 minutes.'}
+                          onChange={(e) => updateSettings({
+                            quickServiceSettings: {
+                              ...(settings.quickServiceSettings || {}),
+                              successMessage: e.target.value
+                            }
+                          })}
+                          className="w-full bg-slate-950 border border-slate-700 text-white text-xs p-2 rounded-lg"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2 flex items-center gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          id="allowOtherService"
+                          checked={settings.quickServiceSettings?.enableOtherOption !== false}
+                          onChange={(e) => updateSettings({
+                            quickServiceSettings: {
+                              ...(settings.quickServiceSettings || {}),
+                              enableOtherOption: e.target.checked
+                            }
+                          })}
+                          className="rounded text-[#F15A24] focus:ring-[#F15A24] w-4 h-4 cursor-pointer"
+                        />
+                        <label htmlFor="allowOtherService" className="text-xs text-slate-300 font-bold cursor-pointer">
+                          Include "Other / not listed" option in Service Type dropdown
+                        </label>
+                      </div>
                     </div>
                   </div>
 
@@ -3725,6 +3855,21 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               </p>
             </div>
 
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!editingCategory.showAsHomepageRow}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, showAsHomepageRow: e.target.checked })}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4"
+                />
+                <span className="text-xs font-bold text-slate-800">Show as Dedicated Homepage Product Row</span>
+              </label>
+              <p className="text-[10px] text-slate-500 ml-6 mt-0.5">
+                When enabled, products from this category get a dedicated horizontal showcase row on the storefront homepage (requires at least 2 items).
+              </p>
+            </div>
+
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
               <Button
                 variant="ghost"
@@ -3770,6 +3915,77 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 placeholder="e.g. 2MP Turbo HD Full Turnkey Package"
                 className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg font-bold"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Package Series</label>
+                <select
+                  value={editingPackage.seriesId || ''}
+                  onChange={(e) => {
+                    const sid = e.target.value;
+                    const matched = packageSeries.find(s => s.id === sid);
+                    setEditingPackage({
+                      ...editingPackage,
+                      seriesId: sid,
+                      seriesName: matched?.name || editingPackage.seriesName
+                    });
+                  }}
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
+                >
+                  <option value="">-- Choose Series --</option>
+                  {packageSeries.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Technology / Marketing Label</label>
+                <input
+                  type="text"
+                  value={editingPackage.technologyLabel || ''}
+                  onChange={(e) => setEditingPackage({ ...editingPackage, technologyLabel: e.target.value })}
+                  placeholder="e.g. Hikvision ColorVu, Smart Dual Light"
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Base Camera Count</label>
+                <select
+                  value={editingPackage.cameraCount || 4}
+                  onChange={(e) => {
+                    const c = parseInt(e.target.value) || 4;
+                    setEditingPackage({
+                      ...editingPackage,
+                      cameraCount: c,
+                      cameraCountsSupported: [c],
+                      isQuoteOnly: c >= 32 ? true : editingPackage.isQuoteOnly
+                    });
+                  }}
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold"
+                >
+                  {[2, 4, 8, 16, 32, 64].map(num => (
+                    <option key={num} value={num}>{num} Cameras</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 pt-5">
+                <input
+                  type="checkbox"
+                  id="pkgQuoteOnly"
+                  checked={!!editingPackage.isQuoteOnly}
+                  onChange={(e) => setEditingPackage({ ...editingPackage, isQuoteOnly: e.target.checked })}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="pkgQuoteOnly" className="text-xs font-bold text-slate-800 cursor-pointer">
+                  Quote Only (Request Quotation)
+                </label>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

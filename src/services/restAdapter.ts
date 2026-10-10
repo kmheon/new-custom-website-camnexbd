@@ -33,7 +33,9 @@ import {
   HeroSlide,
   HeroFeatureHighlight,
   Customer,
-  MediaItem
+  MediaItem,
+  PackageSeries,
+  ServiceOffering
 } from '../types';
 
 import { apiFetch, getApiBase, getCsrfTokenFromCookie, fetchCsrfToken } from './apiClient';
@@ -311,6 +313,33 @@ export class RestPackageService implements IPackageService {
       body: JSON.stringify(pkg)
     });
   }
+
+  async getPackageSeries(): Promise<PackageSeries[]> {
+    return request<PackageSeries[]>('/package-series');
+  }
+
+  async getAllPackageSeries(): Promise<PackageSeries[]> {
+    return request<PackageSeries[]>('/admin/package-series');
+  }
+
+  async savePackageSeries(series: PackageSeries): Promise<PackageSeries> {
+    if (series.id) {
+      return request<PackageSeries>(`/admin/package-series/${encodeURIComponent(series.id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(series)
+      });
+    }
+    return request<PackageSeries>('/admin/package-series', {
+      method: 'POST',
+      body: JSON.stringify(series)
+    });
+  }
+
+  async deletePackageSeries(id: string): Promise<void> {
+    await request<any>(`/admin/package-series/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+  }
 }
 
 // ============================================================================
@@ -441,10 +470,37 @@ export class RestQuoteService implements IQuoteService {
     });
   }
 
-  async createServiceRequest(data: { customerName: string; phone: string; serviceType: string; area?: string; website?: string }): Promise<any> {
+  async createServiceRequest(data: { customerName: string; phone: string; serviceType: string; serviceId?: string; area?: string; website?: string }): Promise<any> {
     return request<any>('/services', {
       method: 'POST',
       body: JSON.stringify(data)
+    });
+  }
+
+  async getServiceOfferings(): Promise<ServiceOffering[]> {
+    return request<ServiceOffering[]>('/service-offerings');
+  }
+
+  async getAllServiceOfferings(): Promise<ServiceOffering[]> {
+    return request<ServiceOffering[]>('/admin/service-offerings');
+  }
+
+  async saveServiceOffering(service: ServiceOffering): Promise<ServiceOffering> {
+    if (service.id) {
+      return request<ServiceOffering>(`/admin/service-offerings/${encodeURIComponent(service.id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(service)
+      });
+    }
+    return request<ServiceOffering>('/admin/service-offerings', {
+      method: 'POST',
+      body: JSON.stringify(service)
+    });
+  }
+
+  async deleteServiceOffering(id: string): Promise<void> {
+    await request<any>(`/admin/service-offerings/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
     });
   }
 

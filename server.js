@@ -1492,6 +1492,16 @@ app.put('/api/quotes/:id/status', requireAdmin, (req, res) => {
   }
 });
 
+app.get(['/api/service-requests'], requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM service_requests ORDER BY created_at DESC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Backward compatibility: GET /api/services if admin returns requests
 app.get('/api/services', requireAdmin, (req, res) => {
   try {
     const rows = db.prepare('SELECT data_json FROM service_requests ORDER BY created_at DESC').all();
@@ -1522,14 +1532,137 @@ app.post(['/api/services', '/api/service-requests'], submissionLimiter, validate
     };
 
     db.prepare(`
-      INSERT INTO service_requests (id, request_number, customer_name, phone, service_type, status, data_json, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO service_requests (id, request_number, customer_name, phone, service_id, service_type, status, data_json, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id, requestNumber, fullRequest.customerName || '', fullRequest.phone || '',
+      fullRequest.serviceId || fullRequest.service_id || '',
       fullRequest.serviceType || '', fullRequest.status, JSON.stringify(fullRequest), createdAt
     );
 
     res.json(fullRequest);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
+// QUICK SERVICE OFFERINGS REST APIs (Admin-driven)
+// ============================================================================
+app.get(['/api/service-offerings', '/api/services/offerings'], (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM services WHERE enabled = 1 ORDER BY display_order ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get(['/api/admin/service-offerings', '/api/admin/services'], requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM services ORDER BY display_order ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/admin/service-offerings', '/api/admin/services'], requireAdmin, validateBody(schemas.serviceOffering), (req, res) => {
+  try {
+    const data = req.body;
+    const id = data.id || `srv-${Date.now()}`;
+    const item = { ...data, id, enabled: data.enabled !== false, order: Number(data.order) || 1 };
+    db.prepare(`
+      INSERT OR REPLACE INTO services (id, title, short_label, enabled, display_order, data_json)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(id, item.title, item.shortLabel || item.title, item.enabled ? 1 : 0, item.order, JSON.stringify(item));
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put(['/api/admin/service-offerings/:id', '/api/admin/services/:id'], requireAdmin, validateBody(schemas.serviceOffering), (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = req.body;
+    const item = { ...data, id, enabled: data.enabled !== false, order: Number(data.order) || 1 };
+    db.prepare(`
+      UPDATE services SET title = ?, short_label = ?, enabled = ?, display_order = ?, data_json = ?
+      WHERE id = ?
+    `).run(item.title, item.shortLabel || item.title, item.enabled ? 1 : 0, item.order, JSON.stringify(item), id);
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete(['/api/admin/service-offerings/:id', '/api/admin/services/:id'], requireAdmin, (req, res) => {
+  try {
+    db.prepare('DELETE FROM services WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
+// PACKAGE SERIES REST APIs (Admin-driven)
+// ============================================================================
+app.get('/api/package-series', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM package_series WHERE enabled = 1 ORDER BY display_order ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/package-series', requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM package_series ORDER BY display_order ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/package-series', requireAdmin, validateBody(schemas.packageSeries), (req, res) => {
+  try {
+    const data = req.body;
+    const id = data.id || `series-${Date.now()}`;
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const item = { ...data, id, slug, enabled: data.enabled !== false, order: Number(data.order) || 1 };
+    db.prepare(`
+      INSERT OR REPLACE INTO package_series (id, name, slug, enabled, display_order, data_json)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(id, item.name, slug, item.enabled ? 1 : 0, item.order, JSON.stringify(item));
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/package-series/:id', requireAdmin, validateBody(schemas.packageSeries), (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = req.body;
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const item = { ...data, id, slug, enabled: data.enabled !== false, order: Number(data.order) || 1 };
+    db.prepare(`
+      UPDATE package_series SET name = ?, slug = ?, enabled = ?, display_order = ?, data_json = ?
+      WHERE id = ?
+    `).run(item.name, slug, item.enabled ? 1 : 0, item.order, JSON.stringify(item), id);
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/package-series/:id', requireAdmin, (req, res) => {
+  try {
+    db.prepare('DELETE FROM package_series WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

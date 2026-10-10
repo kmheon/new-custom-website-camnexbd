@@ -135,6 +135,57 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
     link: '',
     dismissible: true
   },
+  topBarHighlights: [
+    {
+      id: 'tbh-auth',
+      text: 'Hikvision & Dahua: Authorized Support Partner',
+      icon: 'shield-check',
+      link: '/brands',
+      highlighted: true,
+      enabled: true,
+      order: 1
+    },
+    {
+      id: 'tbh-warranty',
+      text: 'Official Warranty',
+      icon: 'shield',
+      link: '/about',
+      highlighted: false,
+      enabled: false,
+      order: 2
+    },
+    {
+      id: 'tbh-nationwide',
+      text: 'Nationwide Installation',
+      icon: 'truck',
+      link: '/services',
+      highlighted: false,
+      enabled: false,
+      order: 3
+    },
+    {
+      id: 'tbh-hours',
+      text: 'Sat-Thu 9:30 AM - 7:30 PM, Friday on-call',
+      icon: 'clock',
+      link: '/contact',
+      highlighted: false,
+      enabled: false,
+      order: 4
+    }
+  ],
+  quickServiceSettings: {
+    heading: 'Need a technician?',
+    subtext: 'Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:',
+    buttonText: 'Request Engineer Callback',
+    nameLabel: 'Your Name *',
+    namePlaceholder: 'e.g. Tanvir Ahmed',
+    phoneLabel: 'Phone Number *',
+    phonePlaceholder: '017XXXXXXXX',
+    areaLabel: 'Dhaka Area / Location',
+    areaPlaceholder: 'e.g. Uttara Sector 3, Dhanmondi, Mirpur',
+    successMessage: 'Thank you! Our engineer will call you back within 15 minutes.',
+    enableOtherOption: true
+  },
   specialOfferSlider: {
     enabled: true,
     interval: 5,
@@ -226,24 +277,184 @@ export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [
   { id: 'sec-cats', type: 'categories', title: 'Shop by Category', enabled: true, order: 3 },
   { id: 'sec-popular', type: 'popular_products', title: 'Popular Products', enabled: true, order: 4 },
   { id: 'sec-offers', type: 'special_offers', title: 'Special Offers', enabled: true, order: 5 },
-  { id: 'sec-new', type: 'new_arrivals', title: 'New Arrivals', enabled: true, order: 6 },
-  { id: 'sec-pkgs', type: 'packages', title: 'CCTV Packages Selector', enabled: true, order: 7 },
-  { id: 'sec-solutions', type: 'solutions', title: 'Our Solutions', enabled: true, order: 8 },
-  { id: 'sec-services', type: 'services', title: 'Quick Service Request', enabled: true, order: 9 },
-  { id: 'sec-accessories', type: 'accessories', title: 'Accessories & Add-ons', subtitle: 'Cables, storage, power and mounting for your setup', enabled: true, order: 10 },
-  { id: 'sec-cat-cctv', type: 'category_row', title: 'CCTV Cameras', categorySlug: 'cctv-cameras', enabled: true, order: 11 },
-  { id: 'sec-cat-access', type: 'category_row', title: 'Access Control & Biometrics', categorySlug: 'biometrics-access-control', enabled: true, order: 12 },
-  { id: 'sec-cat-recorders', type: 'category_row', title: 'DVR & NVR Recorders', categorySlug: 'dvr-nvr-recorders', enabled: true, order: 13 },
-  { id: 'sec-cat-net', type: 'category_row', title: 'Network Equipment & Wi-Fi', categorySlug: 'network-switches', enabled: true, order: 14 },
-  { id: 'sec-testimonials', type: 'testimonials', title: 'Client Feedback', enabled: true, order: 15 },
-  { id: 'sec-projects', type: 'projects', title: 'Recent Installation Projects', enabled: true, order: 16 },
+  { id: 'sec-wifi', type: 'wifi_cameras', title: 'Wi-Fi Cameras', subtitle: 'Single cameras you control from a phone app', enabled: true, order: 6, itemLimit: 6 },
+  { id: 'sec-new', type: 'new_arrivals', title: 'New Arrivals', enabled: true, order: 7 },
+  { id: 'sec-pkgs', type: 'packages', title: 'CCTV Packages Selector', enabled: true, order: 8 },
+  { id: 'sec-solutions', type: 'solutions', title: 'Our Solutions', enabled: true, order: 9 },
+  { id: 'sec-services', type: 'services', title: 'Quick Service Request', enabled: true, order: 10 },
+  { id: 'sec-accessories', type: 'accessories', title: 'Accessories & Add-ons', subtitle: 'Cables, storage, power and mounting for your setup', enabled: true, order: 11 },
+  { id: 'sec-cat-cctv', type: 'category_row', title: 'CCTV Cameras', categorySlug: 'cctv-cameras', enabled: true, order: 12 },
+  { id: 'sec-cat-access', type: 'category_row', title: 'Access Control & Biometrics', categorySlug: 'biometrics-access-control', enabled: true, order: 13 },
+  { id: 'sec-cat-recorders', type: 'category_row', title: 'DVR & NVR Recorders', categorySlug: 'dvr-nvr-recorders', enabled: true, order: 14 },
+  { id: 'sec-cat-net', type: 'category_row', title: 'Network Equipment & Wi-Fi', categorySlug: 'network-switches', enabled: true, order: 15 },
+  { id: 'sec-testimonials', type: 'testimonials', title: 'Client Feedback', enabled: true, order: 16 },
+  { id: 'sec-projects', type: 'projects', title: 'Recent Installation Projects', enabled: true, order: 17 },
   {
     id: 'sec-cta',
     type: 'quote_cta',
     title: 'Need Help Choosing the Right Security Solution?',
     enabled: true,
-    order: 17,
+    order: 18,
     ctaData: INITIAL_CTA_DATA
+  }
+];
+
+export const INITIAL_SERVICES: ServiceOffering[] = [
+  {
+    id: 'srv-cctv',
+    title: 'CCTV Camera Installation',
+    shortLabel: 'CCTV Setup',
+    description: 'Mounting, cable termination, and field-of-view configuration for IP and Turbo HD cameras.',
+    icon: 'Video',
+    enabled: true,
+    order: 1,
+    solutionLink: '/solutions'
+  },
+  {
+    id: 'srv-cabling',
+    title: 'Cabling & Structured Wiring',
+    shortLabel: 'Cabling & Wiring',
+    description: 'Cat6 UTP and optical fiber backhaul cabling through neat PVC conduit in commercial premises.',
+    icon: 'Cable',
+    enabled: true,
+    order: 2,
+    solutionLink: '/solutions'
+  },
+  {
+    id: 'srv-survey',
+    title: 'Physical Site Survey',
+    shortLabel: 'Site Survey',
+    description: 'Inspection of camera vantage points, lighting levels, and power distribution across your Dhaka site.',
+    icon: 'Compass',
+    enabled: true,
+    order: 3,
+    solutionLink: '/solutions'
+  },
+  {
+    id: 'srv-network',
+    title: 'Network & Wi-Fi Configuration',
+    shortLabel: 'Wi-Fi Networking',
+    description: 'VLAN subnetting, PoE switch deployment, and enterprise Wi-Fi 6 access point roaming setup.',
+    icon: 'Wifi',
+    enabled: true,
+    order: 4,
+    solutionLink: '/solutions'
+  },
+  {
+    id: 'srv-access',
+    title: 'Biometric Access Control',
+    shortLabel: 'Access Control',
+    description: 'Fingerprint and facial recognition terminal installation with magnetic door lock integration.',
+    icon: 'Fingerprint',
+    enabled: true,
+    order: 5,
+    solutionLink: '/solutions'
+  },
+  {
+    id: 'srv-repair',
+    title: 'Hardware Diagnosis & Repair',
+    shortLabel: 'Repair & Service',
+    description: 'Troubleshooting offline NVRs, failing hard disk drives, signal interference, and power supply issues.',
+    icon: 'Wrench',
+    enabled: true,
+    order: 6,
+    solutionLink: '/solutions'
+  }
+];
+
+export const INITIAL_PACKAGE_SERIES: PackageSeries[] = [
+  {
+    id: 'series-ir',
+    name: 'Night Vision (IR)',
+    slug: 'night-vision-ir',
+    description: '24/7 infrared surveillance using IRPF series cameras with smart EXIR night vision up to 20m. No artificial white lighting.',
+    order: 1,
+    enabled: true,
+    illustration: 'night-vision',
+    ruleSet: {
+      hasStorageRule: true,
+      storageMap: { 2: '500GB', 4: '1TB', 8: '2TB', 16: '4TB' },
+      hasCableRule: true,
+      cableMetersPerCam: 20,
+      hasRecorderRule: true,
+      recorderChannels: 4,
+      allowPtz: false,
+      allowPoESwitch: false
+    }
+  },
+  {
+    id: 'series-hybrid',
+    name: 'Hybrid Light',
+    slug: 'hybrid-light',
+    description: 'Smart dual-light surveillance that operates in discreet IR mode until human or vehicle motion triggers warm supplemental light.',
+    order: 2,
+    enabled: true,
+    illustration: 'hybrid',
+    ruleSet: {
+      hasStorageRule: true,
+      storageMap: { 4: '1TB', 8: '2TB', 16: '4TB' },
+      hasCableRule: true,
+      cableMetersPerCam: 20,
+      hasRecorderRule: true,
+      recorderChannels: 4,
+      allowPtz: false,
+      allowPoESwitch: false
+    }
+  },
+  {
+    id: 'series-color',
+    name: 'Full-Color',
+    slug: 'full-color',
+    description: 'Continuous 24/7 full-color video capture with F1.0 super-aperture lenses and warm illumination in zero ambient light.',
+    order: 3,
+    enabled: true,
+    illustration: 'full-color',
+    ruleSet: {
+      hasStorageRule: true,
+      storageMap: { 4: '1TB', 8: '2TB', 16: '4TB' },
+      hasCableRule: true,
+      cableMetersPerCam: 20,
+      hasRecorderRule: true,
+      recorderChannels: 4,
+      allowPtz: false,
+      allowPoESwitch: false
+    }
+  },
+  {
+    id: 'series-wireless',
+    name: 'Wireless',
+    slug: 'wireless',
+    description: 'Standalone smart Wi-Fi cameras connecting via phone app or wireless NVR kit. No video cables, includes power adapters and local storage.',
+    order: 4,
+    enabled: true,
+    illustration: 'wireless',
+    ruleSet: {
+      hasStorageRule: true,
+      storageMap: { 2: '128GB MicroSD', 4: '256GB MicroSD' },
+      hasCableRule: false,
+      hasRecorderRule: false,
+      allowPtz: true,
+      allowPoESwitch: false
+    }
+  },
+  {
+    id: 'series-enterprise',
+    name: 'Enterprise & PTZ',
+    slug: 'enterprise-ptz',
+    description: 'High-density IP surveillance systems with 360° PTZ tracking cameras, Gigabit PoE switches, and rackmount NVR arrays.',
+    order: 5,
+    enabled: true,
+    illustration: 'ptz-enterprise',
+    ruleSet: {
+      hasStorageRule: true,
+      storageMap: { 16: '6TB', 32: '12TB', 64: '24TB' },
+      hasCableRule: true,
+      cableMetersPerCam: 30,
+      hasRecorderRule: true,
+      recorderChannels: 32,
+      allowPtz: true,
+      allowPoESwitch: true
+    }
   }
 ];
 

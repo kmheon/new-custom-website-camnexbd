@@ -252,6 +252,14 @@ const schemas = {
     serviceType: z.string().min(2, 'Service type is required')
   }).passthrough(),
 
+  serviceOffering: z.object({
+    title: z.string().min(2, 'Title is required')
+  }).passthrough(),
+
+  packageSeries: z.object({
+    name: z.string().min(2, 'Name is required')
+  }).passthrough(),
+
   heroSlide: z.object({
     title: z.string().min(1, 'Title is required')
   }).passthrough(),

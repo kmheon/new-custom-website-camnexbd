@@ -225,10 +225,39 @@ function initDb() {
       request_number TEXT UNIQUE NOT NULL,
       customer_name TEXT NOT NULL,
       phone TEXT NOT NULL,
+      service_id TEXT,
       service_type TEXT NOT NULL,
       status TEXT DEFAULT 'pending',
       data_json TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  try {
+    db.prepare('ALTER TABLE service_requests ADD COLUMN service_id TEXT').run();
+  } catch (_) {}
+
+  // 11b. Services (Quick Service Offerings)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS services (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      short_label TEXT NOT NULL,
+      enabled INTEGER DEFAULT 1,
+      display_order INTEGER DEFAULT 1,
+      data_json TEXT NOT NULL
+    )
+  `).run();
+
+  // 11c. Package Series
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS package_series (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      enabled INTEGER DEFAULT 1,
+      display_order INTEGER DEFAULT 1,
+      data_json TEXT NOT NULL
     )
   `).run();
 
@@ -551,6 +580,22 @@ function seedDatabaseIfEmpty() {
     insertProject.run(p.id, p.title, p.slug || p.id, JSON.stringify(p));
   }
 
+  const insertService = db.prepare(`
+    INSERT INTO services (id, title, short_label, enabled, display_order, data_json)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  for (const s of seeds.INITIAL_SERVICES || []) {
+    insertService.run(s.id, s.title, s.shortLabel || s.short_label || s.title, s.enabled !== false ? 1 : 0, s.order || 1, JSON.stringify(s));
+  }
+
+  const insertSeries = db.prepare(`
+    INSERT INTO package_series (id, name, slug, enabled, display_order, data_json)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  for (const ps of seeds.INITIAL_PACKAGE_SERIES || []) {
+    insertSeries.run(ps.id, ps.name, ps.slug, ps.enabled !== false ? 1 : 0, ps.order || 1, JSON.stringify(ps));
+  }
+
   if (seeds.INITIAL_SITE_SETTINGS) {
     const insertSetting = db.prepare(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`);
     insertSetting.run('site_settings', JSON.stringify(seeds.INITIAL_SITE_SETTINGS));
@@ -564,7 +609,8 @@ function reseedDatabase() {
   const dropTables = [
     'products', 'categories', 'brands', 'spec_templates',
     'packages', 'orders', 'quotes', 'service_requests', 'blog_posts',
-    'projects', 'testimonials', 'settings', 'hero_slides', 'homepage_sections', 'customers', 'media', 'faqs'
+    'projects', 'testimonials', 'settings', 'hero_slides', 'homepage_sections', 'customers', 'media', 'faqs',
+    'services', 'package_series'
   ];
   for (const t of dropTables) {
     try { db.prepare(`DELETE FROM ${t}`).run(); } catch(err) {}

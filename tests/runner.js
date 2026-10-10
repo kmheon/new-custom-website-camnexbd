@@ -115,6 +115,38 @@ function seedBaselineCatalogIntoDb(dbPath) {
     for (const t of seeds.INITIAL_SPEC_TEMPLATES || []) {
       insertTemplate.run(t.id, t.name, t.categorySlug, JSON.stringify(t));
     }
+
+    const insertService = db.prepare(`
+      INSERT OR IGNORE INTO services (id, title, short_label, enabled, display_order, data_json)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    for (const s of seeds.INITIAL_SERVICES || []) {
+      insertService.run(s.id, s.title, s.shortLabel || s.short_label || s.title, s.enabled !== false ? 1 : 0, s.order || 1, JSON.stringify(s));
+    }
+
+    const insertSeries = db.prepare(`
+      INSERT OR IGNORE INTO package_series (id, name, slug, enabled, display_order, data_json)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    for (const ps of seeds.INITIAL_PACKAGE_SERIES || []) {
+      insertSeries.run(ps.id, ps.name, ps.slug, ps.enabled !== false ? 1 : 0, ps.order || 1, JSON.stringify(ps));
+    }
+
+    const insertSection = db.prepare(`
+      INSERT OR IGNORE INTO homepage_sections (id, section_type, title, enabled, display_order, data_json)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    for (const sec of seeds.INITIAL_HOMEPAGE_SECTIONS || []) {
+      insertSection.run(sec.id, sec.sectionType || sec.type || '', sec.title || '', sec.enabled !== false ? 1 : 0, sec.order || 1, JSON.stringify(sec));
+    }
+
+    const insertSetting = db.prepare(`
+      INSERT OR REPLACE INTO settings (key, value)
+      VALUES (?, ?)
+    `);
+    if (seeds.INITIAL_SITE_SETTINGS) {
+      insertSetting.run('site_settings', JSON.stringify(seeds.INITIAL_SITE_SETTINGS));
+    }
   } finally {
     db.close();
   }
@@ -204,11 +236,12 @@ async function main() {
     console.log('\n[STEP 3] Seeding baseline hardware catalog into test DB for catalog tests...');
     seedBaselineCatalogIntoDb(TEST_DB_PATH);
 
-    // 5. Run test suites (Visual Rendering, Homepage Revision 2, Platform, Packages, Media, Admin, then Security Attacks last)
+    // 5. Run test suites
     results.push(await runTestSuite('Real Visual Computed Styles Suite (CDP)', path.join(__dirname, 'test_visual_rendering.js'), testEnv));
     results.push(await runTestSuite('Homepage Revision 2 Layout Suite (CDP)', path.join(__dirname, 'test_homepage_revision2.js'), testEnv));
     results.push(await runTestSuite('Homepage Fixes Suite (CDP)', path.join(__dirname, 'test_homepage_fixes.js'), testEnv));
     results.push(await runTestSuite('Homepage Revision 3 Suite (CDP)', path.join(__dirname, 'test_homepage_revision3.js'), testEnv));
+    results.push(await runTestSuite('Homepage Revision 4 Suite (CDP)', path.join(__dirname, 'test_homepage_revision4.js'), testEnv));
     results.push(await runTestSuite('Platform Hardening Suite', path.join(__dirname, 'test_platform.js'), testEnv));
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));

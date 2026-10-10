@@ -104,6 +104,7 @@ export interface Category {
   specTemplateId: string;
   featured?: boolean;
   showOnHomepage?: boolean;
+  showAsHomepageRow?: boolean;
   isAccessoryCategory?: boolean;
   order: number;
   displayOrder?: number;
@@ -200,6 +201,26 @@ export interface PackageComponentRule {
   storageLookup?: Record<number, { capacity: string; modelId: string }>; // e.g. {2: 500GB, 4: 500GB, 8: 1TB, 16: 2TB}
 }
 
+export interface PackageSeries {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  order: number;
+  enabled: boolean;
+  illustration?: string;
+  ruleSet?: {
+    hasStorageRule?: boolean;
+    storageMap?: Record<number, string>;
+    hasCableRule?: boolean;
+    cableMetersPerCam?: number;
+    hasRecorderRule?: boolean;
+    recorderChannels?: number;
+    allowPtz?: boolean;
+    allowPoESwitch?: boolean;
+  };
+}
+
 export interface SecurityPackage {
   id: string;
   name: string;
@@ -207,16 +228,21 @@ export interface SecurityPackage {
   badge?: string; // "Most Popular", "Best for Small Homes"
   description: string;
   image?: string;
+  seriesId?: string;
+  seriesName?: string;
+  technologyLabel?: string;
   cameraResolution?: string;
   cameraModel?: string;
   dvrModel?: string;
   storageDescription?: string;
   inclusions?: string[];
-  cameraCountsSupported?: number[]; // [2, 4, 8, 16]
+  cameraCountsSupported?: number[]; // [2, 4, 8, 16, 32, 64]
   defaultCameraCount?: number;
   cameraCount?: number;
   supportedFormFactors?: CameraFormFactor[];
   isNightVisionIrOnly?: boolean; // Uses IRPF series, no fake color/audio
+  isQuoteOnly?: boolean;
+  componentQuantities?: Record<string, number>;
   rules?: PackageComponentRule[];
   pricingRules?: Record<string, any>;
   basePrice?: number;
@@ -415,9 +441,24 @@ export interface SiteSettings {
     id: string;
     text: string;
     icon?: string;
+    link?: string;
+    highlighted?: boolean;
     enabled: boolean;
     order: number;
   }>;
+  quickServiceSettings?: {
+    heading?: string;
+    subtext?: string;
+    buttonText?: string;
+    nameLabel?: string;
+    namePlaceholder?: string;
+    phoneLabel?: string;
+    phonePlaceholder?: string;
+    areaLabel?: string;
+    areaPlaceholder?: string;
+    successMessage?: string;
+    enableOtherOption?: boolean;
+  };
   promoBanner?: {
     enabled: boolean;
     text: string;
@@ -473,6 +514,17 @@ export interface ServiceItem {
   link?: string;
   enabled: boolean;
   order: number;
+}
+
+export interface ServiceOffering {
+  id: string;
+  title: string;
+  shortLabel: string;
+  description?: string;
+  icon?: string;
+  enabled: boolean;
+  order: number;
+  solutionLink?: string;
 }
 
 export interface ProcessStep {

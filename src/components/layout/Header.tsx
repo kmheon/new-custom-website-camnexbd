@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Search, ShoppingBag, Phone, Mail, Menu, X, Shield, ChevronDown, User,
   ArrowRight, Wrench, MessageCircle, Layers, CheckCircle2, Building2, HelpCircle,
-  Heart, Truck, LogOut, Package as PackageIcon, Headphones
+  Heart, Truck, LogOut, Package as PackageIcon, Headphones, ShieldCheck, Clock
 } from 'lucide-react';
 import { useCartStore, useSettingsStore, useWishlistStore, useCustomerAuthStore, useAdminAuthStore } from '../../store';
 import { categoryService, productService, brandService } from '../../services';
@@ -124,26 +124,12 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   const email = settings?.email || 'contact@camnexbd.com';
 
   // Admin-driven highlights list (Settings > Top bar highlights)
+  // Strict requirement: NEVER auto-fill with address or fallback text. If no highlight enabled, right side stays empty!
   const highlights = useMemo(() => {
-    const fromSettings = (settings?.topBarHighlights || [])
-      .filter((h) => h.enabled !== false)
+    return (settings?.topBarHighlights || [])
+      .filter((h) => h.enabled !== false && h.text && h.text.trim())
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    if (fromSettings.length > 0) return fromSettings.map((h) => h.text);
-
-    const defaults: string[] = [];
-    if (settings?.address) defaults.push(settings.address);
-    if (settings?.businessHours) defaults.push(settings.businessHours);
-    if (defaults.length > 0) return defaults;
-
-    if (settings?.showSampleContent) {
-      return [
-        'Dhaka, Bangladesh',
-        'Open Sat-Thu: 9:00 AM - 8:00 PM',
-        'Direct Importer & Certified CCTV Hardware'
-      ];
-    }
-    return [];
-  }, [settings?.topBarHighlights, settings?.address, settings?.businessHours, settings?.showSampleContent]);
+  }, [settings?.topBarHighlights]);
 
   const [mobileHighlightIndex, setMobileHighlightIndex] = useState(0);
 
@@ -199,27 +185,60 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
             </button>
           </div>
 
-          {/* Right: HIGHLIGHTS area driven by admin list */}
+          {/* Right: HIGHLIGHTS area driven by admin list (Never cut mid-word; hidden whole if overflowing) */}
           {highlights.length > 0 && (
-            <div className="hidden md:flex items-center overflow-hidden max-w-[480px] select-none group">
-              <div className="flex items-center gap-3 text-xs text-slate-300 whitespace-nowrap overflow-hidden text-ellipsis">
-                {highlights.map((item, idx) => (
-                  <React.Fragment key={idx}>
-                    {idx > 0 && <span className="w-1 h-1 rounded-full bg-white/30 flex-shrink-0" />}
-                    <span className="font-medium text-slate-300">{item}</span>
-                  </React.Fragment>
-                ))}
+            <div
+              aria-label="Top bar announcements and partner status"
+              className="hidden md:flex items-center overflow-hidden h-6 max-w-[560px] select-none"
+            >
+              <div className="flex flex-wrap items-center gap-2.5 h-6 overflow-hidden">
+                {highlights.map((item, idx) => {
+                  const content = (
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 text-xs">
+                      {item.icon === 'shield-check' && <ShieldCheck className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />}
+                      {item.icon === 'shield' && <Shield className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />}
+                      {item.icon === 'clock' && <Clock className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />}
+                      {item.icon === 'truck' && <Truck className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />}
+                      <span className={item.highlighted ? 'font-semibold text-white' : 'font-medium text-slate-300'}>
+                        {item.text}
+                      </span>
+                    </span>
+                  );
+
+                  return (
+                    <React.Fragment key={item.id || idx}>
+                      {idx > 0 && <span className="w-1 h-1 rounded-full bg-white/30 flex-shrink-0" />}
+                      {item.highlighted ? (
+                        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F15A24]/15 border border-[#F15A24]/30 text-white flex-shrink-0 whitespace-nowrap">
+                          {content}
+                        </div>
+                      ) : item.link ? (
+                        <a href={item.link} className="hover:text-white transition-colors flex-shrink-0 whitespace-nowrap">
+                          {content}
+                        </a>
+                      ) : (
+                        <div className="flex-shrink-0 whitespace-nowrap">{content}</div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Mobile Rotating Highlights Banner under Top Bar */}
+      {/* Mobile Rotating Highlights Banner under Top Bar (one item rotates in a single line) */}
       {highlights.length > 0 && (
         <div className="md:hidden w-full bg-[#162032] text-slate-300 text-[11px] py-1 px-4 border-b border-white/5 overflow-hidden text-center transition-all">
-          <div key={mobileHighlightIndex} className="animate-in fade-in duration-500 font-medium truncate">
-            {highlights[mobileHighlightIndex]}
+          <div key={mobileHighlightIndex} className="animate-in fade-in duration-500 font-medium truncate flex items-center justify-center gap-1.5">
+            {highlights[mobileHighlightIndex].icon === 'shield-check' && <ShieldCheck className="w-3 h-3 text-[#F15A24] shrink-0" />}
+            {highlights[mobileHighlightIndex].icon === 'shield' && <Shield className="w-3 h-3 text-[#F15A24] shrink-0" />}
+            {highlights[mobileHighlightIndex].icon === 'clock' && <Clock className="w-3 h-3 text-[#F15A24] shrink-0" />}
+            {highlights[mobileHighlightIndex].icon === 'truck' && <Truck className="w-3 h-3 text-[#F15A24] shrink-0" />}
+            <span className={highlights[mobileHighlightIndex].highlighted ? 'text-white font-semibold' : 'text-slate-300'}>
+              {highlights[mobileHighlightIndex].text}
+            </span>
           </div>
         </div>
       )}

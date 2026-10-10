@@ -18,7 +18,9 @@ import {
   DeliveryMethod,
   PaymentMethod,
   InstallationOption,
-  HeroSlide
+  HeroSlide,
+  PackageSeries,
+  ServiceOffering
 } from '../types';
 
 export interface ProductFilterParams {
@@ -105,6 +107,10 @@ export interface IPackageService {
     }>;
   }>;
   savePackage(pkg: SecurityPackage): Promise<SecurityPackage>;
+  getPackageSeries(): Promise<PackageSeries[]>;
+  getAllPackageSeries(): Promise<PackageSeries[]>;
+  savePackageSeries(series: PackageSeries): Promise<PackageSeries>;
+  deletePackageSeries(id: string): Promise<void>;
 }
 
 export interface ICartService {
@@ -133,7 +139,11 @@ export interface IOrderService {
 
 export interface IQuoteService {
   createQuote(data: Omit<QuoteRequest, 'id' | 'quoteNumber' | 'createdAt' | 'status'>): Promise<QuoteRequest>;
-  createServiceRequest(data: { customerName: string; phone: string; serviceType: string; area?: string; website?: string }): Promise<any>;
+  createServiceRequest(data: { customerName: string; phone: string; serviceType: string; serviceId?: string; area?: string; website?: string }): Promise<any>;
+  getServiceOfferings(): Promise<ServiceOffering[]>;
+  getAllServiceOfferings(): Promise<ServiceOffering[]>;
+  saveServiceOffering(service: ServiceOffering): Promise<ServiceOffering>;
+  deleteServiceOffering(id: string): Promise<void>;
   getQuotes(): Promise<QuoteRequest[]>;
   getQuoteById(id: string): Promise<QuoteRequest | null>;
   updateQuoteStatus(id: string, status: QuoteRequest['status']): Promise<QuoteRequest>;

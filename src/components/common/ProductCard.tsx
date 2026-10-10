@@ -135,6 +135,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <>
       <div
+        data-product-id={product.id}
         onClick={() => onNavigate('product', product.id)}
         className={`bg-white rounded-2xl border border-[#EDE8E1] p-4 sm:p-5 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative cursor-pointer h-full min-w-0 ${className}`}
       >

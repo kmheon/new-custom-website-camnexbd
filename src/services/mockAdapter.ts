@@ -31,7 +31,9 @@ import {
   DeliveryMethod,
   InstallationOption,
   HeroSlide,
-  HeroFeatureHighlight
+  HeroFeatureHighlight,
+  PackageSeries,
+  ServiceOffering
 } from '../types';
 import {
   INITIAL_SITE_SETTINGS,
@@ -480,6 +482,28 @@ export class MockPackageService implements IPackageService {
     setStorage(STORAGE_KEYS.PACKAGES, list);
     return pkg;
   }
+
+  async getPackageSeries(): Promise<PackageSeries[]> {
+    return (getStorage<PackageSeries[]>('camnex_package_series', []) || []).filter(s => s.enabled);
+  }
+
+  async getAllPackageSeries(): Promise<PackageSeries[]> {
+    return getStorage<PackageSeries[]>('camnex_package_series', []) || [];
+  }
+
+  async savePackageSeries(series: PackageSeries): Promise<PackageSeries> {
+    const list = getStorage<PackageSeries[]>('camnex_package_series', []);
+    const idx = list.findIndex(s => s.id === series.id);
+    if (idx !== -1) list[idx] = series;
+    else list.push(series);
+    setStorage('camnex_package_series', list);
+    return series;
+  }
+
+  async deletePackageSeries(id: string): Promise<void> {
+    const list = getStorage<PackageSeries[]>('camnex_package_series', []);
+    setStorage('camnex_package_series', list.filter(s => s.id !== id));
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -611,6 +635,28 @@ export class MockOrderService implements IOrderService {
 export class MockQuoteService implements IQuoteService {
   async createServiceRequest(data: any): Promise<any> {
     return { success: true, id: `srv-${Date.now()}`, ...data };
+  }
+
+  async getServiceOfferings(): Promise<ServiceOffering[]> {
+    return (getStorage<ServiceOffering[]>('camnex_services', []) || []).filter(s => s.enabled);
+  }
+
+  async getAllServiceOfferings(): Promise<ServiceOffering[]> {
+    return getStorage<ServiceOffering[]>('camnex_services', []) || [];
+  }
+
+  async saveServiceOffering(service: ServiceOffering): Promise<ServiceOffering> {
+    const list = getStorage<ServiceOffering[]>('camnex_services', []);
+    const idx = list.findIndex(s => s.id === service.id);
+    if (idx !== -1) list[idx] = service;
+    else list.push(service);
+    setStorage('camnex_services', list);
+    return service;
+  }
+
+  async deleteServiceOffering(id: string): Promise<void> {
+    const list = getStorage<ServiceOffering[]>('camnex_services', []);
+    setStorage('camnex_services', list.filter(s => s.id !== id));
   }
 
   async createQuote(data: Omit<QuoteRequest, 'id' | 'quoteNumber' | 'createdAt' | 'status'>): Promise<QuoteRequest> {

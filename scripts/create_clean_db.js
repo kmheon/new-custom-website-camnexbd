@@ -216,10 +216,35 @@ db.prepare(`
     request_number TEXT UNIQUE NOT NULL,
     customer_name TEXT NOT NULL,
     phone TEXT NOT NULL,
+    service_id TEXT,
     service_type TEXT NOT NULL,
     status TEXT DEFAULT 'pending',
     data_json TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
+
+// 11b. Services (Quick Service Offerings)
+db.prepare(`
+  CREATE TABLE services (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    short_label TEXT NOT NULL,
+    enabled INTEGER DEFAULT 1,
+    display_order INTEGER DEFAULT 1,
+    data_json TEXT NOT NULL
+  )
+`).run();
+
+// 11c. Package Series
+db.prepare(`
+  CREATE TABLE package_series (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    enabled INTEGER DEFAULT 1,
+    display_order INTEGER DEFAULT 1,
+    data_json TEXT NOT NULL
   )
 `).run();
 
