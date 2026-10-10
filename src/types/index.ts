@@ -179,6 +179,10 @@ export interface Product {
   isPopular?: boolean;
   isTrending?: boolean;
   isDemo?: boolean; // Clearly labeled sample data
+  sample?: boolean;
+  isNew?: boolean;
+  isNewArrival?: boolean;
+  isHot?: boolean;
 }
 
 // ----------------------------------------------------------------------------

@@ -361,7 +361,7 @@ const FALLBACK_SLIDE: HeroSlide = {
 
                   return (
                     <div className="absolute top-2 -right-1 sm:right-2 z-20 bg-white/90 backdrop-blur-md border border-[#EDE8E1] rounded-full px-3 py-1 shadow-md flex items-center gap-1.5 text-xs animate-fade-in pointer-events-none">
-                      {renderHighlightIcon(primaryHighlight.icon)}
+                      {renderHighlightIcon(primaryHighlight?.icon)}
                       <span className="font-extrabold text-[#111827]">{shortVal}</span>
                     </div>
                   );
