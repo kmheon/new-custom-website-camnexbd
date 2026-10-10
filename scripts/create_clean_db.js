@@ -364,7 +364,17 @@ db.prepare(`
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT DEFAULT 'admin',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    status TEXT DEFAULT 'active',
+    must_change_password INTEGER DEFAULT 0,
+    branch_id TEXT,
+    warehouse_id TEXT,
+    last_login DATETIME,
+    totp_secret TEXT,
+    totp_enabled INTEGER DEFAULT 0,
+    failed_login_attempts INTEGER DEFAULT 0,
+    locked_until DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `).run();
 
@@ -376,12 +386,106 @@ db.prepare(`
     role TEXT NOT NULL,
     email TEXT NOT NULL,
     name TEXT NOT NULL,
+    app TEXT DEFAULT 'storefront',
     expires_at DATETIME NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `).run();
 
-// 20. Background Jobs Queue
+// 20. Roles, Role Permissions, User Roles
+db.prepare(`
+  CREATE TABLE roles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    is_system INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
+
+db.prepare(`
+  CREATE TABLE role_permissions (
+    role_id TEXT NOT NULL,
+    permission_key TEXT NOT NULL,
+    PRIMARY KEY (role_id, permission_key)
+  )
+`).run();
+
+db.prepare(`
+  CREATE TABLE user_roles (
+    user_id TEXT NOT NULL,
+    role_id TEXT NOT NULL,
+    PRIMARY KEY (user_id, role_id)
+  )
+`).run();
+
+// 21. Stock Movements
+db.prepare(`
+  CREATE TABLE stock_movements (
+    id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    quantity_change REAL NOT NULL,
+    balance_after REAL NOT NULL,
+    movement_type TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    reference_id TEXT,
+    user_id TEXT,
+    user_name TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
+db.prepare(`CREATE INDEX idx_stock_movements_prod ON stock_movements(product_id)`).run();
+
+// 22. Audit Logs (Immutable)
+db.prepare(`
+  CREATE TABLE audit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    user_name TEXT,
+    user_email TEXT,
+    surface TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    before_data TEXT,
+    after_data TEXT,
+    diff TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
+db.prepare(`CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id)`).run();
+db.prepare(`CREATE INDEX idx_audit_user ON audit_logs(user_id)`).run();
+
+// 23. Domain Events Outbox
+db.prepare(`
+  CREATE TABLE domain_events (
+    id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    aggregate_type TEXT NOT NULL,
+    aggregate_id TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    attempts INTEGER DEFAULT 0,
+    last_error TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    processed_at DATETIME
+  )
+`).run();
+db.prepare(`CREATE INDEX idx_events_status ON domain_events(status)`).run();
+
+// 24. Company Profile
+db.prepare(`
+  CREATE TABLE company_profile (
+    id TEXT PRIMARY KEY,
+    data_json TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
+
+// 25. Background Jobs Queue
 db.prepare(`
   CREATE TABLE background_jobs (
     id TEXT PRIMARY KEY,
@@ -398,7 +502,7 @@ db.prepare(`
   )
 `).run();
 
-// 21. URL Redirects
+// 26. URL Redirects
 db.prepare(`
   CREATE TABLE redirects (
     id TEXT PRIMARY KEY,
@@ -409,7 +513,7 @@ db.prepare(`
   )
 `).run();
 
-// 22. Wishlists (Customer Wishlist Items)
+// 27. Wishlists (Customer Wishlist Items)
 db.prepare(`
   CREATE TABLE wishlists (
     customer_id TEXT NOT NULL,
@@ -418,6 +522,18 @@ db.prepare(`
     PRIMARY KEY (customer_id, product_id)
   )
 `).run();
+
+// Archiving columns on main entities
+try { db.prepare(`ALTER TABLE products ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE products ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE categories ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE categories ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE brands ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE brands ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE services ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE services ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE customers ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+try { db.prepare(`ALTER TABLE customers ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
 
 // Indexes
 db.prepare(`CREATE INDEX idx_jobs_status ON background_jobs(status)`).run();
@@ -430,6 +546,18 @@ db.prepare(`CREATE INDEX idx_customers_phone ON customers(phone)`).run();
 db.prepare(`CREATE INDEX idx_sessions_expires ON sessions(expires_at)`).run();
 db.prepare(`CREATE INDEX idx_redirects_from ON redirects(from_path)`).run();
 db.prepare(`CREATE INDEX idx_wishlists_customer ON wishlists(customer_id)`).run();
+
+// Seed system roles
+const { SYSTEM_ROLES } = require('../server/shared/permissions');
+const insertRole = db.prepare(`INSERT OR REPLACE INTO roles (id, name, description, is_system) VALUES (?, ?, ?, ?)`);
+const insertRolePerm = db.prepare(`INSERT OR IGNORE INTO role_permissions (role_id, permission_key) VALUES (?, ?)`);
+
+for (const role of Object.values(SYSTEM_ROLES)) {
+  insertRole.run(role.id, role.name, role.description, 1);
+  for (const perm of role.permissions) {
+    insertRolePerm.run(role.id, perm);
+  }
+}
 
 // Create initial Administrator User from environment variable
 const adminEmail = (process.env.ADMIN_EMAIL || 'admin@camnexbd.com').toLowerCase().trim();
@@ -449,9 +577,15 @@ if (!passToHash || !passToHash.trim()) {
 const hash = bcrypt.hashSync(passToHash.trim(), 10);
 const adminId = `usr-${Date.now()}`;
 db.prepare(`
-  INSERT INTO users (id, name, email, password_hash, role)
-  VALUES (?, ?, ?, ?, ?)
+  INSERT INTO users (id, name, email, password_hash, role, status)
+  VALUES (?, ?, ?, ?, ?, 'active')
 `).run(adminId, 'CamneX Administrator', adminEmail, hash, 'admin');
+
+// Assign Super Admin role to initial administrator
+db.prepare(`
+  INSERT INTO user_roles (user_id, role_id)
+  VALUES (?, ?)
+`).run(adminId, SYSTEM_ROLES.SUPER_ADMIN.id);
 
 db.close();
 

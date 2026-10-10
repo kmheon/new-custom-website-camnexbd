@@ -71,6 +71,12 @@ PORT=3000
 HOST=127.0.0.1
 NODE_ENV=production
 
+# Multi-Surface Domain Configuration (Separable surfaces)
+PUBLIC_SITE_URL=https://camnexbd.com
+ADMIN_URL=https://camnexbd.com/admin
+STAFF_APP_URL=https://camnexbd.com/staff
+API_URL=https://camnexbd.com/api/v1
+
 # Database & Storage
 DATABASE_PATH=./camnex.db
 
@@ -80,10 +86,26 @@ ADMIN_INITIAL_PASSWORD=YourStrongUniqueAdminPasswordHere!
 
 # Security & Sessions
 SESSION_SECRET=generate_a_random_64_character_hex_string_here
-
-# Frontend API URL
-VITE_API_URL=https://camnexbd.com
 ```
+
+### Multi-Surface Architecture & Deployment Modes
+The CamneX platform is built as one unified Business API with three independent surfaces:
+1. **Public Storefront** (`/`): Customer-facing catalog, packages, solutions, and checkout.
+2. **Website Manager** (`/admin`): Content, CMS pages, catalog presentation, settings.
+3. **Staff App** (`/staff`): Counter operations, staff directory, RBAC roles, audit logs.
+
+#### Mode A: Unified Single-Server (Default)
+In default single-server deployment, all three surfaces run seamlessly from one Node.js process:
+- Storefront served at `/`
+- Website Manager served at `/admin`
+- Staff App served at `/staff`
+- Business API mounted at `/api/v1` (with `/api` compatibility aliases)
+
+#### Mode B: Independent Separated Servers (Reverse-Proxy or Multi-Host)
+To run the surfaces on separate domains or servers (e.g. `camnexbd.com`, `admin.camnexbd.com`, `staff.camnexbd.com`, `api.camnexbd.com`):
+1. Configure `PUBLIC_SITE_URL`, `ADMIN_URL`, `STAFF_APP_URL`, and `API_URL` in `.env` for each instance.
+2. The server's CORS middleware (`server/middleware/cors.js`) dynamically configures the allowlist from these environment variables with credentials support.
+3. In Nginx, proxy requests for `api.*` to the API server instance, `staff.*` to the staff instance or serve the static `staff.js` bundle pointing to `API_URL`.
 
 ### Initialize Clean Database (Zero Demo Data)
 To initialize a fresh production database without any sample/demo data:

@@ -26,6 +26,10 @@ const {
   schemas,
   validateBody
 } = require('./auth');
+const { configureCors } = require('./server/middleware/cors');
+const { authenticate: rbacAuthenticate } = require('./server/middleware/auth');
+const { startDomainEventWorker } = require('./server/middleware/events');
+const apiV1Router = require('./server/routes/api.v1');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +63,8 @@ function validateBuildAssets() {
   }
 
   const jsFile = manifest['main.js'];
+  const adminJsFile = manifest['admin.js'];
+  const staffJsFile = manifest['staff.js'];
   const cssFile = manifest['main.css'];
 
   if (!jsFile || !cssFile) {
@@ -93,7 +99,7 @@ function validateBuildAssets() {
 }
 
 const startupManifest = validateBuildAssets();
-console.log(`[STARTUP] Verified build assets: JS=${startupManifest['main.js']}, CSS=${startupManifest['main.css']}`);
+console.log(`[STARTUP] Verified build assets: JS=${startupManifest['main.js']}, Admin=${startupManifest['admin.js']}, Staff=${startupManifest['staff.js']}, CSS=${startupManifest['main.css']}`);
 
 function getActiveManifest() {
   const manifestPath = path.join(__dirname, 'public/dist/manifest.json');
@@ -192,8 +198,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// /api/v1/* is an alias of /api/* (legacy paths stay working)
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/v1/')) req.url = '/api/' + req.url.slice('/api/v1/'.length);
+  next();
+});
+
 app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
+app.use(configureCors());
 app.use(authenticate);
 
 // Dynamic API endpoints must never be cached by proxies or browsers
@@ -207,6 +220,18 @@ app.use('/api/', (req, res, next) => {
 app.use('/api/', apiLimiter);
 app.use(csrfProtection);
 app.use('/api/admin', requireAdmin);
+
+// New platform endpoints (staff, audit, inventory) are served by the domain modules;
+// all other routes are handled by the existing handlers below.
+const PLATFORM_PREFIXES = ['/staff', '/auth/staff', '/audit-logs', '/inventory'];
+app.use('/api', (req, res, next) => {
+  if (PLATFORM_PREFIXES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
+    return rbacAuthenticate(req, res, () => apiV1Router(req, res, next));
+  }
+  next();
+});
+
+startDomainEventWorker(3000);
 
 // Dynamic 301/302 Redirect Manager Middleware
 app.use((req, res, next) => {
@@ -2891,7 +2916,7 @@ function resolveRouteMetadata(reqPath) {
   };
 }
 
-function renderPageWithMetadata(indexHtml, meta) {
+function renderPageWithMetadata(indexHtml, meta, surface = 'storefront') {
   let html = indexHtml;
 
   // Replace title
@@ -2925,7 +2950,12 @@ function renderPageWithMetadata(indexHtml, meta) {
   // Always read manifest fresh (or fallback to validated startup manifest)
   const manifest = getActiveManifest();
   const cssHref = (manifest && manifest['main.css']) || '/style.css';
-  const jsSrc = (manifest && manifest['main.js']) || '/bundle.js';
+  let jsSrc = (manifest && manifest['main.js']) || '/bundle.js';
+  if (surface === 'admin') {
+    jsSrc = (manifest && manifest['admin.js']) || '/bundle.admin.js';
+  } else if (surface === 'staff') {
+    jsSrc = (manifest && manifest['staff.js']) || '/bundle.staff.js';
+  }
 
   // Guarantee stylesheet link exists and points to the current hashed bundle
   const cssRegex = /<link[^>]+(?:id="app-styles"|href=["'][^"']*(?:\/style\.css|\/dist\/bundle\.[^"']*\.css)["'])[^>]*>/i;
@@ -2951,6 +2981,11 @@ function renderPageWithMetadata(indexHtml, meta) {
 // Fallback HTML router (every HTML response, including SEO-injected pages, 404s and SPA fallback, includes the current CSS link)
 app.use((req, res, next) => {
   if (['GET', 'HEAD'].includes(req.method) && !req.path.startsWith('/api/')) {
+    // 301 Permanent redirect from /about to /company-profile
+    if (req.path === '/about' || req.path === '/about/') {
+      return res.redirect(301, '/company-profile');
+    }
+
     const ext = path.extname(req.path).toLowerCase();
     // Non-HTML static files (.js, .css, .png, etc.) that missed static middleware should 404 normally
     if (ext && ext !== '.html') {
@@ -2964,10 +2999,14 @@ app.use((req, res, next) => {
       meta.canonical = `https://camnexbd.com${req.path}`;
     }
 
+    let surface = 'storefront';
+    if (req.path === '/admin' || req.path.startsWith('/admin/')) surface = 'admin';
+    else if (req.path === '/staff' || req.path.startsWith('/staff/')) surface = 'staff';
+
     const indexHtmlPath = path.join(__dirname, 'public/index.html');
     try {
       const rawHtml = fs.readFileSync(indexHtmlPath, 'utf8');
-      const rendered = renderPageWithMetadata(rawHtml, meta);
+      const rendered = renderPageWithMetadata(rawHtml, meta, surface);
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');

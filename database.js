@@ -405,12 +405,209 @@ function initDb() {
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_orders_phone ON orders(customer_phone)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`).run();
 
+  migratePlatformTables(db);
   ensureAdminUser();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_orders_number ON orders(order_number)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone)`).run();
 
   seedDatabaseIfEmpty();
   ensureComponentProducts();
+}
+
+function migratePlatformTables(targetDb) {
+  // 1. Roles table
+  targetDb.prepare(`
+    CREATE TABLE IF NOT EXISTS roles (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      is_system INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  // 2. Role permissions
+  targetDb.prepare(`
+    CREATE TABLE IF NOT EXISTS role_permissions (
+      role_id TEXT NOT NULL,
+      permission_key TEXT NOT NULL,
+      PRIMARY KEY (role_id, permission_key)
+    )
+  `).run();
+
+  // 3. User roles
+  targetDb.prepare(`
+    CREATE TABLE IF NOT EXISTS user_roles (
+      user_id TEXT NOT NULL,
+      role_id TEXT NOT NULL,
+      PRIMARY KEY (user_id, role_id)
+    )
+  `).run();
+
+  // 4. Stock movements
+  targetDb.prepare(`
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      quantity_change REAL NOT NULL,
+      balance_after REAL NOT NULL,
+      movement_type TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      reference_id TEXT,
+      user_id TEXT,
+      user_name TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  targetDb.prepare(`CREATE INDEX IF NOT EXISTS idx_stock_movements_prod ON stock_movements(product_id)`).run();
+
+  // 5. Audit logs (immutable)
+  targetDb.prepare(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      user_name TEXT,
+      user_email TEXT,
+      surface TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      before_data TEXT,
+      after_data TEXT,
+      diff TEXT,
+      ip_address TEXT,
+      user_agent TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  targetDb.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id)`).run();
+  targetDb.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id)`).run();
+
+  // 6. Domain events outbox
+  targetDb.prepare(`
+    CREATE TABLE IF NOT EXISTS domain_events (
+      id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      aggregate_type TEXT NOT NULL,
+      aggregate_id TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      attempts INTEGER DEFAULT 0,
+      last_error TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      processed_at DATETIME
+    )
+  `).run();
+  targetDb.prepare(`CREATE INDEX IF NOT EXISTS idx_events_status ON domain_events(status)`).run();
+
+  // 7. Company profile
+  targetDb.prepare(`
+    CREATE TABLE IF NOT EXISTS company_profile (
+      id TEXT PRIMARY KEY,
+      data_json TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  // User columns migration
+  const userCols = targetDb.prepare(`PRAGMA table_info(users)`).all().map(c => c.name);
+  if (!userCols.includes('status')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('must_change_password')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('branch_id')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN branch_id TEXT`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('warehouse_id')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN warehouse_id TEXT`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('last_login')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN last_login DATETIME`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('totp_secret')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN totp_secret TEXT`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('totp_enabled')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN totp_enabled INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('failed_login_attempts')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('locked_until')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN locked_until DATETIME`).run(); } catch (_) {}
+  }
+  if (!userCols.includes('updated_at')) {
+    try { targetDb.prepare(`ALTER TABLE users ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`).run(); } catch (_) {}
+  }
+
+  // Sessions app column migration
+  const sessionCols = targetDb.prepare(`PRAGMA table_info(sessions)`).all().map(c => c.name);
+  if (!sessionCols.includes('app')) {
+    try { targetDb.prepare(`ALTER TABLE sessions ADD COLUMN app TEXT DEFAULT 'storefront'`).run(); } catch (_) {}
+  }
+
+  // Archiving columns
+  const prodCols = targetDb.prepare(`PRAGMA table_info(products)`).all().map(c => c.name);
+  if (!prodCols.includes('is_archived')) {
+    try { targetDb.prepare(`ALTER TABLE products ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!prodCols.includes('archived_at')) {
+    try { targetDb.prepare(`ALTER TABLE products ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+  }
+
+  const catCols = targetDb.prepare(`PRAGMA table_info(categories)`).all().map(c => c.name);
+  if (!catCols.includes('is_archived')) {
+    try { targetDb.prepare(`ALTER TABLE categories ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!catCols.includes('archived_at')) {
+    try { targetDb.prepare(`ALTER TABLE categories ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+  }
+
+  const brandCols = targetDb.prepare(`PRAGMA table_info(brands)`).all().map(c => c.name);
+  if (!brandCols.includes('is_archived')) {
+    try { targetDb.prepare(`ALTER TABLE brands ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!brandCols.includes('archived_at')) {
+    try { targetDb.prepare(`ALTER TABLE brands ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+  }
+
+  const srvCols = targetDb.prepare(`PRAGMA table_info(services)`).all().map(c => c.name);
+  if (!srvCols.includes('is_archived')) {
+    try { targetDb.prepare(`ALTER TABLE services ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!srvCols.includes('archived_at')) {
+    try { targetDb.prepare(`ALTER TABLE services ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+  }
+
+  const custCols = targetDb.prepare(`PRAGMA table_info(customers)`).all().map(c => c.name);
+  if (!custCols.includes('is_archived')) {
+    try { targetDb.prepare(`ALTER TABLE customers ADD COLUMN is_archived INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!custCols.includes('archived_at')) {
+    try { targetDb.prepare(`ALTER TABLE customers ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+  }
+
+  // Seed system roles & permissions
+  const { SYSTEM_ROLES } = require('./server/shared/permissions');
+  const insertRole = targetDb.prepare(`INSERT OR REPLACE INTO roles (id, name, description, is_system) VALUES (?, ?, ?, ?)`);
+  const insertRolePerm = targetDb.prepare(`INSERT OR IGNORE INTO role_permissions (role_id, permission_key) VALUES (?, ?)`);
+
+  for (const role of Object.values(SYSTEM_ROLES)) {
+    insertRole.run(role.id, role.name, role.description, 1);
+    for (const perm of role.permissions) {
+      insertRolePerm.run(role.id, perm);
+    }
+  }
+
+  // Ensure all existing users with role = 'admin' are mapped to Super Admin
+  const adminUsers = targetDb.prepare(`SELECT id FROM users WHERE role = 'admin'`).all();
+  const insertUserRole = targetDb.prepare(`INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)`);
+  for (const u of adminUsers) {
+    insertUserRole.run(u.id, SYSTEM_ROLES.SUPER_ADMIN.id);
+  }
 }
 
 function ensureComponentProducts() {

@@ -99,7 +99,7 @@ function issueCsrfCookie(res) {
 // 3. AUTHENTICATION & RBAC MIDDLEWARES
 // ============================================================================
 function authenticate(req, res, next) {
-  const token = req.cookies?.camnex_session;
+  const token = req.cookies?.camnex_session || req.cookies?.camnex_admin_session || req.cookies?.camnex_staff_session;
   if (!token) {
     req.user = null;
     return next();
@@ -146,7 +146,7 @@ function csrfProtection(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
 
   // If user is authenticated via session cookie, verify matching CSRF token
-  if (req.cookies?.camnex_session) {
+  if (req.cookies?.camnex_session || req.cookies?.camnex_admin_session || req.cookies?.camnex_staff_session) {
     const csrfHeader = req.headers['x-csrf-token'];
     const csrfCookie = req.cookies?.camnex_csrf;
     if (csrfCookie && csrfHeader && csrfHeader === csrfCookie) {

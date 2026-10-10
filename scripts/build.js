@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * CamneX Platform - Content-Hashed Asset Bundler
- * Compiles TypeScript/React storefront and admin bundle with esbuild,
- * compiles Tailwind CSS with PostCSS, minifies CSS,
- * produces content-hashed assets with manifest for long immutable caching,
- * and maintains fallback public/bundle.js and public/style.css for local dev server compatibility.
+ * CamneX Platform - Content-Hashed Multi-Surface Asset Bundler
+ * Compiles 3 separate frontend bundles:
+ * 1. Storefront: src/main.tsx -> bundle.main.<hash>.js
+ * 2. Website Manager: src/admin/main.tsx -> bundle.admin.<hash>.js
+ * 3. Staff App: src/staff/main.tsx -> bundle.staff.<hash>.js
+ * And compiles Tailwind CSS with PostCSS.
  */
 
 const esbuild = require('esbuild');
@@ -15,16 +16,10 @@ const postcss = require('postcss');
 const tailwindcss = require('tailwindcss');
 const autoprefixer = require('autoprefixer');
 
-async function runBuild() {
-  const distDir = path.join(__dirname, '../public/dist');
-  if (!fs.existsSync(distDir)) {
-    fs.mkdirSync(distDir, { recursive: true });
-  }
-
-  // 1. Bundle TypeScript/React Application
-  console.log('[BUILD] Bundling src/main.tsx with esbuild...');
-  const jsResult = await esbuild.build({
-    entryPoints: [path.join(__dirname, '../src/main.tsx')],
+async function compileBundle(entryPath, bundleName, distDir, fallbackPath) {
+  console.log(`[BUILD] Bundling ${bundleName} (${entryPath}) with esbuild...`);
+  const result = await esbuild.build({
+    entryPoints: [entryPath],
     bundle: true,
     minify: true,
     target: 'es2020',
@@ -32,18 +27,50 @@ async function runBuild() {
     sourcemap: false
   });
 
-  if (!jsResult.outputFiles || jsResult.outputFiles.length === 0) {
-    throw new Error('esbuild produced no output files');
+  if (!result.outputFiles || result.outputFiles.length === 0) {
+    throw new Error(`esbuild produced no output files for ${bundleName}`);
   }
 
-  const outputJs = jsResult.outputFiles[0].contents;
-  const jsHash = crypto.createHash('md5').update(outputJs).digest('hex').slice(0, 10);
-  const hashedJsFilename = `bundle.${jsHash}.js`;
-  const hashedJsPath = path.join(distDir, hashedJsFilename);
-  const publicBundlePath = path.join(__dirname, '../public/bundle.js');
+  const outputJs = result.outputFiles[0].contents;
+  const hash = crypto.createHash('md5').update(outputJs).digest('hex').slice(0, 10);
+  const filename = `bundle.${bundleName}.${hash}.js`;
+  const distPath = path.join(distDir, filename);
 
-  fs.writeFileSync(hashedJsPath, outputJs);
-  fs.writeFileSync(publicBundlePath, outputJs);
+  fs.writeFileSync(distPath, outputJs);
+  if (fallbackPath) {
+    fs.writeFileSync(fallbackPath, outputJs);
+  }
+
+  return { filename, hash, sizeKb: (outputJs.length / 1024).toFixed(1) };
+}
+
+async function runBuild() {
+  const distDir = path.join(__dirname, '../public/dist');
+  if (!fs.existsSync(distDir)) {
+    fs.mkdirSync(distDir, { recursive: true });
+  }
+
+  // 1. Bundle 3 Separate Surfaces
+  const mainBundle = await compileBundle(
+    path.join(__dirname, '../src/main.tsx'),
+    'main',
+    distDir,
+    path.join(__dirname, '../public/bundle.js')
+  );
+
+  const adminBundle = await compileBundle(
+    path.join(__dirname, '../src/admin/main.tsx'),
+    'admin',
+    distDir,
+    path.join(__dirname, '../public/bundle.admin.js')
+  );
+
+  const staffBundle = await compileBundle(
+    path.join(__dirname, '../src/staff/main.tsx'),
+    'staff',
+    distDir,
+    path.join(__dirname, '../public/bundle.staff.js')
+  );
 
   // 2. Compile Tailwind CSS (Build-time, minified)
   console.log('[BUILD] Compiling Tailwind CSS with PostCSS...');
@@ -55,7 +82,6 @@ async function runBuild() {
     autoprefixer
   ]).process(cssInput, { from: cssInputPath });
 
-  // Minify CSS with esbuild
   const minifiedCssResult = await esbuild.transform(postcssResult.css, {
     loader: 'css',
     minify: true
@@ -70,11 +96,13 @@ async function runBuild() {
   fs.writeFileSync(hashedCssPath, outputCss);
   fs.writeFileSync(publicCssPath, outputCss);
 
-  // 3. Write Manifest
+  // 3. Write Unified Manifest
   const manifest = {
-    'main.js': `/dist/${hashedJsFilename}`,
+    'main.js': `/dist/${mainBundle.filename}`,
+    'admin.js': `/dist/${adminBundle.filename}`,
+    'staff.js': `/dist/${staffBundle.filename}`,
     'main.css': `/dist/${hashedCssFilename}`,
-    'hash': jsHash,
+    'hash': mainBundle.hash,
     'builtAt': new Date().toISOString()
   };
 
@@ -93,7 +121,7 @@ async function runBuild() {
     }
 
     const jsRegex = /<script[^>]+src=["'][^"']*(?:bundle\.js|\/dist\/bundle\.[^"']*\.js)["'][^>]*><\/script>/i;
-    const newJsTag = `<script src="/dist/${hashedJsFilename}"></script>`;
+    const newJsTag = `<script src="/dist/${mainBundle.filename}"></script>`;
     if (jsRegex.test(indexHtml)) {
       indexHtml = indexHtml.replace(jsRegex, newJsTag);
     } else {
@@ -104,18 +132,27 @@ async function runBuild() {
   }
 
   // 5. Clean up old hashed bundle files (keep current ones)
+  const activeFiles = new Set([
+    mainBundle.filename,
+    adminBundle.filename,
+    staffBundle.filename,
+    hashedCssFilename
+  ]);
+
   const existingFiles = fs.readdirSync(distDir);
   for (const f of existingFiles) {
     if (f.startsWith('bundle.') && (f.endsWith('.js') || f.endsWith('.css'))) {
-      if (f !== hashedJsFilename && f !== hashedCssFilename) {
+      if (!activeFiles.has(f)) {
         try { fs.unlinkSync(path.join(distDir, f)); } catch (_) {}
       }
     }
   }
 
   console.log(`[BUILD] Success!`);
-  console.log(`  -> JS:  /dist/${hashedJsFilename} (${(outputJs.length / 1024).toFixed(1)} KB)`);
-  console.log(`  -> CSS: /dist/${hashedCssFilename} (${(outputCss.length / 1024).toFixed(1)} KB)`);
+  console.log(`  -> Storefront JS:     /dist/${mainBundle.filename} (${mainBundle.sizeKb} KB)`);
+  console.log(`  -> Admin JS:          /dist/${adminBundle.filename} (${adminBundle.sizeKb} KB)`);
+  console.log(`  -> Staff JS:          /dist/${staffBundle.filename} (${staffBundle.sizeKb} KB)`);
+  console.log(`  -> CSS:               /dist/${hashedCssFilename} (${(outputCss.length / 1024).toFixed(1)} KB)`);
   console.log(`  -> Manifest saved to public/dist/manifest.json`);
 }
 
