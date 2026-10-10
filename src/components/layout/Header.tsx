@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Search, ShoppingBag, Phone, Mail, Menu, X, Shield, ChevronDown, User,
   ArrowRight, Wrench, MessageCircle, Layers, CheckCircle2, Building2, HelpCircle,
-  Heart, Truck, LogOut, Package as PackageIcon
+  Heart, Truck, LogOut, Package as PackageIcon, Headphones
 } from 'lucide-react';
 import { useCartStore, useSettingsStore, useWishlistStore, useCustomerAuthStore, useAdminAuthStore } from '../../store';
 import { categoryService, productService, brandService } from '../../services';
 import { Category, Product, Brand } from '../../types';
+import { SmartImage } from '../common/ImagePlaceholder';
 
 interface HeaderProps {
   onNavigate: (route: string, param?: string) => void;
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [callPopoverOpen, setCallPopoverOpen] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   const searchRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+  const callPopoverRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const totalCartCount = useCartStore((s) => s.totalCount());
@@ -49,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
     brandService.getBrands().then(setBrands);
   }, [loadSettings, isCustomerAuthenticated]);
 
-  // Click outside to close search suggestions and nav dropdowns
+  // Click outside and escape key handling
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -61,9 +64,24 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
       if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
         setAccountMenuOpen(false);
       }
+      if (callPopoverRef.current && !callPopoverRef.current.contains(e.target as Node)) {
+        setCallPopoverOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setCallPopoverOpen(false);
+        setActiveDropdown(null);
+        setAccountMenuOpen(false);
+        setSearchOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Instant autocomplete debouncing
@@ -105,13 +123,48 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   const phone = settings?.phone || '+880 1540-535150';
   const email = settings?.email || 'contact@camnexbd.com';
 
+  // Admin-driven highlights list (Settings > Top bar highlights)
+  const highlights = useMemo(() => {
+    const fromSettings = (settings?.topBarHighlights || [])
+      .filter((h) => h.enabled !== false)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    if (fromSettings.length > 0) return fromSettings.map((h) => h.text);
+
+    const defaults: string[] = [];
+    if (settings?.address) defaults.push(settings.address);
+    if (settings?.businessHours) defaults.push(settings.businessHours);
+    if (defaults.length > 0) return defaults;
+
+    if (settings?.showSampleContent) {
+      return [
+        'Dhaka, Bangladesh',
+        'Open Sat-Thu: 9:00 AM - 8:00 PM',
+        'Direct Importer & Certified CCTV Hardware'
+      ];
+    }
+    return [];
+  }, [settings?.topBarHighlights, settings?.address, settings?.businessHours, settings?.showSampleContent]);
+
+  const [mobileHighlightIndex, setMobileHighlightIndex] = useState(0);
+
+  useEffect(() => {
+    if (highlights.length <= 1) return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) return;
+
+    const interval = setInterval(() => {
+      setMobileHighlightIndex((prev) => (prev + 1) % highlights.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [highlights.length]);
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white">
       {/* 1. FULL-WIDTH SLIM TOP BAR (36px, surface-dark, 13px text) */}
       <div className="w-full bg-[#0F172A] text-[#A0A8B4] text-[13px] border-b border-white/10 h-9 relative z-50">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
-          {/* Left: Tap-to-call phone and email */}
-          <div className="flex items-center gap-3 sm:gap-6">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
+          {/* Left: Tap-to-call phone, email, thin divider, then TRACK ORDER highlighted */}
+          <div className="flex items-center gap-3 sm:gap-4 md:gap-5 flex-shrink-0">
             <a
               href={`tel:${phone.replace(/\s+/g, '')}`}
               className="flex items-center gap-1.5 text-white/90 hover:text-white font-medium transition-colors"
@@ -126,20 +179,50 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               <Mail className="w-3.5 h-3.5 text-[#F15A24]" />
               <span>{email}</span>
             </a>
-          </div>
 
-          {/* Right: Track Order with line icon */}
-          <div className="flex items-center">
+            {/* Thin vertical divider */}
+            <div className="h-3.5 w-px bg-white/20" />
+
+            {/* TRACK ORDER highlighted: 22px orange rounded icon tile + semibold white text, no button shape, no orange fill behind text */}
             <button
+              type="button"
               onClick={() => onNavigate('tracking')}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-xs"
+              className="flex items-center gap-2 text-white hover:text-white/90 transition-colors cursor-pointer group"
+              aria-label="Track Order"
             >
-              <Truck className="w-3.5 h-3.5 text-white" />
-              <span>Track Order</span>
+              <div className="w-[22px] h-[22px] rounded-md bg-[#F15A24] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
+                <Truck className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-xs sm:text-[13px] font-semibold text-white tracking-tight">
+                Track Order
+              </span>
             </button>
           </div>
+
+          {/* Right: HIGHLIGHTS area driven by admin list */}
+          {highlights.length > 0 && (
+            <div className="hidden md:flex items-center overflow-hidden max-w-[480px] select-none group">
+              <div className="flex items-center gap-3 text-xs text-slate-300 whitespace-nowrap overflow-hidden text-ellipsis">
+                {highlights.map((item, idx) => (
+                  <React.Fragment key={idx}>
+                    {idx > 0 && <span className="w-1 h-1 rounded-full bg-white/30 flex-shrink-0" />}
+                    <span className="font-medium text-slate-300">{item}</span>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Mobile Rotating Highlights Banner under Top Bar */}
+      {highlights.length > 0 && (
+        <div className="md:hidden w-full bg-[#162032] text-slate-300 text-[11px] py-1 px-4 border-b border-white/5 overflow-hidden text-center transition-all">
+          <div key={mobileHighlightIndex} className="animate-in fade-in duration-500 font-medium truncate">
+            {highlights[mobileHighlightIndex]}
+          </div>
+        </div>
+      )}
 
       {/* 2. FULL-WIDTH WHITE HEADER ROW */}
       <div className="w-full bg-white border-b border-[#EDE8E1] shadow-xs">
@@ -215,12 +298,16 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                         }}
                         className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[#FAF7F2] transition-colors text-left cursor-pointer"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-[#FAF7F2] border border-[#EDE8E1] flex items-center justify-center p-1 flex-shrink-0">
-                          {p.primaryImage ? (
-                            <img src={p.primaryImage} alt="" className="w-full h-full object-contain" />
-                          ) : (
-                            <Search className="w-4 h-4 text-[#5B6472]" />
-                          )}
+                        <div className="w-10 h-10 rounded-lg bg-[#FAF7F2] border border-[#EDE8E1] flex items-center justify-center p-1 flex-shrink-0 overflow-hidden">
+                          <SmartImage
+                            src={p.primaryImage}
+                            alt=""
+                            category={p.categoryId || p.category}
+                            name={p.name}
+                            model={p.modelNumber}
+                            className="w-full h-full object-contain"
+                            placeholderClassName="w-6 h-6"
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#5B6472] uppercase">
@@ -254,15 +341,87 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
             )}
           </div>
 
-          {/* Desktop Row 1 Right: Get Quote (Row 1 is logo, extended search, Get Quote) */}
-          <div className="hidden md:flex items-center flex-shrink-0">
+          {/* Desktop Row 1 Right: Two Buttons (Primary: Get Quote / Pricing, Secondary: Call for Service) */}
+          <div className="hidden md:flex items-center gap-2.5 flex-shrink-0">
+            {/* Primary Orange Pill: Get Quote / Pricing (shortened to Quote below 1100px) */}
             <button
+              type="button"
               onClick={() => onNavigate('quote')}
-              className="min-h-[44px] px-5 py-2.5 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+              className="min-h-[42px] px-4 lg:px-5 py-2 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs sm:text-sm rounded-full transition-all shadow-sm flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+              aria-label="Get Quote or Pricing"
             >
-              <span>Get Quote</span>
+              <span className="hidden min-[1100px]:inline">Get Quote / Pricing</span>
+              <span className="min-[1100px]:hidden">Quote</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+
+            {/* Secondary Outlined Pill with Phone Icon: Call for Service with Desktop Popover */}
+            <div ref={callPopoverRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setCallPopoverOpen(!callPopoverOpen)}
+                aria-expanded={callPopoverOpen}
+                aria-haspopup="dialog"
+                className="min-h-[42px] px-3.5 lg:px-4 py-2 bg-white hover:bg-[#FAF7F2] border border-[#EDE8E1] hover:border-[#F15A24] text-[#111827] font-bold text-xs sm:text-sm rounded-full transition-all shadow-xs flex items-center gap-1.5 cursor-pointer flex-shrink-0 group"
+                aria-label="Call for Service options"
+              >
+                <Phone className="w-3.5 h-3.5 text-[#F15A24] group-hover:scale-110 transition-transform" />
+                <span className="hidden min-[1100px]:inline">Call for Service</span>
+                <span className="min-[1100px]:hidden">Call</span>
+              </button>
+
+              {/* Call for Service Popover */}
+              {callPopoverOpen && (
+                <div
+                  role="dialog"
+                  aria-label="Direct Technical Support & Service Call"
+                  className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2"
+                >
+                  <div className="flex items-start justify-between mb-3 pb-2 border-b border-[#EDE8E1]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-[#F15A24]">
+                        <Headphones className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#111827]">Direct Service Desk</div>
+                        <div className="text-[10px] text-[#5B6472]">Certified Security Engineers</div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCallPopoverOpen(false)}
+                      className="p-1 rounded-full text-[#5B6472] hover:text-[#111827] hover:bg-slate-100 cursor-pointer"
+                      aria-label="Close call popover"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-[#5B6472] mb-3 leading-relaxed">
+                    Need instant technical consultation, warranty service, or an urgent site survey?
+                  </p>
+
+                  <a
+                    href={`tel:${phone.replace(/\s+/g, '')}`}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-sm mb-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>Call Now ({phone})</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCallPopoverOpen(false);
+                      onNavigate('services');
+                    }}
+                    className="w-full py-1.5 text-center text-xs font-semibold text-[#5B6472] hover:text-[#F15A24] hover:underline cursor-pointer"
+                  >
+                    Request a call back / Book Service →
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Mobile Row 1 Right: search, wishlist, cart, hamburger */}
@@ -722,37 +881,44 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               )}
             </div>
 
-            <div className="pt-4 border-t border-[#EDE8E1]">
-              <a
-                href={`tel:${phone}`}
-                className="w-full min-h-[44px] px-4 py-2.5 bg-[#F15A24] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2"
+            <div className="pt-4 border-t border-[#EDE8E1] space-y-2">
+              <button
+                type="button"
+                onClick={() => { setMobileMenuOpen(false); onNavigate('quote'); }}
+                className="w-full min-h-[44px] px-4 py-2.5 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
-                <Phone className="w-4 h-4" />
-                <span>Call {phone}</span>
+                <span>Get Quote / Pricing</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <a
+                href={`tel:${phone.replace(/\s+/g, '')}`}
+                className="w-full min-h-[44px] px-4 py-2.5 bg-white border border-[#EDE8E1] text-[#111827] font-bold text-xs rounded-full flex items-center justify-center gap-2 hover:bg-slate-50 shadow-xs"
+              >
+                <Phone className="w-4 h-4 text-[#F15A24]" />
+                <span>Call for Service</span>
               </a>
             </div>
           </div>
         </div>
       )}
 
-      {/* MOBILE STICKY BOTTOM BAR (Call & WhatsApp) */}
+      {/* MOBILE STICKY BOTTOM BAR (Call for Service & Get Quote / Pricing) */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EDE8E1] px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg md:hidden">
         <a
           href={`tel:${phone.replace(/\s+/g, '')}`}
           className="flex-1 min-h-[44px] px-4 py-2 bg-white border border-[#EDE8E1] hover:bg-slate-50 text-[#111827] font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors"
         >
           <Phone className="w-4 h-4 text-[#F15A24]" />
-          <span>Call Now</span>
+          <span>Call for Service</span>
         </a>
-        <a
-          href={`https://wa.me/${(settings?.whatsappNumber || '8801540535150').replace(/[^0-9]/g, '')}?text=Hello%20CamneX,%20I%20need%20assistance%20with%20security%20hardware`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 min-h-[44px] px-4 py-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors"
+        <button
+          type="button"
+          onClick={() => onNavigate('quote')}
+          className="flex-1 min-h-[44px] px-4 py-2 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
         >
-          <MessageCircle className="w-4 h-4 fill-white text-[#25D366]" />
-          <span>WhatsApp</span>
-        </a>
+          <span>Get Quote</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
       </div>
     </header>
   );

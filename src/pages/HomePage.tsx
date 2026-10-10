@@ -51,6 +51,7 @@ import {
   ProjectCaseStudy,
   ScenarioItem
 } from '../types';
+import { SmartImage, ImagePlaceholder } from '../components/common/ImagePlaceholder';
 import { useSettingsStore, useAdminAuthStore, useCartStore } from '../store';
 import { DEFAULT_SCENARIOS } from '../services/seedData';
 
@@ -212,27 +213,27 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }
   );
 };
 
-// Project Case Study Card with [overflow-wrap:anywhere] and real image / neutral blueprint vector
+// Project Case Study Card with [overflow-wrap:anywhere] and real image / neutral vector
 const ProjectCard: React.FC<{
   project: ProjectCaseStudy;
   onNavigate: (route: string, param?: string) => void;
 }> = ({ project, onNavigate }) => {
-  const [imgError, setImgError] = useState(false);
-  const fallbackSvg = '/images/projects/project-neutral.svg';
-  const hasImage = Boolean(project.image && project.image.trim() && !imgError);
-
   return (
     <div
       onClick={() => onNavigate('projects')}
       className="bg-white rounded-[20px] border border-[#EDE8E1] overflow-hidden shadow-xs hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between min-w-0 w-full h-full"
     >
-      <div className="h-44 bg-slate-100 overflow-hidden relative min-w-0">
-        <img
-          src={hasImage ? project.image : fallbackSvg}
-          alt={project.title}
-          onError={() => setImgError(true)}
-          className={`w-full h-full ${hasImage ? 'object-cover' : 'object-contain p-4'} group-hover:scale-105 transition-transform duration-300`}
-        />
+      <div className="h-44 bg-slate-100 overflow-hidden relative min-w-0 flex items-center justify-center">
+        {project.image ? (
+          <SmartImage
+            src={project.image}
+            alt={project.title}
+            fallbackType="generic"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <ImagePlaceholder type="generic" className="w-full h-full" />
+        )}
         {project.category && (
           <span className="absolute top-3 left-3 bg-[#0F172A]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
             {project.category}
@@ -260,7 +261,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [specialOffers, setSpecialOffers] = useState<Product[]>([]);
-  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
+  const [accessoryProducts, setAccessoryProducts] = useState<Product[]>([]);
   const [categoryRowProducts, setCategoryRowProducts] = useState<{ [catId: string]: Product[] }>({});
   const [packages, setPackages] = useState<SecurityPackage[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -355,6 +356,36 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           }));
         });
       });
+
+      // Target accessory categories (flagged isAccessoryCategory or matching slug/name)
+      const accessoryCats = allCats.filter((c) => c.isAccessoryCategory);
+      const targetAccessoryCats = accessoryCats.length > 0
+        ? accessoryCats
+        : allCats.filter((c) => {
+            const s = (c.slug + ' ' + c.name).toLowerCase();
+            return s.includes('cable') || s.includes('accessor') || s.includes('storage') || s.includes('power') || s.includes('connector');
+          });
+
+      const accessoryCatSlugs = new Set(targetAccessoryCats.map((c) => c.slug.toLowerCase()));
+      const accessoryCatIds = new Set(targetAccessoryCats.map((c) => c.id));
+
+      // Fetch all products to identify REAL special offers and Accessories & Add-ons
+      productService.getProducts({ limit: 50 }).then((res) => {
+        const discounted = res.items.filter(
+          (p) => p.status === 'active' && p.websiteVisible !== false && p.pricing.salePrice && p.pricing.regularPrice && p.pricing.salePrice < p.pricing.regularPrice
+        );
+        setSpecialOffers(discounted);
+
+        // Identify accessories items
+        const accessories = res.items.filter((p) => {
+          if (p.status !== 'active' || p.websiteVisible === false) return false;
+          if (accessoryCatIds.has(p.categoryId)) return true;
+          if (p.category && accessoryCatSlugs.has(p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-'))) return true;
+          const catLower = (p.category || '').toLowerCase();
+          return catLower.includes('cable') || catLower.includes('accessor') || catLower.includes('storage') || catLower.includes('power');
+        });
+        setAccessoryProducts(accessories);
+      });
     });
 
     // Fetch popular products
@@ -363,18 +394,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     // Fetch new arrivals (sorted by newest)
     productService.getProducts({ sortBy: 'created_at', sortOrder: 'desc', limit: 8 }).then((res) => {
       setNewArrivals(res.items);
-    });
-
-    // Fetch all products to identify REAL special offers and Trending items
-    productService.getProducts({ limit: 40 }).then((res) => {
-      const discounted = res.items.filter(
-        (p) => p.status === 'active' && p.websiteVisible !== false && p.pricing.salePrice && p.pricing.regularPrice && p.pricing.salePrice < p.pricing.regularPrice
-      );
-      setSpecialOffers(discounted);
-
-      // Identify trending items (products with isTrending === true)
-      const trending = res.items.filter((p) => (p as any).isTrending);
-      setTrendingProducts(trending);
     });
 
     // Fetch packages
@@ -577,11 +596,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     .slice(0, 4);
   dedupNewArrivals.forEach((p) => displayedProductIds.add(p.id));
 
-  // 4. Trending row claims next (products with isTrending === true, at least 4 cards)
-  const dedupTrending = trendingProducts
+  // 4. Accessories & Add-ons row claims next (categories with isAccessoryCategory, up to 8 cards)
+  const dedupAccessories = accessoryProducts
     .filter((p) => !displayedProductIds.has(p.id))
-    .slice(0, 4);
-  dedupTrending.forEach((p) => displayedProductIds.add(p.id));
+    .slice(0, 8);
+  dedupAccessories.forEach((p) => displayedProductIds.add(p.id));
 
   // 5. Category rows claim next (show if >= 2 cards, hide only if < 2)
   const dedupCategoryRows = categories
@@ -791,13 +810,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                       <div className="mb-4 overflow-hidden rounded-2xl">
                         {pkg.image ? (
                           <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
-                            <img
+                            <SmartImage
                               src={pkg.image}
                               alt={pkg.name}
+                              fallbackType="kit"
                               className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
                             />
                           </div>
                         ) : (
@@ -1097,14 +1114,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
 
-      {/* 9. TRENDING HARDWARE (Admin flag isTrending, show if >= 2 cards, hide only if < 2) */}
-      {dedupTrending.length >= 2 && (
+      {/* 9. ACCESSORIES & ADD-ONS (Categories with isAccessoryCategory, show if >= 2 cards, hide only if < 2) */}
+      {dedupAccessories.length >= 2 && (
         <ProductRow
-          eyebrow="Market Popularity"
-          title="Trending Hardware"
-          subtitle="Top selected security and networking equipment this season"
-          products={dedupTrending}
-          actionText={`View all (${dedupTrending.length})`}
+          eyebrow="ESSENTIAL HARDWARE"
+          title="Accessories & Add-ons"
+          subtitle={settings?.accessoriesSubtitle || "Cables, storage, power and mounting for your setup"}
+          products={dedupAccessories}
+          actionText={`View all (${dedupAccessories.length})`}
           onAction={() => onNavigate('catalog')}
           onNavigate={onNavigate}
           variant="panel"

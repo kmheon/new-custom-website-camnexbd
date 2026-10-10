@@ -107,6 +107,14 @@ function seedBaselineCatalogIntoDb(dbPath) {
     for (const pkg of seeds.INITIAL_PACKAGES || []) {
       insertPkg.run(pkg.id, pkg.name, pkg.slug, pkg.description || '', pkg.cameraCount || 4, pkg.basePrice || 0, 1, JSON.stringify(pkg));
     }
+
+    const insertTemplate = db.prepare(`
+      INSERT OR IGNORE INTO spec_templates (id, name, category_slug, data_json)
+      VALUES (?, ?, ?, ?)
+    `);
+    for (const t of seeds.INITIAL_SPEC_TEMPLATES || []) {
+      insertTemplate.run(t.id, t.name, t.categorySlug, JSON.stringify(t));
+    }
   } finally {
     db.close();
   }

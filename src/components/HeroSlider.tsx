@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { HeroSlide, Brand } from '../types';
 import { cmsService, brandService } from '../services';
+import { SmartImage, ImagePlaceholder } from './common/ImagePlaceholder';
+import { formatSpecValue } from '../utils/specUtils';
 
 interface HeroSliderProps {
   onNavigate: (route: string, param?: string) => void;
@@ -119,31 +121,46 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
     });
   }, []);
 
+  const [progress, setProgress] = useState(0);
+
   const totalSlides = slides.length;
 
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % (totalSlides || 1));
+    setProgress(0);
   }, [totalSlides]);
 
   const goToPrev = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + (totalSlides || 1)) % (totalSlides || 1));
+    setProgress(0);
   }, [totalSlides]);
 
-  // Autoplay timer (6 seconds, pauses on hover/focus and reduced-motion)
+  // Autoplay timer with 6-second progress bar (pauses on hover/focus and reduced motion)
   useEffect(() => {
     if (totalSlides <= 1 || isPaused || reducedMotion) {
-      if (timerRef.current) clearInterval(timerRef.current);
+      setProgress(0);
       return;
     }
 
-    timerRef.current = setInterval(() => {
-      goToNext();
-    }, 6000);
+    const intervalMs = 60;
+    const step = (intervalMs / 6000) * 100;
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          goToNext();
+          return 0;
+        }
+        return prev + step;
+      });
+    }, intervalMs);
+
+    return () => clearInterval(interval);
   }, [totalSlides, isPaused, reducedMotion, goToNext, currentIndex]);
+
+  useEffect(() => {
+    setProgress(0);
+  }, [currentIndex]);
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -177,44 +194,53 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onNavigate }) => {
     }
   };
 
-  const renderHighlightIcon = (iconName?: string) => {
-    const className = "w-3.5 h-3.5 text-[#F15A24] flex-shrink-0";
-    switch (iconName?.toLowerCase()) {
-      case 'camera':
-        return <Camera className={className} />;
-      case 'eye':
-        return <Eye className={className} />;
-      case 'shield':
-        return <Shield className={className} />;
-      case 'cpu':
-        return <Cpu className={className} />;
-      case 'wifi':
-        return <Wifi className={className} />;
-      case 'zap':
-        return <Zap className={className} />;
-      default:
-        return <Sparkles className={className} />;
-    }
+  const FALLBACK_SLIDE: HeroSlide = {
+    id: 'slide-fallback',
+    title: 'Professional Security Hardware',
+    headline: 'Commercial Security & Network Hardware',
+    eyebrow: 'ENTERPRISE SURVEILLANCE',
+    modelNumber: 'DS-2CD2087G2-LU',
+    tabLabel: 'ColorVu 4K Bullet',
+    description: 'Enterprise 4K Ultra HD surveillance featuring dual smart lighting, AcuSense AI vehicle classification, and IP67 weather-sealed all-metal housing.',
+    image: '/images/hero/hikvision-bullet.png',
+    buttonText: 'Shop Catalog',
+    buttonLink: '/catalog',
+    secondaryButtonText: 'Request Quotation',
+    secondaryButtonLink: '/quote',
+    badge: 'NEW ARRIVAL',
+    showBadge: true,
+    enabled: true,
+    order: 1,
+    sourceMode: 'manual',
+    highlights: [
+      { value: '4K Ultra HD', label: 'Resolution', icon: 'camera' },
+      { value: '40m Dual-Light', label: 'Smart Hybrid IR', icon: 'eye' },
+      { value: 'IP67 Rating', label: 'Weatherproof', icon: 'shield' },
+      { value: 'AcuSense AI', label: 'Classification', icon: 'cpu' }
+    ]
   };
 
-const FALLBACK_SLIDE: HeroSlide = {
-  id: 'slide-fallback',
-  title: 'Professional Security Hardware',
-  headline: 'Commercial Security & Network Hardware',
-  description: 'Enterprise CCTV surveillance, biometric access control, and structured networking equipment with professional installation.',
-  image: '/images/hero/hikvision-bullet.png',
-  buttonText: 'Shop Catalog',
-  buttonLink: '/catalog',
-  badge: 'Hardware Solutions',
-  enabled: true,
-  order: 1,
-  sourceMode: 'manual'
-};
-
   const currentSlide = slides.length > 0 ? slides[currentIndex] : FALLBACK_SLIDE;
-  const primaryHighlight = currentSlide.highlights?.[0];
 
-  // Eligible brands for the one-line scrolling strip (logo exists or marked showInBrandStrip, ordered by order)
+  // Format up to 4 highlights using formatSpecValue and length limits
+  const formattedHighlights: Array<{ val: string; label: string }> = useMemo(() => {
+    if (!currentSlide.highlights || !Array.isArray(currentSlide.highlights)) return [];
+    return currentSlide.highlights
+      .slice(0, 4)
+      .map((hl) => {
+        let val = String(hl.value || '').trim();
+        // If longer than 14 chars, extract first number + unit or slice
+        if (val.length > 14) {
+          const match = val.match(/^(\d+(?:\.\d+)?\s*[a-zA-Z]+)/);
+          val = match ? match[1].slice(0, 14) : val.slice(0, 14);
+        }
+        const label = String(hl.label || '').slice(0, 14);
+        return { val, label };
+      })
+      .filter((h) => h.val.length > 0);
+  }, [currentSlide.highlights]);
+
+  // Eligible brands for the one-line scrolling strip
   const eligibleBrands = (brands.length > 0 ? brands : DEFAULT_BRAND_DATA)
     .filter((b) => (b.showInBrandStrip !== false) || Boolean(b.logo && b.logo.trim()))
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
@@ -222,7 +248,6 @@ const FALLBACK_SLIDE: HeroSlide = {
   const displayStripBrands = eligibleBrands.length > 0 ? eligibleBrands : DEFAULT_BRAND_DATA;
   const isFew = displayStripBrands.length <= 3;
 
-  // Build duplicated track so Set A + Set B is at least 2x container width and loops seamlessly
   let baseTrack = [...displayStripBrands];
   while (baseTrack.length < 8) {
     baseTrack = [...baseTrack, ...displayStripBrands];
@@ -230,11 +255,11 @@ const FALLBACK_SLIDE: HeroSlide = {
 
   return (
     <div className="w-full">
-      {/* HERO SECTION */}
+      {/* HERO SECTION - Reserved min-height to prevent layout shift */}
       <section
         role="region"
         aria-roledescription="carousel"
-        aria-label="Featured Security & Hardware Highlights"
+        aria-label="Featured Security Hardware"
         aria-live="polite"
         tabIndex={0}
         onKeyDown={handleKeyDown}
@@ -245,7 +270,7 @@ const FALLBACK_SLIDE: HeroSlide = {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="relative bg-gradient-to-b from-[#FFF8F1] via-[#FFFBF6] to-[#FAF7F2] text-[#111827] overflow-hidden select-none outline-none min-h-[540px] lg:min-h-[600px] flex flex-col justify-center pt-4 pb-8"
+        className="relative bg-gradient-to-b from-[#FFF8F1] via-[#FFFBF6] to-[#FAF7F2] text-[#111827] overflow-hidden select-none outline-none min-h-[580px] lg:min-h-[640px] flex flex-col justify-between pt-4 pb-6"
       >
         {/* Faint Background Pattern */}
         <div
@@ -260,51 +285,142 @@ const FALLBACK_SLIDE: HeroSlide = {
 
         {/* Soft Warm Orange Glow behind Product */}
         <div
-          className="absolute right-0 lg:right-[10%] top-1/2 -translate-y-1/2 w-[340px] sm:w-[480px] lg:w-[560px] h-[340px] sm:h-[480px] lg:h-[560px] rounded-full pointer-events-none"
+          className="absolute right-0 lg:right-[12%] top-1/2 -translate-y-1/2 w-[340px] sm:w-[480px] lg:w-[560px] h-[340px] sm:h-[480px] lg:h-[560px] rounded-full pointer-events-none"
           style={{
             background: 'radial-gradient(circle, rgba(241, 90, 36, 0.08) 0%, rgba(241, 90, 36, 0.02) 50%, transparent 75%)'
           }}
         />
 
         {/* Hero Content Container */}
-        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full py-4 lg:py-6">
-          <div className="flex flex-col-reverse lg:flex-row items-center justify-between gap-8 lg:gap-12">
+        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full my-auto py-2">
+          {/* Mobile: image comes first (flex-col). Desktop: classic 2-column (flex-row) */}
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-12">
             
-            {/* LEFT COLUMN: Headline & CTAs */}
-            <div className="w-full lg:w-[50%] space-y-6 text-center lg:text-left transition-all duration-500 ease-out">
-              
-              {/* Optional Pill Badge (only if slide provides real badge) */}
-              {currentSlide.badge && (
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-[#F15A24] border border-orange-200/60 shadow-2xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24]"></span>
-                  <span>{currentSlide.badge}</span>
+            {/* RIGHT COLUMN ON MOBILE (comes first on mobile, right on desktop) */}
+            <div className="w-full lg:w-[50%] lg:order-2 flex flex-col items-center justify-center relative">
+              <div className="relative w-full max-w-[440px] sm:max-w-[500px] lg:max-w-[560px] flex flex-col items-center justify-center group">
+                
+                {/* Transparent Product Image: NO box, NO border, floats directly on hero background with only soft ground shadow */}
+                <div className="relative w-full h-[260px] sm:h-[340px] lg:h-[420px] flex items-center justify-center bg-transparent border-0 shadow-none">
+                  {currentSlide.image ? (
+                    <img
+                      id="hero-product-image"
+                      key={currentSlide.id}
+                      src={currentSlide.image}
+                      alt={currentSlide.headline || 'Product Hardware'}
+                      loading={currentIndex === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                      className={`max-w-full max-h-full object-contain filter drop-shadow-[0_22px_36px_rgba(0,0,0,0.14)] transition-all duration-700 ease-out ${
+                        reducedMotion ? '' : 'motion-safe:hover:-translate-y-1'
+                      }`}
+                    />
+                  ) : (
+                    <ImagePlaceholder
+                      category={currentSlide.title}
+                      name={currentSlide.headline}
+                      model={currentSlide.modelNumber}
+                      className="w-36 h-36"
+                      containerClassName="w-full h-full flex flex-col items-center justify-center bg-transparent p-4"
+                    />
+                  )}
                 </div>
-              )}
 
-              {/* Big Bold H1 (clamp(34px, 5vw, 60px), line-height >= 1.1, max 2 lines clean wrapping, no overlap) */}
+                {/* Ground Shadow */}
+                <div
+                  aria-hidden="true"
+                  className="w-3/4 max-w-[340px] h-4 bg-black/15 blur-md rounded-[100%] mx-auto mt-[-10px] pointer-events-none"
+                />
+
+                {/* Over Right Edge: Vertical Spec Card (Desktop) */}
+                {formattedHighlights.length > 0 && (
+                  <div className="hidden md:flex flex-col absolute -right-2 lg:-right-6 top-1/2 -translate-y-1/2 z-20 bg-white/95 backdrop-blur-md border border-[#EDE8E1] rounded-[14px] shadow-xl p-2 min-w-[150px] max-w-[190px] divide-y divide-[#EDE8E1]">
+                    {formattedHighlights.map((hl, idx) => (
+                      <div key={idx} className="py-2 px-2.5 flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#F15A24] mt-1 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-extrabold text-[#111827] text-xs sm:text-sm tracking-tight truncate">
+                            {hl.val}
+                          </div>
+                          {hl.label && (
+                            <div className="text-[10px] text-[#5B6472] uppercase tracking-wider font-semibold truncate">
+                              {hl.label}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Mobile 2x2 Spec Grid under Image */}
+                {formattedHighlights.length > 0 && (
+                  <div className="md:hidden grid grid-cols-2 gap-2 w-full max-w-sm mt-3">
+                    {formattedHighlights.map((hl, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white/90 border border-[#EDE8E1] rounded-xl p-2 flex items-center gap-2 shadow-2xs"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24] flex-shrink-0" />
+                        <div className="min-w-0 text-left">
+                          <div className="font-extrabold text-[#111827] text-xs truncate">{hl.val}</div>
+                          {hl.label && (
+                            <div className="text-[9px] text-[#5B6472] uppercase font-bold truncate">
+                              {hl.label}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+            {/* LEFT COLUMN: Headline & CTAs (50% desktop) */}
+            <div className="w-full lg:w-[50%] lg:order-1 space-y-4 sm:space-y-5 text-center lg:text-left transition-all duration-500 ease-out">
+              
+              {/* Badge + Monospace Muted Model Number */}
+              <div className="flex items-center justify-center lg:justify-start gap-2.5 flex-wrap">
+                {currentSlide.showBadge !== false && currentSlide.badge && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider text-[#F15A24] border border-[#F15A24] bg-orange-50/70 shadow-2xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24]"></span>
+                    <span>{currentSlide.badge}</span>
+                  </span>
+                )}
+
+                {currentSlide.modelNumber && (
+                  <span className="font-mono text-xs font-bold text-[#5B6472] uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100/80 border border-slate-200/60">
+                    {currentSlide.modelNumber}
+                  </span>
+                )}
+              </div>
+
+              {/* Orange Eyebrow Text */}
+              <div className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-[#F15A24]">
+                {currentSlide.eyebrow || 'ENTERPRISE SURVEILLANCE'}
+              </div>
+
+              {/* Big Bold H1 (clamp(34px, 5vw, 60px), max 2 lines, zero overlap) */}
               <h1
                 style={{
-                  fontSize: (currentSlide.headline && currentSlide.headline.length > 38)
-                    ? 'clamp(32px, 3.2vw, 36px)'
-                    : (currentSlide.headline && currentSlide.headline.length > 25)
-                    ? 'clamp(34px, 4vw, 44px)'
-                    : 'clamp(34px, 5vw, 60px)',
-                  lineHeight: 1.18
+                  fontSize: 'clamp(30px, 3.8vw, 46px)',
+                  lineHeight: 1.15
                 }}
                 className="font-black font-heading text-[#111827] tracking-tight line-clamp-2 overflow-hidden break-words"
               >
                 {currentSlide.headline}
               </h1>
 
-              {/* Muted Subtext */}
-              <p className="text-base sm:text-lg text-[#5B6472] max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
+              {/* 16-18px Muted Description (max 2-3 lines) */}
+              <p className="text-base sm:text-[17px] text-[#5B6472] max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal line-clamp-3">
                 {currentSlide.description}
               </p>
 
-              {/* Two Pill Buttons */}
+              {/* Two Pill Buttons: Primary Orange Pill + Secondary Outlined Pill */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">
-                
-                {/* Primary Orange Pill */}
+                {/* Primary Orange Pill with Arrow */}
                 <button
                   type="button"
                   onClick={() => {
@@ -319,120 +435,91 @@ const FALLBACK_SLIDE: HeroSlide = {
                       onNavigate('catalog');
                     }
                   }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-8 py-3 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-sm shadow-sm transition-all transform hover:-translate-y-0.5"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-8 py-3 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-sm shadow-sm transition-all transform hover:-translate-y-0.5 cursor-pointer"
                 >
-                  <span>{currentSlide.buttonText || 'Shop now'}</span>
+                  <span>{currentSlide.buttonText || 'Shop Catalog'}</span>
                   <ArrowRight className="w-4 h-4 ml-0.5" />
                 </button>
 
-                {/* Secondary White Pill with Border */}
+                {/* Secondary Outlined Pill */}
                 <button
                   type="button"
-                  onClick={() => onNavigate('quote')}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-7 py-3 rounded-full bg-white hover:bg-slate-50 text-[#111827] border border-[#EDE8E1] font-bold text-sm shadow-2xs transition-all"
-                >
-                  <span>Get Quote</span>
-                </button>
-
-              </div>
-
-            </div>
-
-            {/* RIGHT COLUMN: Transparent Floating Product & Frosted Glass Mini-Cards */}
-            <div className="w-full lg:w-[50%] flex flex-col items-center justify-center relative">
-              <div className="relative w-full max-w-[480px] sm:max-w-[540px] lg:max-w-[580px] flex flex-col items-center justify-center group">
-                
-                {/* Overlapping Frosted Glass Chip: ONE short value only ("2 MP", "4K", "IP67"), never label and value together, never truncated, hidden when no short value exists */}
-                {(() => {
-                  let shortVal = '';
-                  if (primaryHighlight?.value) {
-                    const raw = String(primaryHighlight.value).trim();
-                    // Prefer values <= 8 chars, or extract first number + unit
-                    if (raw.length <= 8) {
-                      shortVal = raw;
+                  onClick={() => {
+                    const target = currentSlide.secondaryButtonLink || currentSlide.secondaryLink || '/quote';
+                    if (target === '/quote') {
+                      onNavigate('quote');
+                    } else if (target === '/cart') {
+                      onNavigate('cart');
                     } else {
-                      const match = raw.match(/^(\d+(?:\.\d+)?\s*[a-zA-Z]+)/);
-                      if (match && match[1].length <= 8) {
-                        shortVal = match[1].trim();
-                      }
+                      onNavigate('quote');
                     }
-                  }
-                  if (!shortVal) return null;
-
-                  return (
-                    <div className="absolute top-2 -right-1 sm:right-2 z-20 bg-white/90 backdrop-blur-md border border-[#EDE8E1] rounded-full px-3 py-1 shadow-md flex items-center gap-1.5 text-xs animate-fade-in pointer-events-none">
-                      {renderHighlightIcon(primaryHighlight?.icon)}
-                      <span className="font-extrabold text-[#111827]">{shortVal}</span>
-                    </div>
-                  );
-                })()}
-
-                {/* Transparent Product Image: NO box, NO border, floats directly on hero background with only soft ground shadow */}
-                <div className="relative w-full h-[300px] sm:h-[380px] lg:h-[440px] flex items-center justify-center bg-transparent border-0 shadow-none">
-                  <img
-                    id="hero-product-image"
-                    key={currentSlide.id}
-                    src={currentSlide.image || '/images/hero/hikvision-bullet.png'}
-                    alt={currentSlide.headline || 'Product Hardware'}
-                    loading={currentIndex === 0 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                    className={`max-w-full max-h-full object-contain filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.12)] transition-all duration-700 ease-out ${
-                      reducedMotion ? '' : 'motion-safe:hover:-translate-y-1'
-                    }`}
-                  />
-                </div>
-
-                {/* Ground Shadow */}
-                <div
-                  aria-hidden="true"
-                  className="w-3/4 max-w-[360px] h-4 bg-black/15 blur-md rounded-[100%] mx-auto mt-[-10px] pointer-events-none"
-                />
-
+                  }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-7 py-3 rounded-full bg-white hover:bg-slate-50 text-[#111827] border border-[#EDE8E1] font-bold text-sm shadow-2xs transition-all cursor-pointer"
+                >
+                  <span>{currentSlide.secondaryButtonText || currentSlide.secondaryText || 'Request Quotation'}</span>
+                </button>
               </div>
+
             </div>
 
           </div>
         </div>
 
-        {/* Subtle Slider Controls */}
+        {/* BOTTOM TAB STRIP: Numbered tabs ("01 ColorVu Camera", "02 ...", max 22 chars) with active tab progress bar */}
         {totalSlides > 1 && (
-          <div className="relative z-20 pt-2 flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={goToPrev}
-              aria-label="Previous Slide"
-              className="p-1.5 rounded-full bg-white/80 hover:bg-white text-[#5B6472] hover:text-[#111827] border border-[#EDE8E1] transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            {/* Slider Dots */}
-            <div className="flex items-center gap-1.5">
-              {slides.map((slide, idx) => {
+          <div
+            role="tablist"
+            aria-label="Hero Highlights Navigation"
+            className="relative z-20 max-w-[1200px] mx-auto px-4 sm:px-6 w-full pt-4 pb-1"
+          >
+            <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-1">
+              {slides.map((s, idx) => {
                 const isActive = idx === currentIndex;
+                const numStr = String(idx + 1).padStart(2, '0');
+                const rawLabel = s.tabLabel || s.modelNumber || s.title || `Slide ${idx + 1}`;
+                const shortLabel = rawLabel.length > 22 ? rawLabel.slice(0, 20) + '…' : rawLabel;
+
                 return (
                   <button
-                    key={slide.id}
-                    type="button"
-                    onClick={() => setCurrentIndex(idx)}
-                    aria-label={`Go to slide ${idx + 1}`}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      isActive ? 'w-6 bg-[#F15A24]' : 'w-2 bg-[#EDE8E1] hover:bg-slate-300'
+                    key={s.id}
+                    role="tab"
+                    aria-selected={isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    onClick={() => {
+                      setCurrentIndex(idx);
+                      setProgress(0);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        goToNext();
+                      } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        goToPrev();
+                      }
+                    }}
+                    className={`relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap overflow-hidden flex-shrink-0 ${
+                      isActive
+                        ? 'bg-white text-[#111827] border-2 border-[#F15A24] shadow-sm'
+                        : 'bg-white/70 hover:bg-white text-[#5B6472] hover:text-[#111827] border border-[#EDE8E1]'
                     }`}
-                  />
+                  >
+                    <span className={isActive ? 'text-[#F15A24] font-black' : 'text-[#5B6472]/70 font-mono'}>
+                      {numStr}
+                    </span>
+                    <span>{shortLabel}</span>
+
+                    {/* Active Tab Autoplay Progress Bar */}
+                    {isActive && !reducedMotion && (
+                      <div
+                        className="absolute bottom-0 left-0 h-0.5 bg-[#F15A24] transition-all duration-75"
+                        style={{ width: `${progress}%` }}
+                      />
+                    )}
+                  </button>
                 );
               })}
             </div>
-
-            <button
-              type="button"
-              onClick={goToNext}
-              aria-label="Next Slide"
-              className="p-1.5 rounded-full bg-white/80 hover:bg-white text-[#5B6472] hover:text-[#111827] border border-[#EDE8E1] transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
         )}
       </section>

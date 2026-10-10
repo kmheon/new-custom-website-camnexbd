@@ -5,6 +5,7 @@ import { useCartStore, useCompareStore, useWishlistStore, useCustomerAuthStore }
 import { QuickViewModal } from './QuickViewModal';
 
 import { FormattedSpecResult, formatSpecValue } from '../../utils/specUtils';
+import { ImagePlaceholder } from './ImagePlaceholder';
 
 interface ProductCardProps {
   product: Product;
@@ -154,12 +155,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-[#F4EEE6] rounded-lg p-4 text-center">
-                <Camera className="w-8 h-8 text-[#5B6472]/40 mb-1" />
-                <span className="text-[10px] font-bold text-[#5B6472]/70 uppercase tracking-wider font-mono">
-                  {product.modelNumber || 'Hardware'}
-                </span>
-              </div>
+              <ImagePlaceholder
+                category={product.categoryId || product.category}
+                name={product.name}
+                model={product.modelNumber}
+                className="w-20 h-20"
+                containerClassName="w-full h-full flex flex-col items-center justify-center bg-transparent p-4"
+              />
             )}
 
             {/* Top-Left Brand Logo / Chip */}

@@ -104,6 +104,7 @@ export interface Category {
   specTemplateId: string;
   featured?: boolean;
   showOnHomepage?: boolean;
+  isAccessoryCategory?: boolean;
   order: number;
   displayOrder?: number;
   status?: 'active' | 'inactive' | string;
@@ -177,7 +178,6 @@ export interface Product {
   updatedAt: string;
   isFeatured?: boolean;
   isPopular?: boolean;
-  isTrending?: boolean;
   isDemo?: boolean; // Clearly labeled sample data
   sample?: boolean;
   isNew?: boolean;
@@ -411,6 +411,13 @@ export interface SiteSettings {
     link?: string;
     dismissible?: boolean;
   };
+  topBarHighlights?: Array<{
+    id: string;
+    text: string;
+    icon?: string;
+    enabled: boolean;
+    order: number;
+  }>;
   promoBanner?: {
     enabled: boolean;
     text: string;
@@ -428,6 +435,7 @@ export interface SiteSettings {
   solutions?: ScenarioItem[];
   scenarios?: ScenarioItem[];
   reassurances?: string[];
+  accessoriesSubtitle?: string;
 
   // Global SEO Configuration
   seoTitle?: string;
@@ -476,7 +484,7 @@ export interface ProcessStep {
 
 export interface HomepageSection {
   id: string;
-  type: 'hero' | 'brands' | 'categories' | 'popular_products' | 'special_offers' | 'new_arrivals' | 'services' | 'solutions' | 'packages' | 'trending' | 'category_row' | 'testimonials' | 'projects' | 'quote_cta' | 'credentials' | 'featured_products' | string;
+  type: 'hero' | 'brands' | 'categories' | 'popular_products' | 'special_offers' | 'new_arrivals' | 'accessories' | 'services' | 'solutions' | 'packages' | 'trending' | 'category_row' | 'testimonials' | 'projects' | 'quote_cta' | 'credentials' | 'featured_products' | string;
   title: string;
   subtitle?: string;
   enabled: boolean;
@@ -583,9 +591,13 @@ export interface HeroFeatureHighlight {
 }
 
 export interface HeroSlideOverrides {
+  eyebrow?: string;
   headline?: string;
+  modelNumber?: string;
   description?: string;
   badge?: HeroSlideBadge;
+  showBadge?: boolean;
+  tabLabel?: string;
   image?: string;
   priceText?: string;
   buttonText?: string;
@@ -606,18 +618,25 @@ export interface HeroSlide {
 
   // Mode 1: Manual properties
   badge?: HeroSlideBadge;
+  showBadge?: boolean;
+  modelNumber?: string; // e.g. "DS-2CE10DF0T-F"
+  eyebrow?: string; // e.g. "MEET THE NEW", "NEXT-GEN SURVEILLANCE"
+  tabLabel?: string; // Max 22 chars tab label e.g. "ColorVu Camera"
   headline?: string;
   description?: string;
   image?: string; // Transparent PNG / WebP url
   priceText?: string; // Formatted price e.g. "৳2,450"
   buttonText?: string; // e.g. "View Product"
   buttonLink?: string; // e.g. "/product/prod-hik-irpf-2mp"
-  secondaryText?: string; // e.g. "Request quotation" or "Add to cart"
+  secondaryButtonText?: string; // e.g. "Request quotation"
+  secondaryButtonLink?: string;
+  secondaryText?: string;
   secondaryLink?: string;
-  highlights?: HeroFeatureHighlight[]; // 3-4 feature chips
+  highlights?: HeroFeatureHighlight[]; // Up to 4 feature highlights
 
   // Mode 2: From Product
   productId?: string;
+  fieldOverrides?: Record<string, boolean>; // Per-field override switch in From-product mode
   overrideFlags?: {
     headline?: boolean;
     description?: boolean;
@@ -625,6 +644,10 @@ export interface HeroSlide {
     image?: boolean;
     price?: boolean;
     highlights?: boolean;
+    modelNumber?: boolean;
+    eyebrow?: boolean;
+    tabLabel?: boolean;
+    buttons?: boolean;
   };
   overrides?: HeroSlideOverrides;
 

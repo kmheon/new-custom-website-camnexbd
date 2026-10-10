@@ -444,6 +444,7 @@ function ensureAdminUser() {
 }
 
 function seedDatabaseIfEmpty() {
+  if (process.env.SKIP_SEED === '1' || process.env.SKIP_SEED === 'true') return;
   const catCount = db.prepare('SELECT COUNT(*) as c FROM categories').get().c;
   if (catCount > 0) return; // Already seeded
 

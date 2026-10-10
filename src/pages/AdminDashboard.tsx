@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Package, FolderTree, Tag, Sliders, Layers, ShoppingCart, Users,
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
-  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass
+  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
@@ -56,6 +56,14 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   // Hero Slide Editor Modal State
   const [slideModalOpen, setSlideModalOpen] = useState(false);
   const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null);
+  const [heroPreviewMode, setHeroPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+
+  const isPlaceholderImage = (imgUrl?: string) => {
+    if (!imgUrl || !imgUrl.trim()) return true;
+    if (imgUrl.includes('.svg')) return true;
+    if (imgUrl.includes('placeholder')) return true;
+    return false;
+  };
 
   // Category Editor Modal State
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -208,22 +216,117 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       enabled: true,
       order: heroSlides.length + 1,
       sourceMode: 'manual',
+      showBadge: true,
       badge: 'New',
-      headline: 'Hikvision 4K Smart Hybrid Bullet Camera',
-      description: 'Intelligent 4K security with dual smart illumination and AcuSense AI.',
-      image: '/images/hero/hikvision-bullet.jpg',
-      priceText: '৳4,850',
+      modelNumber: 'DS-2CE10DF0T-F',
+      eyebrow: '24/7 COLORFUL SURVEILLANCE',
+      tabLabel: 'ColorVu Camera',
+      headline: 'Hikvision ColorVu 2MP Bullet Camera',
+      description: 'Intelligent 2MP security with F1.0 large aperture lens and AcuSense AI.',
+      image: '/images/hero/hikvision-bullet.png',
+      priceText: '৳2,450',
       buttonText: 'View Product',
-      buttonLink: '/catalog',
-      secondaryText: 'Request quotation',
-      secondaryLink: '/quote',
+      buttonLink: '/product/prod-hik-irpf-2mp',
+      secondaryButtonText: 'Call for Service',
+      secondaryButtonLink: 'tel:+8801540535150',
+      secondaryText: 'Call for Service',
+      secondaryLink: 'tel:+8801540535150',
       highlights: [
-        { icon: 'camera', value: '4K Ultra HD', label: 'Resolution' },
-        { icon: 'eye', value: '40m IR', label: 'Smart IR' },
-        { icon: 'shield', value: 'IP67', label: 'Weatherproof' }
+        { icon: 'camera', value: '2 MP', label: 'Resolution' },
+        { icon: 'eye', value: '20m', label: 'ColorVu Night' },
+        { icon: 'shield', value: 'IP67', label: 'Ingress Rating' },
+        { icon: 'zap', value: '12V DC', label: 'Power Input' }
       ]
     });
     setSlideModalOpen(true);
+  };
+
+  const handleSeedSampleHeroSlides = async () => {
+    const samples: HeroSlide[] = [
+      {
+        id: 'slide-hik-bullet',
+        title: 'Hikvision ColorVu Bullet Camera',
+        enabled: true,
+        order: 1,
+        sourceMode: 'manual',
+        showBadge: true,
+        badge: 'New',
+        modelNumber: 'DS-2CE10DF0T-F',
+        eyebrow: '24/7 COLORFUL SURVEILLANCE',
+        tabLabel: 'ColorVu Camera',
+        headline: 'Hikvision ColorVu 2MP Bullet Camera',
+        description: 'F1.0 super-aperture lens captures vivid 24/7 full-color video even in pitch-black darkness with AcuSense intelligence.',
+        image: '/images/hero/hikvision-bullet.png',
+        priceText: '৳2,450',
+        buttonText: 'View Product',
+        buttonLink: '/product/prod-hik-irpf-2mp',
+        secondaryButtonText: 'Call for Service',
+        secondaryButtonLink: 'tel:+8801540535150',
+        highlights: [
+          { icon: 'camera', value: '2 MP', label: 'Resolution' },
+          { icon: 'eye', value: '20m', label: 'ColorVu Night' },
+          { icon: 'shield', value: 'IP67', label: 'Ingress Rating' },
+          { icon: 'zap', value: '12V DC', label: 'Power Input' }
+        ]
+      },
+      {
+        id: 'slide-ruijie-ap',
+        title: 'Ruijie Reyee Wi-Fi 6 Access Point',
+        enabled: true,
+        order: 2,
+        sourceMode: 'manual',
+        showBadge: true,
+        badge: 'Featured',
+        modelNumber: 'RG-RAP2260(E)',
+        eyebrow: 'ENTERPRISE WI-FI 6 ROAMING',
+        tabLabel: 'Wi-Fi 6 AP',
+        headline: 'Ruijie Reyee AX3200 Ceiling Access Point',
+        description: 'High-density multi-gigabit ceiling mount access point engineered for smooth roaming and enterprise coverage.',
+        image: '/images/hero/ruijie-wifi6.png',
+        priceText: '৳14,500',
+        buttonText: 'View Product',
+        buttonLink: '/catalog',
+        secondaryButtonText: 'Call for Service',
+        secondaryButtonLink: 'tel:+8801540535150',
+        highlights: [
+          { icon: 'wifi', value: '3200 Mbps', label: 'Wi-Fi 6 Speed' },
+          { icon: 'cpu', value: '2.5G', label: 'Uplink Port' },
+          { icon: 'zap', value: 'PoE+', label: '802.3at Power' },
+          { icon: 'shield', value: '512 Clients', label: 'Max Capacity' }
+        ]
+      },
+      {
+        id: 'slide-zkteco-bio',
+        title: 'ZKTeco Biometric Time & Attendance',
+        enabled: true,
+        order: 3,
+        sourceMode: 'manual',
+        showBadge: true,
+        badge: 'Hot',
+        modelNumber: 'MB20-VL',
+        eyebrow: 'VISIBLE LIGHT RECOGNITION',
+        tabLabel: 'Biometric Terminal',
+        headline: 'ZKTeco Visible Light Face & Fingerprint Terminal',
+        description: 'Anti-spoofing facial recognition and biometric attendance terminal with fast 0.5s verification and TCP/IP connectivity.',
+        image: '/images/hero/zkteco-biometric.png',
+        priceText: '৳8,200',
+        buttonText: 'View Product',
+        buttonLink: '/catalog',
+        secondaryButtonText: 'Call for Service',
+        secondaryButtonLink: 'tel:+8801540535150',
+        highlights: [
+          { icon: 'eye', value: '500 Faces', label: 'Face Capacity' },
+          { icon: 'camera', value: '1,000 Prints', label: 'Fingerprints' },
+          { icon: 'cpu', value: 'TCP/IP', label: 'Network Sync' },
+          { icon: 'shield', value: '0.5s', label: 'Recognition Speed' }
+        ]
+      }
+    ];
+
+    for (const s of samples) {
+      await cmsService.saveHeroSlide(s);
+    }
+    cmsService.getHeroSlides().then(setHeroSlides);
   };
 
   const handleSaveSlide = async (slide: HeroSlide) => {
@@ -744,7 +847,14 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       <tr key={p.id} className="hover:bg-slate-900/40">
                         <td className="p-3.5 font-bold text-white flex items-center gap-2">
                           <img src={p.primaryImage} alt="" className="w-7 h-7 object-cover rounded bg-slate-800" />
-                          <span>{p.name}</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{p.name}</span>
+                            {isPlaceholderImage(p.primaryImage) && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-normal bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                Placeholder image
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="p-3.5 font-mono text-slate-400">{p.modelNumber}</td>
                         <td className="p-3.5">{p.category}</td>
@@ -820,11 +930,21 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       return (
                         <tr key={c.id} className="hover:bg-slate-900/40">
                           <td className="p-3.5 font-bold text-white">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {c.image && (
                                 <img src={c.image} alt={c.name} className="w-6 h-6 object-contain rounded bg-slate-800 p-0.5" />
                               )}
                               <span>{c.name}</span>
+                              {isPlaceholderImage(c.image) && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  Placeholder image
+                                </span>
+                              )}
+                              {c.isAccessoryCategory && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                  Accessory
+                                </span>
+                              )}
                             </div>
                             {c.description && <div className="text-[11px] text-slate-500 font-normal line-clamp-1">{c.description}</div>}
                           </td>
@@ -915,7 +1035,14 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   <div key={p.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4 flex flex-col justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Badge variant="orange">{p.cameraResolution || '2MP Full HD'}</Badge>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge variant="orange">{p.cameraResolution || '2MP Full HD'}</Badge>
+                          {isPlaceholderImage(p.image) && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              Placeholder image
+                            </span>
+                          )}
+                        </div>
                         <Badge variant={p.isActive ? 'success' : 'gray'}>{p.isActive ? 'Active' : 'Disabled'}</Badge>
                       </div>
                       <h3 className="font-bold text-base text-white">{p.name}</h3>
@@ -1366,8 +1493,18 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               {/* Slides List */}
               <div className="space-y-3">
                 {heroSlides.length === 0 ? (
-                  <div className="bg-slate-950 p-8 text-center rounded-xl border border-slate-800 text-slate-400 text-xs">
-                    No hero slides configured yet. Click "Add New Hero Slide" above.
+                  <div className="bg-slate-950 p-8 text-center rounded-xl border border-slate-800 text-slate-400 text-xs space-y-3">
+                    <p>No hero slides configured yet. Click "Add New Hero Slide" or seed authentic hardware samples.</p>
+                    <div className="flex items-center justify-center gap-3">
+                      <Button size="sm" onClick={handleOpenNewSlide}>
+                        <Plus className="w-4 h-4 mr-1.5" />
+                        <span>Add New Hero Slide</span>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleSeedSampleHeroSlides}>
+                        <Sparkles className="w-4 h-4 mr-1.5 text-[#F15A24]" />
+                        <span>Seed Sample Slides</span>
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   heroSlides.map((slide, idx) => {
@@ -1434,6 +1571,12 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-bold text-white text-sm">{slide.title}</span>
                                 
+                                {isPlaceholderImage(slide.image || linkedProduct?.primaryImage) && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    Placeholder image
+                                  </span>
+                                )}
+
                                 {/* Source Mode Badge */}
                                 {isManual && (
                                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
@@ -1881,6 +2024,94 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       placeholder="e.g. Saturday – Thursday: 9:30 AM – 7:30 PM (Friday On-Call)"
                       className="w-full bg-slate-900 border border-slate-700 text-white p-2 rounded"
                     />
+                  </div>
+
+                  <div>
+                    <span className="font-bold text-slate-400 block mb-1">
+                      Accessories & Add-ons Row Subtitle <span className="text-slate-500 font-normal">(homepage hardware row)</span>
+                    </span>
+                    <input
+                      type="text"
+                      value={settings.accessoriesSubtitle || ''}
+                      onChange={(e) => updateSettings({ accessoriesSubtitle: e.target.value })}
+                      placeholder="Cables, storage, power and mounting for your setup"
+                      className="w-full bg-slate-900 border border-slate-700 text-white p-2 rounded"
+                    />
+                  </div>
+
+                  {/* Top Bar Highlights Manager */}
+                  <div className="pt-4 border-t border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <span className="text-[#F15A24] font-bold block uppercase tracking-wider text-xs">
+                          Top Bar Highlights
+                        </span>
+                        <p className="text-[11px] text-slate-400">
+                          Short factual highlights displayed in the top bar right group (e.g. "Dhaka, Bangladesh", "Sat-Thu: 9:30 AM - 7:30 PM", "Genuine Hikvision Warranty").
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const current = settings.topBarHighlights || [];
+                          const newItem = {
+                            id: `tbh-${Date.now()}`,
+                            text: 'Dhaka, Bangladesh',
+                            enabled: true,
+                            order: current.length + 1
+                          };
+                          updateSettings({ topBarHighlights: [...current, newItem] });
+                        }}
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" />
+                        <span>Add Highlight</span>
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(settings.topBarHighlights || []).length === 0 ? (
+                        <p className="text-slate-500 italic text-[11px]">
+                          No custom highlights defined. Clean database displays phone and email.
+                        </p>
+                      ) : (
+                        settings.topBarHighlights?.map((item, hIdx) => (
+                          <div key={item.id} className="flex items-center gap-2 bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                            <input
+                              type="checkbox"
+                              checked={item.enabled}
+                              onChange={(e) => {
+                                const list = [...(settings.topBarHighlights || [])];
+                                list[hIdx] = { ...list[hIdx], enabled: e.target.checked };
+                                updateSettings({ topBarHighlights: list });
+                              }}
+                              className="rounded text-[#F15A24] focus:ring-[#F15A24] w-4 h-4"
+                            />
+                            <input
+                              type="text"
+                              value={item.text}
+                              onChange={(e) => {
+                                const list = [...(settings.topBarHighlights || [])];
+                                list[hIdx] = { ...list[hIdx], text: e.target.value };
+                                updateSettings({ topBarHighlights: list });
+                              }}
+                              placeholder="Highlight text e.g. Dhaka, Bangladesh"
+                              className="flex-1 bg-slate-950 border border-slate-700 text-white text-xs p-1.5 rounded"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const list = (settings.topBarHighlights || []).filter((_, i) => i !== hIdx);
+                                updateSettings({ topBarHighlights: list });
+                              }}
+                              className="text-xs text-rose-400 hover:text-rose-300 p-1"
+                              title="Delete highlight"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
 
                   {/* Storefront Promo / Announcement Banner */}
@@ -2513,8 +2744,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             </div>
 
             {/* General Settings */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="md:col-span-2">
                 <label className="text-xs font-bold text-slate-700 block mb-1">Slide Title (Admin Only) *</label>
                 <input
                   type="text"
@@ -2526,17 +2757,30 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Badge Pill (Optional)</label>
-                <select
-                  value={editingSlide.badge || ''}
-                  onChange={(e) => setEditingSlide({ ...editingSlide, badge: (e.target.value as any) || undefined })}
-                  className="w-full bg-white border border-slate-300 text-xs text-slate-800 p-2 rounded-lg"
-                >
-                  <option value="">No Badge</option>
-                  <option value="New">New</option>
-                  <option value="Featured">Featured</option>
-                  <option value="Hot">Hot</option>
-                </select>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Badge Pill</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={editingSlide.showBadge !== false && !!editingSlide.badge}
+                    onChange={(e) => setEditingSlide({ ...editingSlide, showBadge: e.target.checked })}
+                    className="w-4 h-4 text-[#F15A24] rounded focus:ring-[#F15A24]"
+                    title="Toggle Badge Visibility"
+                  />
+                  <select
+                    value={editingSlide.badge || ''}
+                    onChange={(e) => setEditingSlide({
+                      ...editingSlide,
+                      badge: (e.target.value as any) || undefined,
+                      showBadge: !!e.target.value
+                    })}
+                    className="w-full bg-white border border-slate-300 text-xs text-slate-800 p-2 rounded-lg"
+                  >
+                    <option value="">No Badge</option>
+                    <option value="New">New</option>
+                    <option value="Featured">Featured</option>
+                    <option value="Hot">Hot</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 pt-5">
@@ -2549,6 +2793,45 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   />
                   <span>Active & Enabled</span>
                 </label>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Model Number</label>
+                <input
+                  type="text"
+                  value={editingSlide.modelNumber || ''}
+                  onChange={(e) => setEditingSlide({ ...editingSlide, modelNumber: e.target.value })}
+                  placeholder="e.g. DS-2CE10DF0T-F"
+                  className="w-full bg-white border border-slate-300 text-xs text-slate-800 p-2 rounded-lg font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Orange Eyebrow Text</label>
+                <input
+                  type="text"
+                  value={editingSlide.eyebrow || ''}
+                  onChange={(e) => setEditingSlide({ ...editingSlide, eyebrow: e.target.value })}
+                  placeholder="e.g. 24/7 COLORFUL SURVEILLANCE"
+                  className="w-full bg-white border border-slate-300 text-xs text-slate-800 p-2 rounded-lg uppercase"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-700">Tab Strip Label (Max 22 chars)</label>
+                  <span className={`text-[10px] font-mono ${(editingSlide.tabLabel || '').length > 22 ? 'text-rose-500 font-bold' : 'text-slate-400'}`}>
+                    {(editingSlide.tabLabel || '').length}/22
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  maxLength={22}
+                  value={editingSlide.tabLabel || ''}
+                  onChange={(e) => setEditingSlide({ ...editingSlide, tabLabel: e.target.value })}
+                  placeholder="e.g. ColorVu Camera"
+                  className="w-full bg-white border border-slate-300 text-xs text-slate-800 p-2 rounded-lg"
+                />
               </div>
             </div>
 
@@ -2837,17 +3120,36 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         });
                       }
 
+                      // Clean headline without duplicate brand
+                      const cleanHeadline = prod.name.toLowerCase().startsWith(prod.brand.toLowerCase())
+                        ? prod.name
+                        : `${prod.brand} ${prod.name}`;
+
+                      // Check if new arrival (< 30 days old)
+                      const isNewArrival = prod.createdAt && (Date.now() - new Date(prod.createdAt).getTime() < 30 * 24 * 60 * 60 * 1000);
+                      const derivedBadge = isNewArrival ? 'New' : (prod.isHot ? 'Hot' : (prod.isFeatured ? 'Featured' : undefined));
+
+                      // Tab label (max 22 chars)
+                      const tabLabel = (prod.name.length > 22 ? prod.category || prod.brand : prod.name).slice(0, 22);
+
                       setEditingSlide({
                         ...editingSlide,
                         productId: prod.id,
-                        headline: `${prod.brand} ${prod.name}`,
-                        description: prod.shortDescription || '',
+                        headline: cleanHeadline,
+                        modelNumber: prod.modelNumber || '',
+                        eyebrow: prod.category ? prod.category.toUpperCase() : 'NEXT-GEN SURVEILLANCE',
+                        tabLabel,
+                        badge: derivedBadge as any,
+                        showBadge: Boolean(derivedBadge),
+                        description: prod.shortDescription || prod.description || '',
                         image: prod.primaryImage || '',
                         priceText: prod.pricing?.regularPrice ? `৳${prod.pricing.regularPrice.toLocaleString()}` : '',
                         buttonText: 'View Product',
                         buttonLink: `/product/${prod.id}`,
-                        secondaryText: 'Request quotation',
-                        secondaryLink: '/quote',
+                        secondaryButtonText: 'Call for Service',
+                        secondaryButtonLink: 'tel:+8801540535150',
+                        secondaryText: 'Call for Service',
+                        secondaryLink: 'tel:+8801540535150',
                         highlights
                       });
                     }}
@@ -2904,11 +3206,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   );
                 })()}
 
-                {/* Overrides Toggle & Fields */}
+                {/* Per-field Overrides Toggle & Fields */}
                 <div className="pt-2 border-t border-orange-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-800">
-                      Custom Field Overrides (Optional)
+                      Per-Field Custom Overrides (Optional)
                     </span>
                     <button
                       type="button"
@@ -2916,7 +3218,13 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         const hasOverrides = !!editingSlide.overrides;
                         setEditingSlide({
                           ...editingSlide,
-                          overrides: hasOverrides ? undefined : { headline: editingSlide.headline, description: editingSlide.description }
+                          overrides: hasOverrides ? undefined : {
+                            headline: editingSlide.headline,
+                            description: editingSlide.description,
+                            modelNumber: editingSlide.modelNumber,
+                            eyebrow: editingSlide.eyebrow,
+                            tabLabel: editingSlide.tabLabel
+                          }
                         });
                       }}
                       className="text-xs font-bold text-[#F15A24] hover:underline"
@@ -2927,18 +3235,63 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
                   {editingSlide.overrides && (
                     <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-3 text-xs">
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Headline</label>
-                        <input
-                          type="text"
-                          value={editingSlide.overrides.headline || ''}
-                          onChange={(e) => setEditingSlide({
-                            ...editingSlide,
-                            overrides: { ...editingSlide.overrides, headline: e.target.value }
-                          })}
-                          placeholder="Custom Headline"
-                          className="w-full bg-slate-50 border border-slate-300 p-2 rounded"
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Headline</label>
+                          <input
+                            type="text"
+                            value={editingSlide.overrides.headline || ''}
+                            onChange={(e) => setEditingSlide({
+                              ...editingSlide,
+                              overrides: { ...editingSlide.overrides, headline: e.target.value }
+                            })}
+                            placeholder="Custom Headline"
+                            className="w-full bg-slate-50 border border-slate-300 p-2 rounded"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Model Number</label>
+                          <input
+                            type="text"
+                            value={editingSlide.overrides.modelNumber || ''}
+                            onChange={(e) => setEditingSlide({
+                              ...editingSlide,
+                              overrides: { ...editingSlide.overrides, modelNumber: e.target.value }
+                            })}
+                            placeholder="Custom Model Number"
+                            className="w-full bg-slate-50 border border-slate-300 p-2 rounded font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Eyebrow Text</label>
+                          <input
+                            type="text"
+                            value={editingSlide.overrides.eyebrow || ''}
+                            onChange={(e) => setEditingSlide({
+                              ...editingSlide,
+                              overrides: { ...editingSlide.overrides, eyebrow: e.target.value }
+                            })}
+                            placeholder="Custom Eyebrow Text"
+                            className="w-full bg-slate-50 border border-slate-300 p-2 rounded uppercase"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Tab Label (Max 22 chars)</label>
+                          <input
+                            type="text"
+                            maxLength={22}
+                            value={editingSlide.overrides.tabLabel || ''}
+                            onChange={(e) => setEditingSlide({
+                              ...editingSlide,
+                              overrides: { ...editingSlide.overrides, tabLabel: e.target.value }
+                            })}
+                            placeholder="Custom Tab Label"
+                            className="w-full bg-slate-50 border border-slate-300 p-2 rounded"
+                          />
+                        </div>
                       </div>
 
                       <div>
@@ -2956,7 +3309,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Image URL</label>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Image URL (Transparent PNG/WebP)</label>
                         <input
                           type="text"
                           value={editingSlide.overrides.image || ''}
@@ -2965,7 +3318,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                             overrides: { ...editingSlide.overrides, image: e.target.value }
                           })}
                           placeholder="Custom transparent image URL"
-                          className="w-full bg-slate-50 border border-slate-300 p-2 rounded"
+                          className="w-full bg-slate-50 border border-slate-300 p-2 rounded font-mono"
                         />
                       </div>
                     </div>
@@ -3033,80 +3386,193 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             )}
 
             {/* LIVE PREVIEW BOX */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                Live Storefront Preview
-              </span>
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 relative overflow-hidden shadow-sm">
-                {/* Subtle dot pattern */}
-                <div
-                  className="absolute inset-0 pointer-events-none opacity-[0.05]"
-                  style={{
-                    backgroundImage: 'radial-gradient(#111827 1px, transparent 1px)',
-                    backgroundSize: '20px 20px'
-                  }}
-                />
-                {/* Radial Glow */}
-                <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-72 h-72 bg-[#F15A24]/[0.08] rounded-full blur-3xl pointer-events-none" />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  Live Storefront Preview
+                </span>
+                <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setHeroPreviewMode('desktop')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                      heroPreviewMode === 'desktop' ? 'bg-white text-[#111827] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    Desktop (1280px)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHeroPreviewMode('mobile')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                      heroPreviewMode === 'mobile' ? 'bg-white text-[#111827] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    Mobile (375px)
+                  </button>
+                </div>
+              </div>
 
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                  {/* Left Content */}
-                  <div className="space-y-3 max-w-md">
-                    {editingSlide.badge && (
-                      <span className="inline-block bg-[#F15A24] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
-                        {editingSlide.badge}
-                      </span>
-                    )}
-                    <h3 className="text-lg font-black text-[#111827] leading-tight">
-                      {editingSlide.overrides?.headline || editingSlide.headline || 'Product Headline'}
-                    </h3>
-                    <p className="text-xs text-[#4B5563] line-clamp-2">
-                      {editingSlide.overrides?.description || editingSlide.description || 'Short product description explaining key benefits and technical capability.'}
-                    </p>
+              {heroPreviewMode === 'desktop' ? (
+                /* DESKTOP PREVIEW */
+                <div className="bg-[#FAF7F2] border border-slate-200 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-sm">
+                  {/* Radial Glow */}
+                  <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-80 h-80 bg-[#F15A24]/[0.08] rounded-full blur-3xl pointer-events-none" />
 
-                    {/* Highlight Chips */}
-                    {editingSlide.highlights && editingSlide.highlights.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {editingSlide.highlights.slice(0, 4).map((chip, idx) => (
-                          <div key={idx} className="bg-white border border-slate-200 rounded-full px-2.5 py-1 text-[10px] flex items-center gap-1.5 shadow-xs">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24]" />
-                            <strong className="text-[#111827]">{chip.value}</strong>
-                            <span className="text-[#6B7280]">{chip.label}</span>
-                          </div>
-                        ))}
+                  <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    {/* Left Column (55%) */}
+                    <div className="md:col-span-7 space-y-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {editingSlide.showBadge !== false && (editingSlide.overrides?.badge || editingSlide.badge) && (
+                          <span className="inline-block bg-[#F15A24] text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                            {editingSlide.overrides?.badge || editingSlide.badge}
+                          </span>
+                        )}
+                        {(editingSlide.overrides?.modelNumber || editingSlide.modelNumber) && (
+                          <span className="font-mono text-[11px] font-medium text-slate-500">
+                            {editingSlide.overrides?.modelNumber || editingSlide.modelNumber}
+                          </span>
+                        )}
                       </div>
-                    )}
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 pt-2">
-                      <button type="button" className="bg-[#F15A24] text-white font-bold text-xs px-4 py-2 rounded-xl">
-                        {editingSlide.buttonText || 'View Product'}
-                      </button>
-                      {editingSlide.priceText && (
-                        <span className="text-xs font-black text-[#111827]">{editingSlide.priceText}</span>
+                      {(editingSlide.overrides?.eyebrow || editingSlide.eyebrow) && (
+                        <div className="text-[11px] font-black text-[#F15A24] tracking-wider uppercase">
+                          {editingSlide.overrides?.eyebrow || editingSlide.eyebrow}
+                        </div>
+                      )}
+
+                      <h3 className="text-xl sm:text-2xl font-black text-[#111827] font-heading leading-tight">
+                        {editingSlide.overrides?.headline || editingSlide.headline || 'Product Headline'}
+                      </h3>
+
+                      <p className="text-xs text-[#5B6472] leading-relaxed line-clamp-2">
+                        {editingSlide.overrides?.description || editingSlide.description || 'Intelligent hardware configuration designed for enterprise video surveillance.'}
+                      </p>
+
+                      {/* Dual CTA buttons */}
+                      <div className="flex items-center gap-3 pt-2">
+                        <button type="button" className="bg-[#F15A24] text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-xs">
+                          {editingSlide.buttonText || 'View Product'}
+                        </button>
+                        <button type="button" className="bg-transparent border border-slate-300 text-[#111827] font-bold text-xs px-4 py-2.5 rounded-full flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-[#F15A24]" />
+                          <span>{editingSlide.secondaryButtonText || editingSlide.secondaryText || 'Call for Service'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Right Column (45%): Floating PNG + Spec Card */}
+                    <div className="md:col-span-5 relative flex items-center justify-center min-h-[160px]">
+                      {/* Ground Shadow */}
+                      <div className="absolute bottom-2 w-44 h-4 bg-black/15 rounded-full blur-md" />
+                      {editingSlide.overrides?.image || editingSlide.image ? (
+                        <img
+                          src={editingSlide.overrides?.image || editingSlide.image}
+                          alt="Preview"
+                          className="max-h-44 max-w-full object-contain relative z-10 drop-shadow-[0_16px_24px_rgba(0,0,0,0.12)] mix-blend-multiply"
+                        />
+                      ) : (
+                        <div className="text-slate-300 text-xs text-center py-6">
+                          <ImageIcon className="w-10 h-10 mx-auto mb-1 text-slate-300" />
+                          <span>Permanent vector placeholder active</span>
+                        </div>
+                      )}
+
+                      {/* Floating Spec Highlights Card */}
+                      {editingSlide.highlights && editingSlide.highlights.length > 0 && (
+                        <div className="absolute -top-2 right-0 bg-white/95 backdrop-blur-sm border border-slate-200/90 rounded-xl p-2.5 shadow-md w-36 space-y-1.5 z-20">
+                          {editingSlide.highlights.slice(0, 4).map((h, i) => (
+                            <div key={i} className="flex items-center justify-between text-[10px] border-b border-slate-100 last:border-b-0 pb-1 last:pb-0">
+                              <span className="text-slate-500 truncate">{h.label}</span>
+                              <span className="font-bold text-[#111827] ml-1">{h.value}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Right Image */}
-                  <div className="relative w-48 h-40 flex items-center justify-center">
-                    {/* Ground Shadow */}
-                    <div className="absolute -bottom-2 w-32 h-4 bg-black/15 rounded-full blur-md" />
-                    {editingSlide.image ? (
+                  {/* Tab strip preview */}
+                  <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Tab Preview:</span>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-[#F15A24]/40 rounded-full text-xs font-bold text-[#F15A24] shadow-2xs">
+                      <span className="font-mono text-[10px] opacity-70">01</span>
+                      <span>{editingSlide.overrides?.tabLabel || editingSlide.tabLabel || 'Slide Tab'}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* MOBILE PREVIEW (375px Container) */
+                <div className="max-w-[360px] mx-auto bg-[#FAF7F2] border border-slate-300 rounded-[24px] p-5 shadow-md space-y-4">
+                  <div className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-200">
+                    Mobile Viewport (375px)
+                  </div>
+
+                  {/* Mobile Image First */}
+                  <div className="relative h-36 flex items-center justify-center">
+                    <div className="absolute bottom-1 w-36 h-3 bg-black/15 rounded-full blur-sm" />
+                    {editingSlide.overrides?.image || editingSlide.image ? (
                       <img
-                        src={editingSlide.image}
+                        src={editingSlide.overrides?.image || editingSlide.image}
                         alt="Preview"
-                        className="max-h-full max-w-full object-contain relative z-10 drop-shadow-[0_12px_20px_rgba(0,0,0,0.12)] mix-blend-multiply"
+                        className="max-h-full max-w-full object-contain relative z-10 drop-shadow-[0_12px_18px_rgba(0,0,0,0.12)] mix-blend-multiply"
                       />
                     ) : (
                       <div className="text-slate-300 text-xs text-center">
-                        <ImageIcon className="w-10 h-10 mx-auto mb-1 text-slate-300" />
-                        <span>No image</span>
+                        <ImageIcon className="w-8 h-8 mx-auto mb-1 text-slate-300" />
+                        <span>Placeholder image</span>
                       </div>
                     )}
                   </div>
+
+                  {/* Mobile Spec 2x2 Grid under Image */}
+                  {editingSlide.highlights && editingSlide.highlights.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 bg-white/90 p-2.5 rounded-xl border border-slate-200">
+                      {editingSlide.highlights.slice(0, 4).map((h, i) => (
+                        <div key={i} className="text-[10px]">
+                          <span className="text-slate-400 block">{h.label}</span>
+                          <span className="font-bold text-[#111827]">{h.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Mobile Content */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {editingSlide.showBadge !== false && (editingSlide.overrides?.badge || editingSlide.badge) && (
+                        <span className="inline-block bg-[#F15A24] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">
+                          {editingSlide.overrides?.badge || editingSlide.badge}
+                        </span>
+                      )}
+                      {(editingSlide.overrides?.modelNumber || editingSlide.modelNumber) && (
+                        <span className="font-mono text-[10px] text-slate-500">
+                          {editingSlide.overrides?.modelNumber || editingSlide.modelNumber}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="text-base font-black text-[#111827] font-heading leading-tight">
+                      {editingSlide.overrides?.headline || editingSlide.headline || 'Product Headline'}
+                    </h4>
+
+                    <p className="text-[11px] text-[#5B6472] line-clamp-2 leading-relaxed">
+                      {editingSlide.overrides?.description || editingSlide.description || 'Intelligent security with AcuSense AI.'}
+                    </p>
+
+                    {/* Stacked Action Buttons */}
+                    <div className="space-y-2 pt-2">
+                      <button type="button" className="w-full bg-[#F15A24] text-white font-bold text-xs py-2.5 rounded-full shadow-xs">
+                        {editingSlide.buttonText || 'View Product'}
+                      </button>
+                      <button type="button" className="w-full bg-white border border-slate-300 text-[#111827] font-bold text-xs py-2 rounded-full flex items-center justify-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-[#F15A24]" />
+                        <span>{editingSlide.secondaryButtonText || editingSlide.secondaryText || 'Call for Service'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Modal Actions */}
@@ -3241,6 +3707,21 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               </label>
               <p className="text-[10px] text-slate-500 ml-6 mt-0.5">
                 Displays this category in the homepage "Shop by Category" section (at most 8 categories are shown; ordered by Display Order).
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!editingCategory.isAccessoryCategory}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, isAccessoryCategory: e.target.checked })}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4"
+                />
+                <span className="text-xs font-bold text-slate-800">Accessory Category (Feeds "Accessories & Add-ons" Row)</span>
+              </label>
+              <p className="text-[10px] text-slate-500 ml-6 mt-0.5">
+                Flag this category so its products appear in the homepage "Accessories & Add-ons" row (e.g. cables, hard drives, mounts, power units).
               </p>
             </div>
 

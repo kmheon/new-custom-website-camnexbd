@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowRight, Layers, Camera, HardDrive, Cpu, Radio, Shield, Wrench, Server } from 'lucide-react';
 import { Category } from '../types';
+import { ImagePlaceholder, SmartImage } from './common/ImagePlaceholder';
 
 export interface CategoryGridProps {
   categories: Category[];
@@ -15,92 +16,7 @@ export const CategorySvgIllustration: React.FC<{ slug?: string; name?: string; c
   name = '',
   className = 'w-16 h-16 object-contain'
 }) => {
-  const s = (slug + ' ' + name).toLowerCase();
-
-  if (s.includes('cctv') || s.includes('camera')) {
-    return (
-      <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CCTV Camera">
-        <rect x="18" y="22" width="46" height="26" rx="5" fill="#1E293B" stroke="#64748B" strokeWidth="1.5" />
-        <path d="M64 27 L82 17 L82 53 L64 43 Z" fill="#334155" stroke="#64748B" strokeWidth="1.5" />
-        <circle cx="32" cy="35" r="8" fill="#0F172A" />
-        <circle cx="32" cy="35" r="3.5" fill="#F15A24" />
-        <circle cx="33" cy="34" r="1" fill="#FFFFFF" />
-        <rect x="36" y="48" width="10" height="16" rx="2" fill="#64748B" />
-        <rect x="28" y="64" width="26" height="4" rx="2" fill="#475569" />
-      </svg>
-    );
-  }
-
-  if (s.includes('dvr') || s.includes('nvr') || s.includes('recorder')) {
-    return (
-      <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Video Recorder">
-        <rect x="14" y="26" width="72" height="28" rx="4" fill="#1E293B" stroke="#64748B" strokeWidth="1.5" />
-        <rect x="22" y="34" width="22" height="4" rx="1" fill="#475569" />
-        <circle cx="66" cy="36" r="2.5" fill="#22C55E" />
-        <circle cx="74" cy="36" r="2.5" fill="#F15A24" />
-        <circle cx="82" cy="36" r="2.5" fill="#3B82F6" />
-        <line x1="20" y1="44" x2="80" y2="44" stroke="#334155" strokeWidth="1" />
-      </svg>
-    );
-  }
-
-  if (s.includes('access') || s.includes('biometric')) {
-    return (
-      <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Biometric Terminal">
-        <rect x="28" y="14" width="44" height="52" rx="6" fill="#1E293B" stroke="#64748B" strokeWidth="1.5" />
-        <rect x="34" y="20" width="32" height="22" rx="3" fill="#0F172A" stroke="#475569" strokeWidth="1" />
-        <circle cx="50" cy="27" r="3.5" fill="#38BDF8" />
-        <circle cx="50" cy="54" r="8" fill="#0F172A" stroke="#F15A24" strokeWidth="1.5" strokeDasharray="2 2" />
-        <path d="M46 54 C46 51 54 51 54 54" stroke="#F15A24" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  if (s.includes('switch') || s.includes('network')) {
-    return (
-      <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Network Switch">
-        <rect x="12" y="28" width="76" height="24" rx="3" fill="#1E293B" stroke="#64748B" strokeWidth="1.5" />
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <g key={i} transform={`translate(${20 + i * 10}, 34)`}>
-            <rect x="0" y="0" width="6" height="8" rx="1" fill="#0F172A" stroke="#475569" strokeWidth="0.8" />
-            <circle cx="3" cy="-3" r="1.2" fill={i % 2 === 0 ? '#22C55E' : '#38BDF8'} />
-          </g>
-        ))}
-      </svg>
-    );
-  }
-
-  if (s.includes('wifi') || s.includes('access-point')) {
-    return (
-      <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Wi-Fi Access Point">
-        <circle cx="50" cy="42" r="26" fill="#1E293B" stroke="#64748B" strokeWidth="1.5" />
-        <circle cx="50" cy="42" r="16" fill="#0F172A" />
-        <circle cx="50" cy="42" r="6" fill="#F15A24" />
-        <circle cx="50" cy="42" r="2" fill="#FFFFFF" />
-      </svg>
-    );
-  }
-
-  if (s.includes('storage') || s.includes('hard-drive') || s.includes('hdd')) {
-    return (
-      <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Surveillance HDD">
-        <rect x="22" y="16" width="56" height="48" rx="4" fill="#1E293B" stroke="#64748B" strokeWidth="1.5" />
-        <circle cx="50" cy="38" r="16" fill="#0F172A" stroke="#475569" strokeWidth="1" />
-        <circle cx="50" cy="38" r="5" fill="#64748B" />
-        <rect x="28" y="20" width="22" height="6" rx="1" fill="#475569" />
-      </svg>
-    );
-  }
-
-  // Generic Hardware Module fallback
-  return (
-    <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Hardware Module">
-      <rect x="18" y="20" width="64" height="40" rx="4" fill="#1E293B" stroke="#64748B" strokeWidth="1.5" />
-      <circle cx="34" cy="40" r="8" fill="#0F172A" stroke="#F15A24" strokeWidth="1.5" />
-      <rect x="50" y="32" width="22" height="4" rx="1" fill="#475569" />
-      <rect x="50" y="42" width="16" height="4" rx="1" fill="#475569" />
-    </svg>
-  );
+  return <ImagePlaceholder category={slug + ' ' + name} className={className} iconOnly />;
 };
 
 // Tag chip lookup helper

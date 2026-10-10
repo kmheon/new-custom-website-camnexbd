@@ -16,6 +16,7 @@ import { useCartStore, useWishlistStore, useCustomerAuthStore } from '../../stor
 import { productService } from '../../services';
 import { cleanProductTitle } from './ProductCard';
 import { formatSpecValue } from '../../utils/specUtils';
+import { SmartImage, ImagePlaceholder } from './ImagePlaceholder';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -179,16 +180,22 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
           <div className="space-y-3">
             <div className="h-64 sm:h-72 rounded-2xl bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] border border-[#EDE8E1] flex items-center justify-center p-4 relative overflow-hidden">
               {images.length > 0 ? (
-                <img
+                <SmartImage
                   src={images[activeImageIndex]}
                   alt={product.name}
+                  category={product.categoryId || product.category}
+                  name={product.name}
+                  model={product.modelNumber}
                   className="max-h-full max-w-full object-contain"
                 />
               ) : (
-                <div className="text-center text-slate-400">
-                  <Camera className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <span className="text-xs font-mono">{product.modelNumber}</span>
-                </div>
+                <ImagePlaceholder
+                  category={product.categoryId || product.category}
+                  name={product.name}
+                  model={product.modelNumber}
+                  className="w-24 h-24"
+                  containerClassName="w-full h-full flex flex-col items-center justify-center p-4 bg-transparent select-none"
+                />
               )}
 
               {images.length > 1 && (
@@ -224,7 +231,13 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                       activeImageIndex === idx ? 'border-[#F15A24] ring-2 ring-[#F15A24]/20' : 'border-[#EDE8E1]'
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-contain" />
+                    <SmartImage
+                      src={img}
+                      alt=""
+                      category={product.categoryId || product.category}
+                      className="w-full h-full object-contain"
+                      placeholderClassName="w-6 h-6"
+                    />
                   </button>
                 ))}
               </div>

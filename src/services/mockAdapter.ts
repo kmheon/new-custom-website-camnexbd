@@ -882,16 +882,25 @@ export class MockCmsService implements ICmsService {
 
     // 5. Price
     const priceText = config.overrides?.priceText || (prod.pricing.regularPrice ? `৳${prod.pricing.regularPrice.toLocaleString()}` : undefined);
+    const modelNumber = config.overrides?.modelNumber || config.modelNumber || prod.modelNumber;
+    const eyebrow = config.overrides?.eyebrow || config.eyebrow || (prod.brand ? `${prod.brand.toUpperCase()} OFFICIAL` : 'ENTERPRISE SURVEILLANCE');
+    const tabLabel = config.overrides?.tabLabel || config.tabLabel || (prod.modelNumber ? `${prod.brand || ''} ${prod.modelNumber}`.trim().slice(0, 22) : prod.name.slice(0, 22));
 
     return {
       ...config,
       badge,
+      showBadge: config.overrides?.showBadge ?? config.showBadge ?? true,
+      eyebrow,
+      modelNumber,
+      tabLabel,
       headline,
       description,
       image,
       priceText,
       buttonText: config.overrides?.buttonText || config.buttonText || 'View Product',
       buttonLink: config.overrides?.buttonLink || config.buttonLink || `/product/${prod.id}`,
+      secondaryButtonText: config.overrides?.secondaryText || config.secondaryButtonText || 'Request Quotation',
+      secondaryButtonLink: config.overrides?.secondaryLink || config.secondaryButtonLink || '/quote',
       secondaryText: config.overrides?.secondaryText || config.secondaryText || (prod.pricing.regularPrice ? 'Add to cart' : 'Request quotation'),
       secondaryLink: config.overrides?.secondaryLink || config.secondaryLink || (prod.pricing.regularPrice ? '/cart' : '/quote'),
       highlights: highlights.slice(0, 4)
