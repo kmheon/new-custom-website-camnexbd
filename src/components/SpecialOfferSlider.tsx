@@ -170,14 +170,14 @@ export const SpecialOfferSlider: React.FC<SpecialOfferSliderProps> = ({
           aria-roledescription={totalOffers > 1 ? "carousel" : undefined}
           aria-label={totalOffers > 1 ? "Special Offers Carousel" : undefined}
         >
-          {/* Offer Card */}
+          {/* Offer Card: 50/50 two-column layout, image larger on right */}
           <div
-            className={`bg-white rounded-[24px] border border-orange-200/80 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 transition-all duration-300 ease-out ${
+            className={`bg-white rounded-[24px] border border-orange-200/80 p-6 sm:p-8 shadow-sm grid grid-cols-1 md:grid-cols-2 items-center gap-6 md:gap-8 transition-all duration-300 ease-out ${
               isTransitioning && !reducedMotion ? 'opacity-85 translate-y-0.5' : 'opacity-100 translate-y-0'
             }`}
           >
-            {/* Card Content (Left) */}
-            <div className="flex-1 min-w-0 space-y-3 w-full">
+            {/* Card Content (Left: 50%) */}
+            <div className="min-w-0 space-y-3 w-full">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-black uppercase tracking-wider bg-red-600 text-white px-2.5 py-0.5 rounded-full">
                   -{discountPct}% OFF
@@ -185,7 +185,7 @@ export const SpecialOfferSlider: React.FC<SpecialOfferSliderProps> = ({
                 <span className="text-xs font-bold text-[#5B6472] uppercase">
                   {currentProduct.brand}
                 </span>
-                {totalOffers > 1 && (
+                {totalOffers > 2 && (
                   <span className="text-[10px] font-bold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full ml-auto sm:ml-0">
                     Deal {currentIndex + 1} of {totalOffers}
                   </span>
@@ -239,21 +239,28 @@ export const SpecialOfferSlider: React.FC<SpecialOfferSliderProps> = ({
               </div>
             </div>
 
-            {/* Product Image Tile (Right) */}
+            {/* Product Image (Right: 50%): NO box, NO border, NO gradient well; only soft ground shadow */}
             <div
               onClick={() => onNavigate('product', currentProduct.id)}
-              className="w-full md:w-80 h-56 bg-gradient-to-b from-[#FFF8F4] to-[#F4EEE6] rounded-2xl flex items-center justify-center p-4 cursor-pointer overflow-hidden shrink-0 group/img"
+              className="w-full flex flex-col items-center justify-center cursor-pointer group/img relative"
             >
-              <img
-                src={currentProduct.images?.[0] || currentProduct.primaryImage || '/images/hero/hikvision-bullet.jpg'}
-                alt={currentProduct.name}
-                className="max-h-full max-w-full object-contain mix-blend-multiply group-hover/img:scale-105 transition-transform duration-300"
+              <div className="w-full h-56 sm:h-64 md:h-72 flex items-center justify-center bg-transparent border-0 shadow-none">
+                <img
+                  src={currentProduct.images?.[0] || currentProduct.primaryImage || '/images/hero/hikvision-bullet.jpg'}
+                  alt={currentProduct.name}
+                  className="max-h-full max-w-full object-contain filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.1)] group-hover/img:scale-105 transition-transform duration-300"
+                />
+              </div>
+              {/* Soft Ground Shadow */}
+              <div
+                aria-hidden="true"
+                className="w-3/4 max-w-[260px] h-3.5 bg-black/10 blur-md rounded-[100%] mx-auto mt-[-8px] pointer-events-none"
               />
             </div>
           </div>
 
-          {/* Navigation Controls (Only rendered when > 1 offer) */}
-          {totalOffers > 1 && (
+          {/* Navigation Controls: HIDE slider arrows and dots if <= 2 offers (only show when > 2 offers) */}
+          {totalOffers > 2 && (
             <div className="mt-4 flex items-center justify-between px-1">
               {/* Pagination Dots */}
               <div className="flex items-center gap-2" role="tablist" aria-label="Offer selector">

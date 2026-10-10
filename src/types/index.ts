@@ -51,6 +51,7 @@ export interface SpecFieldDefinition {
   filterable?: boolean; // can be used in category faceted search
   comparable?: boolean; // shown in product comparison matrix
   showInHighlights?: boolean; // shown in hero banner highlights
+  shortLabel?: string; // Max 14 characters compact label for tiles
   order: number;
 }
 
@@ -399,6 +400,7 @@ export interface SiteSettings {
   enableStockBadges: boolean;
   sampleDataBanner: boolean;
   showSampleContent?: boolean;
+  showDemoTags?: boolean; // Toggle "Show demo tags" on sample cards (default true)
   announcementBar?: {
     enabled: boolean;
     text: string;

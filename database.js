@@ -534,6 +534,22 @@ function seedDatabaseIfEmpty() {
     insertFaq.run(faq.id, faq.question, JSON.stringify(faq));
   }
 
+  const insertTestimonial = db.prepare(`
+    INSERT INTO testimonials (id, client_name, company, role, rating, content, image, verified, display_order, data_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  for (const t of seeds.INITIAL_TESTIMONIALS || []) {
+    insertTestimonial.run(t.id, t.author || t.client_name, t.company || '', t.role || '', t.rating || 5, t.content || '', t.avatar || t.image || '', 1, t.order || 1, JSON.stringify(t));
+  }
+
+  const insertProject = db.prepare(`
+    INSERT INTO projects (id, title, slug, data_json)
+    VALUES (?, ?, ?, ?)
+  `);
+  for (const p of seeds.INITIAL_PROJECTS || []) {
+    insertProject.run(p.id, p.title, p.slug || p.id, JSON.stringify(p));
+  }
+
   if (seeds.INITIAL_SITE_SETTINGS) {
     const insertSetting = db.prepare(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`);
     insertSetting.run('site_settings', JSON.stringify(seeds.INITIAL_SITE_SETTINGS));
@@ -547,7 +563,7 @@ function reseedDatabase() {
   const dropTables = [
     'products', 'categories', 'brands', 'spec_templates',
     'packages', 'orders', 'quotes', 'service_requests', 'blog_posts',
-    'projects', 'settings', 'hero_slides', 'homepage_sections', 'customers', 'media', 'faqs'
+    'projects', 'testimonials', 'settings', 'hero_slides', 'homepage_sections', 'customers', 'media', 'faqs'
   ];
   for (const t of dropTables) {
     try { db.prepare(`DELETE FROM ${t}`).run(); } catch(err) {}
@@ -557,15 +573,17 @@ function reseedDatabase() {
 
 function clearDemoData() {
   try {
-    db.prepare('DELETE FROM products WHERE is_demo = 1').run();
-    db.prepare("DELETE FROM packages WHERE data_json LIKE '%\"isDemo\":true%'").run();
-    db.prepare("DELETE FROM projects WHERE data_json LIKE '%\"isDemo\":true%'").run();
+    db.prepare('DELETE FROM products WHERE is_demo = 1 OR data_json LIKE \'%"sample":true%\'').run();
+    db.prepare("DELETE FROM packages WHERE data_json LIKE '%\"isDemo\":true%' OR data_json LIKE '%\"sample\":true%'").run();
+    db.prepare("DELETE FROM projects WHERE data_json LIKE '%\"isDemo\":true%' OR data_json LIKE '%\"sample\":true%'").run();
+    db.prepare("DELETE FROM testimonials WHERE data_json LIKE '%\"sample\":true%'").run();
     
     // Update settings to hide sample data banner
     const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
     if (row) {
       const s = JSON.parse(row.value);
       s.sampleDataBanner = false;
+      s.showDemoTags = false;
       db.prepare("UPDATE settings SET value = ? WHERE key = 'site_settings'").run(JSON.stringify(s));
     }
     return true;

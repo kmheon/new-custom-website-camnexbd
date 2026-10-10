@@ -4,11 +4,14 @@ import { Product } from '../../types';
 import { useCartStore, useCompareStore, useWishlistStore, useCustomerAuthStore } from '../../store';
 import { QuickViewModal } from './QuickViewModal';
 
+import { FormattedSpecResult, formatSpecValue } from '../../utils/specUtils';
+
 interface ProductCardProps {
   product: Product;
   onNavigate: (route: string, param?: string) => void;
   className?: string;
   showSampleBadge?: boolean;
+  allowHot?: boolean; // When false (more than 2 Hot cards in this row), Hot badge is suppressed
 }
 
 // Strip brand and model number repetitions from title
@@ -34,7 +37,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onNavigate,
   className = '',
-  showSampleBadge = true
+  showSampleBadge = true,
+  allowHot = true
 }) => {
   const [imageError, setImageError] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
@@ -87,34 +91,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // Clean title without repeated brand or model
   const cleanTitle = cleanProductTitle(product.name, product.brand, product.modelNumber);
 
-  // Extract up to 4 highlights (spec fields flagged showInHighlights / isHighlight, or specifications)
-  const highlightCards: { label: string; value: string }[] = [];
+  // Extract up to 4 highlights using formatSpecValue:
+  // - use field's highlightValue when set
+  // - booleans show check icon with field's short label (no tile when false)
+  // - numbers append unit
+  // - strings > 14 chars fall back to first number + unit, else skipped
+  // - never "..." and never raw words "true" or "false"
+  const highlightCards: FormattedSpecResult[] = [];
 
   if (product.specs) {
-    Object.values(product.specs).forEach((sp: any) => {
-      if (sp && (sp.isHighlight || sp.showInHighlights) && sp.value && highlightCards.length < 4) {
-        let val = String(sp.highlightValue || sp.value).trim();
-        if (val.length > 14) {
-          // Keep first number plus unit or first 14 chars
-          const numUnit = val.match(/^(\d+(?:\.\d+)?\s*[a-zA-Z]+)/);
-          val = numUnit ? numUnit[1] : val.slice(0, 14);
-        }
-        const lbl = String(sp.label || 'Feature').trim().split(' ').slice(0, 2).join(' ');
-        highlightCards.push({ label: lbl, value: val });
+    Object.entries(product.specs).forEach(([k, sp]: [string, any]) => {
+      if (sp && highlightCards.length < 4) {
+        const val = sp.value;
+        const res = formatSpecValue(sp, val);
+        if (res) highlightCards.push(res);
       }
     });
   }
 
   if (highlightCards.length === 0 && product.specifications) {
     Object.entries(product.specifications).forEach(([k, v]: [string, any]) => {
-      if (v !== undefined && v !== null && String(v).trim() && highlightCards.length < 4) {
-        let val = String(v).trim();
-        if (val.length > 14) {
-          const numUnit = val.match(/^(\d+(?:\.\d+)?\s*[a-zA-Z]+)/);
-          val = numUnit ? numUnit[1] : val.slice(0, 14);
-        }
-        const lbl = k.replace(/_/g, ' ').split(' ').slice(0, 2).join(' ');
-        highlightCards.push({ label: lbl, value: val });
+      if (highlightCards.length < 4) {
+        const res = formatSpecValue({ key: k, label: k.replace(/_/g, ' ') }, v);
+        if (res) highlightCards.push(res);
       }
     });
   }
@@ -123,9 +122,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   if (highlightCards.length === 0 && Array.isArray(product.keyFeatures)) {
     product.keyFeatures.slice(0, 2).forEach((kf) => {
       if (typeof kf === 'string' && kf.trim() && highlightCards.length < 4) {
-        let val = kf.trim();
-        if (val.length > 14) val = val.slice(0, 14);
-        highlightCards.push({ label: 'Key Feature', value: val });
+        const res = formatSpecValue({ label: 'Feature' }, kf.trim());
+        if (res) highlightCards.push(res);
       }
     });
   }
@@ -200,19 +198,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </button>
             </div>
 
-            {/* Bottom-Left Badge: EXACTLY ONE BADGE MAX (New / Hot / -X%) */}
+            {/* Top-Left Corner Demo tag when sample content is ON (shows "Demo") */}
+            {showSampleBadge && (product.isDemo || (product as any).sample) && (
+              <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/90 text-slate-950 shadow-xs uppercase tracking-wider">
+                  Demo
+                </span>
+              </div>
+            )}
+
+            {/* Bottom-Left Badge: EXACTLY ONE BADGE MAX, priority: Sale (-X%) > Hot > New.
+                "Hot" only on admin-flagged products (isFeatured / isHot), never if allowHot is false. */}
             <div className="absolute bottom-2.5 left-2.5 z-10">
               {hasSale ? (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#F15A24] text-white shadow-xs">
                   -{discountPct}%
                 </span>
-              ) : product.isFeatured ? (
+              ) : (product.isFeatured || (product as any).isHot) && allowHot ? (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white shadow-xs">
                   Hot
                 </span>
-              ) : showSampleBadge && product.isDemo ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono bg-slate-900/80 text-slate-300 backdrop-blur-xs">
-                  Sample
+              ) : (product.isNewArrival || (product as any).isNew) ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-600 text-white shadow-xs">
+                  New
                 </span>
               ) : null}
             </div>

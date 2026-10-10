@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowRight,
   ChevronLeft,
@@ -58,26 +58,79 @@ interface HomePageProps {
   onNavigate: (route: string, param?: string) => void;
 }
 
-// Crisp Vector SVG Fallback for CCTV Package kits (Camera + Recorder + Cat6 coil)
-const CctvKitSvgFallback: React.FC = () => (
-  <div className="w-full h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
-    <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="25" y="65" width="150" height="38" rx="6" fill="#1E293B" />
-      <rect x="35" y="74" width="32" height="4" rx="2" fill="#F15A24" />
-      <circle cx="155" cy="84" r="3" fill="#22C55E" />
-      <circle cx="165" cy="84" r="3" fill="#3B82F6" />
-      <line x1="30" y1="92" x2="170" y2="92" stroke="#334155" strokeWidth="1" />
-      <circle cx="145" cy="40" r="22" stroke="#3B82F6" strokeWidth="6" strokeDasharray="6 4" fill="none" />
-      <circle cx="145" cy="40" r="10" fill="#E2E8F0" />
-      <rect x="42" y="22" width="55" height="26" rx="4" fill="#F8FAFC" stroke="#94A3B8" strokeWidth="1.5" />
-      <path d="M97 26 L118 18 L118 52 L97 44 Z" fill="#64748B" />
-      <circle cx="52" cy="35" r="7" fill="#0F172A" />
-      <circle cx="52" cy="35" r="3" fill="#38BDF8" />
-      <rect x="65" y="48" width="8" height="18" fill="#94A3B8" />
-      <rect x="58" y="64" width="22" height="4" rx="2" fill="#64748B" />
-    </svg>
-  </div>
-);
+// Distinct Crisp Vector SVG Fallbacks for CCTV Package kits by type
+const CctvPackageSvg: React.FC<{ pkg: SecurityPackage }> = ({ pkg }) => {
+  const name = (pkg.name || '').toLowerCase();
+  const desc = (pkg.description || '').toLowerCase();
+  const isColor = name.includes('color') || desc.includes('color');
+  const isEnterprise = name.includes('16') || name.includes('enterprise') || name.includes('business');
+
+  if (isColor) {
+    // Warm colored LED illuminator bullet camera + NVR
+    return (
+      <div className="w-full h-36 sm:h-44 bg-[#FFF8F4] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
+        <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ColorVu CCTV Kit">
+          <rect x="25" y="65" width="150" height="38" rx="6" fill="#1E293B" />
+          <rect x="35" y="74" width="32" height="4" rx="2" fill="#F15A24" />
+          <circle cx="155" cy="84" r="3" fill="#22C55E" />
+          <circle cx="165" cy="84" r="3" fill="#3B82F6" />
+          <line x1="30" y1="92" x2="170" y2="92" stroke="#334155" strokeWidth="1" />
+          <circle cx="145" cy="40" r="22" stroke="#F15A24" strokeWidth="4" strokeDasharray="4 4" fill="none" />
+          <circle cx="145" cy="40" r="10" fill="#FED7AA" />
+          <rect x="42" y="22" width="55" height="26" rx="4" fill="#FFFFFF" stroke="#F97316" strokeWidth="1.5" />
+          <path d="M97 26 L118 18 L118 52 L97 44 Z" fill="#EA580C" />
+          <circle cx="52" cy="35" r="7" fill="#0F172A" />
+          <circle cx="52" cy="35" r="3" fill="#FBBF24" />
+          <rect x="65" y="48" width="8" height="18" fill="#94A3B8" />
+          <rect x="58" y="64" width="22" height="4" rx="2" fill="#64748B" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (isEnterprise) {
+    // Rack-mountable 16ch unit + multi-camera array
+    return (
+      <div className="w-full h-36 sm:h-44 bg-[#F1F5F9] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
+        <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Enterprise CCTV Kit">
+          <rect x="18" y="58" width="164" height="48" rx="6" fill="#0F172A" stroke="#334155" strokeWidth="2" />
+          <rect x="28" y="68" width="45" height="5" rx="2" fill="#3B82F6" />
+          <circle cx="148" cy="82" r="3" fill="#22C55E" />
+          <circle cx="158" cy="82" r="3" fill="#22C55E" />
+          <circle cx="168" cy="82" r="3" fill="#38BDF8" />
+          <line x1="24" y1="94" x2="176" y2="94" stroke="#1E293B" strokeWidth="1.5" />
+          <rect x="35" y="20" width="42" height="22" rx="4" fill="#F8FAFC" stroke="#64748B" strokeWidth="1.5" />
+          <path d="M77 24 L94 18 L94 44 L77 38 Z" fill="#475569" />
+          <circle cx="44" cy="31" r="5" fill="#0F172A" />
+          <rect x="110" y="20" width="42" height="22" rx="4" fill="#F8FAFC" stroke="#64748B" strokeWidth="1.5" />
+          <path d="M152 24 L169 18 L169 44 L152 38 Z" fill="#475569" />
+          <circle cx="119" cy="31" r="5" fill="#0F172A" />
+        </svg>
+      </div>
+    );
+  }
+
+  // Standard Infrared Night Vision Bullet Kit
+  return (
+    <div className="w-full h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3 overflow-hidden">
+      <svg viewBox="0 0 200 120" className="w-full h-full max-h-36 object-contain" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Night Vision CCTV Kit">
+        <rect x="25" y="65" width="150" height="38" rx="6" fill="#1E293B" />
+        <rect x="35" y="74" width="32" height="4" rx="2" fill="#F15A24" />
+        <circle cx="155" cy="84" r="3" fill="#22C55E" />
+        <circle cx="165" cy="84" r="3" fill="#3B82F6" />
+        <line x1="30" y1="92" x2="170" y2="92" stroke="#334155" strokeWidth="1" />
+        <circle cx="145" cy="40" r="22" stroke="#3B82F6" strokeWidth="6" strokeDasharray="6 4" fill="none" />
+        <circle cx="145" cy="40" r="10" fill="#E2E8F0" />
+        <rect x="42" y="22" width="55" height="26" rx="4" fill="#F8FAFC" stroke="#94A3B8" strokeWidth="1.5" />
+        <path d="M97 26 L118 18 L118 52 L97 44 Z" fill="#64748B" />
+        <circle cx="52" cy="35" r="7" fill="#0F172A" />
+        <circle cx="52" cy="35" r="3" fill="#38BDF8" />
+        <rect x="65" y="48" width="8" height="18" fill="#94A3B8" />
+        <rect x="58" y="64" width="22" height="4" rx="2" fill="#64748B" />
+      </svg>
+    </div>
+  );
+};
 
 // Testimonial Card (Reference a): quote tile top-left, 5-star rating top-right, 4-line clamped quote + "Read more",
 // "Installed solution" mini panel, avatar/initial, client name & role.
@@ -118,33 +171,41 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }
           </button>
         )}
 
-        {/* "Installed solution" mini panel */}
-        <div className="bg-[#FAF7F2] rounded-xl p-2.5 my-3 border border-[#EDE8E1] flex items-center justify-between text-[11px] text-[#5B6472]">
-          <div className="flex items-center gap-1.5 min-w-0 pr-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-            <span className="font-semibold text-[#111827] truncate">
-              {testimonial.company ? `${testimonial.company} Setup` : 'Turnkey Hardware Setup'}
-            </span>
+        {/* Optional "Installed solution" mini panel - only if company or solution provided, never fallback strings */}
+        {Boolean(testimonial.company || (testimonial as any).solution) && (
+          <div className="bg-[#FAF7F2] rounded-xl p-2.5 my-3 border border-[#EDE8E1] flex items-center justify-between text-[11px] text-[#5B6472]">
+            <div className="flex items-center gap-1.5 min-w-0 pr-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+              <span className="font-semibold text-[#111827] truncate">
+                {testimonial.company ? `${testimonial.company} Setup` : (testimonial as any).solution}
+              </span>
+            </div>
+            {(testimonial as any).city && (
+              <div className="flex items-center gap-1 text-[10px] text-[#5B6472] shrink-0">
+                <MapPin className="w-3 h-3 text-[#5B6472]" />
+                <span>{(testimonial as any).city}</span>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-[#5B6472] shrink-0">
-            <MapPin className="w-3 h-3 text-[#5B6472]" />
-            <span>Dhaka</span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Client Info */}
+      {/* Client Info: icon circle for avatar, author and role show beside avatar when entered */}
       <div className="pt-3 border-t border-[#EDE8E1] flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs shrink-0">
-          {(testimonial.clientName || 'C').charAt(0)}
+        <div className="w-9 h-9 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+          {(testimonial.clientName || 'S').charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-bold text-xs text-[#111827] [overflow-wrap:anywhere] break-words truncate">
-            {testimonial.clientName}
-          </div>
-          <div className="text-[11px] text-[#5B6472] [overflow-wrap:anywhere] break-words truncate">
-            {testimonial.clientRole || testimonial.company}
-          </div>
+          {testimonial.clientName && (
+            <div className="font-bold text-xs text-[#111827] [overflow-wrap:anywhere] break-words truncate">
+              {testimonial.clientName}
+            </div>
+          )}
+          {(testimonial.clientRole || testimonial.company) && (
+            <div className="text-[11px] text-[#5B6472] [overflow-wrap:anywhere] break-words truncate">
+              {testimonial.clientRole || testimonial.company}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -356,30 +417,109 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     }
   };
 
-  // Filtered packages by count and type
-  const filteredPackages = packages.filter((pkg) => {
-    // Camera count filter
-    if (packageCountFilter !== 'All') {
-      const countMatch = pkg.name.toLowerCase().includes(packageCountFilter.toLowerCase()) ||
-        pkg.description.toLowerCase().includes(packageCountFilter.toLowerCase());
-      if (!countMatch) return false;
-    }
+  // Initialize filters from URL query parameters on load
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const cam = params.get('cameras');
+      const typ = params.get('type');
+      if (cam) setPackageCountFilter(cam);
+      if (typ) setPackageTypeFilter(typ);
+    } catch (_) {}
+  }, []);
 
-    // Type filter
-    if (packageTypeFilter === 'Bullet Series') {
-      return pkg.name.toLowerCase().includes('bullet') || pkg.description.toLowerCase().includes('bullet');
-    }
-    if (packageTypeFilter === 'Dome Series') {
-      return pkg.name.toLowerCase().includes('dome') || pkg.description.toLowerCase().includes('dome');
-    }
-    if (packageTypeFilter === 'PoE IP Systems') {
-      return pkg.name.toLowerCase().includes('ip') || pkg.name.toLowerCase().includes('poe') || pkg.description.toLowerCase().includes('poe');
-    }
+  // Sync filters to URL without full page reload
+  const updatePackageFilters = (newCount: string, newType: string) => {
+    setPackageCountFilter(newCount);
+    setPackageTypeFilter(newType);
+    try {
+      const url = new URL(window.location.href);
+      if (newCount !== 'All') url.searchParams.set('cameras', newCount);
+      else url.searchParams.delete('cameras');
+      if (newType !== 'All') url.searchParams.set('type', newType);
+      else url.searchParams.delete('type');
+      window.history.replaceState({}, '', url.toString());
+    } catch (_) {}
+  };
 
-    return true;
-  });
+  // Derive dynamic camera count options from existing packages
+  const availableCameraCounts = useMemo(() => {
+    const counts = new Set<string>();
+    packages.forEach((pkg) => {
+      // Check cameraCountsSupported array or name/description
+      if (pkg.cameraCountsSupported && Array.isArray(pkg.cameraCountsSupported)) {
+        pkg.cameraCountsSupported.forEach((c) => counts.add(`${c} Camera`));
+      } else {
+        const match = pkg.name.match(/(\d+)[-\s]*camera/i) || pkg.description.match(/(\d+)[-\s]*camera/i);
+        if (match) counts.add(`${match[1]} Camera`);
+      }
+    });
+    // Sort numerically
+    const sorted = Array.from(counts).sort((a, b) => parseInt(a) - parseInt(b));
+    return sorted.length >= 1 ? ['All', ...sorted] : [];
+  }, [packages]);
 
-  const displayPackages = filteredPackages.length > 0 ? filteredPackages : packages;
+  // Derive dynamic package types from existing packages
+  const availablePackageTypes = useMemo(() => {
+    const types = new Set<string>();
+    packages.forEach((pkg) => {
+      const nameDesc = (pkg.name + ' ' + (pkg.description || '')).toLowerCase();
+      if (nameDesc.includes('color')) types.add('Color Series');
+      if (nameDesc.includes('night vision') || nameDesc.includes('irpf') || nameDesc.includes('infrared')) types.add('Night Vision');
+      if (nameDesc.includes('bullet')) types.add('Bullet Series');
+      if (nameDesc.includes('dome')) types.add('Dome Series');
+      if (nameDesc.includes('enterprise') || nameDesc.includes('business')) types.add('Business / Enterprise');
+      if (nameDesc.includes('poe') || nameDesc.includes('ip')) types.add('PoE IP Systems');
+    });
+    return types.size >= 2 ? ['All', ...Array.from(types)] : [];
+  }, [packages]);
+
+  // Combined AND filtering for Packages
+  const filteredPackages = useMemo(() => {
+    return packages.filter((pkg) => {
+      const nameDesc = (pkg.name + ' ' + (pkg.description || '')).toLowerCase();
+
+      // Camera count filter (AND)
+      if (packageCountFilter !== 'All') {
+        const countNum = parseInt(packageCountFilter, 10);
+        let matchesCount = false;
+        if (pkg.cameraCountsSupported && Array.isArray(pkg.cameraCountsSupported)) {
+          matchesCount = pkg.cameraCountsSupported.includes(countNum);
+        }
+        if (!matchesCount) {
+          matchesCount = nameDesc.includes(`${countNum} camera`) ||
+            nameDesc.includes(`${countNum}-camera`) ||
+            (countNum === 4 && nameDesc.includes('4 camera')) ||
+            (countNum === 8 && nameDesc.includes('8 camera')) ||
+            (countNum === 16 && nameDesc.includes('16 camera')) ||
+            (countNum === 2 && nameDesc.includes('2 camera'));
+        }
+        if (!matchesCount) return false;
+      }
+
+      // Type filter (AND)
+      if (packageTypeFilter !== 'All') {
+        const t = packageTypeFilter.toLowerCase();
+        if (t.includes('color')) {
+          if (!nameDesc.includes('color')) return false;
+        } else if (t.includes('night vision')) {
+          if (!nameDesc.includes('night vision') && !nameDesc.includes('irpf') && !nameDesc.includes('infrared')) return false;
+        } else if (t.includes('bullet')) {
+          if (!nameDesc.includes('bullet')) return false;
+        } else if (t.includes('dome')) {
+          if (!nameDesc.includes('dome')) return false;
+        } else if (t.includes('business') || t.includes('enterprise')) {
+          if (!nameDesc.includes('business') && !nameDesc.includes('enterprise')) return false;
+        } else if (t.includes('poe') || t.includes('ip')) {
+          if (!nameDesc.includes('ip') && !nameDesc.includes('poe')) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [packages, packageCountFilter, packageTypeFilter]);
+
+  const displayPackages = filteredPackages;
 
   // Active Scenarios (renamed to Our Solutions)
   const scenarios: ScenarioItem[] = (settings?.scenarios && settings.scenarios.length > 0)
@@ -425,28 +565,25 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // Mark all active special offer products as displayed to prevent row duplication
   dedupSpecialOffers.forEach((p) => displayedProductIds.add(p.id));
 
-  // 2. Popular Products claims next
-  const dedupPopular = popularProducts.filter((p) => {
-    if (displayedProductIds.has(p.id)) return false;
-    displayedProductIds.add(p.id);
-    return true;
-  });
+  // 2. Popular Products claims next (at least 4 cards per row)
+  const dedupPopular = popularProducts
+    .filter((p) => !displayedProductIds.has(p.id))
+    .slice(0, 4);
+  dedupPopular.forEach((p) => displayedProductIds.add(p.id));
 
-  // 3. New Arrivals claims next
-  const dedupNewArrivals = newArrivals.filter((p) => {
-    if (displayedProductIds.has(p.id)) return false;
-    displayedProductIds.add(p.id);
-    return true;
-  });
+  // 3. New Arrivals claims next (at least 4 cards per row)
+  const dedupNewArrivals = newArrivals
+    .filter((p) => !displayedProductIds.has(p.id))
+    .slice(0, 4);
+  dedupNewArrivals.forEach((p) => displayedProductIds.add(p.id));
 
-  // 4. Trending row claims next (products with isTrending === true)
-  const dedupTrending = trendingProducts.filter((p) => {
-    if (displayedProductIds.has(p.id)) return false;
-    displayedProductIds.add(p.id);
-    return true;
-  });
+  // 4. Trending row claims next (products with isTrending === true, at least 4 cards)
+  const dedupTrending = trendingProducts
+    .filter((p) => !displayedProductIds.has(p.id))
+    .slice(0, 4);
+  dedupTrending.forEach((p) => displayedProductIds.add(p.id));
 
-  // 5. Category rows claim next
+  // 5. Category rows claim next (show if >= 2 cards, hide only if < 2)
   const dedupCategoryRows = categories
     .filter((cat) => cat.showOnHomepage && categoryRowProducts[cat.id]?.length > 0)
     .map((cat) => {
@@ -457,7 +594,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       });
       return { cat, items };
     })
-    .filter((row) => row.items.length > 0);
+    .filter((row) => row.items.length >= 2);
 
   // 6 Quick Service Request Chips (neutral, claim-free)
   const serviceChips = [
@@ -512,8 +649,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* 3. POPULAR PRODUCTS (Definitive Deduplicated Row on Canvas #FAF7F2) */}
-      {dedupPopular.length > 0 && (
+      {/* 3. POPULAR PRODUCTS (Definitive Deduplicated Row: show if >= 2 cards, hide only if < 2) */}
+      {dedupPopular.length >= 2 && (
         <ProductRow
           eyebrow="Popular Hardware"
           title="Popular Products"
@@ -534,8 +671,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         sliderConfig={settings?.specialOfferSlider}
       />
 
-      {/* 5. NEW ARRIVALS (Definitive Deduplicated Row on White #FFFFFF) */}
-      {dedupNewArrivals.length > 0 && (
+      {/* 5. NEW ARRIVALS (Definitive Deduplicated Row: show if >= 2 cards, hide only if < 2) */}
+      {dedupNewArrivals.length >= 2 && (
         <ProductRow
           eyebrow="New Deployments"
           title="New Arrivals"
@@ -548,8 +685,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         />
       )}
 
-      {/* 6. CCTV PACKAGE SELECTOR (Show when packages >= 1, hide filter chips if < 3 packages) */}
-      {displayPackages.length >= 1 && (
+      {/* 6. CCTV PACKAGE SELECTOR */}
+      {packages.length >= 1 && (
         <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
@@ -561,172 +698,240 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               className="mb-8"
             />
 
-            {/* Filter chips shown ONLY if packages >= 3 */}
-            {packages.length >= 3 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-                <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-full border border-[#EDE8E1] shadow-2xs">
-                  {['All', '2 Camera', '4 Camera', '8 Camera', '16 Camera'].map((tab) => {
-                    const isActive = packageCountFilter === tab;
-                    return (
-                      <button
-                        key={tab}
-                        type="button"
-                        onClick={() => setPackageCountFilter(tab)}
-                        className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
-                          isActive
-                            ? 'bg-[#F15A24] text-white shadow-xs'
-                            : 'text-[#5B6472] hover:text-[#111827]'
-                        }`}
-                      >
-                        {tab}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Filter chips: camera counts and types derived dynamically from existing packages; hide group if < 2 options */}
+            {(availableCameraCounts.length >= 2 || availablePackageTypes.length >= 2) && (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-8">
+                {availableCameraCounts.length >= 2 && (
+                  <div
+                    role="tablist"
+                    aria-label="Filter packages by camera count"
+                    className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-full border border-[#EDE8E1] shadow-2xs"
+                  >
+                    {availableCameraCounts.map((tab) => {
+                      const isActive = packageCountFilter === tab;
+                      return (
+                        <button
+                          key={tab}
+                          type="button"
+                          role="tab"
+                          aria-selected={isActive}
+                          onClick={() => updatePackageFilters(tab, packageTypeFilter)}
+                          className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                            isActive
+                              ? 'bg-[#F15A24] text-white shadow-xs'
+                              : 'text-[#5B6472] hover:text-[#111827]'
+                          }`}
+                        >
+                          {tab}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {['All Types', 'Bullet Series', 'Dome Series', 'PoE IP Systems'].map((chip) => {
-                    const isActive = packageTypeFilter === chip;
-                    return (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() => setPackageTypeFilter(chip)}
-                        className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
-                          isActive
-                            ? 'bg-[#0F172A] text-white'
-                            : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
-                        }`}
-                      >
-                        {chip}
-                      </button>
-                    );
-                  })}
-                </div>
+                {availablePackageTypes.length >= 2 && (
+                  <div
+                    role="group"
+                    aria-label="Filter packages by type"
+                    className="flex flex-wrap items-center gap-1.5"
+                  >
+                    {availablePackageTypes.map((chip) => {
+                      const isActive = packageTypeFilter === chip;
+                      return (
+                        <button
+                          key={chip}
+                          type="button"
+                          aria-pressed={isActive}
+                          onClick={() => updatePackageFilters(packageCountFilter, chip)}
+                          className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F172A] ${
+                            isActive
+                              ? 'bg-[#0F172A] text-white'
+                              : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
+                          }`}
+                        >
+                          {chip}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Package Cards Grid (centered if < 3 items) */}
-            <div className={displayPackages.length < 3 ? "flex flex-wrap justify-center gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"}>
-              {displayPackages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all h-full group ${
-                    displayPackages.length < 3 ? 'w-full max-w-[360px]' : ''
-                  }`}
+            {/* Package Cards Grid or Friendly Empty State */}
+            {displayPackages.length === 0 ? (
+              <div className="bg-white rounded-[24px] border border-[#EDE8E1] p-10 text-center max-w-lg mx-auto shadow-xs space-y-4">
+                <div className="w-12 h-12 rounded-full bg-orange-100 text-[#F15A24] flex items-center justify-center mx-auto">
+                  <Camera className="w-6 h-6" />
+                </div>
+                <h3 className="font-heading font-bold text-lg text-[#111827]">
+                  No packages match your selected filters
+                </h3>
+                <p className="text-xs text-[#5B6472] leading-relaxed">
+                  We could not find any CCTV kits for {packageCountFilter} and {packageTypeFilter}. Try resetting filters to explore all available configurations.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => updatePackageFilters('All', 'All')}
+                  className="px-6 py-2.5 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
                 >
-                  <div>
-                    <div className="mb-4 overflow-hidden rounded-2xl">
-                      {pkg.image ? (
-                        <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
-                          <img
-                            src={pkg.image}
-                            alt={pkg.name}
-                            className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <CctvKitSvgFallback />
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
-                        {pkg.badge || 'Complete Kit'}
-                      </span>
-                      <span className="text-[11px] font-bold text-[#5B6472]">
-                        Hardware Kit
-                      </span>
-                    </div>
-
-                    <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
-                      {pkg.name}
-                    </h3>
-                    <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
-                      {pkg.description}
-                    </p>
-
-                    <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
-                      {pkg.rules && pkg.rules.length > 0 ? (
-                        pkg.rules.slice(0, 4).map((rule: any, rIdx: number) => (
-                          <div key={rIdx} className="flex items-center gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                            <span className="line-clamp-1 font-mono text-[11px]">{rule.name}</span>
+                  Reset filters
+                </button>
+              </div>
+            ) : (
+              <div className={displayPackages.length < 3 ? "flex flex-wrap justify-center gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"}>
+                {displayPackages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 h-full group ${
+                      displayPackages.length < 3 ? 'w-full max-w-[360px]' : ''
+                    }`}
+                  >
+                    <div>
+                      <div className="mb-4 overflow-hidden rounded-2xl">
+                        {pkg.image ? (
+                          <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
+                            <img
+                              src={pkg.image}
+                              alt={pkg.name}
+                              className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
                           </div>
-                        ))
-                      ) : (
-                        <div className="flex items-center gap-2 text-[#5B6472]">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#5B6472] shrink-0" />
-                          <span className="text-[11px]">Components to be confirmed</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                        ) : (
+                          <CctvPackageSvg pkg={pkg} />
+                        )}
+                      </div>
 
-                  <div>
-                    <div className="mb-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
-                        Starting From
-                      </span>
-                      <div className="text-xl font-black text-[#111827] font-heading">
-                        {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full">
+                          {pkg.badge || 'Complete Kit'}
+                        </span>
+                        <span className="text-[11px] font-bold text-[#5B6472]">
+                          Hardware Kit
+                        </span>
+                      </div>
+
+                      <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight">
+                        {pkg.name}
+                      </h3>
+                      <p className="text-xs text-[#5B6472] leading-relaxed mb-4">
+                        {pkg.description}
+                      </p>
+
+                      <div className="space-y-2 py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4">
+                        {pkg.rules && pkg.rules.length > 0 ? (
+                          pkg.rules.slice(0, 4).map((rule: any, rIdx: number) => (
+                            <div key={rIdx} className="flex items-center gap-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                              <span className="line-clamp-1 font-mono text-[11px]">{rule.name}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex items-center gap-2 text-[#5B6472]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#5B6472] shrink-0" />
+                            <span className="text-[11px]">Standard Bill of Materials included</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => onNavigate('packages', pkg.slug)}
-                      className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                    >
-                      <span>Configure Package</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    <div>
+                      <div className="mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
+                          Starting From
+                        </span>
+                        <div className="text-xl font-black text-[#111827] font-heading">
+                          {pkg.basePrice ? `৳${pkg.basePrice.toLocaleString()}` : 'Request Quotation'}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('packages', pkg.slug)}
+                        className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                      >
+                        <span>Configure Package</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
 
-      {/* 7. OUR SOLUTIONS (Renamed from Shop by Scenario, Compact soft band 48-56px padding, 6 tiles across desktop, ~120px tall, neutral one-liners) */}
+      {/* 7. OUR SOLUTIONS (Redesigned: 3 cols desktop, 2 cols tablet, 1 col mobile with adaptive row-fill, horizontal tile min-height 112px, 48px tinted icon, 2-line title, 2-line description, whole tile clickable) */}
       {scenarios.length > 0 && (
-        <section className="w-full bg-[#F4EEE6] py-12 md:py-14 border-y border-[#EDE8E1]">
+        <section className="w-full bg-[#F4EEE6] py-14 border-y border-[#EDE8E1]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
-              eyebrow="Solutions"
+              eyebrow="Deployment Profiles"
               title="Our Solutions"
               subtitle="Turnkey surveillance and networking setups engineered for specific deployment environments"
-              centered
+              actionText="View all"
+              onAction={() => onNavigate('solutions')}
               className="mb-8"
             />
 
-            {/* 6 Tiles Across Desktop (3x2 tablet, 2 mobile), ~120px tall */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              {scenarios.slice(0, 6).map((scenario) => (
-                <div
-                  key={scenario.id}
-                  onClick={() => onNavigate('solutions', scenario.slug)}
-                  className="bg-white rounded-[16px] border border-[#EDE8E1] p-3.5 hover:shadow-md hover:border-orange-300 transition-all duration-300 cursor-pointer group flex flex-col justify-between min-w-0 h-[120px]"
-                >
-                  <div className="min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-orange-50 text-[#F15A24] flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
-                      {renderScenarioIcon(scenario.iconName)}
-                    </div>
-                    <h3 className="font-heading font-bold text-xs sm:text-sm text-[#111827] group-hover:text-[#F15A24] transition-colors line-clamp-1 min-w-0 [overflow-wrap:anywhere] break-words">
-                      {scenario.title}
-                    </h3>
-                  </div>
+            {/* Adaptive 3-col desktop, 2-col tablet, 1-col mobile grid with row-fill */}
+            {(() => {
+              const total = scenarios.length;
+              // Columns by viewport: 3 at >= 1024px, 2 at 640-1023px, 1 below 640px
+              const c = total < 3 ? Math.max(1, total) : 3;
+              const r = total % c;
+              const fullRowsCount = Math.floor(total / c);
 
-                  <p className="text-[10px] sm:text-[11px] text-[#5B6472] line-clamp-2 leading-tight min-w-0 [overflow-wrap:anywhere] break-words">
-                    {scenario.description}
-                  </p>
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+                  {scenarios.map((scenario, idx) => {
+                    // Compute adaptive span on desktop for last row items
+                    const isInLastRow = r > 0 && idx >= fullRowsCount * c;
+                    const lastRowIdx = idx - fullRowsCount * c;
+                    const extraCols = c % r;
+                    const baseSpan = Math.floor(c / r);
+                    const colSpan = isInLastRow ? (lastRowIdx < extraCols ? baseSpan + 1 : baseSpan) : 1;
+
+                    return (
+                      <div
+                        key={scenario.id}
+                        onClick={() => onNavigate('solutions', scenario.slug)}
+                        style={{
+                          gridColumn: colSpan > 1 ? `span ${colSpan} / span ${colSpan}` : undefined
+                        }}
+                        className="bg-white rounded-[20px] border border-[#EDE8E1] p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer group flex items-start gap-4 min-h-[112px]"
+                      >
+                        {/* 48px Tinted Icon Container on Left */}
+                        <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-[#F15A24] group-hover:text-white transition-all duration-300 shadow-2xs">
+                          {renderScenarioIcon(scenario.iconName)}
+                        </div>
+
+                        {/* Right: 17px Bold Title (up to 2 lines), Description (up to 2 lines), Learn more link */}
+                        <div className="min-w-0 flex-1 flex flex-col justify-between h-full">
+                          <div>
+                            <h3 className="font-heading font-bold text-[17px] text-[#111827] group-hover:text-[#F15A24] transition-colors line-clamp-2 leading-snug mb-1 min-w-0 [overflow-wrap:anywhere] break-words">
+                              {scenario.title}
+                            </h3>
+                            <p className="text-sm text-[#5B6472] line-clamp-2 leading-relaxed min-w-0 [overflow-wrap:anywhere] break-words">
+                              {scenario.description ? scenario.description.slice(0, 90) : ''}
+                            </p>
+                          </div>
+
+                          <div className="pt-2 flex items-center gap-1.5 text-xs font-bold text-[#F15A24] group-hover:translate-x-0.5 transition-transform">
+                            <span>Learn more</span>
+                            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
         </section>
       )}
@@ -892,8 +1097,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
 
-      {/* 9. TRENDING HARDWARE (Admin flag isTrending, row hidden if nothing flagged) */}
-      {dedupTrending.length > 0 && (
+      {/* 9. TRENDING HARDWARE (Admin flag isTrending, show if >= 2 cards, hide only if < 2) */}
+      {dedupTrending.length >= 2 && (
         <ProductRow
           eyebrow="Market Popularity"
           title="Trending Hardware"

@@ -342,16 +342,32 @@ const FALLBACK_SLIDE: HeroSlide = {
             <div className="w-full lg:w-[50%] flex flex-col items-center justify-center relative">
               <div className="relative w-full max-w-[480px] sm:max-w-[540px] lg:max-w-[580px] flex flex-col items-center justify-center group">
                 
-                {/* Overlapping Frosted Glass Chip (Top Right) - Only if real highlight exists */}
-                {primaryHighlight && (
-                  <div className="absolute top-2 -right-1 sm:right-2 z-20 bg-white/85 backdrop-blur-md border border-[#EDE8E1] rounded-full px-3.5 py-1.5 shadow-lg flex items-center gap-2 text-xs animate-fade-in pointer-events-none">
-                    {renderHighlightIcon(primaryHighlight.icon)}
-                    <span className="font-extrabold text-[#111827]">{primaryHighlight.value}</span>
-                    <span className="text-[#5B6472] font-medium hidden sm:inline">{primaryHighlight.label}</span>
-                  </div>
-                )}
+                {/* Overlapping Frosted Glass Chip: ONE short value only ("2 MP", "4K", "IP67"), never label and value together, never truncated, hidden when no short value exists */}
+                {(() => {
+                  let shortVal = '';
+                  if (primaryHighlight?.value) {
+                    const raw = String(primaryHighlight.value).trim();
+                    // Prefer values <= 8 chars, or extract first number + unit
+                    if (raw.length <= 8) {
+                      shortVal = raw;
+                    } else {
+                      const match = raw.match(/^(\d+(?:\.\d+)?\s*[a-zA-Z]+)/);
+                      if (match && match[1].length <= 8) {
+                        shortVal = match[1].trim();
+                      }
+                    }
+                  }
+                  if (!shortVal) return null;
 
-                {/* Transparent Product Image: NO box, NO border, floats directly on hero background */}
+                  return (
+                    <div className="absolute top-2 -right-1 sm:right-2 z-20 bg-white/90 backdrop-blur-md border border-[#EDE8E1] rounded-full px-3 py-1 shadow-md flex items-center gap-1.5 text-xs animate-fade-in pointer-events-none">
+                      {renderHighlightIcon(primaryHighlight.icon)}
+                      <span className="font-extrabold text-[#111827]">{shortVal}</span>
+                    </div>
+                  );
+                })()}
+
+                {/* Transparent Product Image: NO box, NO border, floats directly on hero background with only soft ground shadow */}
                 <div className="relative w-full h-[300px] sm:h-[380px] lg:h-[440px] flex items-center justify-center bg-transparent border-0 shadow-none">
                   <img
                     id="hero-product-image"
@@ -366,23 +382,6 @@ const FALLBACK_SLIDE: HeroSlide = {
                     }`}
                   />
                 </div>
-
-                {/* Overlapping Frosted Glass Chip (Bottom Left) - Only if real price exists */}
-                {currentSlide.priceText && (
-                  <div className="absolute bottom-6 -left-2 sm:left-4 z-20 bg-white/85 backdrop-blur-md border border-[#EDE8E1] rounded-[18px] p-2.5 sm:p-3 shadow-lg flex items-center gap-2.5 animate-fade-in pointer-events-none">
-                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-[#F15A24]">
-                      <ShieldCheck className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472]">
-                        From
-                      </div>
-                      <div className="text-sm sm:text-base font-extrabold text-[#111827]">
-                        {currentSlide.priceText}
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Ground Shadow */}
                 <div

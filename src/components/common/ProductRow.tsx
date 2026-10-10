@@ -127,17 +127,36 @@ export const ProductRow: React.FC<ProductRowProps> = ({
           </div>
         )}
 
-        {/* Product Cards */}
-        {products.map((prod) => (
-          <div
-            key={prod.id}
-            className={`snap-start ${
-              totalItems < 4 ? 'w-[260px] sm:w-[280px]' : 'w-[260px] sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]'
-            } flex-shrink-0 min-w-0`}
-          >
-            <ProductCard product={prod} onNavigate={onNavigate} />
-          </div>
-        ))}
+        {/* Product Cards: at most 2 Hot badges per row */}
+        {(() => {
+          let hotCount = 0;
+          return products.map((prod) => {
+            const hasSale = typeof prod.pricing?.salePrice === 'number' &&
+              prod.pricing.salePrice > 0 &&
+              typeof prod.pricing?.regularPrice === 'number' &&
+              prod.pricing.salePrice < prod.pricing.regularPrice;
+            const isFlaggedHot = Boolean(prod.isFeatured || (prod as any).isHot);
+            let allowHot = true;
+            if (!hasSale && isFlaggedHot) {
+              if (hotCount >= 2) {
+                allowHot = false;
+              } else {
+                hotCount++;
+              }
+            }
+
+            return (
+              <div
+                key={prod.id}
+                className={`snap-start ${
+                  totalItems < 4 ? 'w-[260px] sm:w-[280px]' : 'w-[260px] sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]'
+                } flex-shrink-0 min-w-0`}
+              >
+                <ProductCard product={prod} onNavigate={onNavigate} allowHot={allowHot} />
+              </div>
+            );
+          });
+        })()}
       </div>
     </div>
   );

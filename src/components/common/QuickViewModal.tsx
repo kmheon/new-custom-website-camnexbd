@@ -15,6 +15,7 @@ import { Product } from '../../types';
 import { useCartStore, useWishlistStore, useCustomerAuthStore } from '../../store';
 import { productService } from '../../services';
 import { cleanProductTitle } from './ProductCard';
+import { formatSpecValue } from '../../utils/specUtils';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -122,25 +123,21 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
     ? product.images
     : (product.primaryImage ? [product.primaryImage] : []);
 
-  // Format highlights
+  // Format highlights using universal formatSpecValue
   const highlightList: { label: string; value: string }[] = [];
   if (product.specs) {
-    Object.entries(product.specs).forEach(([_, sp]: [string, any]) => {
-      if (sp && (sp.isHighlight || sp.showInHighlights) && sp.value && highlightList.length < 4) {
-        let val = String(sp.highlightValue || sp.value).trim();
-        if (val.length > 14) val = val.slice(0, 14);
-        const lbl = String(sp.label || 'Feature').trim().split(' ').slice(0, 2).join(' ');
-        highlightList.push({ label: lbl, value: val });
+    Object.entries(product.specs).forEach(([k, sp]: [string, any]) => {
+      if (sp && highlightList.length < 4) {
+        const res = formatSpecValue(sp, sp.value);
+        if (res) highlightList.push(res);
       }
     });
   }
   if (highlightList.length === 0 && product.specifications) {
     Object.entries(product.specifications).forEach(([k, v]: [string, any]) => {
-      if (v !== undefined && v !== null && String(v).trim() && highlightList.length < 4) {
-        let val = String(v).trim();
-        if (val.length > 14) val = val.slice(0, 14);
-        const lbl = k.replace(/_/g, ' ').split(' ').slice(0, 2).join(' ');
-        highlightList.push({ label: lbl, value: val });
+      if (highlightList.length < 4) {
+        const res = formatSpecValue({ key: k, label: k.replace(/_/g, ' ') }, v);
+        if (res) highlightList.push(res);
       }
     });
   }

@@ -108,3 +108,23 @@ A rigorous, skeptical verification and attack audit was conducted against the li
 2. Mushak 6.3 VAT invoice generation compliant with NBR Bangladesh.
 3. Multi-warehouse inventory synchronization.
 4. Double-entry accounting ledger and technician dispatch scheduler.
+
+---
+
+## 5. HOMEPAGE POLISH PASS 2 VERIFICATION & IMPLEMENTATION REPORT (2026-10-11)
+
+### Executive Summary:
+Homepage Polish Pass 2 addressed all visual framing, spec badge overflows, deduplication edge cases, CCTV package filter glitches, and sample content hygiene while preserving the deep navy blue band (`#0F172A`), section order, and footer newsletter inputs.
+
+| Item | Requirement | Implementation & Architectural Details | Verification Evidence |
+|---|---|---|---|
+| **1. Hero** | Floating PNG without frame; ONE short value chip. | Removed card, container box, and background border around product images. Soft ground shadow only (`box-shadow: 0 24px 48px -12px rgba(15,23,42,0.18)`). Frosted glass chip displays ONE short value only (e.g. `4K`), omitting label and price chip. | Verified on desktop and mobile live screenshots in `scratch/shots/desktop-live-1280.png` and `mobile-live-375-top.png`. |
+| **2. Highlight Tiles** | Universal `formatSpecValue` function. | Created `src/utils/specUtils.ts` with strict rules: explicit `highlightValue`, booleans show check icon + shortLabel (omit when false), numbers append template units (e.g. `250 W`), strings > 14 chars fallback to first number + unit, never `...`, never raw `true`/`false`. | Verified in `ProductCard.tsx`, `QuickViewModal.tsx`, `HeroSlider.tsx`. |
+| **3. Badges** | Single badge priority: Sale > Hot > New; Hot max 2/row. | `ProductCard.tsx` renders exactly one badge with strict priority. `ProductRow.tsx` tracks row hot counter to enforce at most 2 Hot badges per row. | Verified on Popular and New Arrivals rows in `desktop-live-1280-mid.png` and `desktop-live-packages-solutions.png`. |
+| **4. Demo Data Hygiene** | Realistic placeholder data flagged `sample: true`. | Added 39 sample products across 7 categories in `serverSeeds.json` and SQLite. Replaced gibberish with placeholder style (`Sample Customer 1`, `Sample Corporate Client`). Icon circles for avatars. Corner "DEMO" tag (10px uppercase high contrast). Admin toggle "Show demo tags" and button "Remove all sample content". | Verified in `testimonials` table, `desktop-live-category-rows.png`, and `AdminDashboard.tsx`. |
+| **5. Missing Rows & Deduplication** | New Arrivals, Trending, and category rows render with >= 4 cards. | Sliced global rows (`dedupPopular`, `dedupNewArrivals`, `dedupTrending`) to 4 cards each. Deduplicated cleanly so Special Offers (4), Popular (4), New Arrivals (4), Trending (4), and Category rows (Wi-Fi, Storage, CCTV, Switches, Cables) all keep >= 4 unique cards (or >= 2 centered). | Verified via CDP: `sections: 13`, `productCards: 67`, zero duplicates across rows. |
+| **6. CCTV Packages** | Dynamic tabs/chips combined with AND, distinct SVGs. | Filter chips derived dynamically from package data (hidden if < 2 options). Combined with AND logic, synced to URL query (`?cameras=...&type=...`). Friendly empty state with "Reset filters". Distinct SVG per kit (`CctvPackageSvg`). Dynamic pricing calculates color camera pricing (`prod-hik-color-2mp`). | Verified in `desktop-live-packages-solutions.png` and `test_packages_dynamic.js`. |
+| **7. Special Offers** | Zero image box; 50/50 two-column layout; ground shadow only. | Removed gradient well, rounded box, and inner card borders. 50/50 two-column grid layout with larger floating camera on right. Arrow and dot controls hide when offers <= 2. | Verified in `desktop-live-1280-solutions.png`. |
+| **8. Our Solutions** | Left-aligned heading with "View all"; 3-column row-fill cards. | Redesigned with left-aligned SectionHeader, 3 cols desktop / 2 cols tablet / 1 col mobile using row-fill algorithm. Horizontal tile (min-height 112px, 48px tinted icon on left, 17px bold title, 2-line description, "Learn more" link). Whole card clickable. | Verified in `desktop-live-services-trending.png`. |
+| **9. Brand Strip** | One-line scrolling band (retained from pass 1). | Single hairline band (`#FAF7F2`) with fixed left label "BRANDS WE WORK WITH", vertical divider, and infinite seamless marquee. | Verified in `desktop-live-1280.png`. |
+

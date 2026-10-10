@@ -586,7 +586,7 @@ app.get('/api/products', (req, res) => {
       items.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'popular') {
       items.sort((a, b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0));
-    } else if (sortBy === 'newest') {
+    } else if (sortBy === 'newest' || sortBy === 'created_at') {
       items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     }
 
@@ -1019,9 +1019,14 @@ app.delete(['/api/spec-templates/:id', '/api/admin/spec-templates/:id'], require
 function calculateDynamicPackagePrice(packageId, cameraCount = 4, formFactor = 'bullet') {
   const count = parseInt(cameraCount, 10) || 4;
   const ff = (formFactor || 'bullet').toLowerCase();
+  const pkgId = (packageId || '').toLowerCase();
+  const isColorPackage = pkgId.includes('color');
 
-  // 1. Determine component SKU requirements according to engineering rules
-  const camSku = (ff === 'dome' || ff === 'turret') ? 'prod-hik-dome-2mp' : 'prod-hik-irpf-2mp';
+  // 1. Determine component SKU requirements according to package type and engineering rules
+  let camSku = (ff === 'dome' || ff === 'turret') ? 'prod-hik-dome-2mp' : 'prod-hik-irpf-2mp';
+  if (isColorPackage) {
+    camSku = (ff === 'dome' || ff === 'turret') ? 'prod-hik-color-dome-2mp' : 'prod-hik-color-2mp';
+  }
 
   let dvrSku;
   if (count <= 4) dvrSku = 'prod-hik-dvr-4ch';

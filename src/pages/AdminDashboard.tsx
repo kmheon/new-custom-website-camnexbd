@@ -431,10 +431,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   };
 
   const handleClearDemoData = async () => {
-    if (confirm('Clear all sample/demo data? Only your real saved records will remain.')) {
+    if (confirm('Remove all sample content? This will delete all sample records and leave only real records.')) {
       await cmsService.clearDemoData();
       refreshAllData();
-      alert('Sample data cleared.');
+      alert('All sample content removed.');
     }
   };
 
@@ -633,7 +633,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               className="w-full text-left text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2 py-1"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Clear Sample Data</span>
+              <span>Remove all sample content</span>
             </button>
             <button
               onClick={handleResetSeeds}
@@ -1942,6 +1942,28 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         />
                       </div>
                     </div>
+                  </div>
+
+                  {/* Demonstration Content & Tag Visibility */}
+                  <div className="pt-4 border-t border-slate-800 space-y-3">
+                    <span className="text-[#F15A24] font-bold block uppercase tracking-wider text-xs">
+                      Demonstration Content & Tags
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="showDemoTags"
+                        checked={settings.showDemoTags !== false}
+                        onChange={(e) => updateSettings({ showDemoTags: e.target.checked })}
+                        className="w-4 h-4 rounded text-[#F15A24] focus:ring-[#F15A24]"
+                      />
+                      <label htmlFor="showDemoTags" className="text-slate-300 font-semibold cursor-pointer">
+                        Show demo tags (Displays small "DEMO" corner badge on sample cards)
+                      </label>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      When OFF, sample cards appear identical to real production hardware cards.
+                    </p>
                   </div>
 
                   {/* Footer Specific Settings */}
