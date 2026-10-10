@@ -128,7 +128,7 @@ function authenticate(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || req.user.role === 'customer') {
     return res.status(403).json({ error: 'Access denied: Administrator privileges required.' });
   }
   next();

@@ -246,6 +246,7 @@ async function main() {
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));
     results.push(await runTestSuite('Admin Completeness Suite', path.join(__dirname, 'test_admin_completeness.js'), testEnv));
+    results.push(await runTestSuite('RBAC & Identity Suite', path.join(__dirname, 'test_rbac.js'), testEnv));
     results.push(await runTestSuite('Security Attacks & CSRF Suite', path.join(__dirname, 'test_security_attacks.js'), testEnv));
 
   } finally {

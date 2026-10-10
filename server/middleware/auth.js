@@ -295,6 +295,10 @@ function stripCostFields(data, user) {
     delete sanitized.cost;
     delete sanitized.purchase_cost;
     delete sanitized.supplier_cost;
+    delete sanitized.costPrice;
+    delete sanitized.purchasePrice;
+    delete sanitized.purchaseCost;
+    delete sanitized.supplierCost;
     for (const key of Object.keys(sanitized)) {
       if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
         sanitized[key] = stripCostFields(sanitized[key], user);
@@ -303,6 +307,13 @@ function stripCostFields(data, user) {
     return sanitized;
   }
   return data;
+}
+
+// Response filter: strip purchase-cost fields from every JSON response unless pricing.cost.read is granted
+function costFieldFilter(req, res, next) {
+  const original = res.json.bind(res);
+  res.json = (body) => original(stripCostFields(body, req.user));
+  next();
 }
 
 // 8. Body Validation
@@ -340,6 +351,7 @@ module.exports = {
   requireStaffAccess,
   csrfProtection,
   stripCostFields,
+  costFieldFilter,
   validateBody
 };
 

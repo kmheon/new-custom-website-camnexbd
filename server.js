@@ -28,6 +28,9 @@ const {
 } = require('./auth');
 const { configureCors } = require('./server/middleware/cors');
 const { authenticate: rbacAuthenticate } = require('./server/middleware/auth');
+const { enforcePolicy } = require('./server/middleware/policy');
+const { createSession: createStaffSession, costFieldFilter } = require('./server/middleware/auth');
+const staffService = require('./server/modules/staff/staff.service');
 const { startDomainEventWorker } = require('./server/middleware/events');
 const apiV1Router = require('./server/routes/api.v1');
 
@@ -220,13 +223,17 @@ app.use('/api/', (req, res, next) => {
 app.use('/api/', apiLimiter);
 app.use(csrfProtection);
 app.use('/api/admin', requireAdmin);
+// RBAC: load effective permissions, then enforce the central policy table on every /api route
+app.use('/api', rbacAuthenticate);
+app.use('/api', enforcePolicy);
+app.use('/api', costFieldFilter);
 
 // New platform endpoints (staff, audit, inventory) are served by the domain modules;
 // all other routes are handled by the existing handlers below.
 const PLATFORM_PREFIXES = ['/staff', '/auth/staff', '/audit-logs', '/inventory'];
 app.use('/api', (req, res, next) => {
   if (PLATFORM_PREFIXES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
-    return rbacAuthenticate(req, res, () => apiV1Router(req, res, next));
+    return apiV1Router(req, res, next);
   }
   next();
 });
@@ -348,23 +355,11 @@ app.get('/api/auth/me', (req, res) => {
 app.post('/api/auth/admin/login', loginLimiter, validateBody(schemas.adminLogin), (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(email.trim());
-    if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-      return res.status(401).json({ error: 'Invalid administrator email or password.' });
-    }
-
-    const { csrfToken } = createSession(user.id, user.role, user.email, user.name, res);
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      },
-      csrfToken
-    });
+    const user = staffService.login(email.trim(), password, req.ip);
+    const { csrfToken } = createStaffSession(user.id, user.role, user.email, user.name, res, 'admin');
+    res.json({ success: true, user, csrfToken });
   } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
     res.status(500).json({ error: err.message });
   }
 });
@@ -1267,7 +1262,7 @@ app.get('/api/orders/:orderNumber', (req, res) => {
     if (!row) return res.status(404).json({ error: 'Order not found' });
 
     // 1. If administrator, full access is granted
-    if (req.user && req.user.role === 'admin') {
+    if (req.user && (req.user.role === 'admin' || req.user.permissions?.includes('orders.read'))) {
       return res.json(JSON.parse(row.data_json));
     }
 

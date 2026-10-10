@@ -7,7 +7,7 @@ const { PERMISSIONS, SYSTEM_ROLES } = require('../../shared/permissions');
 
 class StaffService {
   login(email, password, ip = null) {
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(email);
     if (!user) {
       const err = new Error('Invalid email or password.');
       err.statusCode = 401;
