@@ -214,7 +214,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
             <div className="bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-[#111827] uppercase tracking-wider block">
-                  System Architecture:
+                  System Type:
                 </span>
                 <Badge variant="dark" className="text-[10px]">
                   {selectedPackage.systemTypeName?.split('/')[0].trim() || (selectedPackage.systemTypeSlug === 'wireless' ? 'Wireless' : selectedPackage.systemTypeSlug === 'ip' ? 'IP Network' : 'Analogue HD')}

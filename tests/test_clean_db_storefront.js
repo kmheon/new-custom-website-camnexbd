@@ -98,7 +98,8 @@ async function run() {
     'Verified Client Feedback',
     'Real deployment feedback from',
     'firmware guidance',
-    'Fast physical site surveys'
+    'Fast physical site surveys',
+    'architecture'
   ];
 
   const routesToCheck = ['/', '/product/prod-hik-irpf-2mp', '/checkout'];

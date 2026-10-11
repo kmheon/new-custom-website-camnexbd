@@ -440,6 +440,7 @@ function initDb() {
 
   seedDatabaseIfEmpty();
   ensureComponentProducts();
+  ensurePackageSystemTypes();
 }
 
 function migratePlatformTables(targetDb) {
@@ -677,6 +678,36 @@ function ensureComponentProducts() {
   }
 }
 
+function ensurePackageSystemTypes() {
+  try {
+    const count = db.prepare('SELECT count(*) as count FROM package_system_types').get();
+    if (count.count === 0) {
+      const seedsPath = path.join(__dirname, 'serverSeeds.json');
+      if (!fs.existsSync(seedsPath)) return;
+      const seeds = JSON.parse(fs.readFileSync(seedsPath, 'utf8'));
+      const insertSysType = db.prepare(`
+        INSERT OR REPLACE INTO package_system_types (id, name, slug, description, icon, display_order, enabled, data_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const st of seeds.INITIAL_PACKAGE_SYSTEM_TYPES || []) {
+        insertSysType.run(
+          st.id,
+          st.name,
+          st.slug,
+          st.description || '',
+          st.icon || '',
+          st.order || 1,
+          st.enabled !== false ? 1 : 0,
+          JSON.stringify(st)
+        );
+      }
+      console.log('Seeded package_system_types with default system types.');
+    }
+  } catch (err) {
+    console.error('Failed to ensure package system types:', err.message);
+  }
+}
+
 function ensureAdminUser() {
   const adminEmail = (process.env.ADMIN_EMAIL || 'admin@camnexbd.com').toLowerCase().trim();
   const adminPass = process.env.ADMIN_PASSWORD;
@@ -832,6 +863,23 @@ function seedDatabaseIfEmpty() {
   `);
   for (const ps of seeds.INITIAL_PACKAGE_SERIES || []) {
     insertSeries.run(ps.id, ps.name, ps.slug, ps.enabled !== false ? 1 : 0, ps.order || 1, JSON.stringify(ps));
+  }
+
+  const insertSysType = db.prepare(`
+    INSERT OR REPLACE INTO package_system_types (id, name, slug, description, icon, display_order, enabled, data_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  for (const st of seeds.INITIAL_PACKAGE_SYSTEM_TYPES || []) {
+    insertSysType.run(
+      st.id,
+      st.name,
+      st.slug,
+      st.description || '',
+      st.icon || '',
+      st.order || 1,
+      st.enabled !== false ? 1 : 0,
+      JSON.stringify(st)
+    );
   }
 
   const insertGlossary = db.prepare(`

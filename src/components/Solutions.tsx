@@ -17,7 +17,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
             Core Engineering Solutions
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-['Plus_Jakarta_Sans'] tracking-tight text-[#0B1220]">
-            Enterprise-Grade Security & Infrastructure Architecture
+            Enterprise-Grade Security & Infrastructure Solutions
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed">
             Every solution is engineered with authentic hardware, concealed wiring standards, and dedicated after-sales SLA support.

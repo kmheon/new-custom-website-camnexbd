@@ -66,7 +66,8 @@ const BANNED_PHRASES = [
   'Verified Client Feedback',
   'Real deployment feedback from',
   'firmware guidance',
-  'Fast physical site surveys'
+  'Fast physical site surveys',
+  'architecture'
 ];
 
 async function runHomepageFixesTests() {

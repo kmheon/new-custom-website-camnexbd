@@ -654,6 +654,29 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     return counts;
   }, [packages, packageSystemTypes]);
 
+  const visibleSystemTypes = useMemo(() => {
+    return systemTypesOrdered.filter((st) => {
+      if (st.enabled === false) return false;
+      const count = systemCounts[st.slug] || 0;
+      return count > 0;
+    });
+  }, [systemTypesOrdered, systemCounts]);
+
+  const getNightViewOptionLabel = (series: PackageSeries) => {
+    const s = series.slug.toLowerCase();
+    const n = series.name.toLowerCase();
+    if (s === 'series-ir' || n.includes('night vision') || n.includes('infrared')) {
+      return 'Night picture: Black and white';
+    }
+    if (s === 'series-hybrid' || n.includes('hybrid')) {
+      return 'Hybrid light';
+    }
+    if (s === 'series-color' || n.includes('color')) {
+      return 'Full color';
+    }
+    return series.name;
+  };
+
   const getSystemTypeLabel = (st: PackageSystemType) => {
     const s = st.slug.toLowerCase();
     if (s.includes('ip')) return 'IP cameras';
@@ -884,47 +907,51 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             {/* 1. FILTER TOOLBAR: One line desktop, stacked mobile. No horizontal scroll strips */}
             <div className="mb-6 space-y-2">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 bg-white/70 backdrop-blur-xs p-2 sm:p-2.5 rounded-2xl border border-[#EDE8E1] shadow-2xs">
-                {/* (a) SYSTEM TYPE segmented control of 3 equal buttons */}
-                <div
-                  role="radiogroup"
-                  aria-label="Filter packages by system architecture"
-                  className="bg-slate-100/80 p-1 rounded-xl border border-[#EDE8E1] grid grid-cols-3 gap-1 w-full lg:max-w-md shrink-0"
-                >
-                  {systemTypesOrdered.map((st) => {
-                    const isActive = systemFilter === st.slug;
-                    const count = systemCounts[st.slug] || 0;
-                    return (
-                      <button
-                        key={st.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={isActive}
-                        onClick={() =>
-                          updatePackageFilters(
-                            isActive ? 'all' : st.slug,
-                            packageCountFilter,
-                            nightViewFilter
-                          )
-                        }
-                        className={`py-2 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
-                          isActive
-                            ? 'bg-[#0F172A] text-white shadow-xs'
-                            : 'text-[#5B6472] hover:text-[#111827] hover:bg-white'
-                        }`}
-                      >
-                        {getSystemTypeIcon(st)}
-                        <span className="truncate">{getSystemTypeLabel(st)}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                            isActive ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-[#5B6472]'
+                {/* (a) SYSTEM TYPE segmented control of equal buttons (hidden if <= 1 system type has packages) */}
+                {visibleSystemTypes.length > 1 && (
+                  <div
+                    role="radiogroup"
+                    aria-label="Filter packages by system type"
+                    className={`bg-slate-100/80 p-1 rounded-xl border border-[#EDE8E1] grid ${
+                      visibleSystemTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+                    } gap-1 w-full lg:max-w-md shrink-0`}
+                  >
+                    {visibleSystemTypes.map((st) => {
+                      const isActive = systemFilter === st.slug;
+                      const count = systemCounts[st.slug] || 0;
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={isActive}
+                          onClick={() =>
+                            updatePackageFilters(
+                              isActive ? 'all' : st.slug,
+                              packageCountFilter,
+                              nightViewFilter
+                            )
+                          }
+                          className={`py-2 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                            isActive
+                              ? 'bg-[#0F172A] text-white shadow-xs'
+                              : 'text-[#5B6472] hover:text-[#111827] hover:bg-white'
                           }`}
                         >
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                          {getSystemTypeIcon(st)}
+                          <span className="truncate">{getSystemTypeLabel(st)}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                              isActive ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-[#5B6472]'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Dropdowns + Clear filters */}
                 <div className="flex items-center gap-2.5 w-full lg:w-auto justify-between lg:justify-end">
@@ -956,17 +983,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <div className="relative">
                       <select
                         id="filter-night-view"
-                        aria-label="Filter packages by night view"
+                        aria-label="Filter packages by night picture"
                         value={nightViewFilter}
                         onChange={(e) => updatePackageFilters(systemFilter, packageCountFilter, e.target.value)}
                         className="w-full lg:w-auto h-9.5 pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
                       >
-                        <option value="all">All night views ({badgeCounts.nightViews['all'] || packages.length})</option>
+                        <option value="all">Night picture: All ({badgeCounts.nightViews['all'] || packages.length})</option>
                         {packageSeriesList.map((series) => {
                           const matchCount = badgeCounts.nightViews[series.slug] || 0;
                           return (
                             <option key={series.id} value={series.slug} disabled={matchCount === 0}>
-                              {series.name} ({matchCount})
+                              {getNightViewOptionLabel(series)} ({matchCount})
                             </option>
                           );
                         })}
@@ -990,11 +1017,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               </div>
 
               {/* Selected type's one-line description below on desktop */}
-              <div className="hidden sm:block text-center text-xs text-[#5B6472] min-h-[18px]">
-                {systemFilter === 'all'
-                  ? 'Browse complete CCTV security systems with recorder, storage, and cables. Choose an architecture or filter by size.'
-                  : packageSystemTypes.find((s) => s.slug === systemFilter)?.description || ''}
-              </div>
+              {systemFilter !== 'all' && (
+                <div className="hidden sm:block text-center text-xs text-[#5B6472] min-h-[18px]">
+                  {packageSystemTypes.find((s) => s.slug === systemFilter)?.description || ''}
+                </div>
+              )}
             </div>
 
             {/* Package Cards Row (max 4 cards) or Friendly Empty State */}

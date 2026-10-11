@@ -504,7 +504,8 @@ async function runRevision2Tests() {
       'Genuine Products',
       'Fast Response',
       'Free Consultation',
-      'Authorized Hardware Partners'
+      'Authorized Hardware Partners',
+      'architecture'
     ];
 
     const checkDomForClaims = async (contextName) => {
