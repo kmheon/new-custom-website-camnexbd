@@ -235,6 +235,40 @@ async function runCdpEqualHeights() {
               }
             }
 
+            // C. Check Hover Lift & Shadow Clearance (Padding-Block and Ancestor Overflows)
+            const shadowChecks = [];
+            rows.forEach((row, rIdx) => {
+              const comp = window.getComputedStyle(row);
+              const pt = parseFloat(comp.paddingTop);
+              const pb = parseFloat(comp.paddingBottom);
+              const mt = parseFloat(comp.marginTop);
+              const mb = parseFloat(comp.marginBottom);
+
+              let p = row.parentElement;
+              let badAncestor = false;
+              let badAncestorTag = '';
+              while (p && p !== document.body && p !== document.documentElement) {
+                const s = window.getComputedStyle(p);
+                if (s.overflow === 'hidden' || s.overflowY === 'hidden') {
+                  badAncestor = true;
+                  badAncestorTag = p.tagName.toLowerCase() + '.' + (p.className ? p.className.split(' ')[0] : '');
+                  break;
+                }
+                p = p.parentElement;
+              }
+
+              results.push({
+                type: 'shadow-clearance',
+                index: rIdx,
+                pt,
+                pb,
+                mt,
+                mb,
+                badAncestor,
+                badAncestorTag
+              });
+            });
+
             return results;
           })()
         `,
@@ -253,6 +287,17 @@ async function runCdpEqualHeights() {
             throw new Error(`Package Grid has card height variance of ${chk.maxDiff}px in same row at ${vp.name}. Must be equal within 1.5px.`);
           }
           console.log(`  ✓ PASS [${vp.name}]: Package Grid (${chk.count} cards) equal height within ${chk.maxDiff}px`);
+        } else if (chk.type === 'shadow-clearance') {
+          if (chk.badAncestor) {
+            throw new Error(`Product CardRow #${chk.index + 1} has ancestor with overflow:hidden (${chk.badAncestorTag}), which clips hover lift and shadow.`);
+          }
+          if (chk.pt < 20 || chk.pb < 28) {
+            throw new Error(`Product CardRow #${chk.index + 1} insufficient vertical headroom for shadow (pt: ${chk.pt}px, pb: ${chk.pb}px). Required: pt>=24px, pb>=32px.`);
+          }
+          if (chk.mt > -20 || chk.mb > -28) {
+            throw new Error(`Product CardRow #${chk.index + 1} missing negative margins to compensate for padding (mt: ${chk.mt}px, mb: ${chk.mb}px).`);
+          }
+          console.log(`  ✓ PASS [${vp.name}]: CardRow #${chk.index + 1} hover shadow clearance verified (pt: ${chk.pt}px, pb: ${chk.pb}px, no clipping ancestors)`);
         }
       }
     }

@@ -62,7 +62,7 @@ export const CardRow = forwardRef<HTMLDivElement, CardRowProps>(({
         role="region"
         aria-label={ariaLabel}
         tabIndex={0}
-        className={`card-row-scroller card-subgrid-row no-scrollbar pt-6 pb-8 -mt-6 -mb-8 px-3 -mx-3 scroll-px-3 focus:outline-none flex items-stretch gap-5 ${
+        className={`card-row-scroller card-subgrid-row no-scrollbar pt-6 pb-8 -mt-6 -mb-8 px-4 -mx-4 scroll-px-4 focus:outline-none flex items-stretch gap-5 ${
           itemCount > 4 ? 'overflow-x-auto snap-x snap-mandatory' : 'overflow-x-hidden'
         } ${itemCount < 4 ? 'justify-center' : ''}`}
         style={{
