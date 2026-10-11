@@ -67,13 +67,13 @@ img, svg, video, canvas, audio, iframe, embed, object {
 
 @media (min-width: 768px) {
   :root {
-    --card-w: calc((100% - 2 * 16px) / 3);
+    --card-w: clamp(240px, calc((100% - 2 * 16px) / 3), 320px);
   }
 }
 
 @media (min-width: 1024px) {
   :root {
-    --card-w: calc((100% - 3 * 16px) / 4);
+    --card-w: clamp(240px, calc((100% - 3 * 16px) / 4), 320px);
   }
 }
 

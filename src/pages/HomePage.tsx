@@ -869,7 +869,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <section
           id="packages"
           aria-label="CCTV Packages"
-          className="w-full bg-[#FAF7F2] py-12 md:py-[72px]"
+          className="w-full bg-[#FAF7F2] py-10 md:py-12"
         >
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
@@ -878,7 +878,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               subtitle="Camera sets with recorder, storage and cables. Pick a set, then adjust it to fit your place."
               actionText="All packages"
               onAction={() => onNavigate('packages')}
-              className="mb-8"
+              className="mb-5"
             />
 
             {/* 1. FILTER TOOLBAR: One line desktop, stacked mobile. No horizontal scroll strips */}
@@ -1033,7 +1033,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </CardRow>
 
                 {displayPackages.length > 4 && (
-                  <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+                  <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
                     <span className="text-xs font-medium text-[#5B6472]">
                       Showing 4 of {displayPackages.length} packages
                     </span>

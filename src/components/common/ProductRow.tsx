@@ -160,7 +160,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       >
         {/* Filled Lead-in Panel (Desktop/Tablet): visible sm and up, exactly one card wide */}
         {promoTile && (
-          <div className="lead-in-tile card-item-fixed snap-start hidden sm:flex bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 rounded-2xl border border-[#EDE8E1] p-5 flex-col justify-between shadow-2xs">
+          <div className="lead-in-tile card-item-fixed snap-start hidden sm:flex bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 rounded-2xl border border-[#EDE8E1] p-4 flex-col justify-between shadow-2xs">
             {/* Top: Category Title, Subtitle, and Badge */}
             <div>
               {promoTile.badge && (

@@ -272,7 +272,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* 4. DETAILS SLOT (Highlight tile area reserved at height of 2 tile rows; visibility hidden when empty) */}
         <CardDetailsSlot>
-          <div className="min-h-[66px]">
+          <div className="min-h-[70px]">
             {highlightCards.length > 0 ? (
               <div className="grid grid-cols-2 gap-1.5">
                 {highlightCards.slice(0, 4).map((hl, idx) => (
@@ -293,7 +293,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="invisible select-none min-h-[66px]" aria-hidden="true">&nbsp;</div>
+              <div className="invisible select-none min-h-[70px]" aria-hidden="true">&nbsp;</div>
             )}
           </div>
         </CardDetailsSlot>

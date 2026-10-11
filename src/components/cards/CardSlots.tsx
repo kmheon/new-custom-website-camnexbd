@@ -35,7 +35,7 @@ export const CardContainer: React.FC<CardSlotProps & { 'data-card-id'?: string; 
       data-product-id={dataProductId}
       data-package-id={dataPackageId}
       onClick={onClick}
-      className={`card-item-fixed bg-white rounded-2xl border border-[#EDE8E1] p-4 sm:p-5 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 relative cursor-pointer group flex flex-col h-full min-w-0 ${className}`}
+      className={`card-item-fixed bg-white rounded-2xl border border-[#EDE8E1] p-4 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 relative cursor-pointer group flex flex-col h-full min-w-0 ${className}`}
     >
       {children}
     </div>
@@ -43,7 +43,7 @@ export const CardContainer: React.FC<CardSlotProps & { 'data-card-id'?: string; 
 };
 
 export const CardMediaSlot: React.FC<CardSlotProps> = ({ children, className = '' }) => (
-  <div className={`card-slot-media mb-3 relative overflow-hidden rounded-xl ${className}`}>
+  <div className={`card-slot-media mb-2.5 relative overflow-hidden rounded-xl ${className}`}>
     {children}
   </div>
 );
@@ -61,19 +61,19 @@ export const CardTitleSlot: React.FC<CardSlotProps> = ({ children, className = '
 );
 
 export const CardDescriptionSlot: React.FC<CardSlotProps> = ({ children, className = '' }) => (
-  <div className={`card-slot-description mb-3 min-w-0 ${className}`}>
+  <div className={`card-slot-description mb-2.5 min-w-0 ${className}`}>
     {children || <div className="invisible select-none h-4" aria-hidden="true">&nbsp;</div>}
   </div>
 );
 
 export const CardDetailsSlot: React.FC<CardSlotProps> = ({ children, className = '' }) => (
-  <div className={`card-slot-details mb-4 min-w-0 ${className}`}>
+  <div className={`card-slot-details mb-3 min-w-0 ${className}`}>
     {children || <div className="invisible select-none" aria-hidden="true">&nbsp;</div>}
   </div>
 );
 
 export const CardPriceSlot: React.FC<CardSlotProps> = ({ children, className = '' }) => (
-  <div className={`card-slot-price pt-3 border-t border-[#EDE8E1]/80 mb-3 min-w-0 ${className}`}>
+  <div className={`card-slot-price pt-2.5 border-t border-[#EDE8E1]/80 mb-2.5 min-w-0 ${className}`}>
     {children}
   </div>
 );

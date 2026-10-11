@@ -285,6 +285,7 @@ async function main() {
     results.push(await runTestSuite('Homepage Fixes Suite (CDP)', path.join(__dirname, 'test_homepage_fixes.js'), testEnv));
     results.push(await runTestSuite('Homepage Revision 3 Suite (CDP)', path.join(__dirname, 'test_homepage_revision3.js'), testEnv));
     results.push(await runTestSuite('Homepage Revision 4 Suite (CDP)', path.join(__dirname, 'test_homepage_revision4.js'), testEnv));
+    results.push(await runTestSuite('Homepage Sanity Limits & Equal-Height Suite (CDP)', path.join(__dirname, 'test_sanity_limits.js'), testEnv));
     results.push(await runTestSuite('Equal-Height Cards & CSS Subgrid Suite (CDP)', path.join(__dirname, 'test_equal_heights_subgrid.js'), testEnv));
     results.push(await runTestSuite('Platform Hardening Suite', path.join(__dirname, 'test_platform.js'), testEnv));
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));

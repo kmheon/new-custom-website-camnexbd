@@ -184,7 +184,7 @@ async function runCdpEqualHeights() {
             // A. Check Product Rows (CardRow)
             const rows = document.querySelectorAll('.card-row-scroller');
             rows.forEach((row, rIdx) => {
-              const cards = Array.from(row.querySelectorAll('.card-subgrid-item'));
+              const cards = Array.from(row.querySelectorAll('.card-item-fixed, .card-subgrid-item')).filter(c => c.offsetParent !== null && c.getBoundingClientRect().height > 0);
               if (cards.length >= 2) {
                 const heights = cards.map(c => c.getBoundingClientRect().height);
                 const minH = Math.min(...heights);
@@ -204,7 +204,7 @@ async function runCdpEqualHeights() {
             // B. Check Package Grid
             const pkgSection = document.querySelector('section#packages, section[aria-label="CCTV Packages"]');
             if (pkgSection) {
-              const cards = Array.from(pkgSection.querySelectorAll('.card-subgrid-item, div[class*="group/pkg"]'));
+              const cards = Array.from(pkgSection.querySelectorAll('.card-subgrid-item, div[class*="group/pkg"]')).filter(c => c.offsetParent !== null && c.getBoundingClientRect().height > 0);
               if (cards.length >= 2) {
                 const gridRows = {};
                 cards.forEach(card => {
