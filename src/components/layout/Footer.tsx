@@ -62,7 +62,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     { label: 'Installation Services', route: 'services' },
     { label: 'CCTV Packages', route: 'packages' },
     { label: 'Project Portfolio', route: 'projects' },
-    { label: 'About CamneX', route: 'about' }
+    { label: 'Company Profile', route: 'company_profile' }
   ];
 
   const productsLinks: FooterLinkItem[] = footerConfig?.products || [
@@ -306,12 +306,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <span>{footerConfig?.copyrightText || '© 2026 CamneX Bangladesh. All rights reserved.'}</span>
               <span className="text-white/20">|</span>
               <a
-                href="/admin"
+                href={(settings as any)?.staffAppUrl || '/staff'}
                 rel="nofollow"
                 aria-label="Staff login"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-[#A0A8B4] hover:text-white hover:border-[#F15A24] text-[11px] font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-[#A0A8B4] hover:text-white hover:border-slate-500 text-[11px] font-medium transition-colors cursor-pointer"
               >
-                <Lock className="w-3 h-3 text-[#F15A24]" />
+                <Lock className="w-3 h-3 text-slate-400" />
                 <span>Staff login</span>
               </a>
             </div>

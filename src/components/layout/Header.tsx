@@ -614,6 +614,58 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 )}
               </div>
 
+              {/* Company Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleDropdown('company')}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                >
+                  <span>Company</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#5B6472]" />
+                </button>
+
+                {activeDropdown === 'company' && (
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2 z-50 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('company_profile'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                    >
+                      Company Profile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('projects'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                    >
+                      Projects & Portfolio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('why_choose_us'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                    >
+                      Why Choose Us
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('company_profile', 'certifications'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                    >
+                      Certifications & Compliance
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveDropdown(null); onNavigate('contact'); }}
+                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                    >
+                      Contact
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Support Dropdown */}
               <div className="relative">
                 <button
@@ -861,6 +913,52 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               >
                 Packages
               </button>
+
+              {/* Company Accordion */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleMobileAccordion('company')}
+                  className="w-full flex items-center justify-between py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+                >
+                  <span>Company</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${mobileAccordion === 'company' ? 'rotate-180' : ''}`} />
+                </button>
+                {mobileAccordion === 'company' && (
+                  <div className="pl-4 py-1 space-y-1">
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); onNavigate('company_profile'); }}
+                      className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
+                    >
+                      Company Profile
+                    </button>
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); onNavigate('projects'); }}
+                      className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
+                    >
+                      Projects & Portfolio
+                    </button>
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); onNavigate('why_choose_us'); }}
+                      className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
+                    >
+                      Why Choose Us
+                    </button>
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); onNavigate('company_profile', 'certifications'); }}
+                      className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
+                    >
+                      Certifications & Compliance
+                    </button>
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); onNavigate('contact'); }}
+                      className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
+                    >
+                      Contact
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => { setMobileMenuOpen(false); onNavigate('wishlist'); }}
                 className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2] flex items-center justify-between"

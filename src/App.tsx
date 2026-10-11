@@ -19,6 +19,7 @@ const CustomerAccountPage = lazy(() => import('./pages/CustomerAccountPage').the
 const ContentPages = lazy(() => import('./pages/ContentPages').then(m => ({ default: m.ContentPages })));
 const WishlistPage = lazy(() => import('./pages/WishlistPage').then(m => ({ default: m.WishlistPage })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const CompanyProfilePage = lazy(() => import('./pages/CompanyProfilePage').then(m => ({ default: m.CompanyProfilePage })));
 
 const PageLoadingFallback: React.FC = () => (
   <div className="min-h-[50vh] flex items-center justify-center py-16">
@@ -122,8 +123,13 @@ export default function App() {
         setCurrentRoute('faq');
       } else if (path === '/contact') {
         setCurrentRoute('contact');
-      } else if (path === '/about') {
-        setCurrentRoute('about');
+      } else if (path === '/about' || path === '/company-profile' || path.startsWith('/company-profile')) {
+        setCurrentRoute('company_profile');
+        if (window.location.hash) {
+          setRouteParam(window.location.hash.replace('#', ''));
+        }
+      } else if (path === '/why-choose-us') {
+        setCurrentRoute('why_choose_us');
       } else if (path === '/warranty') {
         setCurrentRoute('warranty');
       } else if (path === '/terms') {
@@ -177,7 +183,9 @@ export default function App() {
     else if (route === 'testimonials') newUrl = '/testimonials';
     else if (route === 'faq') newUrl = '/faq';
     else if (route === 'contact') newUrl = '/contact';
-    else if (route === 'about') newUrl = '/about';
+    else if (route === 'company_profile') newUrl = param ? `/company-profile#${param}` : '/company-profile';
+    else if (route === 'why_choose_us') newUrl = '/why-choose-us';
+    else if (route === 'about') newUrl = '/company-profile';
     else if (route === 'warranty') newUrl = '/warranty';
     else if (route === 'terms') newUrl = '/terms';
     else if (route === 'privacy') newUrl = '/privacy';
@@ -217,7 +225,9 @@ export default function App() {
           {currentRoute === 'testimonials' && <ContentPages type="testimonials" onNavigate={navigate} />}
           {currentRoute === 'faq' && <ContentPages type="faq" onNavigate={navigate} />}
           {currentRoute === 'contact' && <ContentPages type="contact" onNavigate={navigate} />}
-          {currentRoute === 'about' && <ContentPages type="about" onNavigate={navigate} />}
+          {currentRoute === 'company_profile' && <CompanyProfilePage initialTab={routeParam} onNavigate={navigate} />}
+          {currentRoute === 'why_choose_us' && <CompanyProfilePage initialTab="overview" onNavigate={navigate} />}
+          {currentRoute === 'about' && <CompanyProfilePage initialTab={routeParam} onNavigate={navigate} />}
           {currentRoute === 'warranty' && <ContentPages type="warranty" onNavigate={navigate} />}
           {currentRoute === 'terms' && <ContentPages type="terms" onNavigate={navigate} />}
           {currentRoute === 'privacy' && <ContentPages type="privacy" onNavigate={navigate} />}
