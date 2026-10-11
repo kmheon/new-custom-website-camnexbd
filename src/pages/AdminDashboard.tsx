@@ -8,6 +8,7 @@ import {
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
 import { useAdminAuthStore, useSettingsStore } from '../store';
+import { hasPermission, PERMISSIONS } from '../shared/permissions';
 import {
   productService, categoryService, brandService, specTemplateService,
   packageService, orderService, quoteService, cmsService, productResearchService
@@ -570,13 +571,32 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     );
   }
 
-  if (!isAdminAuthenticated || !currentUser || currentUser.role !== 'admin') {
+  const canAccessWebsite = currentUser && (
+    currentUser.role === 'admin' ||
+    currentUser.role === 'super-admin' ||
+    (Array.isArray(currentUser.permissions) && (currentUser.permissions.includes('website.access') || currentUser.permissions.includes('*')))
+  );
+
+  const hasPerm = (perm: string) => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin' || currentUser.role === 'super-admin') return true;
+    return hasPermission(currentUser.permissions, perm);
+  };
+
+  const hasStaffAccess = currentUser && (
+    currentUser.role === 'admin' ||
+    currentUser.role === 'super-admin' ||
+    hasPerm('staff.access') ||
+    hasPerm('staff.manage')
+  );
+
+  if (!isAdminAuthenticated || !currentUser || !canAccessWebsite) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
         <header className="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#F15A24]"></span>
-            <span className="text-sm font-black text-white tracking-tight font-heading">Camne<span className="text-[#F15A24]">X</span> Portal</span>
+            <span className="text-sm font-black text-white tracking-tight font-heading">Camne<span className="text-[#F15A24]">X</span> Website Manager</span>
           </div>
           <button onClick={() => onNavigate('home')} className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">
             Return to Storefront
@@ -590,10 +610,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               <span className="text-2xl font-black text-white tracking-tight">Camne<span className="text-[#F15A24]">X</span></span>
             </div>
             <h2 className="text-center text-xl font-bold tracking-tight text-white">
-              Administration Portal
+              Website Manager
             </h2>
             <p className="mt-1 text-center text-xs text-slate-400">
-              Sign in with your verified administrator credentials
+              Sign in with your authorized Website Manager or administrator credentials
             </p>
           </div>
 
@@ -641,7 +661,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     <span>Verifying...</span>
                   </>
                 ) : (
-                  <span>Sign In as Administrator</span>
+                  <span>Sign In to Website Manager</span>
                 )}
               </button>
             </form>
@@ -661,22 +681,22 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
   return (
     <div className="bg-slate-900 min-h-screen text-slate-100 flex flex-col">
-      <SEO title="Platform Admin Dashboard | CamneX Business Platform" description="Role-gated administration portal." noIndex={true} />
+      <SEO title="Website Manager | CamneX Business Platform" description="Website administration portal." noIndex={true} />
 
       {/* Admin Top Navigation */}
       <header className="sticky top-0 z-30 bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => onNavigate('home')} className="flex items-center gap-2 text-white font-bold text-sm">
             <span className="w-2 h-2 rounded-full bg-[#F15A24]"></span>
-            <span>Camne<strong className="text-[#F15A24]">X</strong> Platform Admin</span>
+            <span>Camne<strong className="text-[#F15A24]">X</strong> Website Manager</span>
           </button>
           <span className="text-xs text-slate-600">|</span>
-          <span className="text-xs text-slate-400 font-mono">Phase 1 E-Commerce & Catalog</span>
+          <span className="text-xs text-slate-400 font-mono">Storefront & CMS Management</span>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400">{currentUser?.name}</span>
+            <span className="text-slate-400">{currentUser?.name || currentUser?.email}</span>
             <span className="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700 text-emerald-300 font-mono text-[10px] uppercase">
               {currentUser?.role}
             </span>
@@ -688,6 +708,16 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           >
             Sign Out
           </button>
+
+          {hasStaffAccess && (
+            <a
+              href="/staff"
+              className="text-xs text-sky-400 hover:text-sky-300 font-bold hover:underline flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 border border-slate-700 hover:border-sky-700 transition-colors"
+            >
+              <span>Open Staff App</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
 
           <button
             onClick={() => onNavigate('home')}
@@ -707,27 +737,27 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           
           {[
             { id: 'dashboard', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
-            { id: 'products', label: 'Products & Catalog', icon: <Package className="w-4 h-4" /> },
-            { id: 'categories', label: 'Categories', icon: <FolderTree className="w-4 h-4" /> },
-            { id: 'templates', label: 'Spec Templates', icon: <Sliders className="w-4 h-4" /> },
-            { id: 'packages', label: 'CCTV Packages & Rules', icon: <Layers className="w-4 h-4" /> },
-            { id: 'orders', label: 'Orders & Timeline', icon: <ShoppingCart className="w-4 h-4" /> },
-            { id: 'customers', label: 'Customers & CRM', icon: <Users className="w-4 h-4" /> },
-            { id: 'quotes', label: 'Quotes & Surveys', icon: <FileText className="w-4 h-4" /> },
-            { id: 'media', label: 'Media Library', icon: <ImageIcon className="w-4 h-4" /> },
-            { id: 'heroslides', label: 'Hero Slides (Slider)', icon: <Sparkles className="w-4 h-4 text-[#F15A24]" /> },
-            { id: 'sections', label: 'Homepage Sections', icon: <Layers className="w-4 h-4" /> },
-            { id: 'projects', label: 'Projects & Portfolio', icon: <Briefcase className="w-4 h-4" /> },
-            { id: 'services', label: 'Technician Services', icon: <Wrench className="w-4 h-4 text-[#F15A24]" /> },
-            { id: 'pages', label: 'Pages & Policy CMS', icon: <Globe className="w-4 h-4" /> },
-            { id: 'testimonials', label: 'Customer Testimonials', icon: <Star className="w-4 h-4" /> },
-            { id: 'brands', label: 'Brands & Badges', icon: <Tag className="w-4 h-4" /> },
-            { id: 'scenarios', label: 'Scenarios & Topologies', icon: <Compass className="w-4 h-4 text-emerald-400" /> },
-            { id: 'redirects', label: 'URL Redirects (301)', icon: <Compass className="w-4 h-4" /> },
-            { id: 'blog', label: 'Blog & Articles', icon: <BookOpen className="w-4 h-4" /> },
-            { id: 'faqs', label: 'FAQ Knowledgebase', icon: <HelpCircle className="w-4 h-4" /> },
-            { id: 'settings', label: 'Site Settings & SEO', icon: <Settings className="w-4 h-4" /> }
-          ].map((m) => (
+            { id: 'products', label: 'Products & Catalog', icon: <Package className="w-4 h-4" />, perm: PERMISSIONS.CATALOG_READ },
+            { id: 'categories', label: 'Categories', icon: <FolderTree className="w-4 h-4" />, perm: PERMISSIONS.CATALOG_READ },
+            { id: 'templates', label: 'Spec Templates', icon: <Sliders className="w-4 h-4" />, perm: PERMISSIONS.CATALOG_READ },
+            { id: 'packages', label: 'CCTV Packages & Rules', icon: <Layers className="w-4 h-4" />, perm: PERMISSIONS.CATALOG_READ },
+            { id: 'orders', label: 'Orders & Timeline', icon: <ShoppingCart className="w-4 h-4" />, perm: PERMISSIONS.ORDERS_READ },
+            { id: 'customers', label: 'Customers & CRM', icon: <Users className="w-4 h-4" />, perm: PERMISSIONS.CUSTOMERS_READ },
+            { id: 'quotes', label: 'Quotes & Surveys', icon: <FileText className="w-4 h-4" />, perm: PERMISSIONS.QUOTES_MANAGE },
+            { id: 'media', label: 'Media Library', icon: <ImageIcon className="w-4 h-4" />, perm: PERMISSIONS.MEDIA_WRITE },
+            { id: 'heroslides', label: 'Hero Slides (Slider)', icon: <Sparkles className="w-4 h-4 text-[#F15A24]" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'sections', label: 'Homepage Sections', icon: <Layers className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'projects', label: 'Projects & Portfolio', icon: <Briefcase className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'services', label: 'Technician Services', icon: <Wrench className="w-4 h-4 text-[#F15A24]" />, perm: PERMISSIONS.SERVICES_MANAGE },
+            { id: 'pages', label: 'Pages & Policy CMS', icon: <Globe className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'testimonials', label: 'Customer Testimonials', icon: <Star className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'brands', label: 'Brands & Badges', icon: <Tag className="w-4 h-4" />, perm: PERMISSIONS.CATALOG_READ },
+            { id: 'scenarios', label: 'Scenarios & Topologies', icon: <Compass className="w-4 h-4 text-emerald-400" />, perm: PERMISSIONS.CATALOG_READ },
+            { id: 'redirects', label: 'URL Redirects (301)', icon: <Compass className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_REDIRECTS_WRITE },
+            { id: 'blog', label: 'Blog & Articles', icon: <BookOpen className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'faqs', label: 'FAQ Knowledgebase', icon: <HelpCircle className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'settings', label: 'Site Settings & SEO', icon: <Settings className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_SETTINGS_WRITE }
+          ].filter((m) => !m.perm || hasPerm(m.perm)).map((m) => (
             <button
               key={m.id}
               onClick={() => setActiveModule(m.id)}
@@ -740,23 +770,39 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             </button>
           ))}
 
-          <div className="pt-6 border-t border-slate-800 mt-6 px-3 space-y-2">
-            <span className="text-[10px] text-slate-500 font-bold block uppercase">Data Management</span>
-            <button
-              onClick={handleClearDemoData}
-              className="w-full text-left text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2 py-1"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Remove all sample content</span>
-            </button>
-            <button
-              onClick={handleResetSeeds}
-              className="w-full text-left text-xs font-bold text-slate-400 hover:text-white flex items-center gap-2 py-1"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Reset Sample Seeds</span>
-            </button>
-          </div>
+          {hasStaffAccess && (
+            <div className="pt-4 border-t border-slate-800 mt-4 px-3">
+              <span className="text-[10px] text-slate-500 font-bold block uppercase mb-1">Staff Operations</span>
+              <a
+                href="/staff"
+                className="w-full text-left text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-2 py-1.5 transition-colors"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Open Staff App</span>
+                <ExternalLink className="w-3 h-3 ml-auto opacity-70" />
+              </a>
+            </div>
+          )}
+
+          {hasPerm(PERMISSIONS.ROLES_MANAGE) && (
+            <div className="pt-6 border-t border-slate-800 mt-6 px-3 space-y-2">
+              <span className="text-[10px] text-slate-500 font-bold block uppercase">Data Management</span>
+              <button
+                onClick={handleClearDemoData}
+                className="w-full text-left text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2 py-1"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Remove all sample content</span>
+              </button>
+              <button
+                onClick={handleResetSeeds}
+                className="w-full text-left text-xs font-bold text-slate-400 hover:text-white flex items-center gap-2 py-1"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Reset Sample Seeds</span>
+              </button>
+            </div>
+          )}
         </aside>
 
         {/* Module Content */}

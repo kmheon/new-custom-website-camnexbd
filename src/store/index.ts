@@ -115,9 +115,16 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
   checkAuth: async () => {
     try {
       const data = await apiFetch<{ authenticated: boolean; user: any }>('/auth/me');
-      if (data && data.authenticated && data.user && data.user.role === 'admin') {
-        set({ currentUser: data.user, isAdminAuthenticated: true, error: null });
-        return true;
+      if (data && data.authenticated && data.user) {
+        const u = data.user;
+        const hasWebsiteAccess =
+          u.role === 'admin' ||
+          u.role === 'super-admin' ||
+          (Array.isArray(u.permissions) && (u.permissions.includes('website.access') || u.permissions.includes('*')));
+        if (hasWebsiteAccess) {
+          set({ currentUser: u, isAdminAuthenticated: true, error: null });
+          return true;
+        }
       }
       set({ currentUser: null, isAdminAuthenticated: false });
       return false;

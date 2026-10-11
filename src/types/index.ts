@@ -4,13 +4,16 @@
 // Designed for seamless Phase 2 POS / ERP integration
 // ============================================================================
 
-export type Role = 'admin' | 'editor' | 'support';
+export type Role = 'admin' | 'super-admin' | 'staff' | 'editor' | 'support' | string;
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
+  permissions?: string[];
+  status?: string;
+  mustChangePassword?: boolean;
   token?: string;
 }
 
