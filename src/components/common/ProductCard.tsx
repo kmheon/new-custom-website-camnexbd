@@ -22,7 +22,6 @@ import {
   CardMediaSlot,
   CardMetaSlot,
   CardTitleSlot,
-  CardDescriptionSlot,
   CardDetailsSlot,
   CardPriceSlot,
   CardActionsSlot
@@ -149,9 +148,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {toastText}
         </div>
 
-        {/* 1. MEDIA SLOT */}
+        {/* 1. MEDIA SLOT (aspect 4/3) */}
         <CardMediaSlot>
-          <div className="h-44 sm:h-48 rounded-xl overflow-hidden bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] relative flex items-center justify-center p-3">
+          <div className="aspect-[4/3] w-full rounded-xl overflow-hidden bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] relative flex items-center justify-center p-3">
             {!imageError && product.primaryImage ? (
               <img
                 src={product.primaryImage}
@@ -246,10 +245,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </CardMediaSlot>
 
-        {/* 2. META SLOT (Model number + warranty) */}
+        {/* 2. META SLOT (Brand and model line: 1 line, ellipsis, plus warranty) */}
         <CardMetaSlot>
-          <span className="text-[11px] font-mono text-[#5B6472] uppercase tracking-wider truncate min-w-0">
-            {product.modelNumber || <span className="invisible">&nbsp;</span>}
+          <span className="text-[11px] font-mono text-[#5B6472] uppercase tracking-wider truncate min-w-0 flex-1">
+            {product.brand} {product.modelNumber ? `· ${product.modelNumber}` : ''}
           </span>
           {hasWarranty ? (
             <span className="text-[10px] font-semibold text-emerald-600 inline-flex items-center gap-1 shrink-0">
@@ -261,7 +260,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </CardMetaSlot>
 
-        {/* 3. TITLE SLOT (Clamped to 2 lines, clean ellipsis) */}
+        {/* 3. TITLE SLOT (Clamped to 2 lines with min-height for 2 lines) */}
         <CardTitleSlot>
           <h3
             className="font-bold text-sm sm:text-base text-[#111827] group-hover:text-[#F15A24] transition-colors font-heading line-clamp-2 leading-snug min-h-[2.6rem] min-w-0 [overflow-wrap:anywhere] break-words"
@@ -271,23 +270,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </h3>
         </CardTitleSlot>
 
-        {/* 4. DESCRIPTION SLOT (Reserved slot) */}
-        <CardDescriptionSlot>
-          {product.shortDescription ? (
-            <p className="text-xs text-[#5B6472] leading-relaxed line-clamp-2 min-h-[2.4rem] min-w-0 [overflow-wrap:anywhere] break-words">
-              {product.shortDescription}
-            </p>
-          ) : (
-            <div className="invisible select-none min-h-[2.4rem]" aria-hidden="true">&nbsp;</div>
-          )}
-        </CardDescriptionSlot>
-
-        {/* 5. DETAILS SLOT (4 highlight tiles, reserved slot when empty) */}
+        {/* 4. DETAILS SLOT (Highlight tile area reserved at height of 2 tile rows; visibility hidden when empty) */}
         <CardDetailsSlot>
-          <div className="min-h-[70px]">
+          <div className="min-h-[66px]">
             {highlightCards.length > 0 ? (
               <div className="grid grid-cols-2 gap-1.5">
-                {highlightCards.map((hl, idx) => (
+                {highlightCards.slice(0, 4).map((hl, idx) => (
                   <div
                     key={idx}
                     className="bg-[#FFF4ED] border border-[#FBE3D6] rounded-[10px] px-2 py-1 flex items-center gap-1.5 overflow-hidden"
@@ -305,13 +293,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="invisible select-none min-h-[70px]" aria-hidden="true">&nbsp;</div>
+              <div className="invisible select-none min-h-[66px]" aria-hidden="true">&nbsp;</div>
             )}
           </div>
         </CardDetailsSlot>
 
-        {/* 6. PRICE SLOT (Reserves old price line) */}
-        <CardPriceSlot>
+        {/* 5. PRICE SLOT (Pinned towards bottom with margin-top: auto) */}
+        <CardPriceSlot className="mt-auto">
           <div className="flex items-baseline justify-between min-h-[30px]">
             <div>
               {hasSale ? (
