@@ -458,20 +458,27 @@ async function runRevision4Tests() {
           const pkgSection = document.getElementById('packages') || document.querySelector('section[aria-label="CCTV Packages"]');
           if (!pkgSection) return { error: 'Packages section not found' };
 
-          // Camera count tabs
+          // Camera count tabs or dropdown
+          const countSelect = pkgSection.querySelector('select#filter-cameras');
           const countTabs = Array.from(pkgSection.querySelectorAll('div[role="tablist"] button[role="tab"]'));
-          const countTabTexts = countTabs.map(t => t.innerText.trim());
+          const countTabTexts = countSelect
+            ? Array.from(countSelect.options).map(o => o.text.trim())
+            : countTabs.map(t => t.innerText.trim());
 
-          // Series filter chips
+          // Series filter chips or dropdown
+          const seriesSelect = pkgSection.querySelector('select#filter-night-view');
           const seriesChips = Array.from(pkgSection.querySelectorAll('div[role="group"] button'));
-          const seriesChipTexts = seriesChips.map(c => c.innerText.trim());
+          const seriesChipTexts = seriesSelect
+            ? Array.from(seriesSelect.options).map(o => o.text.trim())
+            : seriesChips.map(c => c.innerText.trim());
 
           // Packages currently visible
-          const cards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"], div[class*="rounded-2xl border"]'));
+          const cards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"]'));
 
           // Check Quote-only vs Add to cart
           const actionButtons = cards.map(c => {
-            const btn = c.querySelector('button:last-of-type, a[href*="quote"]');
+            const btns = Array.from(c.querySelectorAll('button, a[href*="quote"]'));
+            const btn = btns[btns.length - 1];
             return btn ? btn.innerText.trim() : '';
           });
 
@@ -502,8 +509,17 @@ async function runRevision4Tests() {
       expression: `
         (() => {
           const pkgSection = document.getElementById('packages') || document.querySelector('section[aria-label="CCTV Packages"]');
-          const tab8 = Array.from(pkgSection.querySelectorAll('div[role="tablist"] button[role="tab"]')).find(t => t.innerText.includes('8'));
-          if (tab8) tab8.click();
+          const countSelect = pkgSection.querySelector('select#filter-cameras');
+          if (countSelect) {
+            const opt8 = Array.from(countSelect.options).find(o => o.value === '8' || o.text.includes('8'));
+            if (opt8) {
+              countSelect.value = opt8.value;
+              countSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          } else {
+            const tab8 = Array.from(pkgSection.querySelectorAll('div[role="tablist"] button[role="tab"]')).find(t => t.innerText.includes('8'));
+            if (tab8) tab8.click();
+          }
         })()
       `
     });
@@ -513,7 +529,7 @@ async function runRevision4Tests() {
       expression: `
         (() => {
           const pkgSection = document.getElementById('packages') || document.querySelector('section[aria-label="CCTV Packages"]');
-          const visibleCards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"], div[class*="rounded-2xl border"]'));
+          const visibleCards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"]'));
           const titles = visibleCards.map(c => {
             const h = c.querySelector('h3, h4');
             return h ? h.innerText.trim() : '';
@@ -543,8 +559,17 @@ async function runRevision4Tests() {
       expression: `
         (() => {
           const pkgSection = document.getElementById('packages') || document.querySelector('section[aria-label="CCTV Packages"]');
-          const tab32or64 = Array.from(pkgSection.querySelectorAll('div[role="tablist"] button[role="tab"]')).find(t => t.innerText.includes('32') || t.innerText.includes('64'));
-          if (tab32or64) tab32or64.click();
+          const countSelect = pkgSection.querySelector('select#filter-cameras');
+          if (countSelect) {
+            const opt32or64 = Array.from(countSelect.options).find(o => o.value === '32' || o.value === '64' || o.text.includes('32') || o.text.includes('64'));
+            if (opt32or64) {
+              countSelect.value = opt32or64.value;
+              countSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          } else {
+            const tab32or64 = Array.from(pkgSection.querySelectorAll('div[role="tablist"] button[role="tab"]')).find(t => t.innerText.includes('32') || t.innerText.includes('64'));
+            if (tab32or64) tab32or64.click();
+          }
         })()
       `
     });
@@ -554,9 +579,10 @@ async function runRevision4Tests() {
       expression: `
         (() => {
           const pkgSection = document.getElementById('packages') || document.querySelector('section[aria-label="CCTV Packages"]');
-          const visibleCards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"], div[class*="rounded-2xl border"]'));
+          const visibleCards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"]'));
           const btnTexts = visibleCards.map(c => {
-            const btn = c.querySelector('button, a[href*="quote"]');
+            const btns = Array.from(c.querySelectorAll('button, a[href*="quote"]'));
+            const btn = btns[btns.length - 1];
             return btn ? btn.innerText.trim() : '';
           });
           const hasQuoteOnly = btnTexts.some(t => /quote|quotation|pricing|ask for price/i.test(t));
@@ -582,8 +608,14 @@ async function runRevision4Tests() {
       expression: `
         (() => {
           const pkgSection = document.getElementById('packages') || document.querySelector('section[aria-label="CCTV Packages"]');
-          const allTab = Array.from(pkgSection.querySelectorAll('div[role="tablist"] button[role="tab"]')).find(t => /all/i.test(t.innerText));
-          if (allTab) allTab.click();
+          const countSelect = pkgSection.querySelector('select#filter-cameras');
+          if (countSelect) {
+            countSelect.value = 'All';
+            countSelect.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            const allTab = Array.from(pkgSection.querySelectorAll('div[role="tablist"] button[role="tab"]')).find(t => /all/i.test(t.innerText));
+            if (allTab) allTab.click();
+          }
         })()
       `
     });
@@ -614,7 +646,7 @@ async function runRevision4Tests() {
             const pkgSection = document.querySelector('section#packages, section[aria-label="CCTV Packages"]');
             if (!pkgSection) return { error: 'Packages section not found' };
 
-            const cards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"], div[class*="rounded-2xl border"]'));
+            const cards = Array.from(pkgSection.querySelectorAll('div[class*="group/pkg"]'));
             if (cards.length < 2) return { count: cards.length, skipped: true };
 
             // Group cards by their offsetTop to compare cards within the same grid row
