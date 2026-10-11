@@ -80,7 +80,8 @@ class AuditService {
       ip: r.ip_address,
       createdAt: r.created_at,
       before: r.before_data ? JSON.parse(r.before_data) : null,
-      after: r.after_data ? JSON.parse(r.after_data) : null
+      after: r.after_data ? JSON.parse(r.after_data) : null,
+      diff: r.diff ? JSON.parse(r.diff) : null
     }));
 
     return {

@@ -40,6 +40,7 @@ interface AuditLog {
   createdAt: string;
   before?: any;
   after?: any;
+  diff?: any;
 }
 
 export const StaffApp: React.FC = () => {
@@ -658,6 +659,9 @@ export const StaffApp: React.FC = () => {
                     <option value="user">Staff Users</option>
                     <option value="settings">Settings</option>
                   </select>
+                  <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed text-xs" title="Audit CSV export is reserved for Phase 2">
+                    Export (Phase 2)
+                  </Button>
                 </div>
               </div>
 
@@ -756,6 +760,15 @@ export const StaffApp: React.FC = () => {
                 </pre>
               </div>
             </div>
+
+            {selectedAuditLog.diff && Object.keys(selectedAuditLog.diff).length > 0 && (
+              <div>
+                <div className="text-xs font-bold text-amber-700 mb-1">Field Mutation Diff ({'{ old, new }'})</div>
+                <pre className="bg-amber-50/60 p-3 rounded-lg text-[11px] font-mono overflow-auto max-h-40 border border-amber-200 text-amber-900">
+                  {JSON.stringify(selectedAuditLog.diff, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
         )}
       </Modal>

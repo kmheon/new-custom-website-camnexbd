@@ -484,6 +484,19 @@ function migratePlatformTables(targetDb) {
   targetDb.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id)`).run();
   targetDb.prepare(`CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id)`).run();
 
+  targetDb.prepare(`
+    CREATE TRIGGER IF NOT EXISTS audit_logs_no_update BEFORE UPDATE ON audit_logs
+    BEGIN
+      SELECT RAISE(ABORT, 'audit_logs is append-only');
+    END;
+  `).run();
+  targetDb.prepare(`
+    CREATE TRIGGER IF NOT EXISTS audit_logs_no_delete BEFORE DELETE ON audit_logs
+    BEGIN
+      SELECT RAISE(ABORT, 'audit_logs is append-only');
+    END;
+  `).run();
+
   // 6. Domain events outbox
   targetDb.prepare(`
     CREATE TABLE IF NOT EXISTS domain_events (

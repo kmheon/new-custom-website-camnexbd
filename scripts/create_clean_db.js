@@ -459,6 +459,19 @@ db.prepare(`
 db.prepare(`CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id)`).run();
 db.prepare(`CREATE INDEX idx_audit_user ON audit_logs(user_id)`).run();
 
+db.prepare(`
+  CREATE TRIGGER IF NOT EXISTS audit_logs_no_update BEFORE UPDATE ON audit_logs
+  BEGIN
+    SELECT RAISE(ABORT, 'audit_logs is append-only');
+  END;
+`).run();
+db.prepare(`
+  CREATE TRIGGER IF NOT EXISTS audit_logs_no_delete BEFORE DELETE ON audit_logs
+  BEGIN
+    SELECT RAISE(ABORT, 'audit_logs is append-only');
+  END;
+`).run();
+
 // 23. Domain Events Outbox
 db.prepare(`
   CREATE TABLE domain_events (
