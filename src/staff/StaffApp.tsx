@@ -105,11 +105,17 @@ export const StaffApp: React.FC = () => {
     try {
       const res = await apiClient.get<any>('/auth/me');
       if (res && res.authenticated && res.user) {
-        setCurrentUser(res.user);
-        if (res.user.must_change_password) {
-          setMustChangePassModal(true);
+        const u = res.user;
+        const hasAccess = u.role === 'admin' || u.role === 'super-admin' || u.role === 'staff' || (Array.isArray(u.permissions) && (u.permissions.includes('staff.access') || u.permissions.includes('*')));
+        if (hasAccess) {
+          setCurrentUser(u);
+          if (u.must_change_password) {
+            setMustChangePassModal(true);
+          }
+          loadDashboardData();
+        } else {
+          setCurrentUser(null);
         }
-        loadDashboardData();
       } else {
         setCurrentUser(null);
       }
@@ -130,11 +136,17 @@ export const StaffApp: React.FC = () => {
         password: passwordInput
       });
       if (res.success && res.user) {
-        setCurrentUser(res.user);
-        if (res.user.must_change_password) {
-          setMustChangePassModal(true);
+        const u = res.user;
+        const hasAccess = u.role === 'admin' || u.role === 'super-admin' || u.role === 'staff' || (Array.isArray(u.permissions) && (u.permissions.includes('staff.access') || u.permissions.includes('*')));
+        if (hasAccess) {
+          setCurrentUser(u);
+          if (u.must_change_password) {
+            setMustChangePassModal(true);
+          }
+          loadDashboardData();
+        } else {
+          setLoginError('Account does not have permission to access the staff portal.');
         }
-        loadDashboardData();
       }
     } catch (err: any) {
       setLoginError(err.message || 'Login failed. Please check credentials.');
