@@ -262,6 +262,20 @@ db.prepare(`
   )
 `).run();
 
+// 11e. Plain Language Glossary Terms
+db.prepare(`
+  CREATE TABLE glossary_terms (
+    id TEXT PRIMARY KEY,
+    term TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    short_meaning TEXT NOT NULL,
+    long_meaning TEXT,
+    display_order INTEGER DEFAULT 1,
+    is_active INTEGER DEFAULT 1,
+    data_json TEXT NOT NULL
+  )
+`).run();
+
 // 12. CMS Pages
 db.prepare(`
   CREATE TABLE cms_pages (

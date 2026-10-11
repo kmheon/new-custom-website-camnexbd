@@ -7,7 +7,7 @@
       "author": "CamneX Technical Team",
       "publishedAt": "2026-02-10",
       "excerpt": "An objective engineering breakdown comparing cost, cable distance, image clarity, and long-term expandability.",
-      "content": "<p>When planning a surveillance deployment in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>",
+      "content": "<p>When planning a surveillance setup in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>",
       "featuredImage": "/images/products/hikvision-bullet.svg",
       "tags": [
         "CCTV",
@@ -471,7 +471,7 @@
     {
       "id": "sec-pkgs",
       "type": "packages",
-      "title": "Turnkey CCTV Security Packages",
+      "title": "ready-made CCTV Security Packages",
       "enabled": true,
       "order": 5
     },
@@ -494,7 +494,7 @@
     {
       "id": "sec-sol",
       "type": "solutions",
-      "title": "Engineering & Deployment Solutions",
+      "title": "Engineering & setup Solutions",
       "enabled": true,
       "order": 8
     },
@@ -539,7 +539,7 @@
   "INITIAL_PACKAGES": [
     {
       "id": "pkg-ir-2",
-      "name": "2-Camera Night Vision Turnkey CCTV Package",
+      "name": "2-Camera Night Vision CCTV Package",
       "slug": "2-camera-night-vision-package",
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
@@ -571,7 +571,7 @@
     },
     {
       "id": "pkg-ir-4",
-      "name": "4-Camera Night Vision Turnkey CCTV Package",
+      "name": "4-Camera Night Vision CCTV Package",
       "slug": "4-camera-night-vision-package",
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
@@ -603,7 +603,7 @@
     },
     {
       "id": "pkg-ir-8",
-      "name": "8-Camera Night Vision Turnkey CCTV Package",
+      "name": "8-Camera Night Vision CCTV Package",
       "slug": "8-camera-night-vision-package",
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
@@ -635,7 +635,7 @@
     },
     {
       "id": "pkg-ir-16",
-      "name": "16-Camera Night Vision Turnkey CCTV Package",
+      "name": "16-Camera Night Vision CCTV Package",
       "slug": "16-camera-night-vision-package",
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
@@ -729,8 +729,8 @@
     },
     {
       "id": "pkg-color-4",
-      "name": "4-Camera Full-Color Turnkey CCTV Package",
-      "slug": "4-camera-color-turnkey-package",
+      "name": "4-Camera Full-Color CCTV Package",
+      "slug": "4-camera-color-ready-made-package",
       "seriesId": "series-color",
       "seriesName": "Full-Color",
       "technologyLabel": "Hikvision ColorVu",
@@ -760,13 +760,13 @@
     },
     {
       "id": "pkg-color-8",
-      "name": "8-Camera Full-Color Turnkey CCTV Package",
-      "slug": "8-camera-color-turnkey-package",
+      "name": "8-Camera Full-Color CCTV Package",
+      "slug": "8-camera-color-ready-made-package",
       "seriesId": "series-color",
       "seriesName": "Full-Color",
       "technologyLabel": "Hikvision ColorVu",
       "badge": "24/7 Vivid Color",
-      "description": "Comprehensive 8-camera ColorVu deployment providing clear daytime-like color surveillance all night long.",
+      "description": "Comprehensive 8-camera ColorVu setup providing clear daytime-like color surveillance all night long.",
       "cameraCount": 8,
       "cameraCountsSupported": [
         8
@@ -850,7 +850,7 @@
     },
     {
       "id": "pkg-ptz-16",
-      "name": "16-Camera Enterprise PTZ Turnkey Solution",
+      "name": "16-Camera Enterprise PTZ Complete Solution",
       "slug": "16-camera-enterprise-ptz-package",
       "seriesId": "series-enterprise",
       "seriesName": "Enterprise & PTZ",
@@ -918,7 +918,7 @@
       "seriesName": "Enterprise & PTZ",
       "technologyLabel": "Multi-Server NVR Cluster",
       "badge": "Facility Grade",
-      "description": "Enterprise 64-camera security deployment with multi-server NVR redundancy and optical fiber backbone.",
+      "description": "Enterprise 64-camera security setup with multi-server NVR redundancy and optical fiber backbone.",
       "cameraCount": 64,
       "cameraCountsSupported": [
         64
@@ -1997,7 +1997,7 @@
       ],
       "primaryImage": "/images/products/ruijie-switch.svg",
       "shortDescription": "Cloud-managed 5-port gigabit switch with 4 PoE+ ports and 54W power budget.",
-      "description": "Compact steel desktop casing engineered for small CCTV setups and office IP phones. Free lifetime Ruijie Cloud management.",
+      "description": "Compact steel desktop casing Designed for small CCTV setups and office IP phones. Free lifetime Ruijie Cloud management.",
       "keyFeatures": [
         "5 x 10/100/1000 Mbps RJ45 ports",
         "4 ports 802.3af/at PoE+ with 54W total budget",
@@ -2259,7 +2259,7 @@
       ],
       "primaryImage": "/images/products/ruijie-switch.svg",
       "shortDescription": "24-port gigabit cloud switch with 24 PoE+ ports and 250W power budget.",
-      "description": "Engineered for dense IP camera clusters and office Wi-Fi deployments with cloud dashboard visualization.",
+      "description": "Designed for dense IP camera clusters and office Wi-Fi setups with cloud dashboard visualization.",
       "keyFeatures": [
         "24 x 10/100/1000 Mbps RJ45 PoE ports",
         "250W total power supply budget",
@@ -2566,10 +2566,10 @@
         "/images/products/surveillance-hdd.svg"
       ],
       "primaryImage": "/images/products/surveillance-hdd.svg",
-      "shortDescription": "Engineered specifically for 24/7 continuous high-definition surveillance recording.",
+      "shortDescription": "Built specifically for 24/7 continuous high-definition surveillance recording.",
       "description": "AllFrame technology reduces frame loss and improves video playback quality in security systems.",
       "keyFeatures": [
-        "Engineered specifically for surveillance security systems",
+        "Built specifically for surveillance security systems",
         "Supports up to 64 HD surveillance cameras",
         "Reduced video frame loss with AllFrame technology",
         "1 million hours MTBF reliability rating"
@@ -3867,7 +3867,7 @@
   "INITIAL_PROJECTS": [
     {
       "id": "proj-1",
-      "title": "Commercial Corporate Office Security Deployment",
+      "title": "Commercial Corporate Office Security setup",
       "client": "Sample Corporate Client",
       "category": "Commercial Surveillance",
       "description": "Complete 32-camera 4K IP surveillance network with biometric turnstile entry integration.",
@@ -3935,7 +3935,7 @@
       "Maintenance",
       "Site survey",
       "Configuration",
-      "Network deployment",
+      "Network setup",
       "IT infrastructure"
     ],
     "businessHours": "Sat-Thu 9:30 AM - 7:30 PM, Friday on-call",
@@ -4045,7 +4045,7 @@
           "route": "refund"
         }
       ],
-      "newsletterText": "Subscribe for engineering updates, new product releases, and security advisories.",
+      "newsletterText": "Subscribe for product updates, new product releases, and security advisories.",
       "copyrightText": "© 2026 CamneX Bangladesh. All Rights Reserved.",
       "developerCredit": "Designed & Developed by CamneX"
     },
@@ -4202,7 +4202,7 @@
     "quickServiceSettings": {
       "heading": "Need a technician?",
       "subtext": "Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:",
-      "buttonText": "Request Engineer Callback",
+      "buttonText": "Request a call back",
       "nameLabel": "Your Name *",
       "namePlaceholder": "e.g. Tanvir Ahmed",
       "phoneLabel": "Phone Number *",
@@ -4709,7 +4709,7 @@
       "id": "srv-network",
       "title": "Network & Wi-Fi Configuration",
       "shortLabel": "Wi-Fi Networking",
-      "description": "VLAN subnetting, PoE switch deployment, and enterprise Wi-Fi 6 access point roaming setup.",
+      "description": "VLAN subnetting, PoE switch setup, and enterprise Wi-Fi 6 access point roaming setup.",
       "icon": "Wifi",
       "enabled": true,
       "order": 4,
@@ -4902,6 +4902,128 @@
         "hasBaluns": false,
         "descriptionSummary": "No recorder, no cable; cameras, microSD storage or a wireless NVR kit, power adapters"
       }
+    }
+  ],
+  "INITIAL_GLOSSARY_TERMS": [
+    {
+      "id": "term-ip-camera",
+      "term": "IP camera",
+      "slug": "ip-camera",
+      "shortMeaning": "Digital camera that connects to a computer network",
+      "longMeaning": "Sends and receives video data over an Ethernet network cable without separate coaxial lines.",
+      "order": 1
+    },
+    {
+      "id": "term-analogue-camera",
+      "term": "Analogue camera",
+      "slug": "analogue-camera",
+      "shortMeaning": "Camera that sends video over coaxial cable",
+      "longMeaning": "Standard surveillance camera connected directly to a DVR recorder using coaxial video cable.",
+      "order": 2
+    },
+    {
+      "id": "term-dvr",
+      "term": "DVR",
+      "slug": "dvr",
+      "shortMeaning": "The box that records video from analogue cameras",
+      "longMeaning": "Digital Video Recorder that connects to coaxial cameras and stores footage on hard drives.",
+      "order": 3
+    },
+    {
+      "id": "term-nvr",
+      "term": "NVR",
+      "slug": "nvr",
+      "shortMeaning": "The box that records video from network IP cameras",
+      "longMeaning": "Network Video Recorder that connects to IP cameras over network switches or built-in PoE ports.",
+      "order": 4
+    },
+    {
+      "id": "term-poe",
+      "term": "PoE",
+      "slug": "poe",
+      "shortMeaning": "Power sent through the network cable",
+      "longMeaning": "Power over Ethernet technology that sends both electrical power and data over one network cable.",
+      "order": 5
+    },
+    {
+      "id": "term-ir",
+      "term": "IR (infrared)",
+      "slug": "ir-infrared",
+      "shortMeaning": "Black-and-white picture in the dark",
+      "longMeaning": "Uses invisible infrared light LEDs to illuminate the scene in black and white at night.",
+      "order": 6
+    },
+    {
+      "id": "term-ptz",
+      "term": "PTZ",
+      "slug": "ptz",
+      "shortMeaning": "A camera you can turn and zoom by remote",
+      "longMeaning": "Pan-Tilt-Zoom camera that can rotate horizontally, tilt vertically, and zoom optically via app or joystick.",
+      "order": 7
+    },
+    {
+      "id": "term-hybrid-light",
+      "term": "Hybrid Light",
+      "slug": "hybrid-light",
+      "shortMeaning": "Infrared in the dark, plus a white light that gives a color picture when motion is detected",
+      "longMeaning": "Stays discreet with infrared night vision, then switches to a soft white light for color video when a person or vehicle is detected.",
+      "order": 8
+    },
+    {
+      "id": "term-full-color",
+      "term": "Full-Color",
+      "slug": "full-color",
+      "shortMeaning": "Color picture at night",
+      "longMeaning": "Uses large lens apertures and sensitive sensors to deliver vibrant color video even in very dark conditions.",
+      "order": 9
+    },
+    {
+      "id": "term-wifi-camera",
+      "term": "Wi-Fi camera",
+      "slug": "wifi-camera",
+      "shortMeaning": "Camera that connects wirelessly to your router",
+      "longMeaning": "Standalone security camera that streams and records video directly through your home or office Wi-Fi network.",
+      "order": 10
+    },
+    {
+      "id": "term-microsd",
+      "term": "MicroSD",
+      "slug": "microsd",
+      "shortMeaning": "Small memory card inside the camera for recordings",
+      "longMeaning": "Local onboard flash memory storage card inserted into the camera so it records without an NVR.",
+      "order": 11
+    },
+    {
+      "id": "term-bullet",
+      "term": "Bullet",
+      "slug": "bullet",
+      "shortMeaning": "Cylinder-shaped camera with visible pointing direction",
+      "longMeaning": "Elongated cylindrical camera body with sunshield, easy to aim and mount on walls or poles.",
+      "order": 12
+    },
+    {
+      "id": "term-dome",
+      "term": "Dome",
+      "slug": "dome",
+      "shortMeaning": "Circular dome-shaped camera mounted flat to ceilings or walls",
+      "longMeaning": "Compact circular dome camera with transparent casing, ideal for clean indoor ceilings and discreet monitoring.",
+      "order": 13
+    },
+    {
+      "id": "term-turret",
+      "term": "Turret",
+      "slug": "turret",
+      "shortMeaning": "Ball-and-socket camera with no glass dome reflection",
+      "longMeaning": "Eyeball design that prevents infrared light glare and dust buildup commonly seen on glass domes.",
+      "order": 14
+    },
+    {
+      "id": "term-mp",
+      "term": "MP (resolution)",
+      "slug": "mp-resolution",
+      "shortMeaning": "Millions of pixels measuring picture sharpness",
+      "longMeaning": "Megapixels indicate image detail: 2MP is 1080p Full HD, 4MP is 2K Quad HD, and 8MP is 4K Ultra HD.",
+      "order": 15
     }
   ]
 }

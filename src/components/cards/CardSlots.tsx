@@ -35,7 +35,7 @@ export const CardContainer: React.FC<CardSlotProps & { 'data-card-id'?: string; 
       data-product-id={dataProductId}
       data-package-id={dataPackageId}
       onClick={onClick}
-      className={`card-subgrid-item bg-white rounded-2xl border border-[#EDE8E1] p-4 sm:p-5 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 relative cursor-pointer group min-w-0 h-full ${className}`}
+      className={`card-item-fixed bg-white rounded-2xl border border-[#EDE8E1] p-4 sm:p-5 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 relative cursor-pointer group flex flex-col h-full min-w-0 ${className}`}
     >
       {children}
     </div>

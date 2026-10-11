@@ -195,7 +195,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
             </h1>
 
             <p className="text-sm text-slate-600">
-              Your order has been recorded in our dispatch queue. Our Dhaka engineering desk will contact you on <strong className="text-[#111827]">{createdOrder.customerPhone}</strong> to confirm scheduling.
+              Your order has been recorded in our dispatch queue. Our Dhaka support desk will contact you on <strong className="text-[#111827]">{createdOrder.customerPhone}</strong> to confirm scheduling.
             </p>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs space-y-2">
@@ -343,7 +343,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
                           </h3>
                           {item.packageConfig && (
                             <span className="text-xs text-orange-600 font-semibold block mt-0.5">
-                              Turnkey Bundle: {item.packageConfig.cameraCount} Cams · {item.packageConfig.formFactor.toUpperCase()}
+                              Package: {item.packageConfig.cameraCount} Cams · {item.packageConfig.formFactor.toUpperCase()}
                             </span>
                           )}
                           <div className="text-xs font-bold text-[#F15A24] mt-1">

@@ -153,6 +153,27 @@ function seedBaselineCatalogIntoDb(dbPath) {
       insertSysType.run(pst.id, pst.name, pst.slug, pst.description || '', pst.icon || '', pst.order || 1, pst.enabled !== false ? 1 : 0, JSON.stringify(pst));
     }
 
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS glossary_terms (
+        id TEXT PRIMARY KEY,
+        term TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        short_meaning TEXT NOT NULL,
+        long_meaning TEXT,
+        display_order INTEGER DEFAULT 1,
+        is_active INTEGER DEFAULT 1,
+        data_json TEXT NOT NULL
+      )
+    `).run();
+
+    const insertGlossary = db.prepare(`
+      INSERT OR IGNORE INTO glossary_terms (id, term, slug, short_meaning, long_meaning, display_order, is_active, data_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const gt of seeds.INITIAL_GLOSSARY_TERMS || []) {
+      insertGlossary.run(gt.id, gt.term, gt.slug, gt.shortMeaning, gt.longMeaning || '', gt.order || 1, 1, JSON.stringify(gt));
+    }
+
     const insertSection = db.prepare(`
       INSERT OR IGNORE INTO homepage_sections (id, section_type, title, enabled, display_order, data_json)
       VALUES (?, ?, ?, ?, ?, ?)

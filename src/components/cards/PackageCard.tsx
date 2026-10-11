@@ -11,6 +11,7 @@ import {
   CardPriceSlot,
   CardActionsSlot
 } from './CardSlots';
+import { Term } from '../common/Term';
 
 export interface PackageCardProps {
   pkg: SecurityPackage;
@@ -73,10 +74,12 @@ export const PackageCard: React.FC<PackageCardProps> = ({
       {/* 2. META SLOT */}
       <CardMetaSlot>
         <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full truncate max-w-[170px]">
-          {pkg.technologyLabel || pkg.seriesName || pkg.badge || 'Complete Kit'}
+          <Term text={pkg.technologyLabel || pkg.seriesName || pkg.badge || 'Complete Set'}>
+            {pkg.technologyLabel || pkg.seriesName || pkg.badge || 'Complete Set'}
+          </Term>
         </span>
         <span className="text-[11px] font-bold text-[#5B6472] shrink-0">
-          {pkg.cameraCount ? `${pkg.cameraCount} Camera Kit` : 'Hardware Kit'}
+          {pkg.cameraCount ? `${pkg.cameraCount} Camera set` : 'Camera set'}
         </span>
       </CardMetaSlot>
 
@@ -97,7 +100,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         </p>
       </CardDescriptionSlot>
 
-      {/* 5. DETAILS SLOT (Components with reserved slot for '+N more components' line) */}
+      {/* 5. DETAILS SLOT (Components with reserved slot for '+N more parts' line) */}
       <CardDetailsSlot>
         <div className="py-2.5 border-y border-[#EDE8E1] text-xs text-[#111827] min-h-[104px] flex flex-col justify-center space-y-1.5">
           {displayItems.map((item: string, rIdx: number) => (
@@ -110,7 +113,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
           {/* Reserved row: visibility:hidden when extraCount <= 0 so all cards stay equal height */}
           <div className="text-[10px] font-bold text-[#F15A24] pl-5.5 min-h-[16px] flex items-center">
             {extraCount > 0 ? (
-              <span>+{extraCount} more components</span>
+              <span>+{extraCount} more parts</span>
             ) : (
               <span className="invisible select-none" aria-hidden="true">&nbsp;</span>
             )}
@@ -121,11 +124,11 @@ export const PackageCard: React.FC<PackageCardProps> = ({
       {/* 6. PRICE SLOT (Reserved label and value) */}
       <CardPriceSlot>
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block min-h-[15px]">
-          {isQuoteOnly ? 'Commercial Pricing' : 'Starting From'}
+          {isQuoteOnly ? 'Pricing' : 'Starting From'}
         </span>
         <div className="text-xl font-black text-[#111827] font-heading min-h-[28px] flex items-baseline">
           {isQuoteOnly || !pkg.basePrice ? (
-            <span>Request Quotation</span>
+            <span>Ask for price</span>
           ) : (
             <span>৳{pkg.basePrice.toLocaleString()}</span>
           )}
@@ -139,7 +142,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
           onClick={handleAction}
           className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
         >
-          <span>{isQuoteOnly ? 'Request Quotation' : 'Configure Package'}</span>
+          <span>{isQuoteOnly ? 'Ask for price' : 'Customize package'}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </CardActionsSlot>

@@ -2319,6 +2319,68 @@ app.delete('/api/admin/package-system-types/:id', requireAdmin, (req, res) => {
 });
 
 // ============================================================================
+// PLAIN LANGUAGE GLOSSARY REST APIs
+// ============================================================================
+app.get('/api/glossary', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM glossary_terms WHERE is_active = 1 ORDER BY display_order ASC, term ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/glossary', requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM glossary_terms ORDER BY display_order ASC, term ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/glossary', requireAdmin, validateBody(schemas.glossary), (req, res) => {
+  try {
+    const data = req.body;
+    const id = data.id || `term-${Date.now()}`;
+    const slug = data.slug || data.term.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const item = { ...data, id, slug, order: Number(data.order || data.display_order) || 1, isActive: data.isActive !== false };
+    db.prepare(`
+      INSERT OR REPLACE INTO glossary_terms (id, term, slug, short_meaning, long_meaning, display_order, is_active, data_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, item.term, slug, item.shortMeaning || '', item.longMeaning || '', item.order, item.isActive ? 1 : 0, JSON.stringify(item));
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/glossary/:id', requireAdmin, validateBody(schemas.glossary), (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = req.body;
+    const slug = data.slug || data.term.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const item = { ...data, id, slug, order: Number(data.order || data.display_order) || 1, isActive: data.isActive !== false };
+    db.prepare(`
+      UPDATE glossary_terms SET term = ?, slug = ?, short_meaning = ?, long_meaning = ?, display_order = ?, is_active = ?, data_json = ?
+      WHERE id = ?
+    `).run(item.term, slug, item.shortMeaning || '', item.longMeaning || '', item.order, item.isActive ? 1 : 0, JSON.stringify(item), id);
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/glossary/:id', requireAdmin, (req, res) => {
+  try {
+    db.prepare('DELETE FROM glossary_terms WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
 // 9. CMS & SETTINGS REST APIs
 // ============================================================================
 

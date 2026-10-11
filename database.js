@@ -275,6 +275,20 @@ function initDb() {
     )
   `).run();
 
+  // 11e. Plain Language Glossary Terms
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS glossary_terms (
+      id TEXT PRIMARY KEY,
+      term TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      short_meaning TEXT NOT NULL,
+      long_meaning TEXT,
+      display_order INTEGER DEFAULT 1,
+      is_active INTEGER DEFAULT 1,
+      data_json TEXT NOT NULL
+    )
+  `).run();
+
   // 12. CMS Pages
   db.prepare(`
     CREATE TABLE IF NOT EXISTS cms_pages (
@@ -820,6 +834,14 @@ function seedDatabaseIfEmpty() {
     insertSeries.run(ps.id, ps.name, ps.slug, ps.enabled !== false ? 1 : 0, ps.order || 1, JSON.stringify(ps));
   }
 
+  const insertGlossary = db.prepare(`
+    INSERT OR REPLACE INTO glossary_terms (id, term, slug, short_meaning, long_meaning, display_order, is_active, data_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  for (const g of seeds.INITIAL_GLOSSARY_TERMS || []) {
+    insertGlossary.run(g.id, g.term, g.slug, g.shortMeaning, g.longMeaning || '', g.order || 1, 1, JSON.stringify(g));
+  }
+
   if (seeds.INITIAL_SITE_SETTINGS) {
     const insertSetting = db.prepare(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`);
     insertSetting.run('site_settings', JSON.stringify(seeds.INITIAL_SITE_SETTINGS));
@@ -834,7 +856,7 @@ function reseedDatabase() {
     'products', 'categories', 'brands', 'spec_templates',
     'packages', 'orders', 'quotes', 'service_requests', 'blog_posts',
     'projects', 'testimonials', 'settings', 'hero_slides', 'homepage_sections', 'customers', 'media', 'faqs',
-    'services', 'package_series'
+    'services', 'package_series', 'package_system_types', 'glossary_terms'
   ];
   for (const t of dropTables) {
     try { db.prepare(`DELETE FROM ${t}`).run(); } catch(err) {}

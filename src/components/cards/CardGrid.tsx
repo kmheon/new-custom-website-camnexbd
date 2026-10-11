@@ -27,7 +27,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   return (
     <div className="card-grid-wrapper pt-6 pb-8 -mt-6 -mb-8 px-4 -mx-4 overflow-visible">
-      <div className={`card-grid-container card-subgrid-grid grid ${getColClasses()} gap-5 sm:gap-6 items-stretch ${className}`}>
+      <div className={`card-grid-container grid ${getColClasses()} gap-4 sm:gap-4 items-stretch ${className}`}>
         {children}
       </div>
     </div>

@@ -38,6 +38,7 @@ import { SpecialOfferSlider } from '../components/SpecialOfferSlider';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { CardGrid } from '../components/cards/CardGrid';
 import { PackageCard } from '../components/cards/PackageCard';
+import { Term } from '../components/common/Term';
 import {
   cmsService,
   productService,
@@ -532,7 +533,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       setCallbackStatus('success');
       setCallbackMessage(
         settings?.quickServiceSettings?.successMessage ||
-        'Thank you! Our engineer will call you back within 15 minutes.'
+        'Thank you! Our team will call you back within 15 minutes.'
       );
       setCallbackName('');
       setCallbackPhone('');
@@ -715,8 +716,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   return (
     <div className="bg-[#FAF7F2] text-[#111827] min-h-screen">
       <SEO
-        title="CamneX Bangladesh | Authorized Security & Surveillance Engineering"
-        description="Authorized Hikvision Partner and ZKTeco Installer in Bangladesh. Genuine CCTV cameras, Turbo HD DVRs, enterprise switches, and biometric access control."
+        title="CamneX Bangladesh | Security Systems & CCTV Cameras in Dhaka"
+        description="Official security systems and CCTV cameras in Bangladesh. Genuine cameras, video recorders, switches, and attendance systems with Dhaka warranty."
         canonicalPath="/"
         jsonLd={{
           "@context": "https://schema.org",
@@ -742,9 +743,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            eyebrow="Hardware Categories"
+            eyebrow="Categories"
             title="Shop by Category"
-            subtitle="Surveillance, networking, and biometric equipment"
+            subtitle="Cameras, recorders, attendance systems, and network gear"
             actionText="All categories"
             onAction={() => onNavigate('catalog')}
             className="mb-8"
@@ -758,9 +759,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {/* 3. POPULAR PRODUCTS (Definitive Deduplicated Row: show if >= 2 cards, hide only if < 2) */}
       {dedupPopular.length >= 2 && (
         <ProductRow
-          eyebrow="Popular Hardware"
+          eyebrow="Popular"
           title="Popular Products"
-          subtitle="Security cameras, video recorders, and biometric access hardware"
+          subtitle="Security cameras, video recorders, and attendance systems"
           products={dedupPopular}
           actionText={`View all (${dedupPopular.length})`}
           onAction={() => onNavigate('catalog')}
@@ -780,7 +781,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {/* 4.5. WI-FI / WIRELESS CAMERAS (Lead-in tile + product cards, soft tinted background #FAF7F2) */}
       {dedupWifi.length >= 2 && (
         <ProductRow
-          eyebrow="SMART WIRELESS"
+          eyebrow="Wi-Fi cameras"
           title={wifiCategory?.name || "Wi-Fi Cameras"}
           subtitle={wifiCategory?.description || "Single cameras you control from a phone app"}
           products={dedupWifi}
@@ -814,9 +815,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {/* 5. NEW ARRIVALS (Definitive Deduplicated Row: show if >= 2 cards, hide only if < 2) */}
       {dedupNewArrivals.length >= 2 && (
         <ProductRow
-          eyebrow="New Deployments"
+          eyebrow="Just added"
           title="New Arrivals"
-          subtitle="Latest firmware models, high-density PoE switches, and Wi-Fi 6 hardware additions"
+          subtitle="Fresh camera models, PoE switches, and Wi-Fi gear"
           products={dedupNewArrivals}
           actionText={`View all (${dedupNewArrivals.length})`}
           onAction={() => onNavigate('catalog')}
@@ -834,9 +835,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         >
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
-              eyebrow="Turnkey Bundles"
+              eyebrow="Ready-made packages"
               title="Complete CCTV Packages"
-              subtitle="Configurable camera kits with storage, wiring, and professional installation options"
+              subtitle="Camera sets with recorder, storage and cables. Pick a set, then adjust it to fit your place."
               actionText="All packages"
               onAction={() => onNavigate('packages')}
               className="mb-8"
@@ -878,7 +879,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                             : 'text-[#5B6472] hover:text-[#111827] hover:bg-slate-50'
                         }`}
                       >
-                        <span className="truncate block">{st.name.split('/')[0].trim()}</span>
+                        <span className="truncate block">
+                          <Term term={st.name.split('/')[0].trim()}>{st.name.split('/')[0].trim()}</Term>
+                        </span>
                       </button>
                     );
                   })}
@@ -1000,7 +1003,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                             : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
                         }`}
                       >
-                        <span className="whitespace-nowrap">{series.name}</span>
+                        <span className="whitespace-nowrap">
+                          <Term term={series.name}>{series.name}</Term>
+                        </span>
                         <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
                           isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
                         }`}>
@@ -1078,9 +1083,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         >
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
-              eyebrow="Deployment Profiles"
+              eyebrow="By place"
               title="Our Solutions"
-              subtitle="Turnkey surveillance and networking setups engineered for specific deployment environments"
+              subtitle="Find the right setup for your place."
               actionText="View all"
               onAction={() => onNavigate('solutions')}
               className="mb-8"
@@ -1164,7 +1169,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 {settings?.quickServiceSettings?.heading || 'Need a technician?'}
               </h2>
               <p className="text-xs sm:text-sm text-[#A0A8B4] leading-relaxed max-w-lg">
-                {settings?.quickServiceSettings?.subtext || 'Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:'}
+                {settings?.quickServiceSettings?.subtext || 'Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule a call back:'}
               </p>
 
               {/* Service Chips (first 6 enabled services) */}
@@ -1200,7 +1205,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <div className="lg:col-span-6 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-7 shadow-xl">
               <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  {settings?.quickServiceSettings?.buttonText || 'Request Engineer Callback'}
+                  {settings?.quickServiceSettings?.buttonText || 'Request a call back'}
                 </span>
                 <span className="text-[11px] text-[#A0A8B4]">
                   Selected: <strong className="text-[#F15A24]">{selectedServiceType || 'CCTV Camera Setup'}</strong>
@@ -1340,7 +1345,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <span>
                       {callbackStatus === 'submitting'
                         ? 'Submitting...'
-                        : (settings?.quickServiceSettings?.buttonText || 'Request Callback')}
+                        : (settings?.quickServiceSettings?.buttonText || 'Request a call back')}
                     </span>
                   </button>
                 </form>
@@ -1355,7 +1360,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {/* 9. ACCESSORIES & ADD-ONS (Categories with isAccessoryCategory, show if >= 2 cards, hide only if < 2) */}
       {dedupAccessories.length >= 2 && (
         <ProductRow
-          eyebrow="ESSENTIAL HARDWARE"
+          eyebrow="Add-ons"
           title="Accessories & Add-ons"
           subtitle={settings?.accessoriesSubtitle || "Cables, storage, power and mounting for your setup"}
           products={dedupAccessories}
@@ -1641,7 +1646,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div className="relative z-10 max-w-3xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold uppercase tracking-wider shadow-xs">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Engineering & Security Assistance</span>
+              <span>Need help?</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-heading text-white tracking-tight leading-tight">
@@ -1649,7 +1654,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </h2>
 
             <p className="text-base sm:text-lg text-white/90 max-w-2xl mx-auto font-normal leading-relaxed">
-              Our engineering team provides technical consultations and hardware quotations in Dhaka.
+              Our technical team provides recommendations and price quotes in Dhaka.
             </p>
           </div>
 
@@ -1671,7 +1676,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <ArrowRight className="w-4 h-4 text-[#F15A24] transform group-hover:translate-x-1 transition-transform" />
                 </div>
                 <p className="text-xs sm:text-sm text-[#5B6472] mt-1.5 leading-snug">
-                  Direct engineering consultation and quotation inquiries
+                  Direct technical advice and price inquiries
                 </p>
               </div>
             </a>

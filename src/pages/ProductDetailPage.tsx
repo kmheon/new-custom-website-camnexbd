@@ -423,7 +423,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
           <div className="my-10 bg-[#0F172A] text-white p-6 sm:p-8 rounded-2xl border border-slate-800">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <Badge variant="orange" className="mb-1">Available in Turnkey Bundles</Badge>
+                <Badge variant="orange" className="mb-1">Available in Ready-Made Packages</Badge>
                 <h3 className="text-lg font-bold font-heading">Need this camera as part of a complete system?</h3>
               </div>
               <Button size="sm" onClick={() => onNavigate('packages')}>

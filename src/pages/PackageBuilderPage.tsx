@@ -80,8 +80,8 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
       status: 'active',
       images: ['/images/products/hikvision-bullet.svg'],
       primaryImage: '/images/products/hikvision-bullet.svg',
-      shortDescription: `Turnkey ${cameraCount}-camera surveillance setup with DVR, ${cameraCount >= 16 ? '2TB' : cameraCount >= 8 ? '1TB' : '500GB'} HDD, and ${cameraCount * 10}m Cat6 cable.`,
-      description: 'Turnkey bundle',
+      shortDescription: `Complete ${cameraCount}-camera security setup with DVR, ${cameraCount >= 16 ? '2TB' : cameraCount >= 8 ? '1TB' : '500GB'} HDD, and ${cameraCount * 10}m Cat6 cable.`,
+      description: 'Camera package',
       keyFeatures: [],
       specifications: {},
       pricing: { regularPrice: computedBreakdown.totalPrice, currency: 'BDT' },
@@ -125,17 +125,17 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
         {/* Header */}
         <div className="my-6 bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <Badge variant="orange" className="mb-2">Turnkey Estimator</Badge>
+            <Badge variant="orange" className="mb-2">Package Estimator</Badge>
             <h1 className="text-2xl sm:text-3xl font-black text-[#111827] font-heading mb-2">
               Interactive CCTV Package Builder
             </h1>
             <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Build your customized system. Hard drive storage and Cat6 cable lengths are calculated dynamically using engineering rules.
+              Build your customized system. Hard drive storage and Cat6 cable lengths are calculated automatically based on your camera count.
             </p>
           </div>
 
           <Button variant="outline" size="md" onClick={() => onNavigate('quote')}>
-            Request Consultation Instead
+            Ask for Price Instead
           </Button>
         </div>
 
@@ -276,9 +276,9 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <h3 className="font-bold text-base text-[#111827] font-heading">
-                  Itemized Bill of Materials ({cameraCount} Cameras · {formFactor.toUpperCase()})
+                  Itemized Parts List ({cameraCount} Cameras · {formFactor.toUpperCase()})
                 </h3>
-                <Badge variant="dark">Turnkey BOM</Badge>
+                <Badge variant="dark">Included Parts</Badge>
               </div>
 
               {/* Component Breakdown Table */}
@@ -295,7 +295,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
                         <div className="text-xs text-slate-500">@ ৳{comp.unitPrice.toLocaleString()}</div>
                       ) : (
                         <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
-                          Quotation Required
+                          Ask for price
                         </span>
                       )}
                     </div>
@@ -309,7 +309,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
               <div className="flex flex-col sm:flex-row sm:items-baseline justify-between mb-6 gap-2">
                 <div>
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                    {computedBreakdown?.quotationRequired ? 'Deployment Pricing' : 'Calculated Turnkey Package Price'}
+                    {computedBreakdown?.quotationRequired ? 'Custom Setup Pricing' : 'Calculated Package Price'}
                   </span>
                   {computedBreakdown?.totalPrice !== null && computedBreakdown?.totalPrice !== undefined ? (
                     <div className="text-3xl sm:text-4xl font-black text-[#F15A24] font-heading mt-1">
@@ -317,13 +317,13 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
                     </div>
                   ) : (
                     <div className="text-2xl sm:text-3xl font-black text-amber-600 font-heading mt-1">
-                      Request Quotation
+                      Ask for price
                     </div>
                   )}
                   <span className="text-xs text-slate-500">
                     {computedBreakdown?.quotationRequired
-                      ? (computedBreakdown.quotationReason || 'Enterprise or custom setup requires engineer review.')
-                      : 'Includes all components, storage, cables & connectors (BDT)'}
+                      ? (computedBreakdown.quotationReason || 'Custom setup requires technical consultation.')
+                      : 'Includes all parts, storage, cables & connectors (BDT)'}
                   </span>
                 </div>
 
@@ -340,7 +340,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
                     className="w-full bg-[#0F172A] hover:bg-slate-900 text-white"
                   >
                     <ShoppingBag className="w-5 h-5 mr-2" />
-                    <span>Request Quotation for Setup</span>
+                    <span>Ask for Price on Setup</span>
                   </Button>
                 ) : (
                   <Button

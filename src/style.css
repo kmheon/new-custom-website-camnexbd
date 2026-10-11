@@ -59,49 +59,29 @@ img, svg, video, canvas, audio, iframe, embed, object {
 }
 
 /* ==========================================================================
-   Shared Card Subgrid & Equal Heights System
+   Shared CardRow & Equal Heights System (Robust Flexbox System)
    ========================================================================== */
-.card-subgrid-grid {
-  display: grid;
+:root {
+  --card-w: clamp(240px, 72vw, 280px);
 }
 
-@supports (grid-template-rows: subgrid) {
-  .card-subgrid-grid {
-    grid-template-rows: repeat(7, auto);
-  }
-
-  .card-subgrid-row {
-    display: grid !important;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(260px, 300px);
-    grid-template-rows: repeat(7, auto);
-  }
-
-  .card-subgrid-item {
-    display: grid !important;
-    grid-row: span 7;
-    grid-template-rows: subgrid;
+@media (min-width: 768px) {
+  :root {
+    --card-w: calc((100% - 2 * 16px) / 3);
   }
 }
 
-/* Fallback for browsers without subgrid */
-@supports not (grid-template-rows: subgrid) {
-  .card-subgrid-grid {
-    display: grid;
+@media (min-width: 1024px) {
+  :root {
+    --card-w: calc((100% - 3 * 16px) / 4);
   }
+}
 
-  .card-subgrid-row {
-    display: flex !important;
-  }
-
-  .card-subgrid-item {
-    display: flex !important;
-    flex-direction: column;
-  }
-
-  .card-subgrid-item .card-slot-price,
-  .card-subgrid-item .card-slot-actions {
-    margin-top: auto;
-  }
+.card-item-fixed {
+  flex: 0 0 var(--card-w);
+  min-width: var(--card-w);
+  max-width: var(--card-w);
+  width: var(--card-w);
+  scroll-snap-align: start;
 }
 

@@ -57,11 +57,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
   const quickLinks: FooterLinkItem[] = footerConfig?.quickLinks || [
     { label: 'Home', route: 'home' },
-    { label: 'Hardware Catalog', route: 'catalog' },
-    { label: 'Engineering Solutions', route: 'solutions' },
+    { label: 'Products', route: 'catalog' },
+    { label: 'Solutions', route: 'solutions' },
     { label: 'Installation Services', route: 'services' },
-    { label: 'CCTV Packages', route: 'packages' },
-    { label: 'Project Portfolio', route: 'projects' },
+    { label: 'Packages', route: 'packages' },
+    { label: 'Projects', route: 'projects' },
     { label: 'Company Profile', route: 'company_profile' }
   ];
 
@@ -69,17 +69,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     { label: 'CCTV & IP Cameras', route: 'category', param: 'cctv-cameras' },
     { label: 'DVR & NVR Recorders', route: 'category', param: 'dvr-nvr-recorders' },
     { label: 'Biometrics & Access', route: 'category', param: 'biometrics-access-control' },
-    { label: 'Enterprise PoE Switches', route: 'category', param: 'network-switches' },
-    { label: 'Commercial Wi-Fi 6', route: 'category', param: 'access-points-wifi' },
-    { label: 'Surveillance Hard Drives', route: 'category', param: 'cctv-accessories' }
+    { label: 'Network Switches', route: 'category', param: 'network-switches' },
+    { label: 'Wi-Fi Cameras & APs', route: 'category', param: 'wifi-cameras' },
+    { label: 'Storage & Hard Drives', route: 'category', param: 'cctv-accessories' }
   ];
 
   const supportLinks: FooterLinkItem[] = footerConfig?.customerSupport || [
     { label: 'Track Order Status', route: 'tracking' },
-    { label: 'Warranty & RMA Policy', route: 'warranty' },
-    { label: 'Request Quotation', route: 'quote' },
+    { label: 'Warranty & Support Policy', route: 'warranty' },
+    { label: 'Ask for Price', route: 'quote' },
     { label: 'Frequently Asked Questions', route: 'faq' },
-    { label: 'Contact Engineering Team', route: 'contact' }
+    { label: 'Contact Support Team', route: 'contact' }
   ];
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -127,13 +127,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-8 sm:pb-10 border-b border-white/10">
             <div className="max-w-md">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#F15A24] block mb-1">
-                Security Insights & Updates
+                Product Updates
               </span>
               <h3 className="text-xl sm:text-2xl font-bold font-heading text-white">
-                Stay updated with engineering releases
+                Get product news and offers
               </h3>
               <p className="text-xs sm:text-sm text-[#A0A8B4] mt-1">
-                Receive new product releases and hardware announcements. No spam.
+                Receive new product releases and genuine hardware announcements. No spam.
               </p>
             </div>
 
@@ -148,7 +148,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                       setNewsletterEmail(e.target.value);
                       if (emailError) setEmailError('');
                     }}
-                    placeholder="Enter your corporate email"
+                    placeholder="Enter your email address"
                     className="w-full min-h-[44px] px-4 py-2.5 rounded-full bg-white/10 border border-white/15 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#F15A24] focus:ring-1 focus:ring-[#F15A24] transition-all"
                   />
                   {emailError && (

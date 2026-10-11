@@ -33,6 +33,7 @@ import { BrandsModule } from '../components/admin/BrandsModule';
 import { ScenariosModule } from '../components/admin/ScenariosModule';
 import { ServicesModule } from '../components/admin/ServicesModule';
 import { CompanyProfileModule } from '../components/admin/CompanyProfileModule';
+import { GlossaryModule } from '../components/admin/GlossaryModule';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
   const { currentUser, isAdminAuthenticated, checkAuth, login, logout, isLoading: authLoading, error: authError } = useAdminAuthStore();
@@ -766,6 +767,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             { id: 'redirects', label: 'URL Redirects (301)', icon: <Compass className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_REDIRECTS_WRITE },
             { id: 'blog', label: 'Blog & Articles', icon: <BookOpen className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'faqs', label: 'FAQ Knowledgebase', icon: <HelpCircle className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'glossary', label: 'Technical Glossary', icon: <HelpCircle className="w-4 h-4 text-amber-400" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'settings', label: 'Site Settings & SEO', icon: <Settings className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_SETTINGS_WRITE }
           ].filter((m) => !m.perm || hasPerm(m.perm)).map((m) => (
             <button
@@ -1788,6 +1790,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           {/* REDIRECTS 301/302 MANAGER MODULE */}
           {activeModule === 'redirects' && (
             <RedirectsModule />
+          )}
+
+          {/* GLOSSARY CMS MODULE */}
+          {activeModule === 'glossary' && (
+            <GlossaryModule />
           )}
 
           {/* 6. SITE SETTINGS & FOOTER CONTROLS */}

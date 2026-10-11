@@ -47,7 +47,7 @@ const RULES = [
   [ANY, /^\/admin\/(service-offerings|services)/, P.SERVICES_MANAGE],
 
   // Website content
-  [W.concat('DELETE'), /^\/(cms\/(hero-slides|sections|blog|projects|pages|testimonials|faqs)|projects|pages|testimonials|admin\/(projects|pages|testimonials))(\/|$)/, P.WEBSITE_CONTENT_WRITE],
+  [W.concat('DELETE'), /^\/(cms\/(hero-slides|sections|blog|projects|pages|testimonials|faqs)|projects|pages|testimonials|admin\/(projects|pages|testimonials|glossary))(\/|$)/, P.WEBSITE_CONTENT_WRITE],
   [ANY, /^\/admin\/redirects/, P.WEBSITE_REDIRECTS_WRITE],
   [['PUT'], /^\/settings$/, P.WEBSITE_SETTINGS_WRITE],
   [ANY, /^\/admin\/jobs/, P.WEBSITE_SETTINGS_WRITE],

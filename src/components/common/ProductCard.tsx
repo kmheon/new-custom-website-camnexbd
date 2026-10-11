@@ -6,6 +6,8 @@ import { QuickViewModal } from './QuickViewModal';
 
 import { FormattedSpecResult, formatSpecValue } from '../../utils/specUtils';
 import { ImagePlaceholder } from './ImagePlaceholder';
+import { Term } from './Term';
+import { UI_STRINGS } from '../../content/strings';
 
 interface ProductCardProps {
   product: Product;
@@ -293,10 +295,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     <CheckCircle2 className="w-3 h-3 text-[#F15A24] shrink-0" />
                     <div className="min-w-0 flex-1 leading-none">
                       <span className="block text-[11px] font-bold text-[#111827] truncate">
-                        {hl.value}
+                        <Term text={hl.value}>{hl.value}</Term>
                       </span>
                       <span className="block text-[9px] font-medium text-[#5B6472] uppercase truncate mt-0.5">
-                        {hl.label}
+                        <Term text={hl.label}>{hl.label}</Term>
                       </span>
                     </div>
                   </div>
@@ -339,7 +341,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   }}
                   className="text-xs font-bold text-[#F15A24] hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <span>Request quotation</span>
+                  <span>{UI_STRINGS.common.askForPrice}</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               )}

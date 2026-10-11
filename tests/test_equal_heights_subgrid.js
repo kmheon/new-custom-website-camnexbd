@@ -33,17 +33,11 @@ function runCodeScan() {
   const styleCssPath = path.join(__dirname, '../src/style.css');
   const styleCss = fs.readFileSync(styleCssPath, 'utf8');
 
-  // Verify subgrid and fallback rules exist
-  if (!styleCss.includes('card-subgrid-grid') || !styleCss.includes('card-subgrid-row')) {
-    throw new Error('style.css is missing card-subgrid-grid or card-subgrid-row class definitions.');
+  // Verify robust flex card sizing architecture exists
+  if (!styleCss.includes('--card-w') || !styleCss.includes('card-item-fixed')) {
+    throw new Error('style.css is missing --card-w or card-item-fixed class definitions.');
   }
-  if (!styleCss.includes('grid-template-rows: subgrid')) {
-    throw new Error('style.css must define grid-template-rows: subgrid for card subgrid items.');
-  }
-  if (!styleCss.includes('@supports not (grid-template-rows: subgrid)')) {
-    throw new Error('style.css must define @supports not fallback for browsers without CSS subgrid support.');
-  }
-  console.log('  ✓ PASS: style.css defines shared subgrid and @supports fallback rules.');
+  console.log('  ✓ PASS: style.css defines shared robust flex card sizing system.');
 
   // Scan all page and component files for forbidden per-category / per-card height hacks
   const scanDirs = [

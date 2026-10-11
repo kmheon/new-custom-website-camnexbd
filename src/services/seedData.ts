@@ -68,7 +68,7 @@ export const DEFAULT_SERVICES_LIST: ServiceItem[] = [
   },
   {
     id: 'srv-config',
-    title: 'Configuration & Deployment',
+    title: 'Configuration & setup',
     description: 'Cloud DDNS setup, Hik-Connect multi-device smartphone viewing, motion notification zones, and isolated security VLANs.',
     icon: 'settings',
     link: '/services',
@@ -125,7 +125,7 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
     'Maintenance',
     'Site survey',
     'Configuration',
-    'Network deployment',
+    'Network setup',
     'IT infrastructure'
   ],
   businessHours: 'Sat-Thu 9:30 AM - 7:30 PM, Friday on-call',
@@ -179,7 +179,7 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   quickServiceSettings: {
     heading: 'Need a technician?',
     subtext: 'Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:',
-    buttonText: 'Request Engineer Callback',
+    buttonText: 'Request a call back',
     nameLabel: 'Your Name *',
     namePlaceholder: 'e.g. Tanvir Ahmed',
     phoneLabel: 'Phone Number *',
@@ -225,7 +225,7 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
       { label: 'Terms & Conditions', route: 'terms' },
       { label: 'Refund Policy', route: 'refund' }
     ],
-    newsletterText: 'Subscribe for engineering updates, new product releases, and security advisories.',
+    newsletterText: 'Subscribe for product updates, new product releases, and security advisories.',
     copyrightText: '© 2026 CamneX Bangladesh. All Rights Reserved.',
     developerCredit: 'Designed & Developed by CamneX'
   },
@@ -337,7 +337,7 @@ export const INITIAL_SERVICES: ServiceOffering[] = [
     id: 'srv-network',
     title: 'Network & Wi-Fi Configuration',
     shortLabel: 'Wi-Fi Networking',
-    description: 'VLAN subnetting, PoE switch deployment, and enterprise Wi-Fi 6 access point roaming setup.',
+    description: 'VLAN subnetting, PoE switch setup, and enterprise Wi-Fi 6 access point roaming setup.',
     icon: 'Wifi',
     enabled: true,
     order: 4,
@@ -2221,7 +2221,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     "primaryImage": "/images/products/network-switch.svg",
     "shortDescription": "Cloud-managed 5-port gigabit switch with 4 PoE+ ports and 54W power budget.",
-    "description": "Compact steel desktop casing engineered for small CCTV setups and office IP phones. Free lifetime Ruijie Cloud management.",
+    "description": "Compact steel desktop casing Designed for small CCTV setups and office IP phones. Free lifetime Ruijie Cloud management.",
     "keyFeatures": [
       "5 x 10/100/1000 Mbps RJ45 ports",
       "4 ports 802.3af/at PoE+ with 54W total budget",
@@ -2483,7 +2483,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     "primaryImage": "/images/products/network-switch.svg",
     "shortDescription": "24-port gigabit cloud switch with 24 PoE+ ports and 250W power budget.",
-    "description": "Engineered for dense IP camera clusters and office Wi-Fi deployments with cloud dashboard visualization.",
+    "description": "Designed for dense IP camera clusters and office Wi-Fi setups with cloud dashboard visualization.",
     "keyFeatures": [
       "24 x 10/100/1000 Mbps RJ45 PoE ports",
       "250W total power supply budget",
@@ -2790,10 +2790,10 @@ export const INITIAL_PRODUCTS: Product[] = [
       "/images/products/hard-drive.svg"
     ],
     "primaryImage": "/images/products/hard-drive.svg",
-    "shortDescription": "Engineered specifically for 24/7 continuous high-definition surveillance recording.",
+    "shortDescription": "Built specifically for 24/7 continuous high-definition surveillance recording.",
     "description": "AllFrame technology reduces frame loss and improves video playback quality in security systems.",
     "keyFeatures": [
-      "Engineered specifically for surveillance security systems",
+      "Built specifically for surveillance security systems",
       "Supports up to 64 HD surveillance cameras",
       "Reduced video frame loss with AllFrame technology",
       "1 million hours MTBF reliability rating"
@@ -3781,7 +3781,7 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const INITIAL_PACKAGES: SecurityPackage[] = [
   {
     id: 'pkg-cctv-night-vision',
-    name: '4-Camera Night Vision Turnkey CCTV Package',
+    name: '4-Camera Night Vision CCTV Package',
     slug: '4-camera-night-vision-cctv-package',
     badge: 'Affordable',
     description: 'Analog HD surveillance engineered with Hikvision 2MP IRPF infrared night vision cameras.',
@@ -3851,7 +3851,7 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
   },
   {
     id: 'pkg-cctv-4cam-color',
-    name: '4-Camera Color Turnkey CCTV Package',
+    name: '4-Camera Color CCTV Package',
     slug: '4-camera-color-cctv-package',
     badge: 'Most Popular',
     description: 'Surveillance setup with full 24/7 color low-light video imaging and Turbo HD digital recording.',
@@ -3971,7 +3971,7 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
   },
   {
     id: 'pkg-cctv-16cam',
-    name: '16-Camera Enterprise Turnkey Package',
+    name: '16-Camera Enterprise Package',
     slug: '16-camera-enterprise-cctv-package',
     badge: 'Enterprise',
     description: 'Facility surveillance kit covering warehouses, factories, and commercial campuses.',
@@ -4036,7 +4036,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     author: 'CamneX Technical Team',
     publishedAt: '2026-02-10',
     excerpt: 'An objective engineering breakdown comparing cost, cable distance, image clarity, and long-term expandability.',
-    content: '<p>When planning a surveillance deployment in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>',
+    content: '<p>When planning a surveillance setup in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>',
     featuredImage: '/images/products/hikvision-bullet.svg',
     tags: ['CCTV', 'Hikvision', 'Installation Guide'],
     readTime: '4 min read',

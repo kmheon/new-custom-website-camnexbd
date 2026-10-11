@@ -559,7 +559,7 @@ async function runRevision4Tests() {
             const btn = c.querySelector('button, a[href*="quote"]');
             return btn ? btn.innerText.trim() : '';
           });
-          const hasQuoteOnly = btnTexts.some(t => /quote|quotation|pricing/i.test(t));
+          const hasQuoteOnly = btnTexts.some(t => /quote|quotation|pricing|ask for price/i.test(t));
 
           return {
             count: visibleCards.length,
