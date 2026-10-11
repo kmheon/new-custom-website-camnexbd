@@ -103,6 +103,9 @@ export interface Category {
   slug: string;
   description?: string;
   image?: string;
+  leadInImage?: string;
+  bullets?: string[];
+  buttonText?: string;
   parentId?: string | null;
   specTemplateId: string;
   featured?: boolean;

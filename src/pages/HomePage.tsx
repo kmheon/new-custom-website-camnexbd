@@ -447,13 +447,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         );
         setSpecialOffers(discounted);
 
-        // Filter Wi-Fi / Wireless camera products
+        // Filter Wi-Fi / Wireless camera products strictly by category id (cat-wifi and subcategories), never matching strings in names
+        const wifiCategoryIds = new Set<string>(['cat-wifi']);
+        allCats.forEach((c) => {
+          if (c.id === 'cat-wifi' || c.parentId === 'cat-wifi') {
+            wifiCategoryIds.add(c.id);
+            if (Array.isArray(c.subcategories)) {
+              c.subcategories.forEach((sc: any) => { if (sc?.id) wifiCategoryIds.add(sc.id); });
+            }
+          }
+        });
         const wifi = res.items.filter((p) => {
           if (p.status !== 'active' || p.websiteVisible === false) return false;
-          if (p.categoryId === 'cat-wifi' || (p as any).categorySlug === 'wifi-cameras') return true;
-          const cat = (p.category || '').toLowerCase();
-          const name = (p.name || '').toLowerCase();
-          return cat.includes('wi-fi') || cat.includes('wireless') || name.includes('wi-fi') || name.includes('wireless') || name.includes('ezviz');
+          return wifiCategoryIds.has(p.categoryId) || (p as any).categorySlug === 'wifi-cameras';
         });
         setWifiProducts(wifi);
 
@@ -667,6 +673,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   dedupSpecialOffers.forEach((p) => displayedProductIds.add(p.id));
 
   // 2. Wi-Fi Cameras claims next (up to 8 cards; hidden if < 2)
+  const wifiCategory = categories.find((c) => c.id === 'cat-wifi' || c.slug === 'wifi-cameras');
   const dedupWifi = wifiProducts
     .filter((p) => !displayedProductIds.has(p.id))
     .slice(0, 8);
@@ -774,8 +781,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {dedupWifi.length >= 2 && (
         <ProductRow
           eyebrow="SMART WIRELESS"
-          title="Wi-Fi Cameras"
-          subtitle="Single cameras you control from a phone app"
+          title={wifiCategory?.name || "Wi-Fi Cameras"}
+          subtitle={wifiCategory?.description || "Single cameras you control from a phone app"}
           products={dedupWifi}
           actionText={`View all (${dedupWifi.length})`}
           onAction={() => onNavigate('category', 'wifi-cameras')}
@@ -783,9 +790,22 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           variant="canvas"
           promoTile={{
             badge: 'Wireless',
-            title: 'Wi-Fi Cameras',
-            description: 'Single cameras you control from a phone app',
-            buttonText: 'View all',
+            title: wifiCategory?.name || 'Wi-Fi Cameras',
+            subtitle: wifiCategory?.description || 'Single cameras you control from a phone app',
+            description: wifiCategory?.description || 'Single cameras you control from a phone app',
+            image: wifiCategory?.leadInImage || wifiCategory?.image || '/images/hero/hikvision-bullet.png',
+            bullets: wifiCategory?.bullets || [
+              'Direct phone app alert & view',
+              'MicroSD card & cloud storage',
+              'No DVR or NVR box required'
+            ],
+            subcategories: wifiCategory?.subcategories || [
+              { id: 'subcat-wifi-indoor', name: 'Indoor 360°', slug: 'indoor-wifi-cameras' },
+              { id: 'subcat-wifi-outdoor', name: 'Outdoor Bullet', slug: 'outdoor-wifi-cameras' },
+              { id: 'subcat-wifi-ptz', name: 'Pan & Tilt', slug: 'pan-tilt-wifi-cameras' },
+              { id: 'subcat-wifi-doorbell', name: 'Smart Doorbell', slug: 'smart-doorbells' }
+            ],
+            buttonText: wifiCategory?.buttonText || 'Explore all Wi-Fi cameras',
             link: '/category/wifi-cameras'
           }}
         />
@@ -1354,15 +1374,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           title={cat.name}
           subtitle={cat.description}
           products={items}
-          actionText="View category"
+          actionText={`View all (${items.length})`}
           onAction={() => onNavigate('category', cat.slug)}
           onNavigate={onNavigate}
           variant={idx % 2 === 0 ? 'panel' : 'canvas'}
           promoTile={{
-            badge: 'Featured',
-            title: `${cat.name} Solutions`,
-            description: `Explore full technical specifications and commercial stock for ${cat.name}.`,
-            buttonText: 'View Series',
+            badge: 'Category',
+            title: cat.name,
+            subtitle: cat.description,
+            description: cat.description,
+            image: cat.leadInImage || cat.image,
+            bullets: cat.bullets || [
+              `Genuine official ${cat.name}`,
+              'Standard Bangladesh warranty',
+              'Ready for immediate dispatch'
+            ],
+            subcategories: cat.subcategories || [],
+            buttonText: cat.buttonText || `View all ${cat.name}`,
             link: `/category/${cat.slug}`
           }}
         />

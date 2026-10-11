@@ -758,15 +758,49 @@ export const INITIAL_CATEGORIES: Category[] = [
   },
   {
     id: 'cat-wifi',
+    name: 'Wi-Fi Cameras',
+    slug: 'wifi-cameras',
+    description: 'Single cameras you control from a phone app',
+    image: '/images/hero/hikvision-bullet.png',
+    leadInImage: '/images/hero/hikvision-bullet.png',
+    specTemplateId: 'tpl-cctv',
+    featured: true,
+    showOnHomepage: true,
+    displayOrder: 6,
+    order: 6,
+    showAsHomepageRow: true,
+    bullets: [
+      'Direct phone app alert & view',
+      'MicroSD card & cloud storage',
+      'No DVR or NVR box required'
+    ],
+    buttonText: 'Explore all Wi-Fi cameras',
+    subcategories: [
+      { id: 'subcat-wifi-indoor', name: 'Indoor 360°', slug: 'indoor-wifi-cameras' },
+      { id: 'subcat-wifi-outdoor', name: 'Outdoor Bullet', slug: 'outdoor-wifi-cameras' },
+      { id: 'subcat-wifi-ptz', name: 'Pan & Tilt', slug: 'pan-tilt-wifi-cameras' },
+      { id: 'subcat-wifi-doorbell', name: 'Smart Doorbell', slug: 'smart-doorbells' }
+    ]
+  },
+  {
+    id: 'cat-access-points',
     name: 'Access Points & Wi-Fi',
     slug: 'access-points-wifi',
     description: 'Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.',
     image: '/images/products/ruijie-wifi.svg',
+    leadInImage: '/images/products/ruijie-wifi.svg',
     specTemplateId: 'tpl-wifi',
     featured: true,
-    showOnHomepage: true,
-    displayOrder: 6,
-    order: 6
+    showOnHomepage: false,
+    displayOrder: 11,
+    order: 11,
+    showAsHomepageRow: false,
+    bullets: [
+      'Enterprise Wi-Fi 6 speed',
+      'Seamless roaming mesh',
+      'Cloud & local controller'
+    ],
+    buttonText: 'View all Access Points'
   },
   {
     id: 'cat-storage',
@@ -822,6 +856,317 @@ export const INITIAL_CATEGORIES: Category[] = [
 ];
 
 export const INITIAL_PRODUCTS: Product[] = [
+{
+    "id": "prod-wifi-c6n",
+    "name": "EZVIZ C6N 3MP Pan & Tilt Smart Wi-Fi Camera",
+    "modelNumber": "CS-C6N-D0-8B3WF",
+    "sku": "EZV-C6N-3MP",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Motorized 360-degree pan and tilt Wi-Fi camera with smart tracking, two-way audio, and infrared night vision up to 10m.",
+    "pricing": {
+      "regularPrice": 4200,
+      "salePrice": 3850,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "3MP (2K)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "5V USB-C",
+      "app_support": "EZVIZ App"
+    },
+    "inventory": {
+      "available": 25,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-h8c",
+    "name": "EZVIZ H8c 4MP 360° Outdoor Pan & Tilt Wi-Fi Camera",
+    "modelNumber": "CS-H8c-R100-1K4WKFL",
+    "sku": "EZV-H8C-4MP",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Weatherproof outdoor pan/tilt camera with AI human detection, color night vision, active defense siren, and strobe light.",
+    "pricing": {
+      "regularPrice": 9200,
+      "salePrice": 8600,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 512GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "EZVIZ App"
+    },
+    "inventory": {
+      "available": 18,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-h3c",
+    "name": "EZVIZ H3c 2K Color Night Vision Outdoor Wi-Fi Camera",
+    "modelNumber": "CS-H3c-R100-1K3WKFL",
+    "sku": "EZV-H3C-3MP",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": false,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Reliable IP67 weatherproof outdoor bullet camera featuring color night vision and AI-powered human shape detection.",
+    "pricing": {
+      "regularPrice": 6500,
+      "salePrice": 5950,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "3MP (2K)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 512GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "EZVIZ App"
+    },
+    "inventory": {
+      "available": 20,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-hik-pt",
+    "name": "Hikvision 2MP Indoor Pan & Tilt Wi-Fi Camera",
+    "modelNumber": "DS-2CV2Q21FD-IW",
+    "sku": "HIK-2CV2Q21-2MP",
+    "brandId": "brand-hikvision",
+    "brand": "Hikvision",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Dual-antenna indoor pan-tilt Wi-Fi camera with Hik-Connect cloud P2P, built-in microphone and speaker, and 10m IR.",
+    "pricing": {
+      "regularPrice": 5800,
+      "salePrice": 5200,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "2MP (1080p)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "5V USB-C",
+      "app_support": "Hik-Connect"
+    },
+    "inventory": {
+      "available": 15,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-hik-bullet",
+    "name": "Hikvision 4MP Smart Wi-Fi Outdoor Bullet Camera",
+    "modelNumber": "DS-2CV1043G2-LIDW",
+    "sku": "HIK-2CV1043-4MP",
+    "brandId": "brand-hikvision",
+    "brand": "Hikvision",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": false,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "IP66 outdoor wireless bullet with smart dual lighting, onboard Wi-Fi range up to 120m in open field, and digital WDR.",
+    "pricing": {
+      "regularPrice": 8500,
+      "salePrice": 7900,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "Hik-Connect"
+    },
+    "inventory": {
+      "available": 12,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-imou-ranger",
+    "name": "Imou Ranger 2 4MP Indoor 360° Wi-Fi Camera",
+    "modelNumber": "IPC-A42P-D",
+    "sku": "IMOU-RANGER2-4MP",
+    "brandId": "brand-dahua",
+    "brand": "Dahua",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "High-resolution 4MP pan and tilt camera with abnormal sound alarm, physical privacy shutter, and human detection.",
+    "pricing": {
+      "regularPrice": 4600,
+      "salePrice": 4200,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "5V USB-C",
+      "app_support": "DMSS / Imou Life"
+    },
+    "inventory": {
+      "available": 30,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-imou-bullet",
+    "name": "Imou Bullet 2C 4MP Weatherproof Outdoor Wi-Fi Camera",
+    "modelNumber": "IPC-F42P",
+    "sku": "IMOU-BULLET2C-4MP",
+    "brandId": "brand-dahua",
+    "brand": "Dahua",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": false,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Weatherproof IP67 bullet camera with dual external antennas, built-in Wi-Fi hotspot mode, and 30m night vision.",
+    "pricing": {
+      "regularPrice": 5900,
+      "salePrice": 5400,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": false,
+      "power_source": "12V DC Plug-in",
+      "app_support": "DMSS / Imou Life"
+    },
+    "inventory": {
+      "available": 22,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-imou-cruiser",
+    "name": "Imou Cruiser 2 5MP 3K Outdoor PTZ Wi-Fi Camera",
+    "modelNumber": "IPC-GS7EP-5M0WE",
+    "sku": "IMOU-CRUISER2-5MP",
+    "brandId": "brand-dahua",
+    "brand": "Dahua",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Wireless Cameras",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "5MP 3K outdoor speed dome featuring full panoramic coverage, smart full-color night vision, and Wi-Fi 6 connectivity.",
+    "pricing": {
+      "regularPrice": 11500,
+      "salePrice": 10800,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "5MP (3K)",
+      "wifi_band": "Wi-Fi 6",
+      "storage": "MicroSD up to 512GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "DMSS / Imou Life"
+    },
+    "inventory": {
+      "available": 14,
+      "status": "in_stock"
+    }
+  },
+  {
+    "id": "prod-wifi-db2",
+    "name": "EZVIZ DB2 2K Battery Video Doorbell with Chime",
+    "slug": "ezviz-db2-2k-battery-video-doorbell",
+    "modelNumber": "CS-DB2-A0-2C5WF",
+    "sku": "EZV-DB2-2K",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi Cameras",
+    "shortDescription": "Wireless 2K smart video doorbell with wire-free battery installation and indoor chime.",
+    "description": "Crisp 2K resolution video doorbell featuring PIR human detection, ultra-wide 176° field of view, and included indoor wireless chime.",
+    "pricing": {
+      "regularPrice": 11500,
+      "salePrice": 10500
+    },
+    "inventory": {
+      "available": 12,
+      "reserved": 0,
+      "lowStockThreshold": 3
+    },
+    "specifications": [
+      {
+        "key": "Resolution",
+        "value": "2K (2000 x 1504)"
+      },
+      {
+        "key": "Field of View",
+        "value": "176° Ultra-Wide Angle"
+      },
+      {
+        "key": "Night Vision",
+        "value": "Up to 5m Infrared"
+      },
+      {
+        "key": "Battery",
+        "value": "5200mAh Rechargeable"
+      },
+      {
+        "key": "Connectivity",
+        "value": "Wi-Fi 2.4GHz"
+      }
+    ],
+    "status": "active",
+    "websiteVisible": true,
+    "isPopular": true
+  },
   {
     "id": "prod-hik-irpf-2mp",
     "name": "Hikvision 2MP Audio Fixed Mini Bullet Camera",
@@ -2196,7 +2541,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "modelNumber": "RG-RAP2200(E)",
     "sku": "RG-RAP2200-E",
     "category": "Access Points & Wi-Fi",
-    "categoryId": "cat-wifi",
+    "categoryId": "cat-access-points",
     "productType": "physical",
     "status": "active",
     "websiteVisible": true,
@@ -2256,7 +2601,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "modelNumber": "RG-RAP2260(G)",
     "sku": "RG-RAP2260-G",
     "category": "Access Points & Wi-Fi",
-    "categoryId": "cat-wifi",
+    "categoryId": "cat-access-points",
     "productType": "physical",
     "status": "active",
     "websiteVisible": true,
@@ -2316,7 +2661,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "modelNumber": "RG-RAP1200(F)",
     "sku": "RG-RAP1200-F",
     "category": "Access Points & Wi-Fi",
-    "categoryId": "cat-wifi",
+    "categoryId": "cat-access-points",
     "productType": "physical",
     "status": "active",
     "websiteVisible": true,
@@ -2376,7 +2721,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "modelNumber": "RG-RAP6260(H)",
     "sku": "RG-RAP6260-H",
     "category": "Access Points & Wi-Fi",
-    "categoryId": "cat-wifi",
+    "categoryId": "cat-access-points",
     "productType": "physical",
     "status": "active",
     "websiteVisible": true,

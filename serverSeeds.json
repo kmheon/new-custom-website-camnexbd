@@ -213,16 +213,45 @@
     },
     {
       "id": "cat-wifi",
-      "name": "Wi-Fi / Wireless Cameras",
+      "name": "Wi-Fi Cameras",
       "slug": "wifi-cameras",
-      "description": "Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.",
-      "image": "/images/products/ruijie-wifi.svg",
+      "description": "Single cameras you control from a phone app",
+      "image": "/images/hero/hikvision-bullet.png",
       "specTemplateId": "tpl-wifi",
       "featured": true,
       "showOnHomepage": true,
       "displayOrder": 6,
       "order": 6,
-      "showAsHomepageRow": true
+      "showAsHomepageRow": true,
+      "leadInImage": "/images/hero/hikvision-bullet.png",
+      "bullets": [
+        "Direct phone app alert & view",
+        "MicroSD card & cloud storage",
+        "No DVR or NVR box required"
+      ],
+      "buttonText": "Explore all Wi-Fi cameras",
+      "subcategories": [
+        {
+          "id": "subcat-wifi-indoor",
+          "name": "Indoor 360°",
+          "slug": "indoor-wifi-cameras"
+        },
+        {
+          "id": "subcat-wifi-outdoor",
+          "name": "Outdoor Bullet",
+          "slug": "outdoor-wifi-cameras"
+        },
+        {
+          "id": "subcat-wifi-ptz",
+          "name": "Pan & Tilt",
+          "slug": "pan-tilt-wifi-cameras"
+        },
+        {
+          "id": "subcat-wifi-doorbell",
+          "name": "Smart Doorbell",
+          "slug": "smart-doorbells"
+        }
+      ]
     },
     {
       "id": "cat-storage",
@@ -274,6 +303,26 @@
       "isAccessoryCategory": true,
       "displayOrder": 10,
       "order": 10
+    },
+    {
+      "id": "cat-access-points",
+      "name": "Access Points & Wi-Fi",
+      "slug": "access-points-wifi",
+      "description": "Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.",
+      "image": "/images/products/ruijie-wifi.svg",
+      "leadInImage": "/images/products/ruijie-wifi.svg",
+      "specTemplateId": "tpl-wifi",
+      "featured": true,
+      "showOnHomepage": false,
+      "displayOrder": 11,
+      "order": 11,
+      "showAsHomepageRow": false,
+      "bullets": [
+        "Enterprise Wi-Fi 6 speed",
+        "Seamless roaming mesh",
+        "Cloud & local controller"
+      ],
+      "buttonText": "View all Access Points"
     }
   ],
   "INITIAL_CTA_DATA": {
@@ -2268,7 +2317,7 @@
       "modelNumber": "RG-RAP2200(E)",
       "sku": "RG-RAP2200-E",
       "category": "Access Points & Wi-Fi",
-      "categoryId": "cat-wifi",
+      "categoryId": "cat-access-points",
       "productType": "physical",
       "status": "active",
       "websiteVisible": true,
@@ -2328,7 +2377,7 @@
       "modelNumber": "RG-RAP2260(G)",
       "sku": "RG-RAP2260-G",
       "category": "Access Points & Wi-Fi",
-      "categoryId": "cat-wifi",
+      "categoryId": "cat-access-points",
       "productType": "physical",
       "status": "active",
       "websiteVisible": true,
@@ -2388,7 +2437,7 @@
       "modelNumber": "RG-RAP1200(F)",
       "sku": "RG-RAP1200-F",
       "category": "Access Points & Wi-Fi",
-      "categoryId": "cat-wifi",
+      "categoryId": "cat-access-points",
       "productType": "physical",
       "status": "active",
       "websiteVisible": true,
@@ -2448,7 +2497,7 @@
       "modelNumber": "RG-RAP6260(H)",
       "sku": "RG-RAP6260-H",
       "category": "Access Points & Wi-Fi",
-      "categoryId": "cat-wifi",
+      "categoryId": "cat-access-points",
       "productType": "physical",
       "status": "active",
       "websiteVisible": true,
@@ -3766,6 +3815,53 @@
         "available": 14,
         "status": "in_stock"
       }
+    },
+    {
+      "id": "prod-wifi-db2",
+      "name": "EZVIZ DB2 2K Battery Video Doorbell with Chime",
+      "slug": "ezviz-db2-2k-battery-video-doorbell",
+      "modelNumber": "CS-DB2-A0-2C5WF",
+      "sku": "EZV-DB2-2K",
+      "brandId": "brand-ezviz",
+      "brand": "EZVIZ",
+      "categoryId": "cat-wifi",
+      "category": "Wi-Fi Cameras",
+      "shortDescription": "Wireless 2K smart video doorbell with wire-free battery installation and indoor chime.",
+      "description": "Crisp 2K resolution video doorbell featuring PIR human detection, ultra-wide 176° field of view, and included indoor wireless chime.",
+      "pricing": {
+        "regularPrice": 11500,
+        "salePrice": 10500
+      },
+      "inventory": {
+        "available": 12,
+        "reserved": 0,
+        "lowStockThreshold": 3
+      },
+      "specifications": [
+        {
+          "key": "Resolution",
+          "value": "2K (2000 x 1504)"
+        },
+        {
+          "key": "Field of View",
+          "value": "176° Ultra-Wide Angle"
+        },
+        {
+          "key": "Night Vision",
+          "value": "Up to 5m Infrared"
+        },
+        {
+          "key": "Battery",
+          "value": "5200mAh Rechargeable"
+        },
+        {
+          "key": "Connectivity",
+          "value": "Wi-Fi 2.4GHz"
+        }
+      ],
+      "status": "active",
+      "websiteVisible": true,
+      "isPopular": true
     }
   ],
   "INITIAL_PROJECTS": [

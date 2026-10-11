@@ -387,7 +387,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
         ...editingCategory,
         slug,
         showOnHomepage: editingCategory.showOnHomepage !== false,
-        image: editingCategory.image || ''
+        image: editingCategory.image || '',
+        leadInImage: editingCategory.leadInImage || '',
+        bullets: (editingCategory.bullets || []).filter(b => b && b.trim()),
+        buttonText: editingCategory.buttonText || ''
       });
     } else {
       await categoryService.createCategory({
@@ -395,6 +398,9 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
         slug,
         description: editingCategory.description || '',
         image: editingCategory.image || '',
+        leadInImage: editingCategory.leadInImage || '',
+        bullets: (editingCategory.bullets || []).filter(b => b && b.trim()),
+        buttonText: editingCategory.buttonText || '',
         specTemplateId: editingCategory.specTemplateId || templates[0]?.id || 'tpl-cctv',
         status: editingCategory.status || 'active',
         showOnHomepage: editingCategory.showOnHomepage !== false,
@@ -3878,6 +3884,57 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 placeholder="Summary for homepage category card and catalog SEO"
                 className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
               />
+            </div>
+
+            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-200/80 space-y-3">
+              <h4 className="text-xs font-bold text-orange-950 uppercase tracking-wide">Homepage Lead-In Panel Settings</h4>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Lead-In Image URL (Transparent PNG or SVG)</label>
+                <input
+                  type="text"
+                  value={editingCategory.leadInImage || ''}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, leadInImage: e.target.value })}
+                  placeholder="e.g. /images/hero/hikvision-bullet.png"
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+                />
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Displayed in the middle of the category lead-in card. Falls back to category image or SVG illustration.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Reassurance Bullets (Up to 3, max 60 chars each)</label>
+                <div className="space-y-1.5">
+                  {[0, 1, 2].map((idx) => (
+                    <input
+                      key={idx}
+                      type="text"
+                      maxLength={60}
+                      value={editingCategory.bullets?.[idx] || ''}
+                      onChange={(e) => {
+                        const newBullets = [...(editingCategory.bullets || ['', '', ''])];
+                        newBullets[idx] = e.target.value;
+                        setEditingCategory({ ...editingCategory, bullets: newBullets });
+                      }}
+                      placeholder={`Bullet ${idx + 1} (e.g. Direct phone app alert & view)`}
+                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Action Button Text</label>
+                <input
+                  type="text"
+                  maxLength={40}
+                  value={editingCategory.buttonText || ''}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, buttonText: e.target.value })}
+                  placeholder="e.g. Explore all Wi-Fi cameras (default: View all)"
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                />
+              </div>
             </div>
 
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
