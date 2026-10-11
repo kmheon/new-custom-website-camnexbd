@@ -3,6 +3,7 @@ import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button } from '../components/common/UI';
 import { ProductCard } from '../components/common/ProductCard';
+import { CardGrid } from '../components/cards/CardGrid';
 import { useWishlistStore, useCustomerAuthStore, useCartStore } from '../store';
 import { productService } from '../services';
 import { Product } from '../types';
@@ -123,13 +124,11 @@ export const WishlistPage: React.FC<WishlistPageProps> = ({ onNavigate }) => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CardGrid columns={4}>
             {products.map((product) => (
-              <div key={product.id} className="relative group">
-                <ProductCard product={product} onNavigate={onNavigate} />
-              </div>
+              <ProductCard key={product.id} product={product} onNavigate={onNavigate} />
             ))}
-          </div>
+          </CardGrid>
         )}
       </div>
     </div>

@@ -58,3 +58,50 @@ img, svg, video, canvas, audio, iframe, embed, object {
   }
 }
 
+/* ==========================================================================
+   Shared Card Subgrid & Equal Heights System
+   ========================================================================== */
+.card-subgrid-grid {
+  display: grid;
+}
+
+@supports (grid-template-rows: subgrid) {
+  .card-subgrid-grid {
+    grid-template-rows: repeat(7, auto);
+  }
+
+  .card-subgrid-row {
+    display: grid !important;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(260px, 300px);
+    grid-template-rows: repeat(7, auto);
+  }
+
+  .card-subgrid-item {
+    display: grid !important;
+    grid-row: span 7;
+    grid-template-rows: subgrid;
+  }
+}
+
+/* Fallback for browsers without subgrid */
+@supports not (grid-template-rows: subgrid) {
+  .card-subgrid-grid {
+    display: grid;
+  }
+
+  .card-subgrid-row {
+    display: flex !important;
+  }
+
+  .card-subgrid-item {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .card-subgrid-item .card-slot-price,
+  .card-subgrid-item .card-slot-actions {
+    margin-top: auto;
+  }
+}
+

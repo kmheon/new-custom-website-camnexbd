@@ -36,6 +36,8 @@ import { ProductRow } from '../components/common/ProductRow';
 import { HeroSlider } from '../components/HeroSlider';
 import { SpecialOfferSlider } from '../components/SpecialOfferSlider';
 import { CategoryGrid } from '../components/CategoryGrid';
+import { CardGrid } from '../components/cards/CardGrid';
+import { PackageCard } from '../components/cards/PackageCard';
 import {
   cmsService,
   productService,
@@ -877,114 +879,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </button>
               </div>
             ) : (
-              <div className={displayPackages.length < 3 ? "flex flex-wrap justify-center items-stretch gap-5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch"}>
+              <CardGrid columns={displayPackages.length < 4 ? 'auto' as any : 4}>
                 {displayPackages.map((pkg) => (
-                  <div
+                  <PackageCard
                     key={pkg.id}
-                    data-package-id={pkg.id}
-                    className={`bg-white rounded-[20px] border border-[#EDE8E1] p-5 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 h-full group group/pkg ${
-                      displayPackages.length < 3 ? 'w-full max-w-[360px]' : ''
-                    }`}
-                  >
-                    <div className="flex flex-col flex-1">
-                      {/* Image: fixed aspect */}
-                      <div className="mb-4 overflow-hidden rounded-2xl shrink-0">
-                        {pkg.image ? (
-                          <div className="h-36 sm:h-44 bg-[#F4EEE6] rounded-2xl flex items-center justify-center p-3">
-                            <SmartImage
-                              src={pkg.image}
-                              alt={pkg.name}
-                              fallbackType="kit"
-                              className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
-                            />
-                          </div>
-                        ) : (
-                          <CctvPackageSvg pkg={pkg} />
-                        )}
-                      </div>
-
-                      {/* Tag / Series row */}
-                      <div className="flex items-center justify-between mb-2.5 shrink-0 gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2.5 py-0.5 rounded-full truncate">
-                          {pkg.technologyLabel || pkg.seriesName || pkg.badge || 'Complete Kit'}
-                        </span>
-                        <span className="text-[11px] font-bold text-[#5B6472] shrink-0">
-                          {pkg.cameraCount ? `${pkg.cameraCount} Camera Kit` : 'Hardware Kit'}
-                        </span>
-                      </div>
-
-                      {/* Title: clamped to 2 lines with fixed min-h */}
-                      <h3 className="font-heading font-bold text-base sm:text-lg text-[#111827] mb-2 leading-tight line-clamp-2 min-h-[2.8rem]">
-                        {pkg.name}
-                      </h3>
-
-                      {/* Description: clamped to 2 lines with fixed min-h, never cut mid-word */}
-                      <p className="text-xs text-[#5B6472] leading-relaxed mb-4 line-clamp-2 min-h-[2.4rem] min-w-0 [overflow-wrap:anywhere] break-words">
-                        {pkg.description}
-                      </p>
-
-                      {/* Component list: showing max 4 items with height reserved for 4 rows (min-h-[104px]) */}
-                      <div className="py-3 border-y border-[#EDE8E1] text-xs text-[#111827] mb-4 min-h-[104px] flex flex-col justify-center space-y-1.5">
-                        {(() => {
-                          const items = (pkg.inclusions && pkg.inclusions.length > 0)
-                            ? pkg.inclusions
-                            : (pkg.rules && pkg.rules.length > 0)
-                              ? pkg.rules.map((r: any) => r.name)
-                              : ['Standard Bill of Materials included'];
-
-                          const displayItems = items.slice(0, 4);
-                          const extraCount = items.length - 4;
-
-                          return (
-                            <>
-                              {displayItems.map((item: string, rIdx: number) => (
-                                <div key={rIdx} className="flex items-center gap-2">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                                  <span className="truncate text-[11px] font-medium text-slate-700">{item}</span>
-                                </div>
-                              ))}
-                              {extraCount > 0 && (
-                                <div className="text-[10px] font-bold text-[#F15A24] pl-5.5">
-                                  +{extraCount} more components
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Price block and button pinned to bottom with mt-auto */}
-                    <div className="mt-auto pt-2 shrink-0">
-                      <div className="mb-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block">
-                          {pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32) ? 'Commercial Pricing' : 'Starting From'}
-                        </span>
-                        <div className="text-xl font-black text-[#111827] font-heading">
-                          {pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32) || !pkg.basePrice
-                            ? 'Request Quotation'
-                            : `৳${pkg.basePrice.toLocaleString()}`}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32)) {
-                            onNavigate('quote');
-                          } else {
-                            onNavigate('packages', pkg.slug);
-                          }
-                        }}
-                        className="w-full min-h-[44px] py-2.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
-                      >
-                        <span>{pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32) ? 'Request Quotation' : 'Configure Package'}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                    pkg={pkg}
+                    onNavigate={onNavigate}
+                    renderSvgFallback={(p) => <CctvPackageSvg pkg={p} />}
+                  />
                 ))}
-              </div>
+              </CardGrid>
             )}
           </div>
         </section>

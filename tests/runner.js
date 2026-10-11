@@ -178,7 +178,8 @@ async function main() {
   console.log(`\n[STEP 1] Generating clean test database at: ${TEST_DB_PATH}`);
   cp.execFileSync(process.execPath, [
     path.join(__dirname, '../scripts/create_clean_db.js'),
-    `--output=${TEST_DB_PATH}`
+    `--output=${TEST_DB_PATH}`,
+    '--replace'
   ], {
     env: {
       ...process.env,
@@ -242,6 +243,7 @@ async function main() {
     results.push(await runTestSuite('Homepage Fixes Suite (CDP)', path.join(__dirname, 'test_homepage_fixes.js'), testEnv));
     results.push(await runTestSuite('Homepage Revision 3 Suite (CDP)', path.join(__dirname, 'test_homepage_revision3.js'), testEnv));
     results.push(await runTestSuite('Homepage Revision 4 Suite (CDP)', path.join(__dirname, 'test_homepage_revision4.js'), testEnv));
+    results.push(await runTestSuite('Equal-Height Cards & CSS Subgrid Suite (CDP)', path.join(__dirname, 'test_equal_heights_subgrid.js'), testEnv));
     results.push(await runTestSuite('Platform Hardening Suite', path.join(__dirname, 'test_platform.js'), testEnv));
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));

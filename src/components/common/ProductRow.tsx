@@ -4,6 +4,8 @@ import { Product } from '../../types';
 import { SectionHeader } from './SectionHeader';
 import { ProductCard } from './ProductCard';
 
+import { CardRow } from '../cards/CardRow';
+
 interface ProductRowProps {
   eyebrow?: string;
   title: string;
@@ -83,12 +85,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         )}
       </div>
 
-      {/* Horizontal Container (exact 4-card fit desktop, scroll with arrows only when > 4) */}
-      <div
-        ref={scrollRef}
-        className={`flex gap-5 no-scrollbar ${
-          totalItems > 4 ? 'overflow-x-auto snap-x snap-mandatory' : 'overflow-x-hidden'
-        } ${totalItems < 4 ? 'justify-center' : ''}`}
+      {/* Horizontal Container using CardRow */}
+      <CardRow
+        scrollerRef={scrollRef}
+        itemCount={totalItems}
+        showArrows={false}
+        aria-label={title}
       >
         {/* Optional Promo Tile as First Item */}
         {promoTile && (
@@ -146,20 +148,22 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             }
 
             return (
-              <div
+              <ProductCard
                 key={prod.id}
+                product={prod}
+                onNavigate={onNavigate}
+                allowHot={allowHot}
                 className={`snap-start ${
                   totalItems < 4 ? 'w-[260px] sm:w-[280px]' : 'w-[260px] sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]'
                 } flex-shrink-0 min-w-0`}
-              >
-                <ProductCard product={prod} onNavigate={onNavigate} allowHot={allowHot} />
-              </div>
+              />
             );
           });
         })()}
-      </div>
+      </CardRow>
     </div>
   );
+
 
   if (variant === 'panel') {
     return (

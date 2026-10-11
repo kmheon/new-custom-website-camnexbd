@@ -15,6 +15,17 @@ interface ProductCardProps {
   allowHot?: boolean; // When false (more than 2 Hot cards in this row), Hot badge is suppressed
 }
 
+import {
+  CardContainer,
+  CardMediaSlot,
+  CardMetaSlot,
+  CardTitleSlot,
+  CardDescriptionSlot,
+  CardDetailsSlot,
+  CardPriceSlot,
+  CardActionsSlot
+} from '../cards/CardSlots';
+
 // Strip brand and model number repetitions from title
 export function cleanProductTitle(name: string, brand?: string, model?: string): string {
   if (!name) return '';
@@ -92,12 +103,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // Clean title without repeated brand or model
   const cleanTitle = cleanProductTitle(product.name, product.brand, product.modelNumber);
 
-  // Extract up to 4 highlights using formatSpecValue:
-  // - use field's highlightValue when set
-  // - booleans show check icon with field's short label (no tile when false)
-  // - numbers append unit
-  // - strings > 14 chars fall back to first number + unit, else skipped
-  // - never "..." and never raw words "true" or "false"
   const highlightCards: FormattedSpecResult[] = [];
 
   if (product.specs) {
@@ -119,7 +124,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     });
   }
 
-  // Fallback to keyFeatures if still empty
   if (highlightCards.length === 0 && Array.isArray(product.keyFeatures)) {
     product.keyFeatures.slice(0, 2).forEach((kf) => {
       if (typeof kf === 'string' && kf.trim() && highlightCards.length < 4) {
@@ -129,24 +133,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     });
   }
 
-  // Warranty data exists check
   const hasWarranty = typeof product.warranty === 'string' && product.warranty.trim().length > 0;
 
   return (
     <>
-      <div
+      <CardContainer
+        data-card-id={product.id}
         data-product-id={product.id}
         onClick={() => onNavigate('product', product.id)}
-        className={`bg-white rounded-2xl border border-[#EDE8E1] p-4 sm:p-5 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative cursor-pointer h-full min-w-0 ${className}`}
+        className={`group/card ${className}`}
       >
-        {/* Aria-live announcement for wishlist toggle */}
         <div aria-live="polite" className="sr-only">
           {toastText}
         </div>
 
-        <div className="min-w-0 flex-1 flex flex-col">
-          {/* LARGER IMAGE AREA ON SOFT GRADIENT */}
-          <div className="h-48 sm:h-52 rounded-xl overflow-hidden bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] mb-4 relative flex items-center justify-center p-3">
+        {/* 1. MEDIA SLOT */}
+        <CardMediaSlot>
+          <div className="h-44 sm:h-48 rounded-xl overflow-hidden bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] relative flex items-center justify-center p-3">
             {!imageError && product.primaryImage ? (
               <img
                 src={product.primaryImage}
@@ -172,9 +175,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </span>
             </div>
 
-            {/* Top-Right: Wishlist Heart Button & Quick-View Eye Button directly below */}
+            {/* Top-Right: Wishlist Heart Button & Quick-View Eye Button */}
             <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-center gap-1.5">
-              {/* Wishlist Heart */}
               <button
                 type="button"
                 onClick={handleToggleWishlist}
@@ -189,7 +191,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <Heart className={`w-3.5 h-3.5 ${inWishlist ? 'text-[#F15A24] fill-[#F15A24]' : ''}`} />
               </button>
 
-              {/* Quick-View Eye Button directly below heart (hover desktop, always visible touch) */}
               <button
                 type="button"
                 onClick={handleOpenQuickView}
@@ -201,7 +202,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </button>
             </div>
 
-            {/* Top-Left Corner Demo tag when sample content is ON (shows "Demo") */}
+            {/* Top-Left Corner Demo tag when sample content is ON */}
             {showSampleBadge && (product.isDemo || (product as any).sample) && (
               <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/90 text-slate-950 shadow-xs uppercase tracking-wider">
@@ -210,8 +211,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </div>
             )}
 
-            {/* Bottom-Left Badge: EXACTLY ONE BADGE MAX, priority: Sale (-X%) > Hot > New.
-                "Hot" only on admin-flagged products (isFeatured / isHot), never if allowHot is false. */}
+            {/* Bottom-Left Badge: EXACTLY ONE BADGE MAX, priority: Sale > Hot > New */}
             <div className="absolute bottom-2.5 left-2.5 z-10">
               {hasSale ? (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#F15A24] text-white shadow-xs">
@@ -228,12 +228,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               ) : null}
             </div>
 
-            {/* Bottom-Right Compare toggle on hover */}
+            {/* Bottom-Right Compare toggle */}
             <button
               type="button"
               onClick={handleToggleCompare}
               title={inCompare ? 'Remove from compare' : 'Add to compare'}
-              className={`absolute bottom-2.5 right-2.5 p-1.5 rounded-full border shadow-md transition-all ${
+              className={`absolute bottom-2.5 right-2.5 p-1.5 rounded-full border shadow-md transition-all cursor-pointer ${
                 inCompare
                   ? 'bg-[#F15A24] border-[#F15A24] text-white opacity-100'
                   : 'bg-white/90 hover:bg-white border-[#EDE8E1] text-[#111827] opacity-0 group-hover:opacity-100'
@@ -242,23 +242,48 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               <Layers className="w-3.5 h-3.5" />
             </button>
           </div>
+        </CardMediaSlot>
 
-          {/* MODEL NUMBER IN SMALL MUTED MONOSPACE ABOVE TITLE */}
-          <div className="text-[11px] font-mono text-[#5B6472] uppercase tracking-wider mb-1 truncate min-w-0">
-            {product.modelNumber}
-          </div>
+        {/* 2. META SLOT (Model number + warranty) */}
+        <CardMetaSlot>
+          <span className="text-[11px] font-mono text-[#5B6472] uppercase tracking-wider truncate min-w-0">
+            {product.modelNumber || <span className="invisible">&nbsp;</span>}
+          </span>
+          {hasWarranty ? (
+            <span className="text-[10px] font-semibold text-emerald-600 inline-flex items-center gap-1 shrink-0">
+              <ShieldCheck className="w-3 h-3" />
+              <span>{product.warranty}</span>
+            </span>
+          ) : (
+            <span className="invisible select-none" aria-hidden="true">&nbsp;</span>
+          )}
+        </CardMetaSlot>
 
-          {/* CLEAN TITLE WITHOUT REPEATED BRAND OR MODEL */}
+        {/* 3. TITLE SLOT (Clamped to 2 lines, clean ellipsis) */}
+        <CardTitleSlot>
           <h3
-            className="font-bold text-sm sm:text-base text-[#111827] group-hover:text-[#F15A24] transition-colors font-heading line-clamp-2 leading-snug mb-3 min-w-0 [overflow-wrap:anywhere] break-words"
+            className="font-bold text-sm sm:text-base text-[#111827] group-hover:text-[#F15A24] transition-colors font-heading line-clamp-2 leading-snug min-h-[2.6rem] min-w-0 [overflow-wrap:anywhere] break-words"
             title={product.name}
           >
             {cleanTitle}
           </h3>
+        </CardTitleSlot>
 
-          {/* HIGHLIGHTS AS MINI-CARDS: 2x2 grid (1-2 items: 1 row). Reserved height so cards in a row stay equal */}
-          <div className="min-h-[58px] mb-3">
-            {highlightCards.length > 0 && (
+        {/* 4. DESCRIPTION SLOT (Reserved slot) */}
+        <CardDescriptionSlot>
+          {product.shortDescription ? (
+            <p className="text-xs text-[#5B6472] leading-relaxed line-clamp-2 min-h-[2.4rem] min-w-0 [overflow-wrap:anywhere] break-words">
+              {product.shortDescription}
+            </p>
+          ) : (
+            <div className="invisible select-none min-h-[2.4rem]" aria-hidden="true">&nbsp;</div>
+          )}
+        </CardDescriptionSlot>
+
+        {/* 5. DETAILS SLOT (4 highlight tiles, reserved slot when empty) */}
+        <CardDetailsSlot>
+          <div className="min-h-[70px]">
+            {highlightCards.length > 0 ? (
               <div className="grid grid-cols-2 gap-1.5">
                 {highlightCards.map((hl, idx) => (
                   <div
@@ -277,13 +302,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="invisible select-none min-h-[70px]" aria-hidden="true">&nbsp;</div>
             )}
           </div>
-        </div>
+        </CardDetailsSlot>
 
-        {/* PRICING & ACTION BUTTONS */}
-        <div className="pt-3 border-t border-[#EDE8E1]/80 mt-2">
-          <div className="flex items-baseline justify-between mb-3">
+        {/* 6. PRICE SLOT (Reserves old price line) */}
+        <CardPriceSlot>
+          <div className="flex items-baseline justify-between min-h-[30px]">
             <div>
               {hasSale ? (
                 <div className="flex items-baseline gap-2">
@@ -295,8 +322,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   </span>
                 </div>
               ) : hasPrice ? (
-                <div className="text-lg sm:text-xl font-black text-[#111827] font-heading">
-                  ৳{regularPrice.toLocaleString()}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg sm:text-xl font-black text-[#111827] font-heading">
+                    ৳{regularPrice.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-transparent select-none" aria-hidden="true">
+                    &nbsp;
+                  </span>
                 </div>
               ) : (
                 <button
@@ -312,16 +344,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 </button>
               )}
             </div>
-
-            {hasWarranty && (
-              <span className="text-[10px] font-semibold text-emerald-600 inline-flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" />
-                <span>{product.warranty}</span>
-              </span>
-            )}
           </div>
+        </CardPriceSlot>
 
-          {/* Buttons Grid */}
+        {/* 7. ACTIONS SLOT */}
+        <CardActionsSlot>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -356,8 +383,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               )}
             </button>
           </div>
-        </div>
-      </div>
+        </CardActionsSlot>
+      </CardContainer>
 
       {/* Accessible Quick View Dialog */}
       <QuickViewModal
