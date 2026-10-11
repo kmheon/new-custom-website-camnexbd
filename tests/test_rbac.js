@@ -118,6 +118,7 @@ const denied = (r) => r.status === 401 || r.status === 403;
   check('Storefront cookie rejected on staff endpoints', denied(customerCookieOnly), `status ${customerCookieOnly.status}`);
 
   // 5. Role matrix. Allowed means "not 401/403"; denied means 401/403.
+  db.prepare('UPDATE users SET must_change_password = 0').run();
   const tokens = { admin: adminToken };
   for (const k of Object.keys(roles)) tokens[k] = sessionFor(db, users[k]);
 
