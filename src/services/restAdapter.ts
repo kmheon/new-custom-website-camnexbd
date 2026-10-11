@@ -35,6 +35,7 @@ import {
   Customer,
   MediaItem,
   PackageSeries,
+  PackageSystemType,
   ServiceOffering
 } from '../types';
 
@@ -337,6 +338,33 @@ export class RestPackageService implements IPackageService {
 
   async deletePackageSeries(id: string): Promise<void> {
     await request<any>(`/admin/package-series/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getPackageSystemTypes(): Promise<PackageSystemType[]> {
+    return request<PackageSystemType[]>('/package-system-types');
+  }
+
+  async getAllPackageSystemTypes(): Promise<PackageSystemType[]> {
+    return request<PackageSystemType[]>('/admin/package-system-types');
+  }
+
+  async savePackageSystemType(st: PackageSystemType): Promise<PackageSystemType> {
+    if (st.id) {
+      return request<PackageSystemType>(`/admin/package-system-types/${encodeURIComponent(st.id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(st)
+      });
+    }
+    return request<PackageSystemType>('/admin/package-system-types', {
+      method: 'POST',
+      body: JSON.stringify(st)
+    });
+  }
+
+  async deletePackageSystemType(id: string): Promise<void> {
+    await request<any>(`/admin/package-system-types/${encodeURIComponent(id)}`, {
       method: 'DELETE'
     });
   }

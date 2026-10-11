@@ -14,6 +14,8 @@ interface PackageBuilderPageProps {
 export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNavigate, packageSlug }) => {
   const [packages, setPackages] = useState<SecurityPackage[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<SecurityPackage | null>(null);
+  const [systemTypes, setSystemTypes] = useState<any[]>([]);
+  const [packageSeries, setPackageSeries] = useState<any[]>([]);
   const [cameraCount, setCameraCount] = useState<number>(4);
   const [formFactor, setFormFactor] = useState<CameraFormFactor>('bullet');
   const [computedBreakdown, setComputedBreakdown] = useState<{
@@ -34,8 +36,14 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
   const addItemToCart = useCartStore((s) => s.addItem);
 
   useEffect(() => {
-    packageService.getPackages().then(list => {
+    Promise.all([
+      packageService.getPackages(),
+      packageService.getPackageSystemTypes().catch(() => []),
+      packageService.getPackageSeries().catch(() => [])
+    ]).then(([list, sysList, serList]) => {
       setPackages(list);
+      setSystemTypes(sysList);
+      setPackageSeries(serList);
       if (list.length > 0) {
         const found = packageSlug ? list.find(p => p.slug === packageSlug) : list[0];
         setSelectedPackage(found || list[0]);
@@ -202,23 +210,63 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({ onNaviga
               </div>
             )}
 
-            {/* Engineering Rules Explanation */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-2">
-              <span className="font-bold text-[#111827] uppercase tracking-wider block">
-                Automated Engineering Rules:
-              </span>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5" />
-                <span>Storage rule: 2-4 cams = 500GB, 8 cams = 1TB, 16 cams = 2TB surveillance HDD.</span>
+            {/* System Type & Automated Engineering Rules Explanation */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[#111827] uppercase tracking-wider block">
+                  System Architecture:
+                </span>
+                <Badge variant="dark" className="text-[10px]">
+                  {selectedPackage.systemTypeName?.split('/')[0].trim() || (selectedPackage.systemTypeSlug === 'wireless' ? 'Wireless' : selectedPackage.systemTypeSlug === 'ip' ? 'IP Network' : 'Analogue HD')}
+                </Badge>
               </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5" />
-                <span>Cabling rule: 10 meters of Cat6 network cable per camera.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5" />
-                <span>Centralized regulated 12V power supply with surge protection.</span>
-              </div>
+
+              {selectedPackage.systemTypeSlug === 'wireless' ? (
+                <>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Wireless video rule: Encrypted Wi-Fi stream directly to mobile app or NVR kit.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Storage rule: High-endurance local MicroSD card per camera or wireless NVR disk.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Power rule: Individual regulated 12V power adapters included for each camera.</span>
+                  </div>
+                </>
+              ) : selectedPackage.systemTypeSlug === 'ip' ? (
+                <>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Network rule: 4K NVR with PoE power delivery through recorder or Gigabit switch.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Storage rule: 4-8 cams = 1-2TB, 16 cams = 6TB, 32-64 cams = 12-24TB enterprise HDD.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Cabling rule: Cat6 UTP network cable with RJ45 terminations per camera.</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Recorder rule: Turbo HD DVR with coaxial video and audio over coax support.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Storage rule: 2-4 cams = 500GB, 8 cams = 1TB, 16 cams = 2TB surveillance HDD.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>Cabling & Power: Coaxial video cable and centralized 12V power supply.</span>
+                  </div>
+                </>
+              )}
             </div>
 
           </div>

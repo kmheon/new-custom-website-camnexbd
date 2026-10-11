@@ -224,6 +224,26 @@ export interface PackageSeries {
   };
 }
 
+export interface PackageSystemType {
+  id: string;
+  name: string;
+  slug: string; // 'ip', 'analogue', 'wireless'
+  description: string;
+  icon?: string;
+  order: number;
+  enabled: boolean;
+  ruleSet?: {
+    recorderType?: 'dvr' | 'nvr' | 'none' | 'wireless_nvr';
+    cableType?: 'coaxial_dc' | 'cat6_utp' | 'none';
+    cableMetersPerCam?: number;
+    powerSupplyType?: 'centralized_12v' | 'poe_switch' | 'individual_adapters';
+    storageType?: 'surveillance_hdd' | 'microsd_or_nvr_hdd';
+    storageMap?: Record<number, string>;
+    hasBaluns?: boolean;
+    descriptionSummary?: string;
+  };
+}
+
 export interface SecurityPackage {
   id: string;
   name: string;
@@ -231,8 +251,13 @@ export interface SecurityPackage {
   badge?: string; // "Most Popular", "Best for Small Homes"
   description: string;
   image?: string;
-  seriesId?: string;
+  systemTypeId?: string;
+  systemTypeSlug?: string; // 'ip' | 'analogue' | 'wireless'
+  systemTypeName?: string;
+  seriesId?: string; // Night view series id (e.g. 'series-ir', 'series-hybrid', 'series-color', 'series-enterprise')
   seriesName?: string;
+  nightViewId?: string;
+  nightViewName?: string;
   technologyLabel?: string;
   cameraResolution?: string;
   cameraModel?: string;

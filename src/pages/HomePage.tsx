@@ -50,11 +50,23 @@ import {
   Category,
   SecurityPackage,
   PackageSeries,
+  PackageSystemType,
   ServiceOffering,
   Testimonial,
   ProjectCaseStudy,
   ScenarioItem
 } from '../types';
+import {
+  filterPackages,
+  calculateBadgeCounts,
+  resolveDependentFilterSelection,
+  getFilterConflictState,
+  buildFilterQuery,
+  parseFilterQuery,
+  slugifyFilter,
+  normalizeCameraCount,
+  getAvailableCameraCounts
+} from '../utils/packageFilters';
 import { SmartImage, ImagePlaceholder } from '../components/common/ImagePlaceholder';
 import { IconTile } from '../components/common/IconTile';
 import { useSettingsStore, useAdminAuthStore, useCartStore } from '../store';
@@ -318,13 +330,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [categoryRowProducts, setCategoryRowProducts] = useState<{ [catId: string]: Product[] }>({});
   const [packages, setPackages] = useState<SecurityPackage[]>([]);
   const [packageSeriesList, setPackageSeriesList] = useState<PackageSeries[]>([]);
+  const [packageSystemTypes, setPackageSystemTypes] = useState<PackageSystemType[]>([]);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [projects, setProjects] = useState<ProjectCaseStudy[]>([]);
 
-  // Package filters: camera count & package type
+  // Package filters: System type (IP, Analogue, Wireless), Camera count, and Night view series
+  const [systemFilter, setSystemFilter] = useState<string>('all');
   const [packageCountFilter, setPackageCountFilter] = useState<string>('All');
-  const [packageTypeFilter, setPackageTypeFilter] = useState<string>('All Types');
+  const [nightViewFilter, setNightViewFilter] = useState<string>('all');
 
   // Quick Service Request callback state (fully dynamic & two-way synced)
   const [selectedServiceId, setSelectedServiceId] = useState<string>('srv-cctv');
@@ -463,9 +477,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       setNewArrivals(res.items);
     });
 
-    // Fetch packages & package series
+    // Fetch packages, package series & system types
     packageService.getPackages().then(setPackages);
     packageService.getPackageSeries().then(setPackageSeriesList);
+    packageService.getPackageSystemTypes().then(setPackageSystemTypes).catch(() => []);
 
     // Fetch dynamic service offerings for Quick Service section
     quoteService.getServiceOfferings().then((services) => {
@@ -523,80 +538,89 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     }
   };
 
-  // Initialize filters from URL query parameters on load
+  // Initialize filters from URL query parameters on load & on popstate
   useEffect(() => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const cam = params.get('cameras');
-      const typ = params.get('type');
-      if (cam) setPackageCountFilter(cam);
-      if (typ) setPackageTypeFilter(typ);
+      const parsed = parseFilterQuery(window.location.search, {
+        systemTypes: packageSystemTypes,
+        seriesList: packageSeriesList
+      });
+      setSystemFilter(parsed.systemSlug);
+      setPackageCountFilter(parsed.cameraCount);
+      setNightViewFilter(parsed.nightViewSlug);
     } catch (_) {}
-  }, []);
 
-  // Sync filters to URL without full page reload
-  const updatePackageFilters = (newCount: string, newType: string) => {
-    setPackageCountFilter(newCount);
-    setPackageTypeFilter(newType);
+    const handlePopState = () => {
+      try {
+        const parsed = parseFilterQuery(window.location.search, {
+          systemTypes: packageSystemTypes,
+          seriesList: packageSeriesList
+        });
+        setSystemFilter(parsed.systemSlug);
+        setPackageCountFilter(parsed.cameraCount);
+        setNightViewFilter(parsed.nightViewSlug);
+      } catch (_) {}
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [packageSystemTypes, packageSeriesList]);
+
+  // Sync filters to URL and resolve dependent selections
+  const updatePackageFilters = (newSys: string, newCount: string, newNightView: string) => {
+    const resolved = resolveDependentFilterSelection(newSys, newCount, newNightView, packages, {
+      systemTypes: packageSystemTypes,
+      seriesList: packageSeriesList
+    });
+    setSystemFilter(resolved.systemSlug);
+    setPackageCountFilter(resolved.cameraCount);
+    setNightViewFilter(resolved.nightViewSlug);
+
     try {
-      const url = new URL(window.location.href);
-      if (newCount !== 'All') url.searchParams.set('cameras', newCount);
-      else url.searchParams.delete('cameras');
-      if (newType !== 'All') url.searchParams.set('type', newType);
-      else url.searchParams.delete('type');
-      window.history.replaceState({}, '', url.toString());
+      const query = buildFilterQuery(resolved);
+      const newUrl = window.location.pathname + query + window.location.hash;
+      window.history.pushState({}, '', newUrl);
     } catch (_) {}
   };
 
-  // Derive dynamic camera count options from existing packages
-  const availableCameraCounts = useMemo(() => {
-    const counts = new Set<number>();
-    packages.forEach((pkg) => {
-      if (pkg.cameraCount) counts.add(pkg.cameraCount);
-      if (pkg.cameraCountsSupported && Array.isArray(pkg.cameraCountsSupported)) {
-        pkg.cameraCountsSupported.forEach((c) => counts.add(c));
-      }
+  // Derive dynamic camera count numbers from all packages
+  const allAvailableCounts = useMemo(() => {
+    return [2, 4, 8, 16, 32, 64].filter((count) => {
+      return packages.some((pkg) =>
+        pkg.cameraCount === count ||
+        (Array.isArray(pkg.cameraCountsSupported) && pkg.cameraCountsSupported.includes(count))
+      );
     });
-    const sorted = Array.from(counts).sort((a, b) => a - b);
-    return sorted.length >= 1 ? ['All', ...sorted.map((c) => `${c} Camera`)] : [];
   }, [packages]);
 
-  // Derive dynamic package types from series that have packages
-  const availablePackageTypes = useMemo(() => {
-    const seriesNames = new Set<string>();
-    packages.forEach((pkg) => {
-      if (pkg.seriesName) seriesNames.add(pkg.seriesName);
-      else if (pkg.seriesId) {
-        const found = packageSeriesList.find((s) => s.id === pkg.seriesId);
-        if (found) seriesNames.add(found.name);
-      }
-    });
-    return seriesNames.size >= 2 ? ['All Types', ...Array.from(seriesNames)] : [];
-  }, [packages, packageSeriesList]);
+  // Calculate badge counts for camera counts and night view options
+  const badgeCounts = useMemo(() => {
+    return calculateBadgeCounts(
+      packages,
+      { systemSlug: systemFilter, cameraCount: packageCountFilter, nightViewSlug: nightViewFilter },
+      allAvailableCounts,
+      packageSeriesList,
+      packageSystemTypes
+    );
+  }, [packages, systemFilter, packageCountFilter, nightViewFilter, allAvailableCounts, packageSeriesList, packageSystemTypes]);
 
-  // Combined AND filtering for Packages (strict no-leak logic)
+  // Combined AND filtering for Packages (strict no-leak logic via pure filter function)
   const filteredPackages = useMemo(() => {
-    return packages.filter((pkg) => {
-      // Camera count filter (AND)
-      if (packageCountFilter !== 'All') {
-        const countNum = parseInt(packageCountFilter, 10);
-        const matchesCount = pkg.cameraCount === countNum ||
-          (Array.isArray(pkg.cameraCountsSupported) && pkg.cameraCountsSupported.length > 1 && pkg.cameraCountsSupported.includes(countNum));
-        if (!matchesCount) return false;
-      }
+    return filterPackages(
+      packages,
+      { systemSlug: systemFilter, cameraCount: packageCountFilter, nightViewSlug: nightViewFilter },
+      { systemTypes: packageSystemTypes, seriesList: packageSeriesList }
+    );
+  }, [packages, systemFilter, packageCountFilter, nightViewFilter, packageSystemTypes, packageSeriesList]);
 
-      // Series / Type filter (AND)
-      if (packageTypeFilter !== 'All Types' && packageTypeFilter !== 'All') {
-        const target = packageTypeFilter.toLowerCase();
-        const matchesSeries =
-          (pkg.seriesName && pkg.seriesName.toLowerCase() === target) ||
-          (pkg.seriesId && packageSeriesList.some((s) => s.id === pkg.seriesId && s.name.toLowerCase() === target));
-        if (!matchesSeries) return false;
-      }
-
-      return true;
-    });
-  }, [packages, packageCountFilter, packageTypeFilter, packageSeriesList]);
+  // Conflict state when user narrows down to 0 matching packages
+  const conflictState = useMemo(() => {
+    return getFilterConflictState(
+      { systemSlug: systemFilter, cameraCount: packageCountFilter, nightViewSlug: nightViewFilter },
+      packages,
+      { systemTypes: packageSystemTypes, seriesList: packageSeriesList }
+    );
+  }, [systemFilter, packageCountFilter, nightViewFilter, packages, packageSystemTypes, packageSeriesList]);
 
   const displayPackages = filteredPackages;
 
@@ -798,85 +822,216 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               className="mb-8"
             />
 
-            {/* Filter chips: camera counts and types derived dynamically from existing packages; hide group if < 2 options */}
-            {(availableCameraCounts.length >= 2 || availablePackageTypes.length >= 2) && (
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-8">
-                {availableCameraCounts.length >= 2 && (
-                  <div
-                    role="tablist"
-                    aria-label="Filter packages by camera count"
-                    className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-full border border-[#EDE8E1] shadow-2xs"
+            {/* 1. ROW 1: Segmented control for System type ("All", then enabled types) */}
+            {packageSystemTypes.length > 1 && (
+              <div className="mb-6 space-y-2">
+                <div
+                  role="radiogroup"
+                  aria-label="Filter packages by system architecture"
+                  className="bg-white p-1 rounded-2xl border border-[#EDE8E1] shadow-2xs grid grid-cols-2 sm:grid-cols-4 gap-1 w-full max-w-3xl mx-auto"
+                >
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={systemFilter === 'all'}
+                    onClick={() => updatePackageFilters('all', packageCountFilter, nightViewFilter)}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                      systemFilter === 'all'
+                        ? 'bg-[#0F172A] text-white shadow-xs'
+                        : 'text-[#5B6472] hover:text-[#111827] hover:bg-slate-50'
+                    }`}
                   >
-                    {availableCameraCounts.map((tab) => {
-                      const isActive = packageCountFilter === tab;
-                      return (
-                        <button
-                          key={tab}
-                          type="button"
-                          role="tab"
-                          aria-selected={isActive}
-                          onClick={() => updatePackageFilters(tab, packageTypeFilter)}
-                          className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
-                            isActive
-                              ? 'bg-[#F15A24] text-white shadow-xs'
-                              : 'text-[#5B6472] hover:text-[#111827]'
-                          }`}
-                        >
-                          {tab}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                    <span>All Systems</span>
+                  </button>
+                  {packageSystemTypes.map((st) => {
+                    const isActive = systemFilter === st.slug;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isActive}
+                        onClick={() => updatePackageFilters(st.slug, packageCountFilter, nightViewFilter)}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                          isActive
+                            ? 'bg-[#0F172A] text-white shadow-xs'
+                            : 'text-[#5B6472] hover:text-[#111827] hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="truncate block">{st.name.split('/')[0].trim()}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                {availablePackageTypes.length >= 2 && (
-                  <div
-                    role="group"
-                    aria-label="Filter packages by type"
-                    className="flex flex-wrap items-center gap-1.5"
-                  >
-                    {availablePackageTypes.map((chip) => {
-                      const isActive = packageTypeFilter === chip;
-                      return (
-                        <button
-                          key={chip}
-                          type="button"
-                          aria-pressed={isActive}
-                          onClick={() => updatePackageFilters(packageCountFilter, chip)}
-                          className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F172A] ${
-                            isActive
-                              ? 'bg-[#0F172A] text-white'
-                              : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
-                          }`}
-                        >
-                          {chip}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                {/* System type one-line description on desktop */}
+                <div className="hidden sm:block text-center text-xs text-[#5B6472] min-h-[20px]">
+                  {systemFilter === 'all'
+                    ? 'Comparing all CCTV architectures: Coaxial Turbo HD, IP Network PoE, and Wireless Wi-Fi kits.'
+                    : packageSystemTypes.find((s) => s.slug === systemFilter)?.description || ''}
+                </div>
               </div>
             )}
 
+            {/* 2. ROW 2: Two horizontal scroll strips with shadow-fade edges on scroll */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-8">
+              {/* Left: Camera count chips with count badges showing matches for current System type */}
+              <div className="relative group/scroller flex-1 min-w-0">
+                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-[#FAF7F2] to-transparent z-10" />
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-[#FAF7F2] to-transparent z-10" />
+                <div
+                  role="tablist"
+                  aria-label="Filter packages by camera count"
+                  className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 px-1 bg-white rounded-full border border-[#EDE8E1] shadow-2xs"
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={packageCountFilter === 'All'}
+                    onClick={() => updatePackageFilters(systemFilter, 'All', nightViewFilter)}
+                    className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] shrink-0 flex items-center gap-1.5 ${
+                      packageCountFilter === 'All'
+                        ? 'bg-[#F15A24] text-white shadow-xs'
+                        : 'text-[#5B6472] hover:text-[#111827]'
+                    }`}
+                  >
+                    <span>All</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                      packageCountFilter === 'All' ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
+                    }`}>
+                      {badgeCounts.cameraCounts['All'] || 0}
+                    </span>
+                  </button>
+                  {allAvailableCounts.map((num) => {
+                    const countStr = String(num);
+                    const isActive = packageCountFilter === countStr;
+                    const matchCount = badgeCounts.cameraCounts[countStr] || 0;
+                    const isDisabled = matchCount === 0;
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        disabled={isDisabled}
+                        onClick={() => updatePackageFilters(systemFilter, countStr, nightViewFilter)}
+                        className={`min-h-[34px] px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] shrink-0 flex items-center gap-1.5 ${
+                          isDisabled
+                            ? 'opacity-35 cursor-not-allowed text-slate-400'
+                            : isActive
+                            ? 'bg-[#F15A24] text-white shadow-xs'
+                            : 'text-[#5B6472] hover:text-[#111827]'
+                        }`}
+                      >
+                        <span>{num} Cams</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
+                        }`}>
+                          {matchCount}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right: Night view chips with count badges showing matches for current System + Camera count */}
+              <div className="relative group/scroller flex-1 min-w-0">
+                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-[#FAF7F2] to-transparent z-10" />
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-[#FAF7F2] to-transparent z-10" />
+                <div
+                  role="group"
+                  aria-label="Filter packages by night view"
+                  className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 px-1"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={nightViewFilter === 'all'}
+                    onClick={() => updatePackageFilters(systemFilter, packageCountFilter, 'all')}
+                    className={`min-h-[34px] px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F172A] shrink-0 flex items-center gap-1.5 ${
+                      nightViewFilter === 'all'
+                        ? 'bg-[#0F172A] text-white shadow-xs'
+                        : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
+                    }`}
+                  >
+                    <span>All Views</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                      nightViewFilter === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
+                    }`}>
+                      {badgeCounts.nightViews['all'] || 0}
+                    </span>
+                  </button>
+                  {packageSeriesList.map((series) => {
+                    const isActive = nightViewFilter === series.slug;
+                    const matchCount = badgeCounts.nightViews[series.slug] || 0;
+                    const isDisabled = matchCount === 0;
+                    return (
+                      <button
+                        key={series.id}
+                        type="button"
+                        aria-pressed={isActive}
+                        disabled={isDisabled}
+                        onClick={() => updatePackageFilters(systemFilter, packageCountFilter, series.slug)}
+                        className={`min-h-[34px] px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F172A] shrink-0 flex items-center gap-1.5 ${
+                          isDisabled
+                            ? 'opacity-35 cursor-not-allowed bg-slate-100 text-slate-400 border border-slate-200'
+                            : isActive
+                            ? 'bg-[#0F172A] text-white shadow-xs'
+                            : 'bg-white hover:bg-slate-50 text-[#5B6472] border border-[#EDE8E1]'
+                        }`}
+                      >
+                        <span className="whitespace-nowrap">{series.name}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
+                        }`}>
+                          {matchCount}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* Package Cards Grid or Friendly Empty State */}
             {displayPackages.length === 0 ? (
-              <div className="bg-white rounded-[24px] border border-[#EDE8E1] p-10 text-center max-w-lg mx-auto shadow-xs space-y-4">
+              <div className="bg-white rounded-[24px] border border-[#EDE8E1] p-8 sm:p-10 text-center max-w-lg mx-auto shadow-xs space-y-4">
                 <div className="w-12 h-12 rounded-full bg-orange-100 text-[#F15A24] flex items-center justify-center mx-auto">
                   <Camera className="w-6 h-6" />
                 </div>
                 <h3 className="font-heading font-bold text-lg text-[#111827]">
-                  No packages match your selected filters
+                  {conflictState.message || 'No packages match your selected filters'}
                 </h3>
                 <p className="text-xs text-[#5B6472] leading-relaxed">
-                  We could not find any CCTV kits for {packageCountFilter} and {packageTypeFilter}. Try resetting filters to explore all available configurations.
+                  We could not find any CCTV kits for {packageCountFilter !== 'All' ? `${packageCountFilter} cameras` : 'selected filters'} under this configuration. Try clearing conflicting filters below:
                 </p>
-                <button
-                  type="button"
-                  onClick={() => updatePackageFilters('All', 'All')}
-                  className="px-6 py-2.5 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
-                >
-                  Reset filters
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                  {systemFilter !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => updatePackageFilters(systemFilter, 'All', 'all')}
+                      className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-[#111827] text-xs font-bold transition-all cursor-pointer"
+                    >
+                      View all {conflictState.systemName || systemFilter.toUpperCase()} packages
+                    </button>
+                  )}
+                  {packageCountFilter !== 'All' && (
+                    <button
+                      type="button"
+                      onClick={() => updatePackageFilters('all', packageCountFilter, 'all')}
+                      className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-[#111827] text-xs font-bold transition-all cursor-pointer"
+                    >
+                      View {packageCountFilter}-camera packages across all types
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => updatePackageFilters('all', 'All', 'all')}
+                    className="px-5 py-2 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                  >
+                    Reset all filters
+                  </button>
+                </div>
               </div>
             ) : (
               <CardGrid columns={displayPackages.length < 4 ? 'auto' as any : 4}>

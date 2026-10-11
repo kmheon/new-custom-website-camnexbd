@@ -260,6 +260,10 @@ const schemas = {
     name: z.string().min(2, 'Name is required')
   }).passthrough(),
 
+  packageSystemType: z.object({
+    name: z.string().min(2, 'Name is required')
+  }).passthrough(),
+
   heroSlide: z.object({
     title: z.string().min(1, 'Title is required')
   }).passthrough(),

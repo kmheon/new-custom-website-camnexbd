@@ -16,7 +16,8 @@ import {
   ScenarioItem,
   CtaReassuranceItem,
   ServiceOffering,
-  PackageSeries
+  PackageSeries,
+  PackageSystemType
 } from '../types';
 
 export const DEFAULT_SERVICES_LIST: ServiceItem[] = [
@@ -364,6 +365,66 @@ export const INITIAL_SERVICES: ServiceOffering[] = [
   }
 ];
 
+export const INITIAL_PACKAGE_SYSTEM_TYPES: PackageSystemType[] = [
+  {
+    id: 'systype-analogue',
+    name: 'Analogue / HD coaxial cameras (DVR)',
+    slug: 'analogue',
+    description: 'Coaxial video cable with centralized 12V DC power supply and Turbo HD digital video recorder (DVR).',
+    icon: 'Radio',
+    order: 1,
+    enabled: true,
+    ruleSet: {
+      recorderType: 'dvr',
+      cableType: 'coaxial_dc',
+      cableMetersPerCam: 20,
+      powerSupplyType: 'centralized_12v',
+      storageType: 'surveillance_hdd',
+      storageMap: { 2: '500GB', 4: '1TB', 8: '2TB', 16: '4TB' },
+      hasBaluns: true,
+      descriptionSummary: 'DVR, video and power cable per camera, centralized 12V power supply'
+    }
+  },
+  {
+    id: 'systype-ip',
+    name: 'IP / Network cameras (NVR, PoE)',
+    slug: 'ip',
+    description: 'Network IP cameras with Power over Ethernet (PoE) delivery through NVR or Gigabit switch.',
+    icon: 'Network',
+    order: 2,
+    enabled: true,
+    ruleSet: {
+      recorderType: 'nvr',
+      cableType: 'cat6_utp',
+      cableMetersPerCam: 30,
+      powerSupplyType: 'poe_switch',
+      storageType: 'surveillance_hdd',
+      storageMap: { 4: '1TB', 8: '2TB', 16: '6TB', 32: '12TB', 64: '24TB' },
+      hasBaluns: false,
+      descriptionSummary: 'NVR, PoE through NVR or switch, Cat6 network cable per camera'
+    }
+  },
+  {
+    id: 'systype-wireless',
+    name: 'Wireless / Wi-Fi cameras',
+    slug: 'wireless',
+    description: 'Standalone smart Wi-Fi cameras with mobile app monitoring, local storage, or wireless NVR kit.',
+    icon: 'Wifi',
+    order: 3,
+    enabled: true,
+    ruleSet: {
+      recorderType: 'none',
+      cableType: 'none',
+      cableMetersPerCam: 0,
+      powerSupplyType: 'individual_adapters',
+      storageType: 'microsd_or_nvr_hdd',
+      storageMap: { 2: '128GB MicroSD', 4: '256GB MicroSD / 1TB HDD' },
+      hasBaluns: false,
+      descriptionSummary: 'No recorder, no cable; cameras, microSD storage or a wireless NVR kit, power adapters'
+    }
+  }
+];
+
 export const INITIAL_PACKAGE_SERIES: PackageSeries[] = [
   {
     id: 'series-ir',
@@ -423,28 +484,11 @@ export const INITIAL_PACKAGE_SERIES: PackageSeries[] = [
     }
   },
   {
-    id: 'series-wireless',
-    name: 'Wireless',
-    slug: 'wireless',
-    description: 'Standalone smart Wi-Fi cameras connecting via phone app or wireless NVR kit. No video cables, includes power adapters and local storage.',
-    order: 4,
-    enabled: true,
-    illustration: 'wireless',
-    ruleSet: {
-      hasStorageRule: true,
-      storageMap: { 2: '128GB MicroSD', 4: '256GB MicroSD' },
-      hasCableRule: false,
-      hasRecorderRule: false,
-      allowPtz: true,
-      allowPoESwitch: false
-    }
-  },
-  {
     id: 'series-enterprise',
     name: 'Enterprise & PTZ',
     slug: 'enterprise-ptz',
     description: 'High-density IP surveillance systems with 360° PTZ tracking cameras, Gigabit PoE switches, and rackmount NVR arrays.',
-    order: 5,
+    order: 4,
     enabled: true,
     illustration: 'ptz-enterprise',
     ruleSet: {
@@ -3396,6 +3440,13 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
     slug: '4-camera-night-vision-cctv-package',
     badge: 'Affordable',
     description: 'Analog HD surveillance engineered with Hikvision 2MP IRPF infrared night vision cameras.',
+    systemTypeId: 'systype-analogue',
+    systemTypeSlug: 'analogue',
+    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
+    seriesId: 'series-ir',
+    seriesName: 'Night Vision (IR)',
+    nightViewId: 'series-ir',
+    nightViewName: 'Night Vision (IR)',
     cameraCountsSupported: [2, 4, 8, 16],
     defaultCameraCount: 4,
     supportedFormFactors: ['bullet', 'dome', 'turret'],
@@ -3459,6 +3510,13 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
     slug: '4-camera-color-cctv-package',
     badge: 'Most Popular',
     description: 'Surveillance setup with full 24/7 color low-light video imaging and Turbo HD digital recording.',
+    systemTypeId: 'systype-analogue',
+    systemTypeSlug: 'analogue',
+    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
+    seriesId: 'series-color',
+    seriesName: 'Full-Color',
+    nightViewId: 'series-color',
+    nightViewName: 'Full-Color',
     cameraCountsSupported: [2, 4, 8, 16],
     defaultCameraCount: 4,
     supportedFormFactors: ['bullet', 'dome'],
@@ -3515,6 +3573,13 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
     slug: '8-camera-business-cctv-package',
     badge: 'Top Tier',
     description: 'Comprehensive 8-camera commercial surveillance setup with 8-channel recorder and 2TB dedicated HDD.',
+    systemTypeId: 'systype-analogue',
+    systemTypeSlug: 'analogue',
+    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
+    seriesId: 'series-ir',
+    seriesName: 'Night Vision (IR)',
+    nightViewId: 'series-ir',
+    nightViewName: 'Night Vision (IR)',
     cameraCountsSupported: [8, 16],
     defaultCameraCount: 8,
     supportedFormFactors: ['bullet', 'dome', 'turret'],
@@ -3565,6 +3630,13 @@ export const INITIAL_PACKAGES: SecurityPackage[] = [
     slug: '16-camera-enterprise-cctv-package',
     badge: 'Enterprise',
     description: 'Facility surveillance kit covering warehouses, factories, and commercial campuses.',
+    systemTypeId: 'systype-analogue',
+    systemTypeSlug: 'analogue',
+    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
+    seriesId: 'series-ir',
+    seriesName: 'Night Vision (IR)',
+    nightViewId: 'series-ir',
+    nightViewName: 'Night Vision (IR)',
     cameraCountsSupported: [16],
     defaultCameraCount: 16,
     supportedFormFactors: ['bullet', 'dome', 'turret'],

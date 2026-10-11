@@ -46,6 +46,10 @@ const packageSeriesSchema = z.object({
   name: z.string().min(2, 'Name is required')
 }).passthrough();
 
+const packageSystemTypeSchema = z.object({
+  name: z.string().min(2, 'Name is required')
+}).passthrough();
+
 module.exports = {
   settingsSchema,
   heroSlideSchema,
@@ -55,6 +59,7 @@ module.exports = {
   testimonialSchema,
   faqItemSchema,
   redirectSchema,
-  packageSeriesSchema
+  packageSeriesSchema,
+  packageSystemTypeSchema
 };
 

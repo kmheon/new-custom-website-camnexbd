@@ -10,7 +10,8 @@ const {
   testimonialSchema,
   faqItemSchema,
   redirectSchema,
-  packageSeriesSchema
+  packageSeriesSchema,
+  packageSystemTypeSchema
 } = require('./cms.schemas');
 const {
   requireAdmin,
@@ -381,6 +382,53 @@ router.put('/admin/package-series/:id', requireAdmin, validateBody(packageSeries
 router.delete('/admin/package-series/:id', requireAdmin, (req, res) => {
   try {
     cmsService.deletePackageSeries(req.params.id, req.user);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PACKAGE SYSTEM TYPES (IP / Analogue / Wireless)
+router.get('/package-system-types', (req, res) => {
+  try {
+    const list = cmsService.listPackageSystemTypes();
+    res.json(list.filter(s => s.enabled));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/admin/package-system-types', requireAdmin, (req, res) => {
+  try {
+    const list = cmsService.listPackageSystemTypes();
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/admin/package-system-types', requireAdmin, validateBody(packageSystemTypeSchema), (req, res) => {
+  try {
+    const created = cmsService.createPackageSystemType(req.body, req.user);
+    res.json(created);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/admin/package-system-types/:id', requireAdmin, validateBody(packageSystemTypeSchema), (req, res) => {
+  try {
+    const updated = cmsService.updatePackageSystemType(req.params.id, req.body, req.user);
+    if (!updated) return res.status(404).json({ error: 'Package system type not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/admin/package-system-types/:id', requireAdmin, (req, res) => {
+  try {
+    cmsService.deletePackageSystemType(req.params.id, req.user);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

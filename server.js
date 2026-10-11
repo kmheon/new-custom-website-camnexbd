@@ -2257,6 +2257,68 @@ app.delete('/api/admin/package-series/:id', requireAdmin, (req, res) => {
 });
 
 // ============================================================================
+// PACKAGE SYSTEM TYPES REST APIs (IP / Analogue / Wireless)
+// ============================================================================
+app.get('/api/package-system-types', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM package_system_types WHERE enabled = 1 ORDER BY display_order ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/package-system-types', requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT data_json FROM package_system_types ORDER BY display_order ASC').all();
+    res.json(rows.map(r => JSON.parse(r.data_json)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/package-system-types', requireAdmin, validateBody(schemas.packageSystemType), (req, res) => {
+  try {
+    const data = req.body;
+    const id = data.id || `systype-${Date.now()}`;
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const item = { ...data, id, slug, enabled: data.enabled !== false, order: Number(data.order || data.display_order) || 1 };
+    db.prepare(`
+      INSERT OR REPLACE INTO package_system_types (id, name, slug, description, icon, display_order, enabled, data_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, item.name, slug, item.description || '', item.icon || '', item.order, item.enabled ? 1 : 0, JSON.stringify(item));
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/package-system-types/:id', requireAdmin, validateBody(schemas.packageSystemType), (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = req.body;
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const item = { ...data, id, slug, enabled: data.enabled !== false, order: Number(data.order || data.display_order) || 1 };
+    db.prepare(`
+      UPDATE package_system_types SET name = ?, slug = ?, description = ?, icon = ?, display_order = ?, enabled = ?, data_json = ?
+      WHERE id = ?
+    `).run(item.name, slug, item.description || '', item.icon || '', item.order, item.enabled ? 1 : 0, JSON.stringify(item), id);
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/package-system-types/:id', requireAdmin, (req, res) => {
+  try {
+    db.prepare('DELETE FROM package_system_types WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
 // 9. CMS & SETTINGS REST APIs
 // ============================================================================
 

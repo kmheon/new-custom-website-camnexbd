@@ -156,3 +156,4 @@ export const OfferCard: React.FC<OfferCardProps> = ({
     </CardContainer>
   );
 };
+

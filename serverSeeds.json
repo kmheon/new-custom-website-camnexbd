@@ -513,7 +513,12 @@
         "40m High-Shield Coaxial Video Cable",
         "1x 12V 5A Centralized Regulated Power Supply",
         "Complete BNC and DC Video Connectors"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-ir",
+      "nightViewName": "Night Vision (IR)"
     },
     {
       "id": "pkg-ir-4",
@@ -540,7 +545,12 @@
         "80m High-Shield Coaxial Video Cable",
         "1x 12V 5A Centralized Regulated Power Supply",
         "Complete BNC and DC Connectors"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-ir",
+      "nightViewName": "Night Vision (IR)"
     },
     {
       "id": "pkg-ir-8",
@@ -567,7 +577,12 @@
         "160m High-Shield Video Cable",
         "1x 12V 10A Heavy-Duty Power Supply",
         "BNC & DC Power Connectors"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-ir",
+      "nightViewName": "Night Vision (IR)"
     },
     {
       "id": "pkg-ir-16",
@@ -594,7 +609,12 @@
         "320m High-Shield Video Cable",
         "1x 12V 20A Industrial Power Supply",
         "Connectors & Distribution Box"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-ir",
+      "nightViewName": "Night Vision (IR)"
     },
     {
       "id": "pkg-hybrid-4",
@@ -620,7 +640,12 @@
         "80m Video Cable with Connectors",
         "1x 12V 5A Central Power Supply",
         "Mobile App P2P Configuration"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-hybrid",
+      "nightViewName": "Hybrid Light"
     },
     {
       "id": "pkg-hybrid-8",
@@ -646,7 +671,12 @@
         "160m Video Cable with Connectors",
         "1x 12V 10A Central Power Supply",
         "Full Site Configuration Setup"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-hybrid",
+      "nightViewName": "Hybrid Light"
     },
     {
       "id": "pkg-color-4",
@@ -672,7 +702,12 @@
         "80m High-Shield Coaxial Cable",
         "1x 12V 5A Centralized Power Supply",
         "BNC & DC Power Connectors"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-color",
+      "nightViewName": "Full-Color"
     },
     {
       "id": "pkg-color-8",
@@ -698,14 +733,19 @@
         "160m Video Cable with Connectors",
         "1x 12V 10A Central Power Supply",
         "Mounting Brackets & Setup"
-      ]
+      ],
+      "systemTypeId": "systype-analogue",
+      "systemTypeSlug": "analogue",
+      "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+      "nightViewId": "series-color",
+      "nightViewName": "Full-Color"
     },
     {
       "id": "pkg-wifi-2",
       "name": "2-Camera Wireless Smart Security Package",
       "slug": "2-camera-wireless-package",
-      "seriesId": "series-wireless",
-      "seriesName": "Wireless",
+      "seriesId": "series-ir",
+      "seriesName": "Night Vision (IR)",
       "technologyLabel": "Dual-Band Wi-Fi",
       "badge": "Cable-Free Video",
       "description": "Clean Wi-Fi security system with two-way voice communication, cloud/microSD local storage, and instant mobile alerts.",
@@ -722,14 +762,19 @@
         "2x 128GB High-Endurance MicroSD Cards",
         "2x 12V 2A Regulated Power Adapters",
         "Mobile Phone App Sync & Setup"
-      ]
+      ],
+      "systemTypeId": "systype-wireless",
+      "systemTypeSlug": "wireless",
+      "systemTypeName": "Wireless / Wi-Fi cameras",
+      "nightViewId": "series-ir",
+      "nightViewName": "Night Vision (IR)"
     },
     {
       "id": "pkg-wifi-4",
       "name": "4-Camera Wireless NVR Security Kit",
       "slug": "4-camera-wireless-nvr-kit",
-      "seriesId": "series-wireless",
-      "seriesName": "Wireless",
+      "seriesId": "series-ir",
+      "seriesName": "Night Vision (IR)",
       "technologyLabel": "Wi-Fi 6 Wireless Kit",
       "badge": "Complete Wireless Kit",
       "description": "4-camera wireless surveillance kit featuring dedicated wireless NVR receiver with pre-installed 1TB hard drive.",
@@ -747,7 +792,12 @@
         "1x Western Digital Purple 1TB HDD",
         "4x 12V DC Camera Power Adapters",
         "1x NVR Power Adapter & HDMI Cable"
-      ]
+      ],
+      "systemTypeId": "systype-wireless",
+      "systemTypeSlug": "wireless",
+      "systemTypeName": "Wireless / Wi-Fi cameras",
+      "nightViewId": "series-ir",
+      "nightViewName": "Night Vision (IR)"
     },
     {
       "id": "pkg-ptz-16",
@@ -773,7 +823,12 @@
         "1x 24-Port Gigabit PoE Switch",
         "1x 6TB Enterprise Surveillance HDD",
         "Cat6 Structured Network Cabling"
-      ]
+      ],
+      "systemTypeId": "systype-ip",
+      "systemTypeSlug": "ip",
+      "systemTypeName": "IP / Network cameras (NVR, PoE)",
+      "nightViewId": "series-enterprise",
+      "nightViewName": "Enterprise & PTZ"
     },
     {
       "id": "pkg-ent-32",
@@ -799,7 +854,12 @@
         "2x 6TB Enterprise Surveillance HDDs",
         "Cat6 STP Shielded Cabling Infrastructure",
         "Rackmount Cabinet & PDU System"
-      ]
+      ],
+      "systemTypeId": "systype-ip",
+      "systemTypeSlug": "ip",
+      "systemTypeName": "IP / Network cameras (NVR, PoE)",
+      "nightViewId": "series-enterprise",
+      "nightViewName": "Enterprise & PTZ"
     },
     {
       "id": "pkg-ent-64",
@@ -825,7 +885,12 @@
         "4x 6TB Enterprise Surveillance HDDs",
         "Optical Fiber Backbone Transceivers",
         "Centralized Monitoring Console Rack"
-      ]
+      ],
+      "systemTypeId": "systype-ip",
+      "systemTypeSlug": "ip",
+      "systemTypeName": "IP / Network cameras (NVR, PoE)",
+      "nightViewId": "series-enterprise",
+      "nightViewName": "Enterprise & PTZ"
     }
   ],
   "INITIAL_PRODUCTS": [
@@ -4647,31 +4712,11 @@
       }
     },
     {
-      "id": "series-wireless",
-      "name": "Wireless",
-      "slug": "wireless",
-      "description": "Standalone smart Wi-Fi cameras connecting via phone app or wireless NVR kit. No video cables, includes power adapters and local storage.",
-      "order": 4,
-      "enabled": true,
-      "illustration": "wireless",
-      "ruleSet": {
-        "hasStorageRule": true,
-        "storageMap": {
-          "2": "128GB MicroSD",
-          "4": "256GB MicroSD"
-        },
-        "hasCableRule": false,
-        "hasRecorderRule": false,
-        "allowPtz": true,
-        "allowPoESwitch": false
-      }
-    },
-    {
       "id": "series-enterprise",
       "name": "Enterprise & PTZ",
       "slug": "enterprise-ptz",
       "description": "High-density IP surveillance systems with 360° PTZ tracking cameras, Gigabit PoE switches, and rackmount NVR arrays.",
-      "order": 5,
+      "order": 4,
       "enabled": true,
       "illustration": "ptz-enterprise",
       "ruleSet": {
@@ -4687,6 +4732,79 @@
         "recorderChannels": 32,
         "allowPtz": true,
         "allowPoESwitch": true
+      }
+    }
+  ],
+  "INITIAL_PACKAGE_SYSTEM_TYPES": [
+    {
+      "id": "systype-analogue",
+      "name": "Analogue / HD coaxial cameras (DVR)",
+      "slug": "analogue",
+      "description": "Coaxial video cable with centralized 12V DC power supply and Turbo HD digital video recorder (DVR).",
+      "icon": "Radio",
+      "order": 1,
+      "enabled": true,
+      "ruleSet": {
+        "recorderType": "dvr",
+        "cableType": "coaxial_dc",
+        "cableMetersPerCam": 20,
+        "powerSupplyType": "centralized_12v",
+        "storageType": "surveillance_hdd",
+        "storageMap": {
+          "2": "500GB",
+          "4": "1TB",
+          "8": "2TB",
+          "16": "4TB"
+        },
+        "hasBaluns": true,
+        "descriptionSummary": "DVR, video and power cable per camera, centralized 12V power supply"
+      }
+    },
+    {
+      "id": "systype-ip",
+      "name": "IP / Network cameras (NVR, PoE)",
+      "slug": "ip",
+      "description": "Network IP cameras with Power over Ethernet (PoE) delivery through NVR or Gigabit switch.",
+      "icon": "Network",
+      "order": 2,
+      "enabled": true,
+      "ruleSet": {
+        "recorderType": "nvr",
+        "cableType": "cat6_utp",
+        "cableMetersPerCam": 30,
+        "powerSupplyType": "poe_switch",
+        "storageType": "surveillance_hdd",
+        "storageMap": {
+          "4": "1TB",
+          "8": "2TB",
+          "16": "6TB",
+          "32": "12TB",
+          "64": "24TB"
+        },
+        "hasBaluns": false,
+        "descriptionSummary": "NVR, PoE through NVR or switch, Cat6 network cable per camera"
+      }
+    },
+    {
+      "id": "systype-wireless",
+      "name": "Wireless / Wi-Fi cameras",
+      "slug": "wireless",
+      "description": "Standalone smart Wi-Fi cameras with mobile app monitoring, local storage, or wireless NVR kit.",
+      "icon": "Wifi",
+      "order": 3,
+      "enabled": true,
+      "ruleSet": {
+        "recorderType": "none",
+        "cableType": "none",
+        "cableMetersPerCam": 0,
+        "powerSupplyType": "individual_adapters",
+        "storageType": "microsd_or_nvr_hdd",
+        "storageMap": {
+          "2": "128GB MicroSD",
+          "4": "256GB MicroSD / 1TB HDD"
+        },
+        "hasBaluns": false,
+        "descriptionSummary": "No recorder, no cable; cameras, microSD storage or a wireless NVR kit, power adapters"
       }
     }
   ]

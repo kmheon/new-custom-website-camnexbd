@@ -395,6 +395,79 @@ class CmsService {
     logAudit({ entity: 'package_series', entityId: id, action: 'delete', actorId: actor?.id, actorName: actor?.name });
     return true;
   }
+
+  // PACKAGE SYSTEM TYPES
+  listPackageSystemTypes() {
+    const rows = db.prepare('SELECT * FROM package_system_types ORDER BY display_order ASC, name ASC').all();
+    return rows.map(r => {
+      try {
+        if (r.data_json) return JSON.parse(r.data_json);
+      } catch (_) {}
+      return {
+        id: r.id,
+        name: r.name,
+        slug: r.slug,
+        description: r.description,
+        icon: r.icon,
+        order: r.display_order,
+        enabled: Boolean(r.enabled)
+      };
+    });
+  }
+
+  createPackageSystemType(data, actor = null) {
+    const id = data.id || `systype-${Date.now()}`;
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const item = { ...data, id, slug, enabled: data.enabled !== false, order: Number(data.order || data.display_order) || 1 };
+    db.prepare(`
+      INSERT INTO package_system_types (id, name, slug, description, icon, display_order, enabled, data_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, item.name, slug, item.description || '', item.icon || '', item.order, item.enabled ? 1 : 0, JSON.stringify(item));
+
+    logAudit({ entity: 'package_system_types', entityId: id, action: 'create', actorId: actor?.id, actorName: actor?.name, after: item });
+    return item;
+  }
+
+  updatePackageSystemType(id, data, actor = null) {
+    const existingRow = db.prepare('SELECT * FROM package_system_types WHERE id = ?').get(id);
+    if (!existingRow) return null;
+    let existing = {};
+    try { existing = JSON.parse(existingRow.data_json || '{}'); } catch (_) {}
+
+    const slug = data.slug || existing.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const updated = {
+      ...existing,
+      ...data,
+      id,
+      slug,
+      enabled: data.enabled !== undefined ? Boolean(data.enabled) : existing.enabled !== false,
+      order: Number(data.order || data.display_order || existing.order || existingRow.display_order) || 1
+    };
+
+    db.prepare(`
+      UPDATE package_system_types SET
+        name = ?, slug = ?, description = ?, icon = ?, display_order = ?, enabled = ?, data_json = ?
+      WHERE id = ?
+    `).run(
+      updated.name,
+      slug,
+      updated.description || '',
+      updated.icon || '',
+      updated.order,
+      updated.enabled ? 1 : 0,
+      JSON.stringify(updated),
+      id
+    );
+
+    logAudit({ entity: 'package_system_types', entityId: id, action: 'update', actorId: actor?.id, actorName: actor?.name, before: existing, after: updated });
+    return updated;
+  }
+
+  deletePackageSystemType(id, actor = null) {
+    db.prepare('DELETE FROM package_system_types WHERE id = ?').run(id);
+    logAudit({ entity: 'package_system_types', entityId: id, action: 'delete', actorId: actor?.id, actorName: actor?.name });
+    return true;
+  }
 }
 
 module.exports = new CmsService();

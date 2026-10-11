@@ -132,6 +132,27 @@ function seedBaselineCatalogIntoDb(dbPath) {
       insertSeries.run(ps.id, ps.name, ps.slug, ps.enabled !== false ? 1 : 0, ps.order || 1, JSON.stringify(ps));
     }
 
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS package_system_types (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        description TEXT,
+        icon TEXT,
+        display_order INTEGER DEFAULT 1,
+        enabled INTEGER DEFAULT 1,
+        data_json TEXT NOT NULL
+      )
+    `).run();
+
+    const insertSysType = db.prepare(`
+      INSERT OR IGNORE INTO package_system_types (id, name, slug, description, icon, display_order, enabled, data_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const pst of seeds.INITIAL_PACKAGE_SYSTEM_TYPES || []) {
+      insertSysType.run(pst.id, pst.name, pst.slug, pst.description || '', pst.icon || '', pst.order || 1, pst.enabled !== false ? 1 : 0, JSON.stringify(pst));
+    }
+
     const insertSection = db.prepare(`
       INSERT OR IGNORE INTO homepage_sections (id, section_type, title, enabled, display_order, data_json)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -246,6 +267,7 @@ async function main() {
     results.push(await runTestSuite('Equal-Height Cards & CSS Subgrid Suite (CDP)', path.join(__dirname, 'test_equal_heights_subgrid.js'), testEnv));
     results.push(await runTestSuite('Platform Hardening Suite', path.join(__dirname, 'test_platform.js'), testEnv));
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
+    results.push(await runTestSuite('Package Pure Filters Suite', path.join(__dirname, 'test_package_filters.js'), testEnv));
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));
     results.push(await runTestSuite('Admin Completeness Suite', path.join(__dirname, 'test_admin_completeness.js'), testEnv));
     results.push(await runTestSuite('RBAC & Identity Suite', path.join(__dirname, 'test_rbac.js'), testEnv));

@@ -28,6 +28,8 @@ const RULES = [
   [['GET'], /^\/admin\/spec-templates/, P.CATALOG_READ],
   [['PUT'], /^\/admin\/package-series/, P.CATALOG_WRITE],
   [ANY, /^\/admin\/package-series/, P.CATALOG_WRITE],
+  [['PUT'], /^\/admin\/package-system-types/, P.CATALOG_WRITE],
+  [ANY, /^\/admin\/package-system-types/, P.CATALOG_WRITE],
 
   // Orders
   [['GET'], /^\/orders$/, P.ORDERS_READ],

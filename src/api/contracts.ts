@@ -20,6 +20,7 @@ import {
   InstallationOption,
   HeroSlide,
   PackageSeries,
+  PackageSystemType,
   ServiceOffering
 } from '../types';
 
@@ -111,6 +112,10 @@ export interface IPackageService {
   getAllPackageSeries(): Promise<PackageSeries[]>;
   savePackageSeries(series: PackageSeries): Promise<PackageSeries>;
   deletePackageSeries(id: string): Promise<void>;
+  getPackageSystemTypes(): Promise<PackageSystemType[]>;
+  getAllPackageSystemTypes(): Promise<PackageSystemType[]>;
+  savePackageSystemType(st: PackageSystemType): Promise<PackageSystemType>;
+  deletePackageSystemType(id: string): Promise<void>;
 }
 
 export interface ICartService {

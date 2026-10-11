@@ -248,6 +248,20 @@ db.prepare(`
   )
 `).run();
 
+// 11d. Package System Types (IP / Analogue / Wireless)
+db.prepare(`
+  CREATE TABLE package_system_types (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    description TEXT,
+    icon TEXT,
+    display_order INTEGER DEFAULT 1,
+    enabled INTEGER DEFAULT 1,
+    data_json TEXT NOT NULL
+  )
+`).run();
+
 // 12. CMS Pages
 db.prepare(`
   CREATE TABLE cms_pages (

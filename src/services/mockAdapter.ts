@@ -33,6 +33,7 @@ import {
   HeroSlide,
   HeroFeatureHighlight,
   PackageSeries,
+  PackageSystemType,
   ServiceOffering
 } from '../types';
 import {
@@ -48,7 +49,8 @@ import {
   INITIAL_TESTIMONIALS,
   INITIAL_FAQS,
   INITIAL_CTA_DATA,
-  INITIAL_HERO_SLIDES
+  INITIAL_HERO_SLIDES,
+  INITIAL_PACKAGE_SYSTEM_TYPES
 } from './seedData';
 
 const STORAGE_KEYS = {
@@ -503,6 +505,28 @@ export class MockPackageService implements IPackageService {
   async deletePackageSeries(id: string): Promise<void> {
     const list = getStorage<PackageSeries[]>('camnex_package_series', []);
     setStorage('camnex_package_series', list.filter(s => s.id !== id));
+  }
+
+  async getPackageSystemTypes(): Promise<PackageSystemType[]> {
+    return (getStorage<PackageSystemType[]>('camnex_package_system_types', INITIAL_PACKAGE_SYSTEM_TYPES) || []).filter(s => s.enabled);
+  }
+
+  async getAllPackageSystemTypes(): Promise<PackageSystemType[]> {
+    return getStorage<PackageSystemType[]>('camnex_package_system_types', INITIAL_PACKAGE_SYSTEM_TYPES) || [];
+  }
+
+  async savePackageSystemType(st: PackageSystemType): Promise<PackageSystemType> {
+    const list = getStorage<PackageSystemType[]>('camnex_package_system_types', INITIAL_PACKAGE_SYSTEM_TYPES);
+    const idx = list.findIndex(s => s.id === st.id);
+    if (idx !== -1) list[idx] = st;
+    else list.push(st);
+    setStorage('camnex_package_system_types', list);
+    return st;
+  }
+
+  async deletePackageSystemType(id: string): Promise<void> {
+    const list = getStorage<PackageSystemType[]>('camnex_package_system_types', INITIAL_PACKAGE_SYSTEM_TYPES);
+    setStorage('camnex_package_system_types', list.filter(s => s.id !== id));
   }
 }
 

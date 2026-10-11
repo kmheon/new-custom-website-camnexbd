@@ -15,7 +15,7 @@ import {
 } from '../services';
 import { INITIAL_CTA_DATA } from '../services/seedData';
 import {
-  Product, Category, Brand, SpecTemplate, SecurityPackage, PackageSeries, ServiceOffering, Order,
+  Product, Category, Brand, SpecTemplate, SecurityPackage, PackageSeries, PackageSystemType, ServiceOffering, Order,
   QuoteRequest, SiteSettings, HomepageSection, ProductResearchResult, Role,
   HeroSlide, HeroFeatureHighlight
 } from '../types';
@@ -52,6 +52,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [templates, setTemplates] = useState<SpecTemplate[]>([]);
   const [packages, setPackages] = useState<SecurityPackage[]>([]);
   const [packageSeries, setPackageSeries] = useState<PackageSeries[]>([]);
+  const [packageSystemTypes, setPackageSystemTypes] = useState<PackageSystemType[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [sections, setSections] = useState<HomepageSection[]>([]);
@@ -208,6 +209,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     specTemplateService.getTemplates().then(setTemplates);
     packageService.getPackages().then(setPackages);
     packageService.getPackageSeries().then(setPackageSeries);
+    packageService.getPackageSystemTypes().then(setPackageSystemTypes);
     orderService.getAllOrders().then(setOrders);
     quoteService.getQuotes().then(setQuotes);
     cmsService.getHomepageSections().then(setSections);
@@ -3972,37 +3974,62 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Package Series</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">System Type *</label>
                 <select
-                  value={editingPackage.seriesId || ''}
+                  value={editingPackage.systemTypeId || ''}
+                  onChange={(e) => {
+                    const stId = e.target.value;
+                    const matched = packageSystemTypes.find(st => st.id === stId);
+                    setEditingPackage({
+                      ...editingPackage,
+                      systemTypeId: stId,
+                      systemTypeSlug: matched?.slug || editingPackage.systemTypeSlug,
+                      systemTypeName: matched?.name || editingPackage.systemTypeName
+                    });
+                  }}
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold text-slate-800"
+                >
+                  <option value="">-- Choose System Type --</option>
+                  {packageSystemTypes.map(st => (
+                    <option key={st.id} value={st.id}>{st.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Night View (Series)</label>
+                <select
+                  value={editingPackage.seriesId || editingPackage.nightViewId || ''}
                   onChange={(e) => {
                     const sid = e.target.value;
                     const matched = packageSeries.find(s => s.id === sid);
                     setEditingPackage({
                       ...editingPackage,
                       seriesId: sid,
-                      seriesName: matched?.name || editingPackage.seriesName
+                      seriesName: matched?.name || editingPackage.seriesName,
+                      nightViewId: sid,
+                      nightViewName: matched?.name || editingPackage.nightViewName
                     });
                   }}
                   className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
                 >
-                  <option value="">-- Choose Series --</option>
+                  <option value="">-- Choose Night View --</option>
                   {packageSeries.map(s => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Technology / Marketing Label</label>
-                <input
-                  type="text"
-                  value={editingPackage.technologyLabel || ''}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, technologyLabel: e.target.value })}
-                  placeholder="e.g. Hikvision ColorVu, Smart Dual Light"
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
-                />
-              </div>
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Technology / Marketing Label</label>
+              <input
+                type="text"
+                value={editingPackage.technologyLabel || ''}
+                onChange={(e) => setEditingPackage({ ...editingPackage, technologyLabel: e.target.value })}
+                placeholder="e.g. Hikvision ColorVu, Smart Dual Light"
+                className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
