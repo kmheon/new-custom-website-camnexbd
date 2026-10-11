@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const companyService = require('./company.service');
 const { companyProfileSchema } = require('./company.schemas');
-const { requireAdmin, validateBody } = require('../../middleware/auth');
+const { requirePermission, validateBody } = require('../../middleware/auth');
+const { PERMISSIONS } = require('../../shared/permissions');
 
 router.get('/company-profile', (req, res) => {
   try {
@@ -22,7 +23,7 @@ router.get('/company/profile', (req, res) => {
   }
 });
 
-router.put('/company/profile', requireAdmin, validateBody(companyProfileSchema), (req, res) => {
+router.put('/company/profile', requirePermission(PERMISSIONS.WEBSITE_CONTENT_WRITE), validateBody(companyProfileSchema), (req, res) => {
   try {
     const updated = companyService.updateProfile(req.body, req.user);
     res.json(updated);

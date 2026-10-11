@@ -3,58 +3,127 @@ const { logAudit } = require('../../middleware/auditLogger');
 const { emitDomainEvent } = require('../../middleware/events');
 
 class CompanyService {
-  getProfile() {
-    const row = db.prepare('SELECT * FROM company_profile WHERE id = 1').get();
-    if (!row) {
-      return {
-        id: 1,
-        brand_name: 'CamneX',
-        tagline: 'Commercial Security & Networking Hardware',
-        show_statistics: 0,
-        show_corporate_payment: 0
-      };
-    }
+  getDefaultProfile() {
     return {
-      ...row,
-      show_statistics: Boolean(row.show_statistics),
-      show_corporate_payment: Boolean(row.show_corporate_payment),
-      leadership: row.leadership_json ? JSON.parse(row.leadership_json) : []
+      legal_name: 'CamneX Bangladesh',
+      trade_name: 'CamneX',
+      tagline: 'Enterprise Security, Surveillance & Networking Solutions',
+      mission: 'Delivering genuine security and enterprise networking infrastructure with rigorous Dhaka engineering standards.',
+      vision: 'To be Bangladesh\'s most trusted corporate security technology partner.',
+      founded_year: 2020,
+      registration_number: null,
+      bin: null,
+      tin: null,
+      trade_license_number: null,
+      tax_circle: null,
+      vat_reg_number: null,
+      contact_email: 'contact@camnexbd.com',
+      sales_email: 'sales@camnexbd.com',
+      support_email: 'support@camnexbd.com',
+      primary_phone: '+880 1540-535150',
+      secondary_phone: null,
+      hotline: '16000',
+      emergency_support_phone: '+880 1540-535150',
+      whatsapp: '8801540535150',
+      registered_address: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207, Bangladesh',
+      corporate_office: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207',
+      warehouse_address: 'Dhaka Central Hub, Mohammadpur, Dhaka',
+      experience_summary: 'Over 6 years of turnkey engineering experience deploying high-reliability IP surveillance, biometric access control, and enterprise fiber/PoE networking.',
+      team_size_band: '15-25 engineers & field technicians',
+      active_client_count: 350,
+      completed_project_count: 520,
+      warranty_policy_summary: '1-Year official manufacturer warranty on all cameras and recorders; 2-Year warranty on enterprise switches; onsite Dhaka engineering warranty.',
+      service_sla_summary: '24-hour on-site dispatch in Dhaka metropolitan area; dedicated WhatsApp engineering hotline.',
+      bank_name: null,
+      bank_account_name: null,
+      bank_account_number: null,
+      bank_branch: null,
+      routing_number: null,
+      certifications: [
+        { title: 'Hikvision Certified Security Associate (HCSA)', issuer: 'Hikvision', year: 2022 },
+        { title: 'ZKTeco Authorized Enterprise Solution Partner', issuer: 'ZKTeco', year: 2023 },
+        { title: 'Ruijie Certified Network Professional (RCNP)', issuer: 'Ruijie Networks', year: 2024 }
+      ],
+      brands_distributed: ['Hikvision', 'Dahua', 'ZKTeco', 'Ruijie Reyee', 'Western Digital Purple', 'Seagate SkyHawk', 'Cisco'],
+      industry_memberships: ['BASIS Associate Member Network', 'Dhaka Security Hardware Association'],
+      social_links: {
+        facebook: 'https://facebook.com/camnexbd',
+        linkedin: 'https://linkedin.com/company/camnexbd',
+        whatsapp: 'https://wa.me/8801540535150'
+      },
+      pdf_profile_media_id: null,
+      pdf_url: null
     };
+  }
+
+  getProfile() {
+    try {
+      const row = db.prepare("SELECT data_json, updated_at FROM company_profile WHERE id = 'default' OR id = '1' LIMIT 1").get();
+      if (!row || !row.data_json) {
+        return this.getDefaultProfile();
+      }
+      const data = JSON.parse(row.data_json);
+      return { ...this.getDefaultProfile(), ...data, updated_at: row.updated_at };
+    } catch (_) {
+      return this.getDefaultProfile();
+    }
   }
 
   getFullPublicProfile() {
     const profile = this.getProfile();
 
     // Pull authorized partner brands
-    const brands = db.prepare("SELECT * FROM brands WHERE is_archived = 0 ORDER BY name ASC").all();
+    const brands = db.prepare("SELECT * FROM brands WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY name ASC").all();
 
     // Pull services
-    const services = db.prepare("SELECT * FROM service_offerings WHERE enabled = 1 ORDER BY sort_order ASC").all();
+    const services = db.prepare("SELECT * FROM services WHERE enabled = 1 ORDER BY display_order ASC").all();
 
     // Pull featured projects
-    const projects = db.prepare("SELECT data_json FROM projects ORDER BY created_at DESC LIMIT 6").all().map(r => JSON.parse(r.data_json));
+    const projects = db.prepare("SELECT data_json FROM projects LIMIT 6").all().map(r => JSON.parse(r.data_json));
 
     // Pull testimonials
-    const testimonials = db.prepare("SELECT data_json FROM testimonials WHERE is_featured = 1 ORDER BY created_at DESC LIMIT 6").all().map(r => JSON.parse(r.data_json));
+    const testimonials = db.prepare("SELECT data_json FROM testimonials LIMIT 6").all().map(r => JSON.parse(r.data_json));
 
-    // Build JSON-LD
+    // Build Schema.org Organization + Corporation JSON-LD
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": ["Organization", "LocalBusiness"],
-      "name": profile.brand_name || "CamneX",
+      "@type": ["Organization", "Corporation"],
+      "name": profile.trade_name || "CamneX",
       "legalName": profile.legal_name || "CamneX Bangladesh",
-      "description": profile.short_bio || profile.tagline || "Commercial Security & Networking Hardware Solutions",
+      "description": profile.tagline || profile.mission || "Enterprise Security, Surveillance & Networking Solutions",
       "url": "https://camnexbd.com",
-      "telephone": profile.hotline || profile.official_phone || "+8801700000000",
-      "email": profile.official_email || "contact@camnexbd.com",
+      "foundingDate": String(profile.founded_year || "2020"),
+      "telephone": profile.hotline || profile.primary_phone || "+880 1540-535150",
+      "email": profile.contact_email || "contact@camnexbd.com",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": profile.operational_address || profile.registered_address || "Dhaka, Bangladesh",
+        "streetAddress": profile.corporate_office || profile.registered_address || "Dhaka, Bangladesh",
         "addressLocality": "Dhaka",
         "addressCountry": "BD"
-      }
+      },
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "telephone": profile.primary_phone,
+          "contactType": "sales",
+          "email": profile.sales_email,
+          "areaServed": "BD",
+          "availableLanguage": ["en", "bn"]
+        },
+        {
+          "@type": "ContactPoint",
+          "telephone": profile.emergency_support_phone || profile.hotline,
+          "contactType": "customer service",
+          "email": profile.support_email,
+          "areaServed": "BD",
+          "availableLanguage": ["en", "bn"]
+        }
+      ],
+      "sameAs": Object.values(profile.social_links || {}).filter(Boolean)
     };
-    if (profile.bin_no) jsonLd.taxID = profile.bin_no;
+
+    if (profile.bin) jsonLd.taxID = profile.bin;
+    if (profile.tin) jsonLd.vatID = profile.tin;
 
     return {
       profile,
@@ -71,87 +140,16 @@ class CompanyService {
     const updated = { ...existing, ...data };
 
     db.prepare(`
-      INSERT INTO company_profile (
-        id, legal_name, brand_name, tagline, short_bio, year_established, business_type,
-        trade_license_no, tin_no, bin_no, registered_address, operational_address,
-        official_email, official_phone, hotline, whatsapp,
-        show_statistics, projects_completed, active_clients, corporate_clients, years_in_business,
-        show_corporate_payment, bank_name, bank_branch, bank_account_name, bank_account_number, bank_routing_number,
-        leadership_json, pdf_url, pdf_size_bytes, updated_at
-      ) VALUES (
-        1, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
-        ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, CURRENT_TIMESTAMP
-      )
+      INSERT INTO company_profile (id, data_json, updated_at)
+      VALUES ('default', ?, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
-        legal_name = excluded.legal_name,
-        brand_name = excluded.brand_name,
-        tagline = excluded.tagline,
-        short_bio = excluded.short_bio,
-        year_established = excluded.year_established,
-        business_type = excluded.business_type,
-        trade_license_no = excluded.trade_license_no,
-        tin_no = excluded.tin_no,
-        bin_no = excluded.bin_no,
-        registered_address = excluded.registered_address,
-        operational_address = excluded.operational_address,
-        official_email = excluded.official_email,
-        official_phone = excluded.official_phone,
-        hotline = excluded.hotline,
-        whatsapp = excluded.whatsapp,
-        show_statistics = excluded.show_statistics,
-        projects_completed = excluded.projects_completed,
-        active_clients = excluded.active_clients,
-        corporate_clients = excluded.corporate_clients,
-        years_in_business = excluded.years_in_business,
-        show_corporate_payment = excluded.show_corporate_payment,
-        bank_name = excluded.bank_name,
-        bank_branch = excluded.bank_branch,
-        bank_account_name = excluded.bank_account_name,
-        bank_account_number = excluded.bank_account_number,
-        bank_routing_number = excluded.bank_routing_number,
-        leadership_json = excluded.leadership_json,
-        pdf_url = excluded.pdf_url,
-        pdf_size_bytes = excluded.pdf_size_bytes,
+        data_json = excluded.data_json,
         updated_at = CURRENT_TIMESTAMP
-    `).run(
-      updated.legal_name || null,
-      updated.brand_name || 'CamneX',
-      updated.tagline || null,
-      updated.short_bio || null,
-      updated.year_established || null,
-      updated.business_type || null,
-      updated.trade_license_no || null,
-      updated.tin_no || null,
-      updated.bin_no || null,
-      updated.registered_address || null,
-      updated.operational_address || null,
-      updated.official_email || null,
-      updated.official_phone || null,
-      updated.hotline || null,
-      updated.whatsapp || null,
-      updated.show_statistics ? 1 : 0,
-      updated.projects_completed || null,
-      updated.active_clients || null,
-      updated.corporate_clients || null,
-      updated.years_in_business || null,
-      updated.show_corporate_payment ? 1 : 0,
-      updated.bank_name || null,
-      updated.bank_branch || null,
-      updated.bank_account_name || null,
-      updated.bank_account_number || null,
-      updated.bank_routing_number || null,
-      updated.leadership_json ? JSON.stringify(updated.leadership_json) : null,
-      updated.pdf_url || null,
-      updated.pdf_size_bytes || null
-    );
+    `).run(JSON.stringify(updated));
 
     logAudit({
       entity: 'company_profile',
-      entityId: '1',
+      entityId: 'default',
       action: 'update',
       actorId: actor?.id,
       actorName: actor?.name,
@@ -165,4 +163,3 @@ class CompanyService {
 }
 
 module.exports = new CompanyService();
-

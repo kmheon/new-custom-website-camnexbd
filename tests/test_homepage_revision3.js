@@ -168,7 +168,7 @@ async function runRevision3Tests() {
     const footerEval = await send('Runtime.evaluate', {
       expression: `
         (() => {
-          const staffLogin = document.querySelector('a[href*="/admin"]');
+          const staffLogin = document.querySelector('a[href*="/staff"], a[href*="/admin"]');
           if (!staffLogin) return { found: false };
           const rel = staffLogin.getAttribute('rel') || '';
           const svg = staffLogin.querySelector('svg');

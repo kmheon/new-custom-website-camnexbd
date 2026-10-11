@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Package, FolderTree, Tag, Sliders, Layers, ShoppingCart, Users,
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
-  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench
+  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench, Building2
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
@@ -32,6 +32,7 @@ import { RedirectsModule } from '../components/admin/RedirectsModule';
 import { BrandsModule } from '../components/admin/BrandsModule';
 import { ScenariosModule } from '../components/admin/ScenariosModule';
 import { ServicesModule } from '../components/admin/ServicesModule';
+import { CompanyProfileModule } from '../components/admin/CompanyProfileModule';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
   const { currentUser, isAdminAuthenticated, checkAuth, login, logout, isLoading: authLoading, error: authError } = useAdminAuthStore();
@@ -748,6 +749,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             { id: 'heroslides', label: 'Hero Slides (Slider)', icon: <Sparkles className="w-4 h-4 text-[#F15A24]" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'sections', label: 'Homepage Sections', icon: <Layers className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'projects', label: 'Projects & Portfolio', icon: <Briefcase className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'company', label: 'Company Profile', icon: <Building2 className="w-4 h-4 text-[#F15A24]" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'services', label: 'Technician Services', icon: <Wrench className="w-4 h-4 text-[#F15A24]" />, perm: PERMISSIONS.SERVICES_MANAGE },
             { id: 'pages', label: 'Pages & Policy CMS', icon: <Globe className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'testimonials', label: 'Customer Testimonials', icon: <Star className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
@@ -1743,6 +1745,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           {/* PROJECTS & PORTFOLIO CMS MODULE */}
           {activeModule === 'projects' && (
             <ProjectsModule />
+          )}
+
+          {/* COMPANY PROFILE CMS MODULE */}
+          {activeModule === 'company' && (
+            <CompanyProfileModule />
           )}
 
           {/* TECHNICIAN SERVICES CMS MODULE */}
