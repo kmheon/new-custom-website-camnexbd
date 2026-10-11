@@ -247,6 +247,43 @@ function sessionFor(db, userId) {
   const auditEntries = db.prepare(`SELECT count(*) as c FROM audit_logs WHERE entity_type IN ('product', 'category', 'brand', 'service', 'customer')`).get().c;
   check('Audit log entries recorded for catalog and entity mutations', auditEntries >= 5, `count ${auditEntries}`);
 
+  // 9. AUDIT LOG IMMUTABILITY TRIGGER ENFORCEMENT
+  const anyAudit = db.prepare('SELECT id FROM audit_logs LIMIT 1').get();
+  if (anyAudit) {
+    let updateBlocked = false;
+    try {
+      db.prepare("UPDATE audit_logs SET action = 'tampered' WHERE id = ?").run(anyAudit.id);
+    } catch (err) {
+      updateBlocked = /append-only/i.test(err.message);
+    }
+    check('Audit log trigger rejects UPDATE statement (append-only)', updateBlocked);
+
+    let deleteBlocked = false;
+    try {
+      db.prepare("DELETE FROM audit_logs WHERE id = ?").run(anyAudit.id);
+    } catch (err) {
+      deleteBlocked = /append-only/i.test(err.message);
+    }
+    check('Audit log trigger rejects DELETE statement (append-only)', deleteBlocked);
+  }
+
+  // 10. STAFF APP ISOLATION
+  // Ensure storefront source files have zero imports referencing the staff app bundle
+  const fs = require('fs');
+  const path = require('path');
+  const storefrontFiles = ['src/App.tsx', 'src/main.tsx', 'src/components/layout/Header.tsx', 'src/components/layout/Footer.tsx'];
+  let hasStaffImportInStorefront = false;
+  for (const rel of storefrontFiles) {
+    const full = path.join(__dirname, '..', rel);
+    if (fs.existsSync(full)) {
+      const code = fs.readFileSync(full, 'utf8');
+      if (/from\s+['"][^'"]*\/staff(\/|['"])/.test(code)) {
+        hasStaffImportInStorefront = true;
+      }
+    }
+  }
+  check('Storefront code is strictly isolated with zero imports of staff app', !hasStaffImportInStorefront);
+
   console.log(`\nOWNERSHIP & DELETION SUITE: ${passed} passed, ${failed} failed`);
   db.close();
   process.exit(failed ? 1 : 0);
