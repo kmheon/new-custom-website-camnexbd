@@ -101,11 +101,72 @@ In default single-server deployment, all three surfaces run seamlessly from one 
 - Staff App served at `/staff`
 - Business API mounted at `/api/v1` (with `/api` compatibility aliases)
 
-#### Mode B: Independent Separated Servers (Reverse-Proxy or Multi-Host)
-To run the surfaces on separate domains or servers (e.g. `camnexbd.com`, `admin.camnexbd.com`, `staff.camnexbd.com`, `api.camnexbd.com`):
-1. Configure `PUBLIC_SITE_URL`, `ADMIN_URL`, `STAFF_APP_URL`, and `API_URL` in `.env` for each instance.
-2. The server's CORS middleware (`server/middleware/cors.js`) dynamically configures the allowlist from these environment variables with credentials support.
-3. In Nginx, proxy requests for `api.*` to the API server instance, `staff.*` to the staff instance or serve the static `staff.js` bundle pointing to `API_URL`.
+#### Mode B: Independent Separated Servers (Storefront, API, Staff App)
+You can separate the platform across three distinct hosts or servers without modifying application source code:
+1. **Server 1: Public Storefront** (`https://camnexbd.com`)
+2. **Server 2: Business API** (`https://api.camnexbd.com`)
+3. **Server 3: Staff Operations App** (`https://staff.camnexbd.com`)
+
+##### Step 1: Environment Variables on API Server
+On the API Server (`https://api.api.camnexbd.com`), configure `.env`:
+```ini
+NODE_ENV=production
+PORT=3000
+API_URL=https://api.camnexbd.com/api/v1
+PUBLIC_SITE_URL=https://camnexbd.com
+ADMIN_URL=https://camnexbd.com/admin
+STAFF_APP_URL=https://staff.camnexbd.com
+DATABASE_PATH=/var/data/camnex.db
+```
+The server's dynamic CORS middleware (`server/middleware/cors.js`) reads these environment variables at boot and permits cross-origin requests from `PUBLIC_SITE_URL`, `ADMIN_URL`, and `STAFF_APP_URL` with `credentials: true`.
+
+##### Step 2: Nginx Configuration for the 3 Virtual Hosts
+```nginx
+# 1. API Server (api.camnexbd.com)
+server {
+    server_name api.camnexbd.com;
+    listen 443 ssl http2;
+    # SSL certs ...
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# 2. Public Storefront (camnexbd.com)
+server {
+    server_name camnexbd.com;
+    listen 443 ssl http2;
+    # SSL certs ...
+
+    # In split mode, storefront serves static bundle or forwards to front-end node process
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+# 3. Staff App (staff.camnexbd.com)
+server {
+    server_name staff.camnexbd.com;
+    listen 443 ssl http2;
+    # SSL certs ...
+
+    location / {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+##### Step 3: Cookie Domain & Cross-Site Authentication
+In multi-server deployments where services run under subdomains of a shared parent domain (`*.camnexbd.com`), set `COOKIE_DOMAIN=.camnexbd.com` in `.env` so session and CSRF cookies are accessible across subdomains while maintaining isolated session namespaces (`camnex_session`, `camnex_admin_session`, `camnex_staff_session`).
 
 ### Initialize Clean Database (Zero Demo Data)
 To initialize a fresh production database without any sample/demo data:

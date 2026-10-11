@@ -67,25 +67,70 @@ The server is organized into 12 domain modules. Each module maintains strict sep
 
 The system enforces server-side role-based access control on every endpoint via `requirePermission(permissionKey)`.
 
-### System Roles
-1. **Super Admin**: Unrestricted system-wide access.
-2. **Website Manager**: Website CMS, presentation catalog, settings, customer quotes.
-3. **Content Editor**: Marketing pages, blog posts, project showcases, testimonials.
-4. **Catalog Manager**: Technical specifications, product catalog, pricing, stock levels.
-5. **Sales Staff**: Orders, quotes, customer accounts.
-6. **Support Staff**: Service requests, order tracking assistance.
+### System Roles & Seeded Permissions
+1. **Super Admin**: Holds all permissions without restriction.
+2. **Website Manager**: `website.access`, `website.content.write`, `website.seo.write`, `website.redirects.write`, `website.settings.write`, `media.write`, `catalog.read`, `catalog.write`, `catalog.archive`, `quotes.manage`, `services.manage`, `audit.read`.
+3. **Content Editor**: `website.access`, `website.content.write`, `media.write`, `catalog.read`.
+4. **Catalog Manager**: `website.access`, `staff.access`, `catalog.read`, `catalog.write`, `catalog.archive`, `pricing.write`, `pricing.cost.read`, `inventory.read`, `media.write`.
+5. **Sales Staff**: `staff.access`, `catalog.read`, `orders.read`, `orders.update`, `customers.read`, `customers.write`, `quotes.manage`.
+6. **Support Staff**: `staff.access`, `catalog.read`, `orders.read`, `services.manage`, `customers.read`.
+
+### Permission Registry (`src/shared/permissions.ts`)
+- **Website Operations**: `website.access`, `website.content.write`, `website.seo.write`, `website.redirects.write`, `website.settings.write`
+- **Media**: `media.write`
+- **Catalog & Pricing**: `catalog.read`, `catalog.write`, `catalog.archive`, `pricing.write`, `pricing.cost.read`
+- **Inventory**: `inventory.read`, `inventory.adjust`
+- **Orders & Quotes**: `orders.read`, `orders.update`, `quotes.manage`, `services.manage`
+- **Customers**: `customers.read`, `customers.write`
+- **Staff Administration**: `staff.access`, `staff.manage`, `roles.manage`, `audit.read`
+- **Reserved Phase 2 Keys**: `pos.sell`, `pos.refund`, `purchasing.*`, `accounting.*`, `reports.*`
+
+### Purchase Cost Redaction
+The `purchase_cost` field on products is strictly guarded. Endpoints returning products (`/api/v1/products`, `/api/v1/products/:id`) redact this field for any user lacking `pricing.cost.read`. Product mutations made by users without `pricing.cost.read` leave existing cost records intact without overwriting or clearing them.
+
+### Session Cookie Isolation & Security
+- **Independent Session Cookies**:
+  - Customer storefront: `camnex_session` (SameSite=Lax, HttpOnly, Path=/)
+  - Website Manager: `camnex_admin_session` (SameSite=Lax, HttpOnly, Path=/)
+  - Staff App: `camnex_staff_session` (SameSite=Lax, HttpOnly, Path=/)
+- **CSRF Defense**: `camnex_csrf` (SameSite=Strict) cookie issued via `/api/v1/auth/csrf`. All state-changing requests (`POST`, `PUT`, `PATCH`, `DELETE`) require the matching `X-CSRF-Token` header.
+- **Login Rate Limiting & Account Lockout**:
+  - 5 rapid failed password attempts trigger automated 15-minute account lockout (`locked_until`).
+  - Passwords stored using `bcrypt` (work factor 10).
 
 ---
 
 ## 4. Referential Integrity & Deletion Rules
 
-- **Soft Delete / Archival**: Products, categories, brands, and customers cannot be hard-deleted if referenced in orders, packages, or movements. They are soft-deleted with `is_archived = 1` and `archived_at = CURRENT_TIMESTAMP`.
-- **Media Safety**: Uploaded media cannot be deleted if referenced across products, categories, hero slides, projects, or company profile. The API rejects deletion with `409 Conflict`.
-- **Stock Movement Ledger**: Every stock change creates an immutable row in `stock_movements`.
+- **Soft Delete / Archival**: Products, categories, brands, services, and customers cannot be hard-deleted if referenced in orders, packages, service requests, or stock movements. Instead, the server rejects hard deletion with `409 Conflict`. They can be archived using dedicated `/archive` endpoints (`is_archived = 1`, `archived_at = CURRENT_TIMESTAMP`) and restored via `/restore`. Public catalog endpoints filter out archived products unless `includeArchived=true`.
+- **Media In-Use Protection**: Uploaded media cannot be deleted if referenced in products, categories, hero slides, projects, or company profile. Deletion attempts return `409 Conflict` with error code `MEDIA_IN_USE`.
+- **Stock Movements Ledger**: Stock quantities cannot be directly updated without `inventory.adjust`. Every stock modification appends an immutable record to `stock_movements` capturing `product_id`, `quantity_change`, `reason`, `user_id`, and `created_at`.
+- **Audit Log Immutability**: SQLite database triggers `audit_logs_no_update` and `audit_logs_no_delete` reject any `UPDATE` or `DELETE` statements on `audit_logs` using `RAISE(ABORT, 'audit_logs is append-only')`.
 
 ---
 
 ## 5. Domain Events & Outbox Pattern
 
-Domain mutations write an event record to `domain_events` (`status = 'pending'`). A lightweight background worker runs every 3 seconds to publish events to internal subscribers for cache invalidation, sitemap regeneration, and audit trails.
+All domain mutations persist an event to the `domain_events` table within the same transaction:
+
+```
+  Mutation Transaction (Service)
+  ├── 1. Apply Entity Mutation (INSERT / UPDATE)
+  ├── 2. Record Stock Movement / Audit Log
+  └── 3. INSERT INTO domain_events (status = 'pending', attempts = 0)
+```
+
+### Outbox Processing & Worker Lifecycle
+- An asynchronous worker poll runs every 3 seconds (`server/outbox/worker.js`).
+- Pending events are fetched and dispatched to registered in-process subscribers.
+- Upon successful handling, the event is marked `status = 'processed'` with `processed_at = CURRENT_TIMESTAMP`.
+- On failure, `attempts` is incremented. The event is retried with backoff up to 3 attempts.
+- If all 3 attempts fail, the event transitions to `status = 'failed'` with `last_error` recorded.
+
+### Event Catalog
+- `catalog.product.created`, `catalog.product.updated`, `catalog.product.archived`
+- `pricing.changed`
+- `inventory.adjusted`
+- `order.placed`, `order.status_changed`, `order.paid`
+- `staff.user_created`, `staff.user_disabled`
 

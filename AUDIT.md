@@ -152,4 +152,84 @@ Homepage Polish Pass 4 completed all seven required architectural and storefront
 | **6. Solution Tiles** | Hover icon turns solid orange `#F15A24` and white icon (contrast >= 3:1); remove `.slice(0, 90)` text cutting. | Created reusable `IconTile` component with `currentColor` icon support, smooth transitions to `bg-[#F15A24]` and `text-white` on hover and focus. Removed `.slice(0, 90)` string truncation across solution descriptions; replaced with clean `line-clamp-2` and `[overflow-wrap:anywhere] break-words`. | Verified via CDP: `test_homepage_revision4.js` verifies zero hard-sliced words and correct contrast states. Screenshot: `scratch/shots/homepage-desktop-solutions.png`. |
 | **7. Master Test Suite & Verification** | All automated tests pass; visual screenshots verified before reporting. | Added `tests/test_homepage_revision4.js` to `tests/runner.js`. Master runner executes all 11 test suites on isolated temporary clean database. Full pass (11/11 suites, 45/45 security attack tests). | Full test harness exit code 0. Screenshots visually inspected across desktop and mobile. |
 
+---
+
+## 7. MULTI-SURFACE PLATFORM ARCHITECTURE & RBAC AUDIT (2026-10-11)
+
+### 7.1 Architecture Target & Single Source of Truth
+The platform has been refactored into a decoupled, multi-surface architecture:
+- **One Database**: SQLite WAL database (`camnex.db`) containing all business records. Zero data copying or sync processes between surfaces.
+- **One Business API**: Consolidated under `/api/v1` with routers delegating to domain services. All previous `/api` routes remain available as aliases for backward compatibility.
+- **Three Client Surfaces**:
+  1. **Public Storefront** (`/`): Customer-facing catalog, packages, solutions, and checkout. Sourced from `src/main.tsx` (`bundle.main.*.js`). Completely decoupled from staff operations code.
+  2. **Website Manager** (`/admin`): Website content editor, pages, blog, homepage sections, top bar highlights, presentation catalog, settings, customer quotes. Sourced from `src/admin/main.tsx` (`bundle.admin.*.js`). Requires `website.access` permission.
+  3. **Staff Operations App** (`/staff`): Honest Phase 1 back-office operations shell. Sourced from `src/staff/main.tsx` (`bundle.staff.*.js`). Displays staff directory, role assignments, audit change inspector, and profile security. Counter POS, barcode scanning, inventory receipts, and accounting modules are cleanly disabled with transparent "Phase 2 Module" badges. Requires `staff.access` permission.
+
+### 7.2 Endpoint Ownership Matrix
+The following table outlines the endpoint groupings, the owning client application, and the required server-side permissions:
+
+| Endpoint Group | Surface / Owning Client | Required Permission | Description |
+| :--- | :--- | :--- | :--- |
+| `GET /api/v1/products` | Storefront, Website Admin, Staff | None (public) / `catalog.read` | Public catalog listing (excludes archived items unless `includeArchived=true`). |
+| `POST /api/v1/products` | Website Admin / Staff App | `catalog.write` (+ `pricing.write` for prices) | Creates product master record. Requires `pricing.write` to set initial price. |
+| `PUT /api/v1/products/:id` | Website Admin / Staff App | `catalog.write` | Updates product. `inventory.adjust` required for stock; `pricing.write` required for prices. |
+| `DELETE /api/v1/products/:id` | Website Admin / Staff App | `catalog.write` | Hard delete if unreferenced; returns `409 Conflict` if referenced in orders/movements. |
+| `POST /api/v1/products/:id/archive` | Website Admin / Staff App | `catalog.archive` | Soft deletes product (`is_archived = 1`). |
+| `POST /api/v1/products/:id/restore` | Website Admin / Staff App | `catalog.archive` | Restores archived product (`is_archived = 0`). |
+| `GET /api/v1/categories`, `POST`, `PUT`, `DELETE` | Website Admin | `catalog.read` / `catalog.write` | Category CRUD. Delete returns 409 if category has products. |
+| `GET /api/v1/brands`, `POST`, `PUT`, `DELETE` | Website Admin | `catalog.read` / `catalog.write` | Brand management. Delete returns 409 if brand has products. |
+| `GET /api/v1/inventory/movements` | Staff App | `inventory.read` | Immutable ledger of stock movements with user ID and timestamp. |
+| `POST /api/v1/inventory/adjust` | Staff App | `inventory.adjust` | Adjusts product stock and writes a movement audit record. |
+| `GET /api/v1/orders` | Staff App | `orders.read` | View all customer orders. |
+| `PUT /api/v1/orders/:id/status` | Staff App | `orders.update` | Transitions order lifecycle status and writes audit log. |
+| `GET /api/v1/quotes` | Website Admin / Staff App | `quotes.manage` | View commercial quotation requests and site survey inquiries. |
+| `GET /api/v1/services`, `POST`, `PUT`, `DELETE` | Website Admin | `services.manage` | Quick service offerings CRUD. Delete returns 409 if referenced. |
+| `GET /api/v1/cms/*`, `POST`, `PUT` | Website Admin | `website.content.write` | CMS content (pages, blog, testimonials, projects, FAQs). |
+| `GET /api/v1/settings`, `PUT` | Website Admin | `website.settings.write` | Site settings, footer CMS, top bar highlights, SEO metadata. |
+| `GET /api/v1/media`, `POST`, `DELETE` | Website Admin | `media.write` | Media library. Delete returns 409 `MEDIA_IN_USE` if image is in use. |
+| `GET /api/v1/company/profile`, `PUT` | Storefront (public GET) / Website Admin (PUT) | `website.content.write` (PUT) | Comprehensive corporate profile, legal credentials, banking info. |
+| `GET /api/v1/staff/users`, `POST`, `PUT` | Staff App | `staff.manage` | Staff directory management, user creation, status toggle (active/disabled). |
+| `GET /api/v1/staff/roles`, `PUT` | Staff App | `roles.manage` | System role permission editing. System roles cannot be deleted. |
+| `GET /api/v1/audit-logs` | Staff App | `audit.read` | Immutable audit log viewer with before/after JSON diffs. |
+
+### 7.3 Identity & RBAC Enforcement
+- **Staff Accounts**: Stored in `users` table with password hashed via `bcrypt` (work factor 10). Includes `must_change_password`, `status` (`active` or `disabled`), `failed_login_attempts`, `locked_until`, and nullable `branch_id` and `warehouse_id` fields ready for Phase 2.
+- **Session Cookie Isolation**:
+  - Storefront customer sessions: `camnex_session` (SameSite=Lax, HttpOnly).
+  - Website Admin sessions: `camnex_admin_session` (SameSite=Lax, HttpOnly).
+  - Staff App sessions: `camnex_staff_session` (SameSite=Lax, HttpOnly).
+  - CSRF Protection: `camnex_csrf` (SameSite=Strict) + `X-CSRF-Token` header validated on all state-changing HTTP methods.
+- **Rate Limiting & Account Lockout**:
+  - Dedicated rate limiting per surface.
+  - 5 consecutive failed login attempts trigger an automated account lockout (`locked_until` set for 15 minutes).
+- **Cost Privacy Redaction**: Endpoints returning product entities automatically redact `purchase_cost` unless the requesting staff user holds `pricing.cost.read`. Updates without `pricing.cost.read` preserve existing cost values without overwrite.
+- **Audit Immutability**: SQLite triggers `audit_logs_no_update` and `audit_logs_no_delete` reject any `UPDATE` or `DELETE` statements on `audit_logs`, enforcing an immutable append-only ledger.
+
+### 7.4 Domain Events Outbox
+- **Outbox Worker**: Transactional mutations write events to `domain_events` with `status = 'pending'`.
+- **Retry Mechanism**: A background worker scans pending events every 3 seconds, delivering to registered subscribers. Failures increment `attempts` up to 3 before marking `status = 'failed'` with an error message and timestamp.
+- **Phase 1 Subscribers**:
+  - Catalog mutation -> Invalidate search indices and trigger sitemap rebuild.
+  - Order placed / Order status changed -> Persist timeline event and queue notification.
+  - High-value inventory/pricing changes -> Append high-priority security audit entry.
+
+### 7.5 Phase 1 vs Phase 2 Scope Boundaries
+- **Live in Phase 1**:
+  - Decoupled Storefront, Website Admin, and Staff App shells.
+  - Unified Business API (`/api/v1`) with full backward-compatible `/api` aliases.
+  - Comprehensive Role-Based Access Control with 6 system roles.
+  - Ownership reference checking (409 Conflict) and soft archiving.
+  - Stock movements ledger tracking every inventory adjustment.
+  - Immutable audit logs with diff inspector.
+  - Transactional domain events outbox worker.
+  - Corporate Company Profile page with Schema.org JSON-LD and PDF brochure download.
+- **Reserved for Phase 2 (Not Built in Phase 1)**:
+  - Counter POS register screen and hardware barcode scanner integration.
+  - Barcode label generation.
+  - Warehouse multi-location inventory transfers and goods receipt vouchers.
+  - Supplier purchasing workflows and purchase orders.
+  - Double-entry accounting ledger and Mushak 6.3 VAT tax invoices.
+  - Automated courier dispatch webhooks (Steadfast, Pathao).
+
+
 
