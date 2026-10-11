@@ -17,10 +17,13 @@ const ANY = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 // [methods, path regex, permission]. First match wins.
 const RULES = [
+  // Public endpoints under catalog paths
+  [['POST'], /^\/packages\/calculate-price$/, null],
+
   // Catalog
   [['DELETE'], /^\/(products|categories|brands|packages)\/[^/]+$/, P.CATALOG_ARCHIVE],
+  [['POST'], /^\/(products|categories|brands)\/[^/]+\/(archive|restore)$/, P.CATALOG_ARCHIVE],
   [W, /^\/(products|categories|brands|packages)(\/|$)/, P.CATALOG_WRITE],
-  [['POST'], /^\/products\/[^/]+\/(archive|restore)$/, P.CATALOG_ARCHIVE],
   [['POST', 'DELETE'], /^\/(admin\/)?spec-templates/, P.CATALOG_WRITE],
   [['GET'], /^\/admin\/spec-templates/, P.CATALOG_READ],
   [['PUT'], /^\/admin\/package-series/, P.CATALOG_WRITE],
@@ -32,11 +35,13 @@ const RULES = [
 
   // Customers (admin side only)
   [['GET'], /^\/(admin\/)?customers/, P.CUSTOMERS_READ],
+  [['POST'], /^\/(admin\/)?customers\/[^/]+\/(archive|restore)$/, P.CUSTOMERS_WRITE],
   [['POST', 'PUT', 'DELETE'], /^\/(admin\/)?customers/, P.CUSTOMERS_WRITE],
 
   // Quotes and services inbox
   [['GET', 'PUT'], /^\/quotes($|\/)/, P.QUOTES_MANAGE],
   [['GET'], /^\/(service-requests|services)$/, P.SERVICES_MANAGE],
+  [['POST'], /^\/(admin\/)?(services|service-offerings)\/[^/]+\/(archive|restore)$/, P.SERVICES_MANAGE],
   [ANY, /^\/admin\/(service-offerings|services)/, P.SERVICES_MANAGE],
 
   // Website content

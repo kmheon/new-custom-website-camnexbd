@@ -33,6 +33,8 @@ const { createSession: createStaffSession, costFieldFilter } = require('./server
 const staffService = require('./server/modules/staff/staff.service');
 const { startDomainEventWorker } = require('./server/middleware/events');
 const apiV1Router = require('./server/routes/api.v1');
+const { logAudit } = require('./server/middleware/auditLogger');
+const { hasPermission, PERMISSIONS } = require('./server/shared/permissions');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -540,8 +542,12 @@ app.get('/api/products', (req, res) => {
     const catTarget = categorySlug || category;
     const brandTarget = brandSlug || brand;
 
-    let query = 'SELECT data_json FROM products WHERE 1=1';
+    let query = 'SELECT data_json, is_archived FROM products WHERE 1=1';
     const params = [];
+
+    if (req.query.includeArchived !== 'true') {
+      query += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
 
     if (catTarget) {
       query += ' AND (category_slug = ? OR category_id = ?)';
@@ -571,7 +577,11 @@ app.get('/api/products', (req, res) => {
 
     // Fetch matching rows
     const rows = db.prepare(query).all(...params);
-    let items = rows.map(r => JSON.parse(r.data_json));
+    let items = rows.map(r => {
+      const p = JSON.parse(r.data_json);
+      p.isArchived = Boolean(r.is_archived);
+      return p;
+    });
 
     // Client-level or JSON spec filters matching
     if (specFilters) {
@@ -738,6 +748,30 @@ app.post('/api/products', requireAdmin, validateBody(schemas.product), (req, res
       JSON.stringify(productData)
     );
 
+    const initStock = productData.inventory?.available ?? 0;
+    if (initStock > 0) {
+      const movId = `sm-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+      try {
+        db.prepare(`
+          INSERT INTO stock_movements (id, product_id, quantity_change, balance_after, movement_type, reason, user_id, user_name, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `).run(
+          movId, id, initStock, initStock, 'in', 'Initial inventory setup',
+          req.user?.id || null, req.user?.name || 'Staff'
+        );
+      } catch (_) {}
+    }
+
+    logAudit({
+      entity: 'product',
+      entityId: id,
+      action: 'create',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: productData
+    });
+
     res.json(productData);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -747,18 +781,47 @@ app.post('/api/products', requireAdmin, validateBody(schemas.product), (req, res
 app.put('/api/products/:id', requireAdmin, validateBody(schemas.product), (req, res) => {
   try {
     const id = req.params.id;
-    const existingRow = db.prepare('SELECT data_json FROM products WHERE id = ?').get(id);
+    const existingRow = db.prepare('SELECT data_json, stock_quantity FROM products WHERE id = ?').get(id);
     if (!existingRow) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
     const current = JSON.parse(existingRow.data_json);
+    const oldQty = current.inventory?.available ?? existingRow.stock_quantity ?? 0;
+    let targetQty = req.body.inventory?.available !== undefined ? Number(req.body.inventory.available) : oldQty;
+
+    // Stock adjustments require inventory.adjust permission
+    const canAdjustInventory = hasPermission(req.user, PERMISSIONS.INVENTORY_ADJUST);
+    if (targetQty !== oldQty && !canAdjustInventory) {
+      targetQty = oldQty; // preserve existing stock if caller lacks inventory.adjust
+    }
+
     const updated = {
       ...current,
       ...req.body,
       id,
+      inventory: {
+        ...(current.inventory || {}),
+        ...(req.body.inventory || {}),
+        available: targetQty
+      },
       updatedAt: new Date().toISOString()
     };
+
+    if (targetQty !== oldQty && canAdjustInventory) {
+      const diff = targetQty - oldQty;
+      const movId = `sm-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+      try {
+        db.prepare(`
+          INSERT INTO stock_movements (id, product_id, quantity_change, balance_after, movement_type, reason, user_id, user_name, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `).run(
+          movId, id, diff, targetQty, diff > 0 ? 'in' : 'out',
+          req.body.stockReason || 'Product edit stock update',
+          req.user?.id || null, req.user?.name || 'Staff'
+        );
+      } catch (_) {}
+    }
 
     db.prepare(`
       UPDATE products SET
@@ -777,12 +840,23 @@ app.put('/api/products/:id', requireAdmin, validateBody(schemas.product), (req, 
       updated.status || 'active',
       updated.pricing?.regularPrice || 0,
       updated.pricing?.salePrice || 0,
-      updated.inventory?.available || 10,
+      targetQty,
       updated.isFeatured ? 1 : 0,
       updated.isPopular ? 1 : 0,
       JSON.stringify(updated),
       id
     );
+
+    logAudit({
+      entity: 'product',
+      entityId: id,
+      action: 'update',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: current,
+      after: updated
+    });
 
     res.json(updated);
   } catch (err) {
@@ -792,8 +866,88 @@ app.put('/api/products/:id', requireAdmin, validateBody(schemas.product), (req, 
 
 app.delete('/api/products/:id', requireAdmin, (req, res) => {
   try {
-    db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, data_json FROM products WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Product not found' });
+
+    // Reference checks
+    const orderCount = db.prepare(`SELECT count(*) as c FROM orders WHERE data_json LIKE ? OR data_json LIKE ?`).get(`%"id":"${id}"%`, `%"productId":"${id}"%`).c;
+    const quoteCount = db.prepare(`SELECT count(*) as c FROM quotes WHERE data_json LIKE ? OR data_json LIKE ?`).get(`%"id":"${id}"%`, `%"productId":"${id}"%`).c;
+    let movementCount = 0;
+    try {
+      movementCount = db.prepare(`SELECT count(*) as c FROM stock_movements WHERE product_id = ?`).get(id)?.c || 0;
+    } catch (_) {}
+    const packageCount = db.prepare(`SELECT count(*) as c FROM packages WHERE data_json LIKE ? OR data_json LIKE ?`).get(`%"id":"${id}"%`, `%"productId":"${id}"%`).c;
+
+    const totalRefs = orderCount + quoteCount + movementCount + packageCount;
+    if (totalRefs > 0) {
+      return res.status(409).json({
+        error: `Referenced by ${totalRefs} orders/quotes/movements/packages; archive instead`,
+        code: 'CANNOT_DELETE_REFERENCED',
+        references: { orders: orderCount, quotes: quoteCount, movements: movementCount, packages: packageCount }
+      });
+    }
+
+    db.prepare('DELETE FROM products WHERE id = ?').run(id);
+    logAudit({
+      entity: 'product',
+      entityId: id,
+      action: 'delete',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing
+    });
+
+    res.json({ success: true, message: 'Product deleted permanently.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/products/:id/archive', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, is_archived FROM products WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Product not found' });
+
+    db.prepare('UPDATE products SET is_archived = 1, archived_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+    logAudit({
+      entity: 'product',
+      entityId: id,
+      action: 'archive',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 1 }
+    });
+
+    res.json({ success: true, message: 'Product archived successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/products/:id/restore', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, is_archived FROM products WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Product not found' });
+
+    db.prepare('UPDATE products SET is_archived = 0, archived_at = NULL WHERE id = ?').run(id);
+    logAudit({
+      entity: 'product',
+      entityId: id,
+      action: 'restore',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 0 }
+    });
+
+    res.json({ success: true, message: 'Product restored successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -805,8 +959,16 @@ app.delete('/api/products/:id', requireAdmin, (req, res) => {
 
 app.get('/api/categories', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM categories ORDER BY display_order ASC, name ASC').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const includeArchived = req.query.includeArchived === 'true';
+    const query = includeArchived
+      ? 'SELECT data_json, is_archived FROM categories ORDER BY display_order ASC, name ASC'
+      : 'SELECT data_json, is_archived FROM categories WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY display_order ASC, name ASC';
+    const rows = db.prepare(query).all();
+    res.json(rows.map(r => {
+      const c = JSON.parse(r.data_json);
+      c.isArchived = Boolean(r.is_archived);
+      return c;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -815,9 +977,11 @@ app.get('/api/categories', (req, res) => {
 app.get('/api/categories/:slug', (req, res) => {
   try {
     const slug = req.params.slug;
-    const row = db.prepare('SELECT data_json FROM categories WHERE slug = ? OR id = ?').get(slug, slug);
+    const row = db.prepare('SELECT data_json, is_archived FROM categories WHERE slug = ? OR id = ?').get(slug, slug);
     if (!row) return res.status(404).json({ error: 'Category not found' });
-    res.json(JSON.parse(row.data_json));
+    const c = JSON.parse(row.data_json);
+    c.isArchived = Boolean(row.is_archived);
+    res.json(c);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -844,6 +1008,16 @@ app.post('/api/categories', requireAdmin, validateBody(schemas.category), (req, 
       categoryData.image || '', categoryData.specTemplateId || '', displayOrder,
       categoryData.status || 'active', JSON.stringify(categoryData)
     );
+
+    logAudit({
+      entity: 'category',
+      entityId: id,
+      action: 'create',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: categoryData
+    });
 
     res.json(categoryData);
   } catch (err) {
@@ -879,6 +1053,17 @@ app.put('/api/categories/:id', requireAdmin, validateBody(schemas.category), (re
       JSON.stringify(updated), id
     );
 
+    logAudit({
+      entity: 'category',
+      entityId: id,
+      action: 'update',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existingData,
+      after: updated
+    });
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -887,8 +1072,82 @@ app.put('/api/categories/:id', requireAdmin, validateBody(schemas.category), (re
 
 app.delete('/api/categories/:id', requireAdmin, (req, res) => {
   try {
-    db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, slug FROM categories WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Category not found' });
+
+    const refProducts = db.prepare(`
+      SELECT count(*) as c FROM products WHERE category_id = ? OR category_slug = ?
+    `).get(id, existing.slug || id).c;
+
+    if (refProducts > 0) {
+      return res.status(409).json({
+        error: `Referenced by ${refProducts} products; archive instead`,
+        code: 'CANNOT_DELETE_REFERENCED',
+        references: { products: refProducts }
+      });
+    }
+
+    db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+    logAudit({
+      entity: 'category',
+      entityId: id,
+      action: 'delete',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing
+    });
+
+    res.json({ success: true, message: 'Category deleted permanently.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/categories/:id/archive', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, is_archived FROM categories WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Category not found' });
+
+    db.prepare('UPDATE categories SET is_archived = 1, archived_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+    logAudit({
+      entity: 'category',
+      entityId: id,
+      action: 'archive',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 1 }
+    });
+
+    res.json({ success: true, message: 'Category archived successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/categories/:id/restore', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, is_archived FROM categories WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Category not found' });
+
+    db.prepare('UPDATE categories SET is_archived = 0, archived_at = NULL WHERE id = ?').run(id);
+    logAudit({
+      entity: 'category',
+      entityId: id,
+      action: 'restore',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 0 }
+    });
+
+    res.json({ success: true, message: 'Category restored successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -900,8 +1159,16 @@ app.delete('/api/categories/:id', requireAdmin, (req, res) => {
 
 app.get('/api/brands', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM brands').all();
-    const brands = rows.map(r => JSON.parse(r.data_json));
+    const includeArchived = req.query.includeArchived === 'true';
+    const query = includeArchived
+      ? 'SELECT data_json, is_archived FROM brands'
+      : 'SELECT data_json, is_archived FROM brands WHERE (is_archived IS NULL OR is_archived = 0)';
+    const rows = db.prepare(query).all();
+    const brands = rows.map(r => {
+      const b = JSON.parse(r.data_json);
+      b.isArchived = Boolean(r.is_archived);
+      return b;
+    });
     brands.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
     res.json(brands);
   } catch (err) {
@@ -912,9 +1179,11 @@ app.get('/api/brands', (req, res) => {
 app.get('/api/brands/:slug', (req, res) => {
   try {
     const slug = req.params.slug;
-    const row = db.prepare('SELECT data_json FROM brands WHERE slug = ? OR id = ?').get(slug, slug);
+    const row = db.prepare('SELECT data_json, is_archived FROM brands WHERE slug = ? OR id = ?').get(slug, slug);
     if (!row) return res.status(404).json({ error: 'Brand not found' });
-    res.json(JSON.parse(row.data_json));
+    const b = JSON.parse(row.data_json);
+    b.isArchived = Boolean(row.is_archived);
+    res.json(b);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -934,6 +1203,16 @@ app.post('/api/brands', requireAdmin, validateBody(schemas.brand), (req, res) =>
       brandData.website || '', brandData.featured ? 1 : 0, JSON.stringify(brandData)
     );
 
+    logAudit({
+      entity: 'brand',
+      entityId: id,
+      action: 'create',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: brandData
+    });
+
     res.json(brandData);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -946,7 +1225,8 @@ app.put('/api/brands/:id', requireAdmin, validateBody(schemas.brand), (req, res)
     const existing = db.prepare('SELECT data_json FROM brands WHERE id = ?').get(id);
     if (!existing) return res.status(404).json({ error: 'Brand not found' });
 
-    const updated = { ...JSON.parse(existing.data_json), ...req.body, id };
+    const existingData = JSON.parse(existing.data_json);
+    const updated = { ...existingData, ...req.body, id };
     db.prepare(`
       UPDATE brands SET
         name = ?, slug = ?, logo = ?, description = ?, website = ?, featured = ?, data_json = ?
@@ -956,6 +1236,17 @@ app.put('/api/brands/:id', requireAdmin, validateBody(schemas.brand), (req, res)
       updated.website || '', updated.featured ? 1 : 0, JSON.stringify(updated), id
     );
 
+    logAudit({
+      entity: 'brand',
+      entityId: id,
+      action: 'update',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existingData,
+      after: updated
+    });
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -964,8 +1255,82 @@ app.put('/api/brands/:id', requireAdmin, validateBody(schemas.brand), (req, res)
 
 app.delete('/api/brands/:id', requireAdmin, (req, res) => {
   try {
-    db.prepare('DELETE FROM brands WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, slug FROM brands WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Brand not found' });
+
+    const refProducts = db.prepare(`
+      SELECT count(*) as c FROM products WHERE brand_id = ? OR brand_name = ?
+    `).get(id, existing.name || id).c;
+
+    if (refProducts > 0) {
+      return res.status(409).json({
+        error: `Referenced by ${refProducts} products; archive instead`,
+        code: 'CANNOT_DELETE_REFERENCED',
+        references: { products: refProducts }
+      });
+    }
+
+    db.prepare('DELETE FROM brands WHERE id = ?').run(id);
+    logAudit({
+      entity: 'brand',
+      entityId: id,
+      action: 'delete',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing
+    });
+
+    res.json({ success: true, message: 'Brand deleted permanently.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/brands/:id/archive', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, is_archived FROM brands WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Brand not found' });
+
+    db.prepare('UPDATE brands SET is_archived = 1, archived_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+    logAudit({
+      entity: 'brand',
+      entityId: id,
+      action: 'archive',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 1 }
+    });
+
+    res.json({ success: true, message: 'Brand archived successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/brands/:id/restore', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, name, is_archived FROM brands WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Brand not found' });
+
+    db.prepare('UPDATE brands SET is_archived = 0, archived_at = NULL WHERE id = ?').run(id);
+    logAudit({
+      entity: 'brand',
+      entityId: id,
+      action: 'restore',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 0 }
+    });
+
+    res.json({ success: true, message: 'Brand restored successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1431,8 +1796,16 @@ app.put('/api/orders/:id/payment', requireAdmin, (req, res) => {
 
 app.get(['/api/customers', '/api/admin/customers'], requireAdmin, (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM customers ORDER BY created_at DESC').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const includeArchived = req.query.includeArchived === 'true';
+    const query = includeArchived
+      ? 'SELECT data_json, is_archived FROM customers ORDER BY created_at DESC'
+      : 'SELECT data_json, is_archived FROM customers WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY created_at DESC';
+    const rows = db.prepare(query).all();
+    res.json(rows.map(r => {
+      const c = JSON.parse(r.data_json);
+      c.isArchived = Boolean(r.is_archived);
+      return c;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1441,9 +1814,95 @@ app.get(['/api/customers', '/api/admin/customers'], requireAdmin, (req, res) => 
 app.get(['/api/customers/:id', '/api/admin/customers/:id'], requireAdmin, (req, res) => {
   try {
     const id = req.params.id;
-    const row = db.prepare('SELECT data_json FROM customers WHERE id = ? OR phone = ?').get(id, id);
+    const row = db.prepare('SELECT data_json, is_archived FROM customers WHERE id = ? OR phone = ?').get(id, id);
     if (!row) return res.status(404).json({ error: 'Customer not found' });
-    res.json(JSON.parse(row.data_json));
+    const c = JSON.parse(row.data_json);
+    c.isArchived = Boolean(row.is_archived);
+    res.json(c);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete(['/api/customers/:id', '/api/admin/customers/:id'], requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, phone, data_json FROM customers WHERE id = ? OR phone = ?').get(id, id);
+    if (!existing) return res.status(404).json({ error: 'Customer not found' });
+
+    const phone = existing.phone || '';
+    const refOrders = db.prepare(`SELECT count(*) as c FROM orders WHERE customer_phone = ? OR data_json LIKE ?`).get(phone, `%"customerId":"${existing.id}"%`).c;
+    const refQuotes = db.prepare(`SELECT count(*) as c FROM quotes WHERE phone = ?`).get(phone).c;
+    const totalRefs = refOrders + refQuotes;
+
+    if (totalRefs > 0) {
+      return res.status(409).json({
+        error: `Referenced by ${totalRefs} orders/quotes; archive instead`,
+        code: 'CANNOT_DELETE_REFERENCED',
+        references: { orders: refOrders, quotes: refQuotes }
+      });
+    }
+
+    db.prepare('DELETE FROM customers WHERE id = ?').run(existing.id);
+    logAudit({
+      entity: 'customer',
+      entityId: existing.id,
+      action: 'delete',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing
+    });
+
+    res.json({ success: true, message: 'Customer deleted permanently.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/customers/:id/archive', '/api/admin/customers/:id/archive'], requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, phone, is_archived, data_json FROM customers WHERE id = ? OR phone = ?').get(id, id);
+    if (!existing) return res.status(404).json({ error: 'Customer not found' });
+
+    db.prepare('UPDATE customers SET is_archived = 1, archived_at = CURRENT_TIMESTAMP WHERE id = ?').run(existing.id);
+    logAudit({
+      entity: 'customer',
+      entityId: existing.id,
+      action: 'archive',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 1 }
+    });
+
+    res.json({ success: true, message: 'Customer archived successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/customers/:id/restore', '/api/admin/customers/:id/restore'], requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, phone, is_archived, data_json FROM customers WHERE id = ? OR phone = ?').get(id, id);
+    if (!existing) return res.status(404).json({ error: 'Customer not found' });
+
+    db.prepare('UPDATE customers SET is_archived = 0, archived_at = NULL WHERE id = ?').run(existing.id);
+    logAudit({
+      entity: 'customer',
+      entityId: existing.id,
+      action: 'restore',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 0 }
+    });
+
+    res.json({ success: true, message: 'Customer restored successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1571,8 +2030,12 @@ app.post(['/api/services', '/api/service-requests'], submissionLimiter, validate
 // ============================================================================
 app.get(['/api/service-offerings', '/api/services/offerings'], (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM services WHERE enabled = 1 ORDER BY display_order ASC').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const rows = db.prepare('SELECT data_json, is_archived FROM services WHERE enabled = 1 AND (is_archived IS NULL OR is_archived = 0) ORDER BY display_order ASC').all();
+    res.json(rows.map(r => {
+      const s = JSON.parse(r.data_json);
+      s.isArchived = Boolean(r.is_archived);
+      return s;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1580,8 +2043,16 @@ app.get(['/api/service-offerings', '/api/services/offerings'], (req, res) => {
 
 app.get(['/api/admin/service-offerings', '/api/admin/services'], requireAdmin, (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM services ORDER BY display_order ASC').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const includeArchived = req.query.includeArchived === 'true';
+    const query = includeArchived
+      ? 'SELECT data_json, is_archived FROM services ORDER BY display_order ASC'
+      : 'SELECT data_json, is_archived FROM services WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY display_order ASC';
+    const rows = db.prepare(query).all();
+    res.json(rows.map(r => {
+      const s = JSON.parse(r.data_json);
+      s.isArchived = Boolean(r.is_archived);
+      return s;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1596,6 +2067,17 @@ app.post(['/api/admin/service-offerings', '/api/admin/services'], requireAdmin, 
       INSERT OR REPLACE INTO services (id, title, short_label, enabled, display_order, data_json)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(id, item.title, item.shortLabel || item.title, item.enabled ? 1 : 0, item.order, JSON.stringify(item));
+
+    logAudit({
+      entity: 'service',
+      entityId: id,
+      action: 'create',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: item
+    });
+
     res.json(item);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1605,12 +2087,27 @@ app.post(['/api/admin/service-offerings', '/api/admin/services'], requireAdmin, 
 app.put(['/api/admin/service-offerings/:id', '/api/admin/services/:id'], requireAdmin, validateBody(schemas.serviceOffering), (req, res) => {
   try {
     const id = req.params.id;
+    const existing = db.prepare('SELECT data_json FROM services WHERE id = ?').get(id);
+    const existingData = existing ? JSON.parse(existing.data_json) : {};
+
     const data = req.body;
-    const item = { ...data, id, enabled: data.enabled !== false, order: Number(data.order) || 1 };
+    const item = { ...existingData, ...data, id, enabled: data.enabled !== false, order: Number(data.order) || 1 };
     db.prepare(`
       UPDATE services SET title = ?, short_label = ?, enabled = ?, display_order = ?, data_json = ?
       WHERE id = ?
     `).run(item.title, item.shortLabel || item.title, item.enabled ? 1 : 0, item.order, JSON.stringify(item), id);
+
+    logAudit({
+      entity: 'service',
+      entityId: id,
+      action: 'update',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existingData,
+      after: item
+    });
+
     res.json(item);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1619,8 +2116,79 @@ app.put(['/api/admin/service-offerings/:id', '/api/admin/services/:id'], require
 
 app.delete(['/api/admin/service-offerings/:id', '/api/admin/services/:id'], requireAdmin, (req, res) => {
   try {
-    db.prepare('DELETE FROM services WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, title FROM services WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Service not found' });
+
+    const refQuotes = db.prepare(`SELECT count(*) as c FROM quotes WHERE service_type = ? OR data_json LIKE ?`).get(existing.title, `%"serviceId":"${id}"%`).c;
+    if (refQuotes > 0) {
+      return res.status(409).json({
+        error: `Referenced by ${refQuotes} quotes/service requests; archive instead`,
+        code: 'CANNOT_DELETE_REFERENCED',
+        references: { quotes: refQuotes }
+      });
+    }
+
+    db.prepare('DELETE FROM services WHERE id = ?').run(id);
+    logAudit({
+      entity: 'service',
+      entityId: id,
+      action: 'delete',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing
+    });
+
+    res.json({ success: true, message: 'Service deleted permanently.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/admin/service-offerings/:id/archive', '/api/admin/services/:id/archive', '/api/services/:id/archive'], requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, title, is_archived FROM services WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Service not found' });
+
+    db.prepare('UPDATE services SET is_archived = 1, archived_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+    logAudit({
+      entity: 'service',
+      entityId: id,
+      action: 'archive',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 1 }
+    });
+
+    res.json({ success: true, message: 'Service archived successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/admin/service-offerings/:id/restore', '/api/admin/services/:id/restore', '/api/services/:id/restore'], requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const existing = db.prepare('SELECT id, title, is_archived FROM services WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Service not found' });
+
+    db.prepare('UPDATE services SET is_archived = 0, archived_at = NULL WHERE id = ?').run(id);
+    logAudit({
+      entity: 'service',
+      entityId: id,
+      action: 'restore',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: existing,
+      after: { is_archived: 0 }
+    });
+
+    res.json({ success: true, message: 'Service restored successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -2311,7 +2879,30 @@ app.get('/api/media', (req, res) => {
 
 app.delete('/api/media/:id', requireAdmin, (req, res) => {
   try {
-    const row = db.prepare('SELECT filename FROM media WHERE id = ?').get(req.params.id);
+    const row = db.prepare('SELECT * FROM media WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ error: 'Media not found' });
+
+    const filename = row.filename;
+    const url = row.url || `/uploads/${filename}`;
+
+    // Check if media is in use across the platform
+    const inProducts = db.prepare(`SELECT count(*) as c FROM products WHERE data_json LIKE ? OR data_json LIKE ?`).get(`%${filename}%`, `%${url}%`).c;
+    const inCategories = db.prepare(`SELECT count(*) as c FROM categories WHERE image LIKE ? OR image LIKE ?`).get(`%${filename}%`, `%${url}%`).c;
+    const inBrands = db.prepare(`SELECT count(*) as c FROM brands WHERE logo LIKE ? OR logo LIKE ?`).get(`%${filename}%`, `%${url}%`).c;
+    let inHero = 0;
+    try { inHero = db.prepare(`SELECT count(*) as c FROM hero_slides WHERE image LIKE ? OR image LIKE ?`).get(`%${filename}%`, `%${url}%`).c; } catch (_) {}
+    let inBlog = 0;
+    try { inBlog = db.prepare(`SELECT count(*) as c FROM blog_posts WHERE image LIKE ? OR image LIKE ?`).get(`%${filename}%`, `%${url}%`).c; } catch (_) {}
+
+    const inUseTotal = inProducts + inCategories + inBrands + inHero + inBlog;
+    if (inUseTotal > 0) {
+      return res.status(409).json({
+        error: `Media is currently in use across ${inUseTotal} items and cannot be deleted.`,
+        code: 'MEDIA_IN_USE',
+        usage: { products: inProducts, categories: inCategories, brands: inBrands, hero: inHero, blog: inBlog }
+      });
+    }
+
     if (row && row.filename) {
       const filePath = path.join(__dirname, 'public/uploads', row.filename);
       if (fs.existsSync(filePath)) {
@@ -2323,8 +2914,19 @@ app.delete('/api/media/:id', requireAdmin, (req, res) => {
       if (fs.existsSync(thumbPath)) try { fs.unlinkSync(thumbPath); } catch (_) {}
       if (fs.existsSync(webpPath)) try { fs.unlinkSync(webpPath); } catch (_) {}
     }
+
     db.prepare('DELETE FROM media WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
+    logAudit({
+      entity: 'media',
+      entityId: req.params.id,
+      action: 'delete',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      before: row
+    });
+
+    res.json({ success: true, message: 'Media deleted permanently.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
