@@ -191,6 +191,8 @@ class StaffService {
       after: { email, name, roleIds, primaryRole }
     });
 
+    emitDomainEvent('staff.user_created', { userId: id, email, name, role: primaryRole, roleIds });
+
     return { id, email, name, role: primaryRole, roleIds, status: 'active', must_change_password: true };
   }
 
@@ -236,6 +238,10 @@ class StaffService {
       actorName: actor?.name,
       after: data
     });
+
+    if (data.status === 'disabled') {
+      emitDomainEvent('staff.user_disabled', { userId: id, email: user.email });
+    }
 
     return true;
   }

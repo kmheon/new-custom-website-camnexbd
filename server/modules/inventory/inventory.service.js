@@ -70,6 +70,14 @@ class InventoryService {
       after: { stockQuantity: newQty, quantityChange, movementType, reason }
     });
 
+    emitDomainEvent('inventory.adjusted', {
+      productId,
+      previousStock: currentQty,
+      newStock: newQty,
+      quantityChange,
+      movementType,
+      reason
+    });
     emitDomainEvent('stock.changed', {
       productId,
       previousStock: currentQty,

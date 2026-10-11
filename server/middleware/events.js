@@ -15,10 +15,10 @@ function emitDomainEvent(eventType, payload = {}) {
   try {
     const id = `evt-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
     const aggregateType = String(eventType).split('.')[0];
-    const aggregateId = String(payload.id || payload.productId || payload.orderId || payload.categoryId || payload.brandId || 'n/a');
+    const aggregateId = String(payload.id || payload.productId || payload.orderId || payload.categoryId || payload.brandId || payload.userId || 'n/a');
     db.prepare(`
-      INSERT INTO domain_events (id, event_type, aggregate_type, aggregate_id, payload, status)
-      VALUES (?, ?, ?, ?, ?, 'pending')
+      INSERT INTO domain_events (id, event_type, aggregate_type, aggregate_id, payload, status, attempts)
+      VALUES (?, ?, ?, ?, ?, 'pending', 0)
     `).run(id, eventType, aggregateType, aggregateId, JSON.stringify(payload));
     return id;
   } catch (err) {
@@ -27,30 +27,94 @@ function emitDomainEvent(eventType, payload = {}) {
   }
 }
 
-function processPendingEvents() {
+async function processPendingEvents() {
   try {
-    const events = db.prepare(`SELECT * FROM domain_events WHERE status = 'pending' ORDER BY created_at ASC LIMIT 20`).all();
+    const events = db.prepare(`SELECT * FROM domain_events WHERE status = 'pending' AND attempts < 3 ORDER BY created_at ASC LIMIT 20`).all();
     for (const event of events) {
       let payload = {};
       try { payload = JSON.parse(event.payload); } catch (_) {}
       let error = null;
-      for (const handler of subscribers[event.event_type] || []) {
-        try { handler(payload, event); } catch (e) { error = e.message; }
+      const handlers = subscribers[event.event_type] || [];
+      for (const handler of handlers) {
+        try {
+          const res = handler(payload, event);
+          if (res && typeof res.then === 'function') {
+            await res;
+          }
+        } catch (e) {
+          error = e.message || String(e);
+          break; // Stop subsequent handlers on failure so event can retry
+        }
       }
+
+      const attempts = (event.attempts || 0) + 1;
+      const isFailed = Boolean(error);
+      const newStatus = isFailed ? (attempts >= 3 ? 'failed' : 'pending') : 'processed';
+      const markProcessed = newStatus === 'processed' || newStatus === 'failed';
+
       db.prepare(`
         UPDATE domain_events
-        SET status = ?, attempts = attempts + 1, last_error = ?, processed_at = CURRENT_TIMESTAMP
+        SET status = ?, attempts = ?, last_error = ?, processed_at = ${markProcessed ? 'CURRENT_TIMESTAMP' : 'NULL'}
         WHERE id = ?
-      `).run(error ? 'failed' : 'processed', error, event.id);
+      `).run(newStatus, attempts, error || null, event.id);
     }
-  } catch (_) {}
+  } catch (err) {
+    console.error('[OUTBOX WORKER ERROR]', err.message);
+  }
 }
 
+// Phase 1 Handlers (async, idempotent)
+function registerPhase1Handlers() {
+  // 1. Search index refresh handler
+  const handleCatalogIndex = async (payload, event) => {
+    // Phase 1: in-memory cache/search re-indexing signal
+  };
+  onDomainEvent('catalog.product.created', handleCatalogIndex);
+  onDomainEvent('catalog.product.updated', handleCatalogIndex);
+  onDomainEvent('catalog.product.archived', handleCatalogIndex);
+  onDomainEvent('product.created', handleCatalogIndex);
+  onDomainEvent('product.updated', handleCatalogIndex);
+  onDomainEvent('product.archived', handleCatalogIndex);
+  onDomainEvent('category.updated', handleCatalogIndex);
+
+  // 2. Order notification handler
+  const handleOrderNotification = async (payload) => {
+    // Phase 1: audit/log channel for new orders
+  };
+  onDomainEvent('order.placed', handleOrderNotification);
+  onDomainEvent('order.created', handleOrderNotification);
+
+  // 3. High-value mutation handler
+  const handleHighValue = async (payload, event) => {
+    // Phase 1: high-value commercial mutation signal
+  };
+  onDomainEvent('pricing.changed', handleHighValue);
+  onDomainEvent('inventory.adjusted', handleHighValue);
+  onDomainEvent('stock.changed', handleHighValue);
+  onDomainEvent('staff.user_disabled', handleHighValue);
+}
+
+registerPhase1Handlers();
+
 let workerInterval = null;
-function startDomainEventWorker(intervalMs = 3000) {
+function startDomainEventWorker(intervalMs = 5000) {
   if (workerInterval) return;
   workerInterval = setInterval(processPendingEvents, intervalMs);
   if (workerInterval.unref) workerInterval.unref();
 }
 
-module.exports = { emitDomainEvent, onDomainEvent, processPendingEvents, startDomainEventWorker };
+function stopDomainEventWorker() {
+  if (workerInterval) {
+    clearInterval(workerInterval);
+    workerInterval = null;
+  }
+}
+
+module.exports = {
+  emitDomainEvent,
+  onDomainEvent,
+  processPendingEvents,
+  startDomainEventWorker,
+  stopDomainEventWorker,
+  _subscribers: subscribers
+};

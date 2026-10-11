@@ -248,6 +248,7 @@ async function main() {
     results.push(await runTestSuite('Admin Completeness Suite', path.join(__dirname, 'test_admin_completeness.js'), testEnv));
     results.push(await runTestSuite('RBAC & Identity Suite', path.join(__dirname, 'test_rbac.js'), testEnv));
     results.push(await runTestSuite('Ownership & Deletion Rules Suite', path.join(__dirname, 'test_ownership_deletion.js'), testEnv));
+    results.push(await runTestSuite('Domain Events & Outbox Suite', path.join(__dirname, 'test_domain_events_outbox.js'), testEnv));
     results.push(await runTestSuite('Security Attacks & CSRF Suite', path.join(__dirname, 'test_security_attacks.js'), testEnv));
 
   } finally {

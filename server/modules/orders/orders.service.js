@@ -134,6 +134,7 @@ class OrdersService {
       after: { orderNumber, total: fullOrder.total, status: fullOrder.status }
     });
 
+    emitDomainEvent('order.placed', { orderId: id, orderNumber, total: fullOrder.total });
     emitDomainEvent('order.created', { orderId: id, orderNumber, total: fullOrder.total });
     return fullOrder;
   }
@@ -180,6 +181,7 @@ class OrdersService {
       after: { status, note }
     });
 
+    emitDomainEvent('order.status_changed', { orderId: id, previousStatus: prevStatus, newStatus: status });
     emitDomainEvent('order.status_updated', { orderId: id, previousStatus: prevStatus, newStatus: status });
     return order;
   }
@@ -212,6 +214,10 @@ class OrdersService {
       before: { paymentStatus: prevPayment },
       after: { paymentStatus: order.paymentStatus }
     });
+
+    if (order.paymentStatus === 'paid') {
+      emitDomainEvent('order.paid', { orderId: id, paymentStatus: 'paid' });
+    }
 
     return order;
   }

@@ -208,6 +208,7 @@ class CatalogService {
       after: productData
     });
 
+    emitDomainEvent('catalog.product.created', { productId: id, sku: productData.sku });
     emitDomainEvent('product.created', { productId: id, sku: productData.sku });
     return productData;
   }
@@ -258,6 +259,13 @@ class CatalogService {
       after: updated
     });
 
+    const oldPrice = current.pricing?.regularPrice ?? current.price;
+    const newPrice = updated.pricing?.regularPrice ?? updated.price;
+    if (oldPrice !== newPrice) {
+      emitDomainEvent('pricing.changed', { productId: id, oldPrice, newPrice });
+    }
+
+    emitDomainEvent('catalog.product.updated', { productId: id });
     emitDomainEvent('product.updated', { productId: id });
     return updated;
   }
@@ -278,6 +286,7 @@ class CatalogService {
       actorName: actor?.name
     });
 
+    emitDomainEvent('catalog.product.archived', { productId: id });
     emitDomainEvent('product.archived', { productId: id });
     return true;
   }
