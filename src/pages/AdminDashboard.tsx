@@ -463,6 +463,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       seriesName: editingPackage.seriesName,
       technologyLabel: editingPackage.technologyLabel,
       badge: (editingPackage.badge || '').trim() || undefined,
+      featuredOnHomepage: Boolean(editingPackage.featuredOnHomepage),
       systemTypeId: editingPackage.systemTypeId,
       systemTypeSlug: editingPackage.systemTypeSlug,
       systemTypeName: editingPackage.systemTypeName,
@@ -4124,6 +4125,21 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 <option value="Best Value" />
               </datalist>
               <p className="text-[10px] text-slate-500 mt-1">Shown as a small ribbon on the top-left of the package image. Never set automatically.</p>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!editingPackage.featuredOnHomepage}
+                  onChange={(e) => setEditingPackage({ ...editingPackage, featuredOnHomepage: e.target.checked })}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-slate-800">Featured on homepage</span>
+              </label>
+              <p className="text-[10px] text-slate-500 ml-6 mt-0.5">
+                Takes top priority in the homepage default "All" package mix.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
