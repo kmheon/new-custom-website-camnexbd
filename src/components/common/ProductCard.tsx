@@ -203,9 +203,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </button>
             </div>
 
-            {/* Top-Left Corner Demo tag when sample content is ON */}
+            {/* Bottom-Right Corner Demo tag when sample content is ON */}
             {showSampleBadge && (product.isDemo || (product as any).sample) && (
-              <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
+              <div className="absolute bottom-2.5 right-2.5 z-10 pointer-events-none">
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/90 text-slate-950 shadow-xs uppercase tracking-wider">
                   Demo
                 </span>
@@ -229,12 +229,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               ) : null}
             </div>
 
-            {/* Bottom-Right Compare toggle */}
+            {/* Compare toggle: placed neatly above Demo tag or bottom-right when no demo */}
             <button
               type="button"
               onClick={handleToggleCompare}
               title={inCompare ? 'Remove from compare' : 'Add to compare'}
-              className={`absolute bottom-2.5 right-2.5 p-1.5 rounded-full border shadow-md transition-all cursor-pointer ${
+              className={`absolute ${showSampleBadge && (product.isDemo || (product as any).sample) ? 'bottom-8 right-2.5' : 'bottom-2.5 right-2.5'} p-1.5 rounded-full border shadow-md transition-all cursor-pointer z-10 ${
                 inCompare
                   ? 'bg-[#F15A24] border-[#F15A24] text-white opacity-100'
                   : 'bg-white/90 hover:bg-white border-[#EDE8E1] text-[#111827] opacity-0 group-hover:opacity-100'

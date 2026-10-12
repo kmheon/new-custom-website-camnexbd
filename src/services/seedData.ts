@@ -906,7 +906,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     "description": "Weatherproof outdoor pan/tilt camera with AI human detection, color night vision, active defense siren, and strobe light.",
     "pricing": {
       "regularPrice": 9200,
-      "salePrice": 8600,
       "currency": "BDT"
     },
     "specifications": {
@@ -939,7 +938,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     "description": "Reliable IP67 weatherproof outdoor bullet camera featuring color night vision and AI-powered human shape detection.",
     "pricing": {
       "regularPrice": 6500,
-      "salePrice": 5950,
       "currency": "BDT"
     },
     "specifications": {
@@ -972,7 +970,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     "description": "Dual-antenna indoor pan-tilt Wi-Fi camera with Hik-Connect cloud P2P, built-in microphone and speaker, and 10m IR.",
     "pricing": {
       "regularPrice": 5800,
-      "salePrice": 5200,
       "currency": "BDT"
     },
     "specifications": {
@@ -1005,7 +1002,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     "description": "IP66 outdoor wireless bullet with smart dual lighting, onboard Wi-Fi range up to 120m in open field, and digital WDR.",
     "pricing": {
       "regularPrice": 8500,
-      "salePrice": 7900,
       "currency": "BDT"
     },
     "specifications": {
@@ -1038,7 +1034,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     "description": "High-resolution 4MP pan and tilt camera with abnormal sound alarm, physical privacy shutter, and human detection.",
     "pricing": {
       "regularPrice": 4600,
-      "salePrice": 4200,
       "currency": "BDT"
     },
     "specifications": {
@@ -1071,7 +1066,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     "description": "Weatherproof IP67 bullet camera with dual external antennas, built-in Wi-Fi hotspot mode, and 30m night vision.",
     "pricing": {
       "regularPrice": 5900,
-      "salePrice": 5400,
       "currency": "BDT"
     },
     "specifications": {
@@ -1104,7 +1098,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     "description": "5MP 3K outdoor speed dome featuring full panoramic coverage, smart full-color night vision, and Wi-Fi 6 connectivity.",
     "pricing": {
       "regularPrice": 11500,
-      "salePrice": 10800,
       "currency": "BDT"
     },
     "specifications": {
@@ -1133,8 +1126,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "shortDescription": "Wireless 2K smart video doorbell with wire-free battery installation and indoor chime.",
     "description": "Crisp 2K resolution video doorbell featuring PIR human detection, ultra-wide 176° field of view, and included indoor wireless chime.",
     "pricing": {
-      "regularPrice": 11500,
-      "salePrice": 10500
+      "regularPrice": 11500
     },
     "inventory": {
       "available": 12,
@@ -1935,7 +1927,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     },
     "pricing": {
       "regularPrice": 8500,
-      "salePrice": 7950,
       "currency": "BDT"
     },
     "inventory": {

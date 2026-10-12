@@ -248,6 +248,63 @@ const CHECKS = [
       });
       return errors;
     `
+  },
+  {
+    name: 'Badge positions: Demo tag at bottom-right, wishlist/quick-view top-right without intersecting, discount at bottom-left',
+    body: `
+      const errors = [];
+      const cards = Array.from(document.querySelectorAll('[data-product-id]'));
+      cards.forEach(card => {
+        const pid = card.getAttribute('data-product-id');
+        const media = card.querySelector('[data-slot="media"]') || card.firstElementChild;
+        if (!media) return;
+
+        // Check Demo tag position
+        const demoEl = Array.from(media.querySelectorAll('span')).find(s => s.textContent.trim() === 'Demo');
+        if (demoEl) {
+          const demoWrap = demoEl.parentElement;
+          const rect = demoWrap.getBoundingClientRect();
+          const mediaRect = media.getBoundingClientRect();
+          // Demo tag must be positioned at bottom-right (bottom > top, right near right)
+          if (rect.top - mediaRect.top < mediaRect.height / 2) {
+            errors.push(pid + ': Demo tag is in upper half instead of bottom-right');
+          }
+        }
+
+        // Check top-right buttons (wishlist / quick-view)
+        const topBtns = Array.from(media.querySelectorAll('button')).filter(b => {
+          const r = b.getBoundingClientRect();
+          const mr = media.getBoundingClientRect();
+          return (r.top - mr.top) < mr.height / 2 && (mr.right - r.right) < mr.width / 2;
+        });
+
+        // Check bottom-left discount badge
+        const discountBadge = Array.from(media.querySelectorAll('span')).find(s => /-\\d+%/.test(s.textContent.trim()));
+        if (discountBadge) {
+          const br = discountBadge.getBoundingClientRect();
+          const mr = media.getBoundingClientRect();
+          if (br.top - mr.top < mr.height / 2 || br.left - mr.left > mr.width / 2) {
+            errors.push(pid + ': discount badge is not in bottom-left');
+          }
+        }
+
+        // Check bounding box non-intersection on all absolute badges/buttons in media
+        const interactiveElements = Array.from(media.querySelectorAll('button, [class*="absolute"] > span'));
+        for (let i = 0; i < interactiveElements.length; i++) {
+          for (let j = i + 1; j < interactiveElements.length; j++) {
+            const r1 = interactiveElements[i].getBoundingClientRect();
+            const r2 = interactiveElements[j].getBoundingClientRect();
+            if (r1.width > 0 && r1.height > 0 && r2.width > 0 && r2.height > 0) {
+              const intersects = !(r2.left >= r1.right || r2.right <= r1.left || r2.top >= r1.bottom || r2.bottom <= r1.top);
+              if (intersects) {
+                errors.push(pid + ': badge/button overlap between "' + interactiveElements[i].textContent.trim() + '" and "' + interactiveElements[j].textContent.trim() + '"');
+              }
+            }
+          }
+        }
+      });
+      return errors;
+    `
   }
 ];
 
