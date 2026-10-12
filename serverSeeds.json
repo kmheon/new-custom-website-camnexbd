@@ -590,6 +590,7 @@
       "basePrice": 209400,
       "isActive": true,
       "isFeatured": true,
+      "featuredOnHomepage": true,
       "isDemo": true,
       "inclusions": [
         "4x Hikvision 2MP IRPF Cameras",
@@ -803,6 +804,7 @@
       "basePrice": 110000,
       "isActive": true,
       "isFeatured": true,
+      "featuredOnHomepage": true,
       "isDemo": true,
       "inclusions": [
         "2x 3MP Wireless Smart Cameras",
@@ -861,6 +863,7 @@
       "basePrice": 980000,
       "isActive": true,
       "isFeatured": true,
+      "featuredOnHomepage": true,
       "isDemo": true,
       "inclusions": [
         "1x 4MP 25x Optical Zoom Speed Dome PTZ",

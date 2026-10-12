@@ -637,62 +637,59 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   const displayPackages = useMemo(() => {
     if (!isFilterActive) {
-      // 1. Featured on homepage packages take highest priority
-      const featured = packages.filter((p) => Boolean(p.featuredOnHomepage));
-      const featuredIds = new Set(featured.map((p) => p.id));
-
-      // 2. Admin-tagged packages next (Most Popular, Affordable, Top Tier, Best Value, custom)
-      const tagged = packages.filter(
-        (p) => Boolean(p.badge && p.badge.trim()) && !featuredIds.has(p.id)
-      );
-
-      const selectedIds = new Set([...featured.map((p) => p.id), ...tagged.map((p) => p.id)]);
-
-      // 3. System types order for round-robin: IP, Analogue, Wi-Fi
-      const orderMap: Record<string, number> = { ip: 1, analogue: 2, wireless: 3 };
-      const orderedTypes = [...packageSystemTypes].sort((a, b) => {
-        const oa = orderMap[a.slug] || a.order || 99;
-        const ob = orderMap[b.slug] || b.order || 99;
-        return oa - ob;
+      // 1. Identify enabled system types that have packages
+      const activeTypes = systemTypesOrdered.filter((st) => {
+        if (st.enabled === false) return false;
+        return packages.some((p) => getPackageSystemSlug(p, packageSystemTypes) === st.slug);
       });
 
-      const poolsByType: Record<string, SecurityPackage[]> = {};
-      for (const st of orderedTypes) {
-        poolsByType[st.slug] = packages.filter(
-          (p) => getPackageSystemSlug(p, packageSystemTypes) === st.slug && !selectedIds.has(p.id)
+      const picked: SecurityPackage[] = [];
+      const pickedIds = new Set<string>();
+
+      // Step A: Include at least one package of each system type that has packages:
+      // First one admin "Featured on homepage" package per type, then fill by tags and sort order
+      for (const st of activeTypes) {
+        const typePkgs = packages.filter(
+          (p) => getPackageSystemSlug(p, packageSystemTypes) === st.slug && !pickedIds.has(p.id)
         );
-      }
-      const unclassified = packages.filter(
-        (p) => !selectedIds.has(p.id) && !orderedTypes.some((st) => getPackageSystemSlug(p, packageSystemTypes) === st.slug)
-      );
+        if (typePkgs.length === 0) continue;
 
-      // 4. Fill by round-robin across system types (one IP, one Analogue, one Wi-Fi, then repeat)
-      const roundRobin: SecurityPackage[] = [];
-      let added = true;
-      while (added) {
-        added = false;
-        for (const st of orderedTypes) {
-          const pool = poolsByType[st.slug];
-          if (pool && pool.length > 0) {
-            const nextPkg = pool.shift()!;
-            roundRobin.push(nextPkg);
-            selectedIds.add(nextPkg.id);
-            added = true;
-          }
-        }
+        const sortedTypePkgs = [...typePkgs].sort((a, b) => {
+          const fa = a.featuredOnHomepage ? 1 : 0;
+          const fb = b.featuredOnHomepage ? 1 : 0;
+          if (fa !== fb) return fb - fa;
+
+          const ta = a.badge && a.badge.trim() ? 1 : 0;
+          const tb = b.badge && b.badge.trim() ? 1 : 0;
+          if (ta !== tb) return tb - ta;
+
+          return (a.order || 0) - (b.order || 0);
+        });
+
+        const chosen = sortedTypePkgs[0];
+        picked.push(chosen);
+        pickedIds.add(chosen.id);
       }
 
-      for (const p of unclassified) {
-        if (!selectedIds.has(p.id)) {
-          roundRobin.push(p);
-          selectedIds.add(p.id);
-        }
-      }
+      // Step B: Fill the remaining slots by tags and sort order (with any remaining featured packages first)
+      const remaining = packages
+        .filter((p) => !pickedIds.has(p.id))
+        .sort((a, b) => {
+          const fa = a.featuredOnHomepage ? 1 : 0;
+          const fb = b.featuredOnHomepage ? 1 : 0;
+          if (fa !== fb) return fb - fa;
 
-      return [...featured, ...tagged, ...roundRobin];
+          const ta = a.badge && a.badge.trim() ? 1 : 0;
+          const tb = b.badge && b.badge.trim() ? 1 : 0;
+          if (ta !== tb) return tb - ta;
+
+          return (a.order || 0) - (b.order || 0);
+        });
+
+      return [...picked, ...remaining];
     }
     return filteredPackages;
-  }, [isFilterActive, packages, packageSystemTypes, filteredPackages]);
+  }, [isFilterActive, packages, packageSystemTypes, systemTypesOrdered, filteredPackages]);
 
   const systemTypesOrdered = useMemo(() => {
     const orderMap: Record<string, number> = { ip: 1, analogue: 2, wireless: 3 };
