@@ -151,6 +151,7 @@ export interface ProductSeo {
 export interface Product {
   id: string;
   name: string;
+  shortName?: string; // Optional short display name for compact lists (max 36 chars); falls back to a stripped name
   brand: string;
   brandId: string;
   modelNumber: string;
@@ -201,6 +202,7 @@ export interface PackageComponentRule {
   role: 'camera' | 'recorder' | 'storage' | 'cable' | 'power' | 'connectors' | 'installation';
   defaultModelId: string;
   name: string;
+  shortName?: string;
   quantityFormula: 'fixed' | 'per_camera' | 'lookup_camera_count';
   fixedQty?: number;
   qtyPerCamera?: number;

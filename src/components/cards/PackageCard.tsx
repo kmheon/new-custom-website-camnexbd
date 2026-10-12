@@ -10,6 +10,7 @@ import {
   CardPriceSlot,
   CardActionsSlot
 } from './CardSlots';
+import { getShortDisplayName } from '../../utils/displayName';
 
 export interface PackageCardProps {
   pkg: SecurityPackage;
@@ -61,6 +62,11 @@ export const PackageCard: React.FC<PackageCardProps> = ({
   const top3Items = allInclusions.slice(0, 3);
   const summaryLine = generatePackageSummary(pkg);
 
+  // Admin-set short names (optional `shortName` on component rules / linked products)
+  const shortNameFor = (item: string): string | undefined => {
+    const rule = (pkg.rules || []).find((r: any) => r && (r.name === item || r.productName === item));
+    return (rule as any)?.shortName || (rule as any)?.product?.shortName || undefined;
+  };
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -154,9 +160,15 @@ export const PackageCard: React.FC<PackageCardProps> = ({
           <div className="py-1.5 border-y border-[#EDE8E1] text-xs flex flex-col justify-between min-h-[78px]">
             <div className="space-y-0.5">
               {top3Items.map((item: string, rIdx: number) => (
-                <div key={rIdx} className="flex items-center gap-1.5 min-w-0">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
-                  <span className="truncate text-[11px] font-medium text-slate-700">{item}</span>
+                <div key={rIdx} className="flex items-start gap-1.5 min-w-0">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0 mt-px" />
+                  <span
+                    className="line-clamp-2 break-words text-[11px] leading-snug font-medium text-slate-700"
+                    title={item}
+                    data-pkg-item
+                  >
+                    {getShortDisplayName(item, shortNameFor(item))}
+                  </span>
                 </div>
               ))}
             </div>
@@ -238,7 +250,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
               {allInclusions.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span className="font-medium text-slate-800">{item}</span>
+                  <span className="font-medium text-slate-800" data-pkg-full-item>{item}</span>
                 </div>
               ))}
             </div>

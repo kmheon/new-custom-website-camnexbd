@@ -91,6 +91,43 @@ const CHECKS = [
       });
       return errors;
     `
+  },
+  {
+    name: 'Package item names: short, never end in "...", fit in 2 lines; popover shows full names',
+    body: `
+      const errors = [];
+      const pkgs = await fetch('/api/packages').then(r => r.json());
+      const list = Array.isArray(pkgs) ? pkgs : (pkgs.items || []);
+      const byId = Object.fromEntries(list.map(p => [p.id, p]));
+      const cards = Array.from(document.querySelectorAll('section#packages [data-package-id]'));
+      cards.forEach(card => {
+        const p = byId[card.getAttribute('data-package-id')];
+        card.querySelectorAll('[data-pkg-item]').forEach(el => {
+          const t = el.textContent.trim();
+          if (/(\\.\\.\\.|\\u2026)$/.test(t)) errors.push((p && p.name) + ': item ends in ellipsis: "' + t + '"');
+          if (t.length > 36) errors.push((p && p.name) + ': short name longer than 36 chars: "' + t + '"');
+          if (el.scrollHeight > el.clientHeight + 1) errors.push((p && p.name) + ': item is clamped (overflows 2 lines): "' + t + '"');
+          const cs = getComputedStyle(el);
+          if (cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap') errors.push((p && p.name) + ': item uses single-line truncate');
+        });
+      });
+      // Popover shows the full names
+      const firstCard = cards[0];
+      const btn = firstCard && Array.from(firstCard.querySelectorAll('button')).find(b => /See what/i.test(b.textContent));
+      if (!btn) errors.push('No "See what\\'s included" button on first package card');
+      else {
+        btn.click();
+        await new Promise(r => setTimeout(r, 300));
+        const dialog = document.querySelector('[role="dialog"]');
+        const full = dialog ? Array.from(dialog.querySelectorAll('[data-pkg-full-item]')).map(e => e.textContent.trim()) : [];
+        const expected = (byId[firstCard.getAttribute('data-package-id')]?.inclusions) || [];
+        if (!dialog) errors.push('Popover did not open');
+        else if (expected.length && JSON.stringify(full) !== JSON.stringify(expected)) errors.push('Popover names differ from full inclusion names: ' + JSON.stringify(full));
+        if (dialog) dialog.click();
+        await new Promise(r => setTimeout(r, 200));
+      }
+      return errors;
+    `
   }
 ];
 

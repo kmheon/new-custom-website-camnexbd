@@ -4,6 +4,7 @@ import { Button, Modal, Badge } from '../common/UI';
 import { MediaPickerModal } from './MediaLibraryModal';
 import { productService } from '../../services';
 import { Product, Category, Brand, SpecTemplate } from '../../types';
+import { getShortDisplayName } from '../../utils/displayName';
 
 interface ProductEditModalProps {
   isOpen: boolean;
@@ -257,6 +258,21 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Short display name (optional, max 36 characters)</label>
+              <input
+                type="text"
+                maxLength={36}
+                value={formData.shortName || ''}
+                onChange={e => setFormData({ ...formData, shortName: e.target.value })}
+                placeholder={getShortDisplayName(formData.name || '') || 'e.g. Bullet Camera'}
+                className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg"
+              />
+              <p className="text-[10px] text-slate-500 mt-1">
+                Used in compact lists such as the package card. If empty, the name without brand, model and spec words is used: “{getShortDisplayName(formData.name || '') || '—'}”.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
