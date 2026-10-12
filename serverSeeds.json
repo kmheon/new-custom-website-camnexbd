@@ -544,7 +544,7 @@
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
       "technologyLabel": "Hikvision EXIR IR",
-      "badge": "Starter Home",
+      "badge": "Affordable",
       "description": "Complete 2-camera 1080p surveillance with infrared night vision up to 20m, 4-channel DVR, and pre-terminated video cabling.",
       "cameraCount": 2,
       "cameraCountsSupported": [
@@ -608,7 +608,6 @@
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
       "technologyLabel": "Hikvision EXIR IR",
-      "badge": "Best for Offices",
       "description": "8-channel infrared security system covering exterior perimeter and interior hallways with 2TB storage.",
       "cameraCount": 8,
       "cameraCountsSupported": [
@@ -640,7 +639,6 @@
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
       "technologyLabel": "Hikvision EXIR IR",
-      "badge": "Commercial Grade",
       "description": "Comprehensive 16-channel infrared surveillance system for retail stores and multi-floor commercial facilities.",
       "cameraCount": 16,
       "cameraCountsSupported": [
@@ -672,7 +670,6 @@
       "seriesId": "series-hybrid",
       "seriesName": "Hybrid Light",
       "technologyLabel": "Smart Hybrid Light",
-      "badge": "Smart Dual-Light",
       "description": "Intelligent dual-light security cameras that operate in infrared mode and switch to bright illumination upon motion.",
       "cameraCount": 4,
       "cameraCountsSupported": [
@@ -703,7 +700,6 @@
       "seriesId": "series-hybrid",
       "seriesName": "Hybrid Light",
       "technologyLabel": "Smart Hybrid Light",
-      "badge": "AcuSense AI",
       "description": "8-channel smart dual-light surveillance system with AcuSense motion classification and color deterrence.",
       "cameraCount": 8,
       "cameraCountsSupported": [
@@ -734,7 +730,6 @@
       "seriesId": "series-color",
       "seriesName": "Full-Color",
       "technologyLabel": "Hikvision ColorVu",
-      "badge": "24/7 Color",
       "description": "ColorVu technology delivers round-the-clock vivid color imaging even in pitch darkness with F1.0 super-apertures.",
       "cameraCount": 4,
       "cameraCountsSupported": [
@@ -765,7 +760,7 @@
       "seriesId": "series-color",
       "seriesName": "Full-Color",
       "technologyLabel": "Hikvision ColorVu",
-      "badge": "24/7 Vivid Color",
+      "badge": "Best Value",
       "description": "Comprehensive 8-camera ColorVu setup providing clear daytime-like color surveillance all night long.",
       "cameraCount": 8,
       "cameraCountsSupported": [
@@ -796,7 +791,6 @@
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
       "technologyLabel": "Dual-Band Wi-Fi",
-      "badge": "Cable-Free Video",
       "description": "Clean Wi-Fi security system with two-way voice communication, cloud/microSD local storage, and instant mobile alerts.",
       "cameraCount": 2,
       "cameraCountsSupported": [
@@ -825,7 +819,6 @@
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
       "technologyLabel": "Wi-Fi 6 Wireless Kit",
-      "badge": "Complete Wireless Kit",
       "description": "4-camera wireless surveillance kit featuring dedicated wireless NVR receiver with pre-installed 1TB hard drive.",
       "cameraCount": 4,
       "cameraCountsSupported": [
@@ -855,7 +848,7 @@
       "seriesId": "series-enterprise",
       "seriesName": "Enterprise & PTZ",
       "technologyLabel": "Speed Dome PTZ & PoE",
-      "badge": "PTZ Tracking",
+      "badge": "Top Tier",
       "description": "Integrated 16-camera enterprise IP surveillance featuring a 360° optical zoom PTZ camera and Gigabit PoE switching.",
       "cameraCount": 16,
       "cameraCountsSupported": [
@@ -886,7 +879,6 @@
       "seriesId": "series-enterprise",
       "seriesName": "Enterprise & PTZ",
       "technologyLabel": "Multi-NVR High Capacity",
-      "badge": "Campus Security",
       "description": "High-density 32-camera IP surveillance infrastructure designed for commercial buildings, factories, and campuses.",
       "cameraCount": 32,
       "cameraCountsSupported": [
@@ -917,7 +909,6 @@
       "seriesId": "series-enterprise",
       "seriesName": "Enterprise & PTZ",
       "technologyLabel": "Multi-Server NVR Cluster",
-      "badge": "Facility Grade",
       "description": "Enterprise 64-camera security setup with multi-server NVR redundancy and optical fiber backbone.",
       "cameraCount": 64,
       "cameraCountsSupported": [

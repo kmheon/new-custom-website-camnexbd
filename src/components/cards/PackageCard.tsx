@@ -10,7 +10,6 @@ import {
   CardPriceSlot,
   CardActionsSlot
 } from './CardSlots';
-import { Term } from '../common/Term';
 
 export interface PackageCardProps {
   pkg: SecurityPackage;
@@ -62,6 +61,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
   const top3Items = allInclusions.slice(0, 3);
   const summaryLine = generatePackageSummary(pkg);
 
+
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isQuoteOnly) {
@@ -76,6 +76,8 @@ export const PackageCard: React.FC<PackageCardProps> = ({
     setShowInclusionsModal(true);
   };
 
+  const pkgTag = (pkg.badge || '').trim();
+
   return (
     <>
       <CardContainer
@@ -84,9 +86,16 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         onClick={() => onNavigate('packages', pkg.slug)}
         className="group/pkg"
       >
-        {/* 1. MEDIA SLOT (aspect 16/10, max 110px tall) */}
+        {/* 1. MEDIA SLOT (aspect 16/10, max 110px tall, with optional tag ribbon) */}
         <CardMediaSlot>
           <div className="aspect-[16/10] max-h-[110px] w-full bg-[#F4EEE6] rounded-xl flex items-center justify-center p-2 overflow-hidden relative">
+            {pkgTag && (
+              <div className="absolute top-2 left-2 z-10 pointer-events-none" data-pkg-tag>
+                <span className="text-[9px] font-black uppercase tracking-wider bg-[#F15A24] text-white px-2 py-0.5 rounded shadow-2xs">
+                  {pkgTag}
+                </span>
+              </div>
+            )}
             {pkg.image ? (
               <img
                 src={pkg.image}
@@ -102,20 +111,18 @@ export const PackageCard: React.FC<PackageCardProps> = ({
           </div>
         </CardMediaSlot>
 
-        {/* 2. META SLOT (tag chip and camera count row) */}
-        <CardMetaSlot className="mb-1.5">
-          <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-[#F15A24] px-2 py-0.5 rounded-full truncate max-w-[140px]">
-            <Term text={pkg.technologyLabel || pkg.seriesName || pkg.badge || 'Complete Set'}>
-              {pkg.technologyLabel || pkg.seriesName || pkg.badge || 'Complete Set'}
-            </Term>
+        {/* 2. META SLOT (system type label on left, camera count chip on right) */}
+        <CardMetaSlot className="mb-1.5 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-[#5B6472] uppercase tracking-wider">
+            {pkg.systemTypeSlug ? (pkg.systemTypeSlug === 'wireless' ? 'Wi-Fi Wireless' : pkg.systemTypeSlug === 'ip' ? 'IP Network' : 'Analogue HD') : 'CCTV System'}
           </span>
-          <span className="text-[11px] font-bold text-[#5B6472] shrink-0">
-            {pkg.cameraCount ? `${pkg.cameraCount} Camera set` : 'Camera set'}
+          <span className="text-[10px] sm:text-[11px] font-bold bg-slate-100 text-[#111827] px-2 py-0.5 rounded-full shrink-0">
+            {pkg.cameraCount ? `${pkg.cameraCount} Cameras` : 'Camera set'}
           </span>
         </CardMetaSlot>
 
         {/* 3. TITLE SLOT (Clamped to 2 lines) */}
-        <CardTitleSlot className="mb-1">
+        <CardTitleSlot className="mb-0.5">
           <h3
             className="font-heading font-bold text-sm sm:text-base text-[#111827] group-hover:text-[#F15A24] transition-colors leading-snug line-clamp-2 min-h-[2.3rem]"
             title={pkg.name}
@@ -123,6 +130,17 @@ export const PackageCard: React.FC<PackageCardProps> = ({
             {pkg.name}
           </h3>
         </CardTitleSlot>
+
+        {/* Technology label: muted text line directly under the title */}
+        <div className="min-h-[16px] mb-1">
+          {pkg.technologyLabel ? (
+            <p className="text-[11px] font-semibold text-[#5B6472] truncate" data-pkg-tech>
+              {pkg.technologyLabel}
+            </p>
+          ) : (
+            <span className="invisible select-none text-[11px]" aria-hidden="true">&nbsp;</span>
+          )}
+        </div>
 
         {/* 4. SUMMARY LINE (Generated from data, at most 2 lines, reserved height) */}
         <div className="mb-1.5 min-h-[2.0rem]">

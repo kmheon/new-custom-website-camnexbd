@@ -465,6 +465,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       seriesId: editingPackage.seriesId,
       seriesName: editingPackage.seriesName,
       technologyLabel: editingPackage.technologyLabel,
+      badge: (editingPackage.badge || '').trim() || undefined,
+      systemTypeId: editingPackage.systemTypeId,
+      systemTypeSlug: editingPackage.systemTypeSlug,
+      systemTypeName: editingPackage.systemTypeName,
       isQuoteOnly: editingPackage.isQuoteOnly,
       cameraCountsSupported: editingPackage.cameraCountsSupported || (editingPackage.cameraCount ? [editingPackage.cameraCount] : [4]),
       componentQuantities: editingPackage.componentQuantities,
@@ -4086,7 +4090,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Technology / Marketing Label</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Technology Label (shown under the title)</label>
               <input
                 type="text"
                 value={editingPackage.technologyLabel || ''}
@@ -4094,6 +4098,25 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 placeholder="e.g. Hikvision ColorVu, Smart Dual Light"
                 className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
               />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Tag ribbon (optional, manual only)</label>
+              <input
+                type="text"
+                list="package-tag-suggestions"
+                value={editingPackage.badge || ''}
+                onChange={(e) => setEditingPackage({ ...editingPackage, badge: e.target.value })}
+                placeholder="Leave empty for no ribbon"
+                className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+              />
+              <datalist id="package-tag-suggestions">
+                <option value="Most Popular" />
+                <option value="Affordable" />
+                <option value="Top Tier" />
+                <option value="Best Value" />
+              </datalist>
+              <p className="text-[10px] text-slate-500 mt-1">Shown as a small ribbon on the top-left of the package image. Never set automatically.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

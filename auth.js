@@ -230,7 +230,9 @@ const schemas = {
 
   package: z.object({
     name: z.string().min(2, 'Package name is required'),
-    slug: z.string().min(1, 'Slug is required')
+    slug: z.string().min(1, 'Slug is required'),
+    badge: z.string().max(32, 'Tag cannot exceed 32 characters').optional(),
+    technologyLabel: z.string().max(60, 'Technology label cannot exceed 60 characters').optional()
   }).passthrough(),
 
   order: z.object({
