@@ -899,8 +899,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               eyebrow="Ready-made packages"
               title="Complete CCTV Packages"
               subtitle="Camera sets with recorder, storage and cables. Pick a set, then adjust it to fit your place."
-              actionText="All packages"
-              onAction={() => onNavigate('packages')}
               className="mb-5"
             />
 

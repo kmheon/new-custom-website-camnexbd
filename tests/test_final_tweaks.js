@@ -128,6 +128,39 @@ const CHECKS = [
       }
       return errors;
     `
+  },
+  {
+    name: 'Each homepage section has at most one "view all" control (never both header link and bottom button)',
+    body: `
+      const errors = [];
+      const sections = Array.from(document.querySelectorAll('main section, #packages, #solutions'));
+      sections.forEach(sec => {
+        const titleEl = sec.querySelector('h2, h3');
+        const secName = titleEl ? titleEl.textContent.trim() : (sec.getAttribute('aria-label') || sec.id);
+        const headerAction = Array.from(sec.querySelectorAll('button, a')).filter(el => {
+          const t = el.textContent.trim();
+          const isTop = el.closest('[class*="justify-between"]') && !el.closest('.card-row-scroller') && !el.closest('[class*="mt-"]');
+          return isTop && /^(View all|All packages|All categories)/i.test(t);
+        });
+        const bottomBtn = Array.from(sec.querySelectorAll('button, a')).filter(el => {
+          const t = el.textContent.trim();
+          const isBottom = el.closest('[class*="mt-5"], [class*="mt-8"], [class*="justify-center"]') && !el.closest('.card-row-scroller');
+          return isBottom && /^(See all|View all)/i.test(t);
+        });
+        if (headerAction.length > 0 && bottomBtn.length > 0) {
+          errors.push(secName + ': has both header link ("' + headerAction[0].textContent.trim() + '") and bottom button ("' + bottomBtn[0].textContent.trim() + '")');
+        }
+      });
+      const pkgSec = document.querySelector('section#packages');
+      if (pkgSec) {
+        const topLink = Array.from(pkgSec.querySelectorAll('h2, h3')).some(h => {
+          const header = h.closest('[class*="justify-between"]');
+          return header && header.querySelector('button, a');
+        });
+        if (topLink) errors.push('Packages section still has a header "All packages" link');
+      }
+      return errors;
+    `
   }
 ];
 
