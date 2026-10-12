@@ -1032,23 +1032,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Right: Two labeled dropdowns + optional clear filters */}
-                <div className="flex flex-col sm:flex-row sm:items-end gap-3 shrink-0">
-                  <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 shrink-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
                     {/* (b) "Number of cameras" dropdown */}
                     <div className="flex flex-col">
                       <label
                         htmlFor="filter-cameras"
-                        className="text-[11px] font-semibold text-[#5B6472] mb-1.5 block"
+                        className="text-[11px] font-semibold text-[#5B6472] mb-1.5 block text-left"
                       >
                         Number of cameras
                       </label>
-                      <div className="relative">
+                      <div className="relative w-full sm:w-[210px] min-w-[200px]">
                         <select
                           id="filter-cameras"
                           aria-label="Filter packages by camera count"
                           value={packageCountFilter}
                           onChange={(e) => updatePackageFilters(systemFilter, e.target.value, nightViewFilter)}
-                          className="w-full sm:w-auto h-9 pl-3.5 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                          className="w-full h-[44px] pl-3.5 pr-9 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
                         >
                           <option value="All">All ({badgeCounts.cameraCounts['All'] || packages.length})</option>
                           {allAvailableCounts.map((num) => {
@@ -1061,7 +1061,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                             );
                           })}
                         </select>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
                     </div>
 
@@ -1069,17 +1069,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <div className="flex flex-col">
                       <label
                         htmlFor="filter-night-view"
-                        className="text-[11px] font-semibold text-[#5B6472] mb-1.5 block"
+                        className="text-[11px] font-semibold text-[#5B6472] mb-1.5 block text-left"
                       >
                         Night picture
                       </label>
-                      <div className="relative">
+                      <div className="relative w-full sm:w-[210px] min-w-[200px]">
                         <select
                           id="filter-night-view"
                           aria-label="Filter packages by night picture"
                           value={nightViewFilter}
                           onChange={(e) => updatePackageFilters(systemFilter, packageCountFilter, e.target.value)}
-                          className="w-full sm:w-auto h-9 pl-3.5 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                          className="w-full h-[44px] pl-3.5 pr-9 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
                         >
                           <option value="all">All ({badgeCounts.nightViews['all'] || packages.length})</option>
                           {packageSeriesList.map((series) => {
@@ -1091,7 +1091,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                             );
                           })}
                         </select>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
                     </div>
                   </div>
@@ -1101,7 +1101,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <button
                       type="button"
                       onClick={() => updatePackageFilters('all', 'All', 'all')}
-                      className="h-9 px-2 text-xs font-bold text-[#F15A24] hover:underline flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap self-center sm:self-end"
+                      className="h-[44px] px-2 text-xs font-bold text-[#F15A24] hover:underline flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap self-center sm:self-end"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Clear filters</span>
