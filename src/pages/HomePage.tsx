@@ -722,8 +722,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const getNightViewOptionLabel = (series: PackageSeries) => {
     const s = series.slug.toLowerCase();
     const n = series.name.toLowerCase();
-    if (s === 'series-ir' || n.includes('night vision') || n.includes('infrared')) {
-      return 'Night picture: Black and white';
+    if (s === 'series-ir' || s.includes('ir') || n.includes('night vision') || n.includes('infrared') || n.includes('black and white')) {
+      return 'Black and white';
     }
     if (s === 'series-hybrid' || n.includes('hybrid')) {
       return 'Hybrid light';
@@ -1065,18 +1065,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                       </div>
                     </div>
 
-                    {/* (c) "Night picture" dropdown */}
+                    {/* (c) "Night vision" dropdown */}
                     <div className="flex flex-col">
                       <label
                         htmlFor="filter-night-view"
                         className="text-[11px] font-semibold text-[#5B6472] mb-1.5 block text-left"
                       >
-                        Night picture
+                        Night vision
                       </label>
                       <div className="relative w-full sm:w-[210px] min-w-[200px]">
                         <select
                           id="filter-night-view"
-                          aria-label="Filter packages by night picture"
+                          aria-label="Filter packages by night vision"
                           value={nightViewFilter}
                           onChange={(e) => updatePackageFilters(systemFilter, packageCountFilter, e.target.value)}
                           className="w-full h-[44px] pl-3.5 pr-9 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
