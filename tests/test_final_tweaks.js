@@ -161,6 +161,28 @@ const CHECKS = [
       }
       return errors;
     `
+  },
+  {
+    name: 'Lead-in tile does not duplicate section heading (case-insensitive)',
+    body: `
+      const errors = [];
+      const rows = Array.from(document.querySelectorAll('.card-row-scroller'));
+      rows.forEach(scroller => {
+        const leadIn = scroller.querySelector('.lead-in-tile');
+        if (!leadIn) return;
+        const section = leadIn.closest('section, div[class*="py-"]') || scroller.parentElement;
+        const sectionHeading = section?.querySelector('h2, h3.font-heading');
+        const headingText = (sectionHeading?.textContent || scroller.getAttribute('aria-label') || '').trim().toLowerCase();
+        const leadInHeading = leadIn.querySelector('h3');
+        if (leadInHeading) {
+          const leadInText = leadInHeading.textContent.trim().toLowerCase();
+          if (leadInText === headingText) {
+            errors.push('Lead-in tile duplicated section heading: "' + leadInText + '"');
+          }
+        }
+      });
+      return errors;
+    `
   }
 ];
 

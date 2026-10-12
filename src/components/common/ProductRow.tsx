@@ -159,22 +159,34 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         aria-label={title}
       >
         {/* Filled Lead-in Panel (Desktop/Tablet): visible sm and up, exactly one card wide */}
-        {promoTile && (
-          <div className="lead-in-tile card-item-fixed snap-start hidden sm:flex bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 rounded-2xl border border-[#EDE8E1] p-4 flex-col justify-between shadow-2xs">
-            {/* Top: Category Title, Subtitle, and Badge */}
-            <div>
-              {promoTile.badge && (
-                <span className="inline-block px-3 py-1 bg-[#F15A24] text-white text-[10px] font-black uppercase tracking-wider rounded-full mb-2">
-                  {promoTile.badge}
-                </span>
-              )}
-              <h3 className="text-lg font-bold text-[#111827] font-heading mb-1 [overflow-wrap:anywhere] break-words">
-                {promoTile.title}
-              </h3>
-              <p className="text-xs text-[#5B6472] leading-snug line-clamp-2 [overflow-wrap:anywhere] break-words">
-                {promoTile.subtitle || promoTile.description}
-              </p>
-            </div>
+        {promoTile && (() => {
+          const sectionTitleNorm = (title || '').trim().toLowerCase();
+          const promoTitleNorm = (promoTile.title || '').trim().toLowerCase();
+          const isTitleMatch = Boolean(promoTitleNorm && sectionTitleNorm && promoTitleNorm === sectionTitleNorm);
+          const hasCustomTitle = Boolean(promoTile.title && !isTitleMatch);
+
+          return (
+            <div className="lead-in-tile card-item-fixed snap-start hidden sm:flex bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 rounded-2xl border border-[#EDE8E1] p-4 flex-col justify-between shadow-2xs">
+              {/* Top: Eyebrow badge + Optional Title (only shown if not matching section heading) */}
+              <div>
+                {promoTile.badge && (
+                  <span className="inline-block px-3 py-1 bg-[#F15A24] text-white text-[10px] font-black uppercase tracking-wider rounded-full mb-2">
+                    {promoTile.badge}
+                  </span>
+                )}
+                {hasCustomTitle && (
+                  <>
+                    <h3 className="text-lg font-bold text-[#111827] font-heading mb-1 [overflow-wrap:anywhere] break-words" data-lead-in-title>
+                      {promoTile.title}
+                    </h3>
+                    {(promoTile.subtitle || promoTile.description) && (
+                      <p className="text-xs text-[#5B6472] leading-snug line-clamp-2 [overflow-wrap:anywhere] break-words">
+                        {promoTile.subtitle || promoTile.description}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
 
             {/* Middle: Category Image, Subcategory Chips, Bullets */}
             <div className="my-auto py-2 flex flex-col items-center">
@@ -245,7 +257,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        )}
+          );
+        })()}
 
         {/* Product Cards: at most 2 Hot badges per row */}
         {(() => {
