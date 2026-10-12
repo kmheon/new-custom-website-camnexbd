@@ -762,19 +762,21 @@ export const INITIAL_CATEGORIES: Category[] = [
     slug: 'wifi-cameras',
     description: 'Single cameras you control from a phone app',
     image: '/images/hero/hikvision-bullet.png',
-    leadInImage: '/images/hero/hikvision-bullet.png',
+    promoTile: {
+      enabled: true,
+      headline: 'Smart Wi-Fi Security Cameras',
+      subtext: 'Direct phone alerts & wireless storage',
+      buttonText: 'Explore Wi-Fi cameras',
+      link: '/category/wifi-cameras',
+      bgStyle: 'orange',
+      image: '/images/hero/hikvision-bullet.png'
+    },
     specTemplateId: 'tpl-cctv',
     featured: true,
     showOnHomepage: true,
     displayOrder: 6,
     order: 6,
     showAsHomepageRow: true,
-    bullets: [
-      'Direct phone app alert & view',
-      'MicroSD card & cloud storage',
-      'No DVR or NVR box required'
-    ],
-    buttonText: 'Explore all Wi-Fi cameras',
     subcategories: [
       { id: 'subcat-wifi-indoor', name: 'Indoor 360°', slug: 'indoor-wifi-cameras' },
       { id: 'subcat-wifi-outdoor', name: 'Outdoor Bullet', slug: 'outdoor-wifi-cameras' },
@@ -788,19 +790,21 @@ export const INITIAL_CATEGORIES: Category[] = [
     slug: 'access-points-wifi',
     description: 'Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.',
     image: '/images/products/ruijie-wifi.svg',
-    leadInImage: '/images/products/ruijie-wifi.svg',
+    promoTile: {
+      enabled: true,
+      headline: 'Enterprise Cloud Wi-Fi',
+      subtext: 'Seamless roaming & Gigabit speeds',
+      buttonText: 'View Access Points',
+      link: '/category/access-points-wifi',
+      bgStyle: 'dark',
+      image: '/images/products/ruijie-wifi.svg'
+    },
     specTemplateId: 'tpl-wifi',
     featured: true,
     showOnHomepage: false,
     displayOrder: 11,
     order: 11,
-    showAsHomepageRow: false,
-    bullets: [
-      'Enterprise Wi-Fi 6 speed',
-      'Seamless roaming mesh',
-      'Cloud & local controller'
-    ],
-    buttonText: 'View all Access Points'
+    showAsHomepageRow: true
   },
   {
     id: 'cat-storage',

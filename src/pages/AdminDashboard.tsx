@@ -20,6 +20,7 @@ import {
   HeroSlide, HeroFeatureHighlight
 } from '../types';
 import { ProductEditModal } from '../components/admin/ProductEditModal';
+import { PromoTileEditor } from '../components/admin/PromoTileEditor';
 import { CustomersModule } from '../components/admin/CustomersModule';
 import { SpecTemplatesModule } from '../components/admin/SpecTemplatesModule';
 import { MediaLibraryView } from '../components/admin/MediaLibraryModal';
@@ -389,9 +390,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
         slug,
         showOnHomepage: editingCategory.showOnHomepage !== false,
         image: editingCategory.image || '',
-        leadInImage: editingCategory.leadInImage || '',
-        bullets: (editingCategory.bullets || []).filter(b => b && b.trim()),
-        buttonText: editingCategory.buttonText || ''
+        promoTile: editingCategory.promoTile
       });
     } else {
       await categoryService.createCategory({
@@ -399,9 +398,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
         slug,
         description: editingCategory.description || '',
         image: editingCategory.image || '',
-        leadInImage: editingCategory.leadInImage || '',
-        bullets: (editingCategory.bullets || []).filter(b => b && b.trim()),
-        buttonText: editingCategory.buttonText || '',
+        promoTile: editingCategory.promoTile,
         specTemplateId: editingCategory.specTemplateId || templates[0]?.id || 'tpl-cctv',
         status: editingCategory.status || 'active',
         showOnHomepage: editingCategory.showOnHomepage !== false,
@@ -1518,19 +1515,19 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         </div>
                       )}
 
-                      {/* SPECIAL OFFERS SLIDER SHORTCUT */}
-                      {s.type === 'special_offers' && (
-                        <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                          <div className="text-slate-400">
-                            Auto-slide: <span className="font-bold text-white">{settings?.specialOfferSlider?.enabled !== false ? 'Enabled' : 'Disabled'}</span> · Interval: <span className="font-bold text-white">{settings?.specialOfferSlider?.interval ?? 5}s</span> · Max: <span className="font-bold text-white">{settings?.specialOfferSlider?.maxOffers ?? 5}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setActiveModule('settings')}
-                            className="text-xs text-[#F15A24] hover:underline font-bold cursor-pointer"
-                          >
-                            Manage Slider & Offers in Settings →
-                          </button>
+                      {/* ROW PROMO TILE EDITOR (for product row sections) */}
+                      {['popular_products', 'new_arrivals', 'accessories', 'special_offers', 'category_row', 'wifi_cameras', 'featured_products'].includes(s.type) && (
+                        <div className="pt-3 border-t border-slate-800/80">
+                          <PromoTileEditor
+                            value={s.promoTile}
+                            onChange={async (updated) => {
+                              const updatedSections = [...sections];
+                              updatedSections[idx].promoTile = updated;
+                              await cmsService.updateHomepageSections(updatedSections);
+                              setSections(updatedSections);
+                            }}
+                            categoryName={s.title}
+                          />
                         </div>
                       )}
                     </div>
@@ -3904,56 +3901,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               />
             </div>
 
-            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-200/80 space-y-3">
-              <h4 className="text-xs font-bold text-orange-950 uppercase tracking-wide">Homepage Lead-In Panel Settings</h4>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Lead-In Image URL (Transparent PNG or SVG)</label>
-                <input
-                  type="text"
-                  value={editingCategory.leadInImage || ''}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, leadInImage: e.target.value })}
-                  placeholder="e.g. /images/hero/hikvision-bullet.png"
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
-                />
-                <p className="text-[10px] text-slate-500 mt-0.5">
-                  Displayed in the middle of the category lead-in card. Falls back to category image or SVG illustration.
-                </p>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Reassurance Bullets (Up to 3, max 60 chars each)</label>
-                <div className="space-y-1.5">
-                  {[0, 1, 2].map((idx) => (
-                    <input
-                      key={idx}
-                      type="text"
-                      maxLength={60}
-                      value={editingCategory.bullets?.[idx] || ''}
-                      onChange={(e) => {
-                        const newBullets = [...(editingCategory.bullets || ['', '', ''])];
-                        newBullets[idx] = e.target.value;
-                        setEditingCategory({ ...editingCategory, bullets: newBullets });
-                      }}
-                      placeholder={`Bullet ${idx + 1} (e.g. Direct phone app alert & view)`}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Action Button Text</label>
-                <input
-                  type="text"
-                  maxLength={40}
-                  value={editingCategory.buttonText || ''}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, buttonText: e.target.value })}
-                  placeholder="e.g. Explore all Wi-Fi cameras (default: View all)"
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
-                />
-              </div>
-            </div>
+            <PromoTileEditor
+              value={editingCategory.promoTile}
+              onChange={(updated) => setEditingCategory({ ...editingCategory, promoTile: updated })}
+              categoryName={editingCategory.name || ''}
+            />
 
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
               <label className="flex items-center gap-2 cursor-pointer">

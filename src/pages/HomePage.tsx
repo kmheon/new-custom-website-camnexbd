@@ -422,8 +422,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       const initialCats = (window as any).__CAMNEX_TEST_CATEGORIES || allCats;
       setCategories(initialCats);
 
-      // Fetch products for categories configured to show on homepage
-      const homepageCats = allCats.filter((c) => c.showOnHomepage);
+      // Fetch products for categories configured to show on homepage or as category row
+      const homepageCats = allCats.filter((c) => c.showOnHomepage || c.showAsHomepageRow);
       homepageCats.forEach((cat) => {
         productService.getProducts({ category: cat.slug, limit: 8 }).then((res) => {
           setCategoryRowProducts((prev) => ({
@@ -850,25 +850,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           onAction={() => onNavigate('category', 'wifi-cameras')}
           onNavigate={onNavigate}
           variant="canvas"
-          promoTile={{
-            badge: 'Wireless',
-            title: wifiCategory?.name || 'Wi-Fi Cameras',
-            subtitle: wifiCategory?.description || 'Single cameras you control from a phone app',
-            description: wifiCategory?.description || 'Single cameras you control from a phone app',
-            image: wifiCategory?.leadInImage || wifiCategory?.image || '/images/hero/hikvision-bullet.png',
-            bullets: wifiCategory?.bullets || [
-              'Direct phone app alert & view',
-              'MicroSD card & cloud storage',
-              'No DVR or NVR box required'
-            ],
-            subcategories: wifiCategory?.subcategories || [
-              { id: 'subcat-wifi-indoor', name: 'Indoor 360°', slug: 'indoor-wifi-cameras' },
-              { id: 'subcat-wifi-outdoor', name: 'Outdoor Bullet', slug: 'outdoor-wifi-cameras' },
-              { id: 'subcat-wifi-ptz', name: 'Pan & Tilt', slug: 'pan-tilt-wifi-cameras' },
-              { id: 'subcat-wifi-doorbell', name: 'Smart Doorbell', slug: 'smart-doorbells' }
-            ],
-            buttonText: wifiCategory?.buttonText || 'Explore all Wi-Fi cameras',
-            link: '/category/wifi-cameras'
+          promoTile={wifiCategory?.promoTile || {
+            enabled: true,
+            headline: 'Smart Wi-Fi Security Cameras',
+            subtext: 'Direct phone alerts & wireless storage',
+            buttonText: 'Explore Wi-Fi cameras',
+            link: '/category/wifi-cameras',
+            bgStyle: 'orange',
+            image: wifiCategory?.image || '/images/hero/hikvision-bullet.png'
           }}
         />
       )}
@@ -1387,21 +1376,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           onAction={() => onNavigate('category', cat.slug)}
           onNavigate={onNavigate}
           variant={idx % 2 === 0 ? 'panel' : 'canvas'}
-          promoTile={{
-            badge: 'Category',
-            title: cat.name,
-            subtitle: cat.description,
-            description: cat.description,
-            image: cat.leadInImage || cat.image,
-            bullets: cat.bullets || [
-              `Genuine official ${cat.name}`,
-              'Standard Bangladesh warranty',
-              'Ready for immediate dispatch'
-            ],
-            subcategories: cat.subcategories || [],
-            buttonText: cat.buttonText || `View all ${cat.name}`,
-            link: `/category/${cat.slug}`
-          }}
+          promoTile={cat.promoTile}
         />
       ))}
 
