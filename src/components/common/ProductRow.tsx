@@ -1,22 +1,11 @@
 import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { Product } from '../../types';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Product, PromoTileConfig } from '../../types';
 import { SectionHeader } from './SectionHeader';
 import { ProductCard } from './ProductCard';
+import { PromoTile } from './PromoTile';
 
 import { CardRow } from '../cards/CardRow';
-
-export interface LeadInConfig {
-  title: string;
-  description?: string;
-  subtitle?: string;
-  badge?: string;
-  image?: string;
-  subcategories?: { id?: string; name: string; slug?: string }[];
-  bullets?: string[];
-  buttonText?: string;
-  link?: string;
-}
 
 interface ProductRowProps {
   eyebrow?: string;
@@ -27,7 +16,7 @@ interface ProductRowProps {
   onAction?: () => void;
   onNavigate: (route: string, param?: string) => void;
   variant?: 'canvas' | 'panel';
-  promoTile?: LeadInConfig;
+  promoTile?: PromoTileConfig;
 }
 
 export const ProductRow: React.FC<ProductRowProps> = ({
@@ -43,7 +32,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const totalItems = (products ? products.length : 0) + (promoTile ? 1 : 0);
+  const hasPromoTile = Boolean(promoTile && (promoTile.enabled !== false) && promoTile.headline);
+  const totalItems = (products ? products.length : 0) + (hasPromoTile ? 1 : 0);
   if (!products || totalItems <= 1) {
     return null;
   }
@@ -52,16 +42,6 @@ export const ProductRow: React.FC<ProductRowProps> = ({
     if (scrollRef.current) {
       const offset = direction === 'left' ? -320 : 320;
       scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
-    }
-  };
-
-  const handleLeadInNavigate = () => {
-    if (promoTile?.link?.startsWith('/category/')) {
-      onNavigate('category', promoTile.link.replace('/category/', ''));
-    } else if (promoTile?.link?.startsWith('/packages')) {
-      onNavigate('packages');
-    } else {
-      onNavigate('catalog');
     }
   };
 
@@ -101,53 +81,15 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         )}
       </div>
 
-      {/* On mobile: Lead-in becomes a heading line / banner above the scroll row */}
-      {promoTile && (
-        <div className="sm:hidden mb-4 p-4 rounded-2xl bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 border border-[#EDE8E1] flex flex-col gap-2.5 shadow-2xs">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              {promoTile.badge && (
-                <span className="inline-block px-2.5 py-0.5 bg-[#F15A24] text-white text-[9px] font-black uppercase tracking-wider rounded-full mb-1">
-                  {promoTile.badge}
-                </span>
-              )}
-              <h3 className="text-base font-bold text-[#111827] font-heading truncate">
-                {promoTile.title}
-              </h3>
-              <p className="text-xs text-[#5B6472] line-clamp-1">
-                {promoTile.subtitle || promoTile.description}
-              </p>
-            </div>
-            {promoTile.image && (
-              <img
-                src={promoTile.image}
-                alt=""
-                className="w-14 h-14 object-contain flex-shrink-0 bg-white/70 rounded-xl p-1 border border-orange-100"
-              />
-            )}
-          </div>
-          {promoTile.subcategories && promoTile.subcategories.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {promoTile.subcategories.slice(0, 4).map((sc, i) => (
-                <button
-                  key={sc.id || i}
-                  type="button"
-                  onClick={() => sc.slug && onNavigate('category', sc.slug)}
-                  className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/90 border border-[#EDE8E1] text-[#374151]"
-                >
-                  {sc.name}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={handleLeadInNavigate}
-            className="w-full py-2 bg-[#F15A24] text-white text-xs font-bold rounded-full flex items-center justify-center gap-1 shadow-xs"
-          >
-            <span>{promoTile.buttonText || 'View all'}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+      {/* Mobile Strip variant (below 768px): banner above the scroll row */}
+      {hasPromoTile && promoTile && (
+        <div className="md:hidden mb-4">
+          <PromoTile
+            config={promoTile}
+            categoryName={title}
+            onNavigate={onNavigate}
+            isMobileStrip={true}
+          />
         </div>
       )}
 
@@ -158,107 +100,16 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         showArrows={false}
         aria-label={title}
       >
-        {/* Filled Lead-in Panel (Desktop/Tablet): visible sm and up, exactly one card wide */}
-        {promoTile && (() => {
-          const sectionTitleNorm = (title || '').trim().toLowerCase();
-          const promoTitleNorm = (promoTile.title || '').trim().toLowerCase();
-          const isTitleMatch = Boolean(promoTitleNorm && sectionTitleNorm && promoTitleNorm === sectionTitleNorm);
-          const hasCustomTitle = Boolean(promoTile.title && !isTitleMatch);
-
-          return (
-            <div className="lead-in-tile card-item-fixed snap-start hidden sm:flex bg-gradient-to-br from-[#F4EEE6] to-orange-50/60 rounded-2xl border border-[#EDE8E1] p-4 flex-col justify-between shadow-2xs">
-              {/* Top: Eyebrow badge + Optional Title (only shown if not matching section heading) */}
-              <div>
-                {promoTile.badge && (
-                  <span className="inline-block px-3 py-1 bg-[#F15A24] text-white text-[10px] font-black uppercase tracking-wider rounded-full mb-2">
-                    {promoTile.badge}
-                  </span>
-                )}
-                {hasCustomTitle && (
-                  <>
-                    <h3 className="text-lg font-bold text-[#111827] font-heading mb-1 [overflow-wrap:anywhere] break-words" data-lead-in-title>
-                      {promoTile.title}
-                    </h3>
-                    {(promoTile.subtitle || promoTile.description) && (
-                      <p className="text-xs text-[#5B6472] leading-snug line-clamp-2 [overflow-wrap:anywhere] break-words">
-                        {promoTile.subtitle || promoTile.description}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-
-            {/* Middle: Category Image, Subcategory Chips, Bullets */}
-            <div className="my-auto py-2 flex flex-col items-center">
-              {/* Category Image with permanent illustration fallback */}
-              <div className="w-full h-24 flex items-center justify-center p-2 mb-2 relative">
-                {promoTile.image ? (
-                  <img
-                    src={promoTile.image}
-                    alt={promoTile.title}
-                    className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-transform duration-300 hover:scale-105"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                      const fallback = e.currentTarget.parentElement?.querySelector('.lead-in-fallback-svg');
-                      if (fallback) (fallback as HTMLElement).classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div
-                  className={`lead-in-fallback-svg w-16 h-16 rounded-2xl bg-orange-100/70 border border-orange-200/80 items-center justify-center text-[#F15A24] ${
-                    promoTile.image ? 'hidden' : 'flex'
-                  }`}
-                >
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Up to 4 chips built from real subcategories (hidden when none) */}
-              {promoTile.subcategories && promoTile.subcategories.length > 0 && (
-                <div className="w-full flex flex-wrap gap-1.5 justify-start mb-2.5">
-                  {promoTile.subcategories.slice(0, 4).map((sc, i) => (
-                    <button
-                      key={sc.id || i}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (sc.slug) onNavigate('category', sc.slug);
-                      }}
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/90 border border-[#EDE8E1] text-[#374151] hover:border-[#F15A24] hover:text-[#F15A24] transition-colors"
-                    >
-                      {sc.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Up to 3 admin-entered bullet points (max 60 chars each, hidden when empty) */}
-              {promoTile.bullets && promoTile.bullets.length > 0 && (
-                <ul className="w-full space-y-1 mb-1">
-                  {promoTile.bullets.slice(0, 3).filter(b => Boolean(b && b.trim())).map((bullet, i) => (
-                    <li key={i} className="flex items-start gap-1.5 text-[11px] text-[#4B5563] leading-tight">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24] flex-shrink-0 mt-1" />
-                      <span className="line-clamp-1">{bullet.slice(0, 60)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Bottom: Pinned Action Button */}
-            <button
-              type="button"
-              onClick={handleLeadInNavigate}
-              className="mt-2 w-full py-2.5 bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold rounded-full transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              <span>{promoTile.buttonText || 'View all'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          );
-        })()}
+        {/* Desktop / Tablet Promo Tile: visible md (768px) and up, exactly one card wide */}
+        {hasPromoTile && promoTile && (
+          <PromoTile
+            config={promoTile}
+            categoryName={title}
+            onNavigate={onNavigate}
+            isMobileStrip={false}
+            className="hidden md:flex"
+          />
+        )}
 
         {/* Product Cards: at most 2 Hot badges per row */}
         {(() => {

@@ -97,15 +97,23 @@ export interface ScenarioItem {
   order: number;
 }
 
+export interface PromoTileConfig {
+  enabled?: boolean;
+  headline: string;
+  subtext?: string;
+  buttonText: string;
+  link: string;
+  bgStyle?: 'orange' | 'dark' | 'tint'; // Orange, Dark, Soft tint
+  image?: string;
+}
+
 export interface Category {
   id: string;
   name: string;
   slug: string;
   description?: string;
   image?: string;
-  leadInImage?: string;
-  bullets?: string[];
-  buttonText?: string;
+  promoTile?: PromoTileConfig;
   parentId?: string | null;
   specTemplateId: string;
   featured?: boolean;
@@ -578,13 +586,7 @@ export interface HomepageSection {
   categorySlug?: string;
   itemLimit?: number;
   ctaData?: CtaSectionData;
-  promoTile?: {
-    title: string;
-    description: string;
-    buttonText: string;
-    link: string;
-    image?: string;
-  };
+  promoTile?: PromoTileConfig;
 }
 
 export interface BlogPost {
