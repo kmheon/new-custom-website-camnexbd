@@ -1,11 +1,13 @@
 /**
- * Short display names for package components.
+ * Short display names and component line formatting for package inclusions.
  *
- * Rule: an admin-set `shortName` always wins. Otherwise the full name is reduced by
- * stripping brand names, model numbers, technical spec tokens and marketing filler,
- * keeping the leading quantity ("4x", "80m"), and limited to MAX_SHORT_NAME_LENGTH
- * characters at a word boundary. A short name never ends with "..." – words are
- * dropped whole instead.
+ * Requirements:
+ * 1. Format every component line as "{qty} × {short name}"
+ *    (uses the × sign \u00D7, space on each side, qty first).
+ * 2. Works for both card preview and popover.
+ * 3. Never "2x", never "15x" without the product name, never "1× 25x ..." (strips spec words like 25x).
+ * 4. Never truncates in the middle of a name with "...".
+ * 5. Every line matches /^\d+ × .+/; no line contains "x" as a quantity marker.
  */
 
 export const MAX_SHORT_NAME_LENGTH = 36;
@@ -24,12 +26,6 @@ const FILLER_WORDS = [
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const SPEC_TOKEN = /^(\d+(\.\d+)?(mp|k|v|a|w|p|mm|x))$|^(irpf|ir|hd|fhd|uhd|ip67|ip66|h\.265\+?)$/i;
-// Model numbers: mixed letters+digits with a hyphen or 6+ chars, e.g. DS-2CE16D0T-IRPF, C6N
-const MODEL_TOKEN = /^(?=.*[a-z])(?=.*\d)[a-z0-9]+(-[a-z0-9]+)+$|^(?=.*[a-z])(?=.*\d)[a-z0-9]{6,}$/i;
-// Tokens worth keeping although they contain digits (capacities, channel counts, port counts, lengths)
-const KEEP_TOKEN = /^\d+(\.\d+)?(tb|gb)$|^\d+-(channel|port|ch)$|^\d+m$|^\d+x$/i;
-
 export function getShortDisplayName(fullName: string, shortName?: string | null): string {
   const admin = (shortName || '').trim();
   if (admin) return admin;
@@ -45,16 +41,14 @@ export function getShortDisplayName(fullName: string, shortName?: string | null)
   }
   text = text.replace(/\([^)]*\)/g, ' ');
 
-  const tokens = text.split(/\s+/).filter(Boolean).filter((tok, idx) => {
-    if (KEEP_TOKEN.test(tok)) return true;
-    if (idx === 0 && /^\d+x$/i.test(tok)) return true;
-    if (SPEC_TOKEN.test(tok)) return false;
-    if (MODEL_TOKEN.test(tok)) return false;
-    return true;
-  });
+  // Strip spec words like 25x, 10x, 2MP, etc. so spec words never survive into short names
+  text = text.replace(/\b\d+\s*(?:x|X)\b/g, ' ');
+  text = text.replace(/\b\d+(\.\d+)?(mp|k|v|a|w|p|mm)\b/gi, ' ');
+  text = text.replace(/\b(irpf|ir|hd|fhd|uhd|ip67|ip66|h\.265\+?)\b/gi, ' ');
 
-  // Drop orphan connectors at the edges ("&", "and", "with")
+  const tokens = text.split(/\s+/).filter(Boolean);
   while (tokens.length && /^(&|and|with|\+)$/i.test(tokens[tokens.length - 1])) tokens.pop();
+  while (tokens.length && /^(&|and|with|\+)$/i.test(tokens[0])) tokens.shift();
 
   let result = '';
   for (const tok of tokens) {
@@ -62,16 +56,25 @@ export function getShortDisplayName(fullName: string, shortName?: string | null)
     if (next.length > MAX_SHORT_NAME_LENGTH) break;
     result = next;
   }
-  while (/\s(&|and|with|\+)$/i.test(result)) result = result.replace(/\s(&|and|with|\+)$/i, '');
+  return result.trim() || original.slice(0, MAX_SHORT_NAME_LENGTH).trim();
+}
 
-  // If stripping removed everything meaningful, fall back to whole words of the original
-  if (!result || /^\d+(x|m)?$/i.test(result)) {
-    result = '';
-    for (const tok of original.split(/\s+/)) {
-      const next = result ? `${result} ${tok}` : tok;
-      if (next.length > MAX_SHORT_NAME_LENGTH) break;
-      result = next;
-    }
+export function formatComponentLine(fullName: string, shortName?: string | null): string {
+  let str = (shortName || fullName || '').trim();
+  if (!str) return '';
+  if (/^\d+\s*×\s*.+/.test(str)) return str;
+
+  let qty = 1;
+  let rest = str;
+  const m = str.match(/^(\d+)\s*(?:x|X|×)\s*(.*)$/i);
+  if (m) {
+    qty = parseInt(m[1], 10) || 1;
+    rest = m[2].trim();
   }
-  return result;
+  // Strip any embedded spec tokens like 25x, 10x
+  rest = rest.replace(/\b\d+\s*(?:x|X)\b/gi, '').trim();
+
+  const short = getShortDisplayName(rest, shortName && shortName !== fullName ? shortName : null);
+  const finalName = short || rest || 'Component';
+  return `${qty} \u00D7 ${finalName}`;
 }

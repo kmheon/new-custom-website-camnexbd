@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, CheckCircle2, Info, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronDown, X } from 'lucide-react';
 import { SecurityPackage } from '../../types';
 import {
   CardContainer,
@@ -10,7 +10,7 @@ import {
   CardPriceSlot,
   CardActionsSlot
 } from './CardSlots';
-import { getShortDisplayName } from '../../utils/displayName';
+import { formatComponentLine, getShortDisplayName } from '../../utils/displayName';
 
 export interface PackageCardProps {
   pkg: SecurityPackage;
@@ -167,7 +167,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
                     title={item}
                     data-pkg-item
                   >
-                    {getShortDisplayName(item, shortNameFor(item))}
+                    {formatComponentLine(item, shortNameFor(item))}
                   </span>
                 </div>
               ))}
@@ -176,9 +176,9 @@ export const PackageCard: React.FC<PackageCardProps> = ({
             <button
               type="button"
               onClick={handleOpenModal}
-              className="text-[10.5px] font-bold text-[#F15A24] hover:underline flex items-center gap-1 pt-0.5 self-start cursor-pointer focus:outline-none"
+              className="text-[11px] font-semibold text-[#F15A24] hover:underline flex items-center gap-1 pt-0.5 self-start cursor-pointer focus:outline-none"
             >
-              <Info className="w-3 h-3" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
               <span>See what's included ({allInclusions.length} items)</span>
             </button>
           </div>
@@ -250,7 +250,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
               {allInclusions.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span className="font-medium text-slate-800" data-pkg-full-item>{item}</span>
+                  <span className="font-medium text-slate-800" data-pkg-full-item>{formatComponentLine(item, shortNameFor(item))}</span>
                 </div>
               ))}
             </div>
