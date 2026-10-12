@@ -82,6 +82,8 @@ img, svg, video, canvas, audio, iframe, embed, object {
   min-width: var(--card-w);
   max-width: var(--card-w);
   width: var(--card-w);
+  height: auto;
+  align-self: stretch;
   scroll-snap-align: start;
 }
 
