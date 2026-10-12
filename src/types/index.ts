@@ -241,6 +241,7 @@ export interface PackageSystemType {
   id: string;
   name: string;
   slug: string; // 'ip', 'analogue', 'wireless'
+  shortLabel?: string; // 'IP', 'Analogue', 'Wi-Fi'
   description: string;
   icon?: string;
   order: number;
@@ -262,6 +263,7 @@ export interface SecurityPackage {
   name: string;
   slug: string;
   badge?: string; // "Most Popular", "Best for Small Homes"
+  featuredOnHomepage?: boolean; // Admin priority flag for homepage mix
   description: string;
   image?: string;
   systemTypeId?: string;

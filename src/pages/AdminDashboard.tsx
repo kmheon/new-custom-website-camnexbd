@@ -1107,6 +1107,54 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 </Button>
               </div>
 
+              {/* System Types Toolbar Editor */}
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                    System Types (Short labels & Descriptions for homepage toolbar)
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {packageSystemTypes.map((st) => (
+                    <div key={st.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">{st.name}</span>
+                        <Badge variant={st.enabled !== false ? 'success' : 'gray'}>
+                          {st.enabled !== false ? 'Enabled' : 'Disabled'}
+                        </Badge>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Short label (Toolbar tab)</label>
+                        <input
+                          type="text"
+                          value={st.shortLabel || ''}
+                          onChange={async (e) => {
+                            const updated = { ...st, shortLabel: e.target.value };
+                            await packageService.savePackageSystemType(updated);
+                            packageService.getPackageSystemTypes().then(setPackageSystemTypes);
+                          }}
+                          placeholder={st.slug === 'ip' ? 'IP' : st.slug === 'analogue' ? 'Analogue' : 'Wi-Fi'}
+                          className="w-full bg-slate-900 border border-slate-700 text-white text-xs p-1.5 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Plain-language Description</label>
+                        <textarea
+                          rows={2}
+                          value={st.description || ''}
+                          onChange={async (e) => {
+                            const updated = { ...st, description: e.target.value };
+                            await packageService.savePackageSystemType(updated);
+                            packageService.getPackageSystemTypes().then(setPackageSystemTypes);
+                          }}
+                          className="w-full bg-slate-900 border border-slate-700 text-white text-[11px] p-1.5 rounded resize-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {packages.map(p => (
                   <div key={p.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4 flex flex-col justify-between">

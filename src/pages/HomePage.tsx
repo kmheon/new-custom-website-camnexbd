@@ -678,19 +678,48 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   };
 
   const getSystemTypeLabel = (st: PackageSystemType) => {
+    if (st.shortLabel && st.shortLabel.trim()) return st.shortLabel.trim();
     const s = st.slug.toLowerCase();
-    if (s.includes('ip')) return 'IP cameras';
-    if (s.includes('analogue')) return 'Analogue cameras';
-    if (s.includes('wireless') || s.includes('wifi')) return 'Wi-Fi cameras';
+    if (s.includes('ip')) return 'IP';
+    if (s.includes('analogue')) return 'Analogue';
+    if (s.includes('wireless') || s.includes('wifi')) return 'Wi-Fi';
     return st.name.split('/')[0].trim();
   };
 
   const getSystemTypeIcon = (st: PackageSystemType) => {
     const s = st.slug.toLowerCase();
-    if (s.includes('ip')) return <Cpu className="w-4 h-4 shrink-0" />;
-    if (s.includes('wireless') || s.includes('wifi')) return <Wifi className="w-4 h-4 shrink-0" />;
-    return <Camera className="w-4 h-4 shrink-0" />;
+    if (s.includes('ip')) return <Cpu className="w-3.5 h-3.5 shrink-0" />;
+    if (s.includes('wireless') || s.includes('wifi')) return <Wifi className="w-3.5 h-3.5 shrink-0" />;
+    return <Camera className="w-3.5 h-3.5 shrink-0" />;
   };
+
+  const systemSegments = useMemo(() => {
+    const allSeg = {
+      id: 'all',
+      slug: 'all',
+      label: 'All',
+      icon: <Layers className="w-3.5 h-3.5 shrink-0" />,
+      count: packages.length,
+      description: settings?.allSystemTypeDescription || 'Camera sets for homes, shops and offices'
+    };
+    const typeSegs = visibleSystemTypes.map((st) => ({
+      id: st.id,
+      slug: st.slug,
+      label: getSystemTypeLabel(st),
+      icon: getSystemTypeIcon(st),
+      count: systemCounts[st.slug] || 0,
+      description: st.description || ''
+    }));
+    return [allSeg, ...typeSegs];
+  }, [visibleSystemTypes, packages.length, systemCounts, settings]);
+
+  const selectedSystemDescription = useMemo(() => {
+    if (systemFilter === 'all') {
+      return settings?.allSystemTypeDescription || 'Camera sets for homes, shops and offices';
+    }
+    const matched = packageSystemTypes.find((s) => s.slug === systemFilter);
+    return matched?.description || '';
+  }, [systemFilter, packageSystemTypes, settings]);
 
   // Active Scenarios (renamed to Our Solutions)
   const scenarios: ScenarioItem[] = (settings?.scenarios && settings.scenarios.length > 0)
@@ -897,42 +926,40 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 {/* (a) SYSTEM TYPE segmented control of equal buttons (hidden if <= 1 system type has packages) */}
                 {visibleSystemTypes.length > 1 && (
                   <div
-                    role="radiogroup"
+                    role="tablist"
                     aria-label="Filter packages by system type"
-                    className={`bg-slate-100/80 p-1 rounded-xl border border-[#EDE8E1] grid ${
-                      visibleSystemTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
-                    } gap-1 w-full lg:max-w-md shrink-0`}
+                    className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto shrink-0"
                   >
-                    {visibleSystemTypes.map((st) => {
-                      const isActive = systemFilter === st.slug;
-                      const count = systemCounts[st.slug] || 0;
+                    {systemSegments.map((seg) => {
+                      const isActive = systemFilter === seg.slug;
                       return (
                         <button
-                          key={st.id}
+                          key={seg.id}
                           type="button"
-                          role="radio"
-                          aria-checked={isActive}
+                          role="tab"
+                          aria-selected={isActive}
+                          aria-pressed={isActive}
                           onClick={() =>
                             updatePackageFilters(
-                              isActive ? 'all' : st.slug,
+                              seg.slug,
                               packageCountFilter,
                               nightViewFilter
                             )
                           }
-                          className={`py-2 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                          className={`h-9 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 min-w-[70px] whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
                             isActive
-                              ? 'bg-[#0F172A] text-white shadow-xs'
-                              : 'text-[#5B6472] hover:text-[#111827] hover:bg-white'
+                              ? 'bg-[#F15A24] text-white shadow-xs border border-transparent'
+                              : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
                           }`}
                         >
-                          {getSystemTypeIcon(st)}
-                          <span className="truncate">{getSystemTypeLabel(st)}</span>
+                          {seg.icon}
+                          <span>{seg.label}</span>
                           <span
-                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                              isActive ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-[#5B6472]'
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 ${
+                              isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
                             }`}
                           >
-                            {count}
+                            {seg.count}
                           </span>
                         </button>
                       );
@@ -1003,12 +1030,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              {/* Selected type's one-line description below on desktop */}
-              {systemFilter !== 'all' && (
-                <div className="hidden sm:block text-center text-xs text-[#5B6472] min-h-[18px]">
-                  {packageSystemTypes.find((s) => s.slug === systemFilter)?.description || ''}
-                </div>
-              )}
+              {/* Selected type's one-line plain-language description below control (muted, 14px, reserved one line) */}
+              <div data-slot="system-type-description" className="text-sm text-[#5B6472] min-h-[22px] flex items-center">
+                {selectedSystemDescription}
+              </div>
             </div>
 
             {/* Package Cards Row (max 4 cards) or Friendly Empty State */}

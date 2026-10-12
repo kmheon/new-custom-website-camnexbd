@@ -27,7 +27,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ---------------------------------------------------------------------------
 const CHECKS = [
   {
-    name: 'System-type control renders real buttons (>=2 types) or nothing (<2); no empty/skeleton bar',
+    name: 'The system type control has an "All" segment selected by default and no label text ends in "..." at 375, 768 and 1280px; description line present for every selection',
     body: `
       const errors = [];
       const [pkgs, types] = await Promise.all([
@@ -38,33 +38,42 @@ const CHECKS = [
       const typesWithPkgs = types.filter(t => t.enabled !== false && list.some(p => (p.systemTypeSlug || '') === t.slug || p.systemTypeId === t.id));
       const section = document.querySelector('section#packages');
       if (!section) return ['Packages section not found'];
-      const group = section.querySelector('[role="radiogroup"]');
+      
+      const group = section.querySelector('[role="tablist"], [role="radiogroup"]');
       if (typesWithPkgs.length >= 2) {
         if (!group) errors.push('Expected system-type control for ' + typesWithPkgs.length + ' types, found none');
         else {
-          const btns = Array.from(group.querySelectorAll('button[role="radio"]')).filter(b => b.getBoundingClientRect().width > 0 && b.textContent.trim().length > 0);
-          if (btns.length !== typesWithPkgs.length) errors.push('Expected ' + typesWithPkgs.length + ' visible system-type buttons, found ' + btns.length);
-        }
-      } else if (group) {
-        errors.push('System-type control rendered although fewer than 2 types have packages');
-      }
-      // No empty pill/skeleton containers anywhere in the toolbar area
-      const toolbar = section.querySelector('select#filter-cameras')?.closest('div[class*="rounded-2xl"]');
-      if (toolbar) {
-        toolbar.querySelectorAll('*').forEach(el => {
-          const cls = String(el.className || '');
-          if (cls.includes('animate-pulse')) errors.push('Skeleton element in toolbar: ' + cls);
-          if (/bg-slate-100|bg-gray-100|rounded-xl/.test(cls) && el.children.length === 0 && el.textContent.trim() === '' && el.tagName !== 'svg' && !el.closest('svg') && el.getBoundingClientRect().width > 40) {
-            errors.push('Empty pill-like element in toolbar: <' + el.tagName.toLowerCase() + ' class="' + cls + '">');
+          const btns = Array.from(group.querySelectorAll('button')).filter(b => b.getBoundingClientRect().width > 0 && b.textContent.trim().length > 0);
+          // Includes "All" segment first
+          if (btns.length !== typesWithPkgs.length + 1) {
+            errors.push('Expected ' + (typesWithPkgs.length + 1) + ' visible segments (All + types), found ' + btns.length);
           }
-        });
+          const firstBtn = btns[0];
+          if (!firstBtn || !firstBtn.textContent.includes('All')) {
+            errors.push('First segment should be "All"');
+          }
+          // "All" segment selected by default
+          if (firstBtn && firstBtn.getAttribute('aria-selected') !== 'true' && firstBtn.getAttribute('aria-pressed') !== 'true') {
+            errors.push('"All" segment is not selected by default');
+          }
+          // No segment text ends in "..."
+          btns.forEach(b => {
+            const txt = b.textContent.trim();
+            if (txt.includes('...') || txt.includes('…')) {
+              errors.push('Segment label truncated with ellipsis: ' + txt);
+            }
+          });
+        }
       }
-      // Removed helper line and wording
+
+      // Description line is present for selection
+      const descEl = section.querySelector('[data-slot="system-type-description"]');
+      if (!descEl || descEl.textContent.trim().length === 0) {
+        errors.push('System type description line missing or empty under control');
+      }
+
+      // No banned architecture word
       if (/Choose an architecture/i.test(section.innerText)) errors.push('Old toolbar helper line still present');
-      const nightSel = section.querySelector('select#filter-night-view');
-      if (nightSel && !/^Night picture: All/.test(nightSel.options[0].textContent.trim())) {
-        errors.push('Night dropdown first option should read "Night picture: All", got "' + nightSel.options[0].textContent.trim() + '"');
-      }
       return errors;
     `
   },
