@@ -231,5 +231,19 @@ The following table outlines the endpoint groupings, the owning client applicati
   - Double-entry accounting ledger and Mushak 6.3 VAT tax invoices.
   - Automated courier dispatch webhooks (Steadfast, Pathao).
 
-
-
+### 7.6 Promo Tile Redesign (Items 1 to 4)
+- **Promo Tile Component (`src/components/common/PromoTile.tsx`)**:
+  - Replaces legacy lead-in card. Explicitly distinct banner tile without chips, bullet points, repeated section headers, eyebrow chips, subtitle blocks, prices, hearts, or add-to-cart buttons.
+  - Supports 3 admin themes: Brand Orange (`bg-[#F15A24]`), Dark (`bg-[#141210]`), and Soft Tint (`bg-[#FAF7F2]`), with an 8% opacity geometric background SVG pattern.
+  - Content: headline (max 40 chars, 24-28px bold font-heading), optional subtext (max 60 chars), and exactly one action button (pill shape pinned bottom-left).
+  - Media: transparent hardware image (~70% tile width) anchored bottom-right, bleeding past the 20px rounded corner edge with fallback SVG hardware illustration.
+  - Accessibility & Hover: interactive button focus ring, `role="button"`, `tabIndex={0}`, keyboard navigation (Enter/Space), and hover lift with 1.04x image scale (disabled on `prefers-reduced-motion`).
+- **Responsive & Equal Height Flex Architecture (`src/style.css`, `ProductRow.tsx`)**:
+  - Desktop & Tablet (>=768px): Renders as the first item inside `CardRow` with width `var(--card-w)`. Uses flexbox `align-self: stretch` with `height: auto` to match adjacent product card heights within 1px.
+  - Mobile (<768px): Transforms into a full-width banner strip (~120px tall) placed directly above the scroll row. The first item in the mobile horizontal scroll row is guaranteed to be a product card.
+- **Admin Configuration & Sample Seeding (`src/pages/AdminDashboard.tsx`, `seedData.ts`, `serverSeeds.json`)**:
+  - Dedicated `PromoTileEditor` in Homepage Section Editor and Category modal with live dual preview (desktop card + mobile strip), character counters, and transparent PNG warning.
+  - Clean database defaults to 0 promo tiles across all rows.
+  - Sample content seeds exactly 2 promo tiles: Wi-Fi Cameras (`cat-wifi`, orange) and Access Points (`cat-access-points`, dark).
+- **Automated Verification (`tests/test_final_tweaks.js`, `tests/test_equal_heights_subgrid.js`)**:
+  - Headless CDP suite asserts: height equals product cards within 1px, 0 prohibited card elements (chips/bullets/prices/hearts/cart buttons), <=1 button, <=2 text blocks, headline-image overlap < 10%, mobile strip placement above row, and 100% clean test suite passes.

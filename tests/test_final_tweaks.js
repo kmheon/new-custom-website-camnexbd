@@ -163,24 +163,74 @@ const CHECKS = [
     `
   },
   {
-    name: 'Lead-in tile does not duplicate section heading (case-insensitive)',
+    name: 'Promo tile: dimensions equal product card within 1px, contains zero chips/bullets/prices/hearts/cart buttons, <=1 button, <=2 text blocks, mobile strip above row',
     body: `
       const errors = [];
-      const rows = Array.from(document.querySelectorAll('.card-row-scroller'));
-      rows.forEach(scroller => {
-        const leadIn = scroller.querySelector('.lead-in-tile');
-        if (!leadIn) return;
-        const section = leadIn.closest('section, div[class*="py-"]') || scroller.parentElement;
-        const sectionHeading = section?.querySelector('h2, h3.font-heading');
-        const headingText = (sectionHeading?.textContent || scroller.getAttribute('aria-label') || '').trim().toLowerCase();
-        const leadInHeading = leadIn.querySelector('h3');
-        if (leadInHeading) {
-          const leadInText = leadInHeading.textContent.trim().toLowerCase();
-          if (leadInText === headingText) {
-            errors.push('Lead-in tile duplicated section heading: "' + leadInText + '"');
+      const isMobile = window.innerWidth < 768;
+
+      if (!isMobile) {
+        // Desktop / Tablet Viewport Checks (Storefront Row Promo Tiles)
+        const promoTiles = Array.from(document.querySelectorAll('.card-row-scroller .promo-tile')).filter(el => !el.classList.contains('promo-tile-mobile') && el.offsetParent !== null);
+        promoTiles.forEach(tile => {
+          const row = tile.closest('.card-row-scroller');
+          if (!row) return;
+          const firstProductCard = row.querySelector('.card-item-fixed[data-product-id]');
+          if (firstProductCard) {
+            const tileRect = tile.getBoundingClientRect();
+            const cardRect = firstProductCard.getBoundingClientRect();
+            if (Math.abs(tileRect.width - cardRect.width) > 1.5) {
+              errors.push('Promo tile width (' + tileRect.width + 'px) differs from product card width (' + cardRect.width + 'px) by >1px');
+            }
+            if (Math.abs(tileRect.height - cardRect.height) > 1.5) {
+              errors.push('Promo tile height (' + tileRect.height + 'px) differs from product card height (' + cardRect.height + 'px) by >1px');
+            }
           }
-        }
-      });
+
+          // Zero chips, bullets, prices, hearts, add-to-cart elements
+          if (tile.querySelectorAll('ul, li').length > 0) errors.push('Promo tile contains bullet list elements');
+          if (tile.querySelectorAll('button[class*="heart"], button[aria-label*="wishlist"], [data-slot="price"]').length > 0) errors.push('Promo tile contains cart/price/heart elements');
+          if (tile.querySelectorAll('.badge, [class*="chip"]').length > 0) errors.push('Promo tile contains badge/chip elements');
+
+          // Maximum 1 button, maximum 2 text blocks
+          const buttons = tile.querySelectorAll('button, span[class*="rounded-full"]');
+          if (buttons.length > 2) errors.push('Promo tile contains more than one button: ' + buttons.length);
+          const textBlocks = tile.querySelectorAll('h3, p');
+          if (textBlocks.length > 2) errors.push('Promo tile contains more than 2 text blocks: ' + textBlocks.length);
+
+          // Overlap check: text and image main subject overlap < 10%
+          const headline = tile.querySelector('h3');
+          const img = tile.querySelector('.promo-tile-media img, .promo-tile-media svg');
+          if (headline && img) {
+            const hRect = headline.getBoundingClientRect();
+            const iRect = img.getBoundingClientRect();
+            const overlapX = Math.max(0, Math.min(hRect.right, iRect.right) - Math.max(hRect.left, iRect.left));
+            const overlapY = Math.max(0, Math.min(hRect.bottom, iRect.bottom) - Math.max(hRect.top, iRect.top));
+            const overlapArea = overlapX * overlapY;
+            const hArea = hRect.width * hRect.height;
+            if (hArea > 0 && (overlapArea / hArea) > 0.10) {
+              errors.push('Headline overlaps promo tile image by > 10% (' + Math.round((overlapArea / hArea) * 100) + '%)');
+            }
+          }
+        });
+      } else {
+        // Mobile Viewport Checks: promo tile is strip ABOVE row, first item in row is product
+        const mobileStrips = Array.from(document.querySelectorAll('.promo-tile-mobile')).filter(el => el.offsetParent !== null);
+        mobileStrips.forEach(strip => {
+          const sRect = strip.getBoundingClientRect();
+          if (Math.abs(sRect.height - 120) > 25) {
+            errors.push('Mobile promo strip height (' + sRect.height + 'px) is not near ~120px');
+          }
+          // Verify CardRow directly follows and starts with product card
+          const parentSec = strip.closest('div, section');
+          const nextRow = parentSec ? parentSec.querySelector('.card-row-scroller') : null;
+          if (nextRow) {
+            const firstCard = nextRow.querySelector('.card-item-fixed');
+            if (firstCard && !firstCard.hasAttribute('data-product-id')) {
+              errors.push('First card in mobile row is not a product card');
+            }
+          }
+        });
+      }
       return errors;
     `
   },

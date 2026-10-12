@@ -186,13 +186,22 @@ async function runCdpEqualHeights() {
             rows.forEach((row, rIdx) => {
               const cards = Array.from(row.querySelectorAll('.card-item-fixed, .card-subgrid-item')).filter(c => c.offsetParent !== null && c.getBoundingClientRect().height > 0);
               if (cards.length >= 2) {
-                const heights = cards.map(c => c.getBoundingClientRect().height);
+                const heights = cards.map(c => Math.round(c.getBoundingClientRect().height * 10) / 10);
                 const minH = Math.min(...heights);
                 const maxH = Math.max(...heights);
                 const diff = maxH - minH;
+                const cardDetails = cards.map((c, ci) => ({
+                  idx: ci,
+                  h: c.getBoundingClientRect().height,
+                  tag: c.tagName,
+                  cls: c.className.slice(0, 50),
+                  text: c.innerText.slice(0, 20).replace(/\n/g, ' ')
+                }));
                 results.push({
                   type: 'row',
                   index: rIdx,
+                  section: row.closest('section')?.querySelector('h2, h3')?.textContent || 'unknown',
+                  cardDetails,
                   count: cards.length,
                   minH: Math.round(minH),
                   maxH: Math.round(maxH),
@@ -273,6 +282,8 @@ async function runCdpEqualHeights() {
       for (const chk of rowChecks) {
         if (chk.type === 'row') {
           if (chk.diff > 1.5) {
+            console.error(`[MISMATCH DETAILS for Row #${chk.index + 1} (${chk.section})]:`);
+            console.error(JSON.stringify(chk.cardDetails, null, 2));
             throw new Error(`Product CardRow #${chk.index + 1} has card height variance of ${chk.diff}px at ${vp.name} (min: ${chk.minH}px, max: ${chk.maxH}px). Must be equal within 1.5px.`);
           }
           console.log(`  ✓ PASS [${vp.name}]: Product CardRow #${chk.index + 1} (${chk.count} cards) equal height within ${chk.diff}px`);
