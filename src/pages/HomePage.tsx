@@ -635,6 +635,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   const isFilterActive = systemFilter !== 'all' || packageCountFilter !== 'All' || nightViewFilter !== 'all';
 
+  const systemTypesOrdered = useMemo(() => {
+    const orderMap: Record<string, number> = { ip: 1, analogue: 2, wireless: 3 };
+    return [...packageSystemTypes].sort((a, b) => {
+      const oa = orderMap[a.slug] || a.order || 99;
+      const ob = orderMap[b.slug] || b.order || 99;
+      return oa - ob;
+    });
+  }, [packageSystemTypes]);
+
   const displayPackages = useMemo(() => {
     if (!isFilterActive) {
       // 1. Identify enabled system types that have packages
@@ -690,15 +699,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     }
     return filteredPackages;
   }, [isFilterActive, packages, packageSystemTypes, systemTypesOrdered, filteredPackages]);
-
-  const systemTypesOrdered = useMemo(() => {
-    const orderMap: Record<string, number> = { ip: 1, analogue: 2, wireless: 3 };
-    return [...packageSystemTypes].sort((a, b) => {
-      const oa = orderMap[a.slug] || a.order || 99;
-      const ob = orderMap[b.slug] || b.order || 99;
-      return oa - ob;
-    });
-  }, [packageSystemTypes]);
 
   const systemCounts = useMemo(() => {
     const counts: Record<string, number> = {};

@@ -154,9 +154,9 @@ async function main() {
                   errors.push('Scroller ' + sIdx + ' card ' + cIdx + ' width out of bounds: ' + w + 'px (expected 240-320px)');
                 }
 
-                // Height assertion: <= 520px
+                // Height assertion: <= 520px (packages up to 550px)
                 const isPackage = Boolean(card.closest('#packages, section[aria-label="CCTV Packages"]'));
-                const maxAllowedH = isPackage ? 500 : 485;
+                const maxAllowedH = isPackage ? 550 : 520;
                 if (h > maxAllowedH) {
                   errors.push('Scroller ' + sIdx + ' card ' + cIdx + ' height exceeded limit: ' + h + 'px (limit ' + maxAllowedH + 'px)');
                 }

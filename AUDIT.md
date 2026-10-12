@@ -247,3 +247,22 @@ The following table outlines the endpoint groupings, the owning client applicati
   - Sample content seeds exactly 2 promo tiles: Wi-Fi Cameras (`cat-wifi`, orange) and Access Points (`cat-access-points`, dark).
 - **Automated Verification (`tests/test_final_tweaks.js`, `tests/test_equal_heights_subgrid.js`)**:
   - Headless CDP suite asserts: height equals product cards within 1px, 0 prohibited card elements (chips/bullets/prices/hearts/cart buttons), <=1 button, <=2 text blocks, headline-image overlap < 10%, mobile strip placement above row, and 100% clean test suite passes.
+
+### 7.7 Package Toolbar and Card Text Polish
+- **Package Toolbar Dropdowns (`src/pages/HomePage.tsx`)**:
+  - Both selects ("Number of cameras" and "Night vision") are custom-styled native selects with identical width (`min-w-[200px]`, `w-[210px]`), height (`44px`), border, radius, and inside chevron icon.
+  - Labels sit directly above each select, left-aligned to its box.
+  - Layout: 24px between control groups (`gap-6`). Description line sits below the segmented control at the same left edge. Dropdown labels align vertically with the segmented control tops (`lg:items-start`).
+- **Wording & Options**:
+  - "Night picture" renamed to "Night vision" across the entire storefront and options: "All", "Black and white", "Hybrid light", "Full color" (from series names, with counts).
+  - "Number of cameras" retains counted options ("4 cameras (6)").
+- **Default Mix with Homepage Featured Priority**:
+  - Unfiltered default "All" view guarantees at least one package of each active system type among the 4 cards shown, prioritizing admin "Featured on homepage" packages first per type, then tags and sort order.
+  - Admin package form provides the "Featured on homepage" flag with seeded sample content featuring one Wi-Fi package (`pkg-wifi-2`), one Analogue package (`pkg-ir-4`), and one IP package (`pkg-ptz-16`).
+- **Component Item Lines Formatter (`src/utils/displayName.ts`, `PackageCard.tsx`)**:
+  - Every component line formatted as `{qty} × {short name}` using the `×` multiplication sign with surrounding spaces.
+  - Consistent across both card previews and popover modal inclusions.
+  - Strips spec words (e.g. `25x`, `16ch`), never outputs `2x`, `15x` alone, or `1× 25x`.
+- **Automated Verification (`tests/test_item_lines.js`, `tests/test_final_tweaks.js`)**:
+  - Headless CDP assertions verify: equal select widths/heights (44px), chevron inside select bounding box, zero instances of "Night picture", default 4 cards contain at least two types and include featured package of each, every component line matches `/^\d+ × .+/`, zero occurrences of "x" as a quantity marker, and 1280px non-wrapping toolbar layout.
+

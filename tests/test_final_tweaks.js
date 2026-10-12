@@ -74,6 +74,77 @@ const CHECKS = [
 
       // No banned architecture word
       if (/Choose an architecture/i.test(section.innerText)) errors.push('Old toolbar helper line still present');
+
+      // The label text "Night picture" appears nowhere
+      if (/Night picture/i.test(document.body.innerText)) {
+        errors.push('Label text "Night picture" still appears on page');
+      }
+
+      // Toolbar selects: both selects have equal width and height (44px), chevron inside select box
+      const selects = Array.from(section.querySelectorAll('select'));
+      if (selects.length >= 2) {
+        const s1 = selects[0].getBoundingClientRect();
+        const s2 = selects[1].getBoundingClientRect();
+        if (Math.abs(s1.width - s2.width) > 2) {
+          errors.push('Selects have unequal widths: ' + s1.width + ' vs ' + s2.width);
+        }
+        if (Math.abs(s1.height - s2.height) > 1 || Math.abs(s1.height - 44) > 2) {
+          errors.push('Selects have unequal or non-44px heights: ' + s1.height + ' vs ' + s2.height);
+        }
+        selects.forEach((sel, i) => {
+          const box = sel.getBoundingClientRect();
+          const chevron = sel.parentElement ? sel.parentElement.querySelector('svg') : null;
+          if (!chevron) errors.push('Select ' + i + ' has no chevron icon');
+          else {
+            const cBox = chevron.getBoundingClientRect();
+            const inside = cBox.left >= box.left && cBox.right <= box.right && cBox.top >= box.top && cBox.bottom <= box.bottom;
+            if (!inside) errors.push('Select ' + i + ' chevron bounding box is not inside select: chevron=' + JSON.stringify(cBox) + ' select=' + JSON.stringify(box));
+          }
+        });
+      }
+
+      // With at least two system types present, default 4 cards contain at least two types and include the featured package of each
+      const cards = Array.from(section.querySelectorAll('[data-package-id]'));
+      const first4Cards = cards.slice(0, 4);
+      const byId = Object.fromEntries(list.map(p => [p.id, p]));
+      const typesIn4 = new Set(first4Cards.map(c => {
+        const p = byId[c.getAttribute('data-package-id')];
+        return p ? (p.systemTypeSlug || p.systemTypeId) : null;
+      }).filter(Boolean));
+
+      if (typesWithPkgs.length >= 2 && typesIn4.size < 2) {
+        errors.push('Expected at least two system types in default 4 cards, found ' + typesIn4.size + ': ' + Array.from(typesIn4).join(', '));
+      }
+
+      const featuredByType = {};
+      list.filter(p => p.featuredOnHomepage).forEach(p => {
+        const st = p.systemTypeSlug || p.systemTypeId;
+        if (!featuredByType[st]) featuredByType[st] = p.id;
+      });
+      const rendered4Ids = new Set(first4Cards.map(c => c.getAttribute('data-package-id')));
+      for (const [st, featId] of Object.entries(featuredByType)) {
+        if (!rendered4Ids.has(featId)) {
+          errors.push('Featured package ' + featId + ' of type ' + st + ' not in default 4 cards');
+        }
+      }
+
+      // Toolbar layout: controls fit in one line without wrapping on desktop (1280px)
+      if (window.innerWidth >= 1200) {
+        const leftGroup = section.querySelector('[role="tablist"]');
+        const selectsGroup = section.querySelector('select')?.closest('.grid, .flex');
+        if (leftGroup && selectsGroup) {
+          const lRect = leftGroup.getBoundingClientRect();
+          const sRect = selectsGroup.getBoundingClientRect();
+          if (sRect.top > lRect.bottom) {
+            errors.push('Dropdown selects wrapped below segmented control on desktop: select.top=' + sRect.top + ' vs control.bottom=' + lRect.bottom);
+          }
+          const gap = sRect.left - lRect.right;
+          if (gap < 20) {
+            errors.push('Gap between toolbar control groups is too small: ' + Math.round(gap) + 'px (< 24px)');
+          }
+        }
+      }
+
       return errors;
     `
   },
@@ -102,7 +173,7 @@ const CHECKS = [
     `
   },
   {
-    name: 'Package item names: short, never end in "...", fit in 2 lines; popover shows full names',
+    name: 'Package item lines formatted as {qty} × {short name}, match /^\\d+ × .+/, no "x" quantity marker, popover matches',
     body: `
       const errors = [];
       const pkgs = await fetch('/api/packages').then(r => r.json());
@@ -113,14 +184,15 @@ const CHECKS = [
         const p = byId[card.getAttribute('data-package-id')];
         card.querySelectorAll('[data-pkg-item]').forEach(el => {
           const t = el.textContent.trim();
+          if (!/^\\d+ × .+/u.test(t)) errors.push((p && p.name) + ': item line does not match /^\\d+ × .+/: "' + t + '"');
+          if (/\\b\\d+\\s*x\\b/i.test(t) || /\\bx\\b/i.test(t)) errors.push((p && p.name) + ': item line contains "x" as quantity marker: "' + t + '"');
           if (/(\\.\\.\\.|\\u2026)$/.test(t)) errors.push((p && p.name) + ': item ends in ellipsis: "' + t + '"');
-          if (t.length > 36) errors.push((p && p.name) + ': short name longer than 36 chars: "' + t + '"');
           if (el.scrollHeight > el.clientHeight + 1) errors.push((p && p.name) + ': item is clamped (overflows 2 lines): "' + t + '"');
           const cs = getComputedStyle(el);
           if (cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap') errors.push((p && p.name) + ': item uses single-line truncate');
         });
       });
-      // Popover shows the full names
+      // Popover shows formatted inclusions
       const firstCard = cards[0];
       const btn = firstCard && Array.from(firstCard.querySelectorAll('button')).find(b => /See what/i.test(b.textContent));
       if (!btn) errors.push('No "See what\\'s included" button on first package card');
@@ -128,11 +200,15 @@ const CHECKS = [
         btn.click();
         await new Promise(r => setTimeout(r, 300));
         const dialog = document.querySelector('[role="dialog"]');
-        const full = dialog ? Array.from(dialog.querySelectorAll('[data-pkg-full-item]')).map(e => e.textContent.trim()) : [];
-        const expected = (byId[firstCard.getAttribute('data-package-id')]?.inclusions) || [];
         if (!dialog) errors.push('Popover did not open');
-        else if (expected.length && JSON.stringify(full) !== JSON.stringify(expected)) errors.push('Popover names differ from full inclusion names: ' + JSON.stringify(full));
-        if (dialog) dialog.click();
+        else {
+          dialog.querySelectorAll('[data-pkg-full-item]').forEach(el => {
+            const t = el.textContent.trim();
+            if (!/^\\d+ × .+/u.test(t)) errors.push('Popover item does not match /^\\d+ × .+/: "' + t + '"');
+            if (/\\b\\d+\\s*x\\b/i.test(t) || /\\bx\\b/i.test(t)) errors.push('Popover item contains "x" as quantity marker: "' + t + '"');
+          });
+          dialog.click();
+        }
         await new Promise(r => setTimeout(r, 200));
       }
       return errors;
