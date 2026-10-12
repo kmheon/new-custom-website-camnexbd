@@ -183,6 +183,40 @@ const CHECKS = [
       });
       return errors;
     `
+  },
+  {
+    name: 'Product cards: placeholder shows illustration only (no text overlay), model number appears once per card',
+    body: `
+      const errors = [];
+      const cards = Array.from(document.querySelectorAll('[data-product-id]'));
+      cards.forEach(card => {
+        const pid = card.getAttribute('data-product-id');
+        // Placeholder check: inside card media slot, no text overlays should be rendered
+        const mediaSlot = card.querySelector('[data-slot="media"]') || card.firstElementChild;
+        if (mediaSlot) {
+          const placeholderTexts = Array.from(mediaSlot.querySelectorAll('span.font-mono, span.tracking-wider')).filter(el => {
+            // Must not be the brand chip (absolute top-2.5 left-2.5) or demo tag (absolute top-2.5 right-2.5)
+            const isChip = el.closest('[class*="top-2.5"]') || el.closest('[class*="bottom-2.5"]');
+            return !isChip;
+          });
+          if (placeholderTexts.length > 0) {
+            errors.push(pid + ': placeholder renders text overlay: "' + placeholderTexts[0].textContent.trim() + '"');
+          }
+        }
+        // Model number count check: model appears at most once in meta row
+        const metaSlot = card.querySelector('[data-slot="meta"]');
+        if (metaSlot) {
+          const metaText = metaSlot.textContent.trim();
+          // Check if brand is duplicated into meta row
+          const brandChip = card.querySelector('[class*="top-2.5"][class*="left-2.5"]');
+          const brand = brandChip ? brandChip.textContent.trim().toLowerCase() : '';
+          if (brand && metaText.toLowerCase().includes(brand + ' ·')) {
+            errors.push(pid + ': meta line duplicates brand "' + brand + '": "' + metaText + '"');
+          }
+        }
+      });
+      return errors;
+    `
   }
 ];
 

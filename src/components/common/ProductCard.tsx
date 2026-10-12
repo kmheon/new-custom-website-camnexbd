@@ -245,10 +245,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </CardMediaSlot>
 
-        {/* 2. META SLOT (Brand and model line: 1 line, ellipsis, plus warranty) */}
+        {/* 2. META SLOT (Model number line: 1 line, ellipsis, plus warranty; brand is in top-left chip) */}
         <CardMetaSlot>
           <span className="text-[11px] font-mono text-[#5B6472] uppercase tracking-wider truncate min-w-0 flex-1">
-            {product.brand} {product.modelNumber ? `· ${product.modelNumber}` : ''}
+            {product.modelNumber || ''}
           </span>
           {hasWarranty ? (
             <span className="text-[10px] font-semibold text-emerald-600 inline-flex items-center gap-1 shrink-0">

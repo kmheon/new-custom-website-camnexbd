@@ -22,6 +22,7 @@ export interface ImagePlaceholderProps {
   className?: string;
   containerClassName?: string;
   iconOnly?: boolean;
+  showTextOverlay?: boolean;
 }
 
 /**
@@ -252,7 +253,8 @@ export const ImagePlaceholder: React.FC<ImagePlaceholderProps> = ({
   brandName = '',
   className = 'w-16 h-16',
   containerClassName = 'w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] select-none',
-  iconOnly = false
+  iconOnly = false,
+  showTextOverlay = false
 }) => {
   const resolvedType = resolveHardwareType(category, name, model, type);
 
@@ -266,7 +268,7 @@ export const ImagePlaceholder: React.FC<ImagePlaceholderProps> = ({
       <div className={`relative ${containerClassName}`} role="img" aria-label={brandName || 'Hardware Brand'}>
         <div className="flex flex-col items-center justify-center">
           <HardwareIllustration type="brand" className={className} />
-          {brandName && (
+          {showTextOverlay && brandName && (
             <span className="mt-1.5 text-xs font-black tracking-wider uppercase text-[#111827]">
               {brandName}
             </span>
@@ -284,7 +286,7 @@ export const ImagePlaceholder: React.FC<ImagePlaceholderProps> = ({
     >
       <div className="flex flex-col items-center justify-center">
         <HardwareIllustration type={resolvedType} className={className} />
-        {(model || name) && (
+        {showTextOverlay && (model || name) && (
           <span className="mt-2 text-[10px] font-bold font-mono tracking-wider uppercase text-[#5B6472]/80 truncate max-w-[140px]">
             {model || name}
           </span>
@@ -308,6 +310,7 @@ export interface SmartImageProps extends React.ImgHTMLAttributes<HTMLImageElemen
   brandName?: string;
   placeholderClassName?: string;
   placeholderContainerClassName?: string;
+  showTextOverlay?: boolean;
 }
 
 export const SmartImage: React.FC<SmartImageProps> = ({
@@ -321,6 +324,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
   brandName,
   placeholderClassName = 'w-16 h-16',
   placeholderContainerClassName = 'w-full h-full flex flex-col items-center justify-center p-3 bg-gradient-to-b from-[#FAF7F2] to-[#F4EEE6] select-none',
+  showTextOverlay = false,
   onError,
   ...props
 }) => {
@@ -338,6 +342,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
         brandName={brandName}
         className={placeholderClassName}
         containerClassName={placeholderContainerClassName}
+        showTextOverlay={showTextOverlay}
       />
     );
   }
