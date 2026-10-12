@@ -978,7 +978,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <div className="mb-8">
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                 {/* Left: Segmented Control & Plain-Language Description */}
-                <div className="flex flex-col flex-1 min-w-0">
+                <div className="flex flex-col items-start flex-1 min-w-0">
                   {visibleSystemTypes.length > 1 && (
                     <div
                       role="tablist"
@@ -1023,14 +1023,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   )}
 
                   {/* Selected type's one-line plain-language description below control (muted, 14px, reserved one line) */}
-                  <div data-slot="system-type-description" className="text-sm text-[#5B6472] min-h-[22px] mt-2 flex items-center">
+                  <div
+                    data-slot="system-type-description"
+                    className="text-sm text-[#5B6472] min-h-[22px] mt-2 flex items-center text-left"
+                  >
                     {selectedSystemDescription}
                   </div>
                 </div>
 
                 {/* Right: Two labeled dropdowns + optional clear filters */}
-                <div className="flex flex-col sm:flex-row sm:items-start gap-3 shrink-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-6 shrink-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto">
                     {/* (b) "Number of cameras" dropdown */}
                     <div className="flex flex-col">
                       <label
