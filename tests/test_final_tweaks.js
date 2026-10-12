@@ -217,6 +217,37 @@ const CHECKS = [
       });
       return errors;
     `
+  },
+  {
+    name: 'Highlight tiles: check icon + single label when value equals label or boolean, no repeating text or raw lowercase enums',
+    body: `
+      const errors = [];
+      const cards = Array.from(document.querySelectorAll('[data-product-id]'));
+      cards.forEach(card => {
+        const pid = card.getAttribute('data-product-id');
+        const detailsSlot = card.querySelector('[data-slot="details"]');
+        if (!detailsSlot) return;
+        const tiles = Array.from(detailsSlot.querySelectorAll('div[class*="bg-[#FFF4ED]"]'));
+        tiles.forEach(tile => {
+          const spans = Array.from(tile.querySelectorAll('span'));
+          if (spans.length === 2) {
+            const valText = spans[0].textContent.trim().toLowerCase();
+            const lblText = spans[1].textContent.trim().toLowerCase();
+            if (valText === lblText) {
+              errors.push(pid + ': highlight tile repeats identical text for value and label: "' + valText + '"');
+            }
+          }
+          // Verify no raw lowercase underscore strings
+          spans.forEach(s => {
+            const txt = s.textContent.trim();
+            if (/^[a-z]+_[a-z]+/.test(txt)) {
+              errors.push(pid + ': highlight tile contains raw lowercase enum string: "' + txt + '"');
+            }
+          });
+        });
+      });
+      return errors;
+    `
   }
 ];
 

@@ -275,22 +275,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="min-h-[70px]">
             {highlightCards.length > 0 ? (
               <div className="grid grid-cols-2 gap-1.5">
-                {highlightCards.slice(0, 4).map((hl, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-[#FFF4ED] border border-[#FBE3D6] rounded-[10px] px-2 py-1 flex items-center gap-1.5 overflow-hidden"
-                  >
-                    <CheckCircle2 className="w-3 h-3 text-[#F15A24] shrink-0" />
-                    <div className="min-w-0 flex-1 leading-none">
-                      <span className="block text-[11px] font-bold text-[#111827] truncate">
-                        <Term text={hl.value}>{hl.value}</Term>
-                      </span>
-                      <span className="block text-[9px] font-medium text-[#5B6472] uppercase truncate mt-0.5">
-                        <Term text={hl.label}>{hl.label}</Term>
-                      </span>
+                {highlightCards.slice(0, 4).map((hl, idx) => {
+                  const isSingleLabel = hl.isBoolean || hl.value.toLowerCase().replace(/[\s\-_]+/g, '') === hl.label.toLowerCase().replace(/[\s\-_]+/g, '');
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-[#FFF4ED] border border-[#FBE3D6] rounded-[10px] px-2 py-1 flex items-center gap-1.5 overflow-hidden"
+                    >
+                      <Check className="w-3 h-3 text-[#F15A24] shrink-0" />
+                      <div className="min-w-0 flex-1 leading-none">
+                        {isSingleLabel ? (
+                          <span className="block text-[11px] font-bold text-[#111827] truncate">
+                            <Term text={hl.label}>{hl.label}</Term>
+                          </span>
+                        ) : (
+                          <>
+                            <span className="block text-[11px] font-bold text-[#111827] truncate">
+                              <Term text={hl.value}>{hl.value}</Term>
+                            </span>
+                            <span className="block text-[9px] font-medium text-[#5B6472] uppercase truncate mt-0.5">
+                              <Term text={hl.label}>{hl.label}</Term>
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="invisible select-none min-h-[70px]" aria-hidden="true">&nbsp;</div>

@@ -927,6 +927,13 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                                 Placeholder image
                               </span>
                             )}
+                            {(!p.specs || Object.keys(p.specs).length === 0) &&
+                             (!p.specifications || Object.keys(p.specifications).length === 0) &&
+                             (!p.keyFeatures || p.keyFeatures.length === 0) && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-normal bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                No highlights
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="p-3.5 font-mono text-slate-400">{p.modelNumber}</td>

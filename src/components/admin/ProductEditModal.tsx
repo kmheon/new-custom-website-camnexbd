@@ -580,6 +580,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     No template linked to category "{formData.category}". You can define custom specs below.
                   </p>
                 )}
+                {Object.keys(specs).length === 0 && customSpecs.length === 0 && (
+                  <p className="text-[10px] text-amber-500 mt-1 flex items-center gap-1">
+                    <HelpCircle className="w-3 h-3 shrink-0" />
+                    <span>Tip: Fill in at least 2 specifications to populate product card highlight tiles.</span>
+                  </p>
+                )}
               </div>
             </div>
 
