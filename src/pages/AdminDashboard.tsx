@@ -806,7 +806,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const totalWorkQueueCount = pendingOrders.length + unverifiedPayments.length + pendingQuotes.length;
 
   // Real System & Store Activity Feed (Audit Logs or Synthesized Orders & Inquiries)
-  const combinedRecentActivity = React.useMemo(() => {
+  const combinedRecentActivity = (() => {
     if (dashboardAuditLogs && dashboardAuditLogs.length > 0) {
       return dashboardAuditLogs.map(log => ({
         id: log.id,
@@ -857,7 +857,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     });
 
     return events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8);
-  }, [dashboardAuditLogs, orders, quotes]);
+  })();
 
   return (
     <div className="bg-slate-900 min-h-screen text-slate-100 flex flex-col">
