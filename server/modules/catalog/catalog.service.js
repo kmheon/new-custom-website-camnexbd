@@ -167,6 +167,14 @@ class CatalogService {
   }
 
   createProduct(data, actor = null) {
+    if (data.sku) {
+      const conflict = db.prepare('SELECT id FROM products WHERE sku = ?').get(data.sku);
+      if (conflict) {
+        const err = new Error(`SKU '${data.sku}' already exists for product ID ${conflict.id}`);
+        err.statusCode = 400;
+        throw err;
+      }
+    }
     const id = data.id || `prod-${Date.now()}`;
     const productData = {
       ...data,
@@ -218,10 +226,46 @@ class CatalogService {
     if (!existingRow) return null;
 
     const current = JSON.parse(existingRow.data_json);
+
+    // Validate SKU uniqueness across other products
+    if (data.sku && data.sku !== current.sku) {
+      const conflict = db.prepare('SELECT id FROM products WHERE sku = ? AND id != ?').get(data.sku, id);
+      if (conflict) {
+        const err = new Error(`SKU '${data.sku}' already exists for product ID ${conflict.id}`);
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
+    // Deep merge sensitive/nested structures so unedited properties are preserved
+    const mergedPricing = (current.pricing || data.pricing) ? {
+      ...(current.pricing || {}),
+      ...(data.pricing || {})
+    } : undefined;
+
+    const mergedInventory = (current.inventory || data.inventory) ? {
+      ...(current.inventory || {}),
+      ...(data.inventory || {})
+    } : undefined;
+
+    const mergedSeo = (current.seo || data.seo) ? {
+      ...(current.seo || {}),
+      ...(data.seo || {})
+    } : undefined;
+
+    const mergedSpecs = (current.specifications || data.specifications) ? {
+      ...(current.specifications || {}),
+      ...(data.specifications || {})
+    } : undefined;
+
     const updated = {
       ...current,
       ...data,
-      id,
+      id, // Stable canonical identifier
+      ...(mergedPricing ? { pricing: mergedPricing } : {}),
+      ...(mergedInventory ? { inventory: mergedInventory } : {}),
+      ...(mergedSeo ? { seo: mergedSeo } : {}),
+      ...(mergedSpecs ? { specifications: mergedSpecs } : {}),
       updatedAt: new Date().toISOString()
     };
 

@@ -76,6 +76,9 @@ router.post('/products', requireAdmin, validateBody(productSchema), (req, res) =
     const created = catalogService.createProduct(req.body, req.user);
     res.json(created);
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
     res.status(500).json({ error: err.message });
   }
 });
@@ -86,6 +89,9 @@ router.put('/products/:id', requireAdmin, validateBody(productSchema), (req, res
     if (!updated) return res.status(404).json({ error: 'Product not found' });
     res.json(updated);
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
     res.status(500).json({ error: err.message });
   }
 });

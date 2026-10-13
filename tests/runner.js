@@ -298,6 +298,7 @@ async function main() {
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));
     results.push(await runTestSuite('Admin Completeness Suite', path.join(__dirname, 'test_admin_completeness.js'), testEnv));
     results.push(await runTestSuite('Dashboard Audit Fixes Suite', path.join(__dirname, 'test_dashboard_audit_fixes.js'), testEnv));
+    results.push(await runTestSuite('Phase 2 ERP/POS Compatibility Suite', path.join(__dirname, 'test_phase2_erp_pos_compatibility.js'), testEnv));
     results.push(await runTestSuite('RBAC & Identity Suite', path.join(__dirname, 'test_rbac.js'), testEnv));
     results.push(await runTestSuite('Ownership & Deletion Rules Suite', path.join(__dirname, 'test_ownership_deletion.js'), testEnv));
     results.push(await runTestSuite('Domain Events & Outbox Suite', path.join(__dirname, 'test_domain_events_outbox.js'), testEnv));

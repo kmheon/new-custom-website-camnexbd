@@ -732,6 +732,12 @@ app.get('/api/products/:id/accessories', (req, res) => {
 app.post('/api/products', requireAdmin, validateBody(schemas.product), (req, res) => {
   try {
     const p = req.body;
+    if (p.sku) {
+      const conflict = db.prepare('SELECT id FROM products WHERE sku = ?').get(p.sku);
+      if (conflict) {
+        return res.status(400).json({ error: `SKU '${p.sku}' already exists for product ID ${conflict.id}` });
+      }
+    }
     const id = p.id || `prod-${Date.now()}`;
     const productData = {
       ...p,
@@ -803,6 +809,15 @@ app.put('/api/products/:id', requireAdmin, validateBody(schemas.product), (req, 
     }
 
     const current = JSON.parse(existingRow.data_json);
+
+    // Validate SKU uniqueness across other products
+    if (req.body.sku && req.body.sku !== current.sku) {
+      const conflict = db.prepare('SELECT id FROM products WHERE sku = ? AND id != ?').get(req.body.sku, id);
+      if (conflict) {
+        return res.status(400).json({ error: `SKU '${req.body.sku}' already exists for product ID ${conflict.id}` });
+      }
+    }
+
     const oldQty = current.inventory?.available ?? existingRow.stock_quantity ?? 0;
     let targetQty = req.body.inventory?.available !== undefined ? Number(req.body.inventory.available) : oldQty;
 
@@ -812,15 +827,36 @@ app.put('/api/products/:id', requireAdmin, validateBody(schemas.product), (req, 
       targetQty = oldQty; // preserve existing stock if caller lacks inventory.adjust
     }
 
+    // Deep merge sensitive/nested structures so unedited properties are preserved
+    const mergedPricing = (current.pricing || req.body.pricing) ? {
+      ...(current.pricing || {}),
+      ...(req.body.pricing || {})
+    } : undefined;
+
+    const mergedInventory = {
+      ...(current.inventory || {}),
+      ...(req.body.inventory || {}),
+      available: targetQty
+    };
+
+    const mergedSeo = (current.seo || req.body.seo) ? {
+      ...(current.seo || {}),
+      ...(req.body.seo || {})
+    } : undefined;
+
+    const mergedSpecs = (current.specifications || req.body.specifications) ? {
+      ...(current.specifications || {}),
+      ...(req.body.specifications || {})
+    } : undefined;
+
     const updated = {
       ...current,
       ...req.body,
-      id,
-      inventory: {
-        ...(current.inventory || {}),
-        ...(req.body.inventory || {}),
-        available: targetQty
-      },
+      id, // Stable canonical identifier
+      ...(mergedPricing ? { pricing: mergedPricing } : {}),
+      inventory: mergedInventory,
+      ...(mergedSeo ? { seo: mergedSeo } : {}),
+      ...(mergedSpecs ? { specifications: mergedSpecs } : {}),
       updatedAt: new Date().toISOString()
     };
 

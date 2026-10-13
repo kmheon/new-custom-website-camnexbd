@@ -88,6 +88,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   // Product Form / Edit Modal State
   const [productEditModalOpen, setProductEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('');
 
   const handleOpenProductEdit = (p: Product) => {
     setEditingProduct(p);
@@ -800,6 +802,17 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   // Catalog Product Total: use official API total if provided (including legitimate 0), fallback to loaded products length
   const displayedProductTotal = typeof totalProductsCount === 'number' ? totalProductsCount : products.length;
   const catalogReadinessScore = displayedProductTotal > 0 ? Math.round((fullyReadyProducts.length / displayedProductTotal) * 100) : 100;
+
+  // Filtered Products for Product Management Table
+  const filteredProducts = products.filter(p => {
+    const q = productSearchQuery.trim().toLowerCase();
+    const matchesSearch = !q ||
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.modelNumber && p.modelNumber.toLowerCase().includes(q));
+    const matchesCat = !productCategoryFilter || p.categoryId === productCategoryFilter || p.category === productCategoryFilter;
+    return matchesSearch && matchesCat;
+  });
 
   // Dashboard Overview: Real Orders & Revenue Metrics
   const pendingOrders = orders.filter(o => o.status === 'pending');
@@ -1674,10 +1687,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           {/* 2. PRODUCTS & CREATION ASSISTANT */}
           {activeModule === 'products' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold font-heading text-white">Catalog Products</h2>
-                  <p className="text-xs text-slate-400">Total {products.length} products published or in draft</p>
+                  <p className="text-xs text-slate-400">Total {displayedProductTotal} products published or in draft</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button size="sm" onClick={handleOpenProductCreate} className="bg-[#F15A24] text-white hover:bg-[#D94D1C]">
@@ -1688,6 +1701,42 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     <Sparkles className="w-4 h-4 mr-1.5 text-[#F15A24]" />
                     <span>Research Assistant</span>
                   </Button>
+                </div>
+              </div>
+
+              {/* Product Search & Category Filter Toolbar */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="relative flex-1 w-full">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="text"
+                    value={productSearchQuery}
+                    onChange={e => setProductSearchQuery(e.target.value)}
+                    placeholder="Search catalog by product name, SKU, or model number..."
+                    className="w-full bg-slate-950 border border-slate-800 text-xs pl-9 pr-8 py-2 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#F15A24]"
+                  />
+                  {productSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="w-full sm:w-64">
+                  <select
+                    value={productCategoryFilter}
+                    onChange={e => setProductCategoryFilter(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-xs px-3 py-2 rounded-xl text-slate-300 focus:outline-none focus:border-[#F15A24]"
+                  >
+                    <option value="">All Categories ({products.length})</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1704,7 +1753,16 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800 text-slate-300">
-                    {products.map(p => (
+                    {filteredProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-500">
+                          <Package className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+                          <p className="text-sm font-semibold text-slate-400">No matching products found</p>
+                          <p className="text-xs text-slate-500 mt-1">Try adjusting your search query or category filter.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredProducts.map(p => (
                       <tr key={p.id} className="hover:bg-slate-900/40">
                         <td className="p-3.5 font-bold text-white flex items-center gap-2">
                           <img src={p.primaryImage} alt="" className="w-7 h-7 object-cover rounded bg-slate-800" />
@@ -1753,7 +1811,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>

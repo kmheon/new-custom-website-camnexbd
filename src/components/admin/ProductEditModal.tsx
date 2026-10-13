@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X, Plus, Trash2, Image as ImageIcon, Sliders, Shield, Tag, HelpCircle } from 'lucide-react';
+import { Check, X, Plus, Trash2, Image as ImageIcon, Sliders, Shield, Tag, HelpCircle, Globe } from 'lucide-react';
 import { Button, Modal, Badge } from '../common/UI';
 import { MediaPickerModal } from './MediaLibraryModal';
 import { productService } from '../../services';
-import { Product, Category, Brand, SpecTemplate } from '../../types';
+import { Product, Category, Brand, SpecTemplate, ProductSeo } from '../../types';
 import { getShortDisplayName } from '../../utils/displayName';
 
 interface ProductEditModalProps {
@@ -30,6 +30,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   const [specs, setSpecs] = useState<Record<string, any>>({});
   const [customSpecs, setCustomSpecs] = useState<Array<{ key: string; value: string }>>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [seo, setSeo] = useState<ProductSeo>({
+    metaTitle: '',
+    metaDescription: '',
+    keywords: [],
+    canonicalUrl: ''
+  });
+  const [keywordsText, setKeywordsText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +47,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   useEffect(() => {
     if (product) {
       setFormData({
+        ...product,
         name: product.name || '',
         modelNumber: product.modelNumber || '',
         sku: product.sku || '',
@@ -64,11 +72,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
         isFeatured: !!product.isFeatured,
         isPopular: !!product.isPopular,
         pricing: {
+          ...product.pricing,
           regularPrice: product.pricing?.regularPrice,
           salePrice: product.pricing?.salePrice,
           currency: 'BDT'
         },
         inventory: {
+          ...product.inventory,
           available: product.inventory?.available ?? 10,
           status: product.inventory?.status || 'in_stock'
         }
@@ -77,6 +87,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       setKeyFeaturesText((product.keyFeatures || []).join('\n'));
       setSpecs(product.specifications || {});
       setGalleryImages(product.images || []);
+      setSeo({
+        metaTitle: product.seo?.metaTitle || '',
+        metaDescription: product.seo?.metaDescription || '',
+        keywords: product.seo?.keywords || [],
+        canonicalUrl: product.seo?.canonicalUrl || ''
+      });
+      setKeywordsText((product.seo?.keywords || []).join(', '));
 
       // Parse custom specs that are not in the template
       const currentTemplate = templates.find(
@@ -184,20 +201,37 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       .map(s => s.trim())
       .filter(Boolean);
 
+    const parsedKeywords = keywordsText
+      .split(',')
+      .map(k => k.trim())
+      .filter(Boolean);
+
     const payload: Partial<Product> = {
+      ...product, // Preserve canonical ID and unedited fields (barcode, documents, etc.)
       ...formData,
       primaryImage: formData.primaryImage || '/images/hero/hikvision-bullet.png',
       images: galleryImages.length > 0 ? galleryImages : [formData.primaryImage || '/images/hero/hikvision-bullet.png'],
       keyFeatures: featuresList,
       specifications: combinedSpecs,
       pricing: {
-        regularPrice: formData.pricing?.regularPrice ? Number(formData.pricing.regularPrice) : undefined,
-        salePrice: formData.pricing?.salePrice ? Number(formData.pricing.salePrice) : undefined,
+        ...(product.pricing || {}),
+        ...(formData.pricing || {}),
+        regularPrice: formData.pricing?.regularPrice !== undefined && formData.pricing?.regularPrice !== '' ? Number(formData.pricing.regularPrice) : undefined,
+        salePrice: formData.pricing?.salePrice !== undefined && formData.pricing?.salePrice !== '' ? Number(formData.pricing.salePrice) : undefined,
         currency: 'BDT'
       },
       inventory: {
+        ...(product.inventory || {}),
+        ...(formData.inventory || {}),
         available: Number(formData.inventory?.available || 0),
         status: formData.inventory?.status || 'in_stock'
+      },
+      seo: {
+        ...(product.seo || {}),
+        metaTitle: seo.metaTitle?.trim() || undefined,
+        metaDescription: seo.metaDescription?.trim() || undefined,
+        keywords: parsedKeywords.length > 0 ? parsedKeywords : undefined,
+        canonicalUrl: seo.canonicalUrl?.trim() || undefined
       }
     };
 
@@ -787,6 +821,81 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   placeholder="Official Brand Replacement Warranty"
                   className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 7: SEO & Web Metadata */}
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-[#F15A24]" />
+                <span>7. Search Engine Optimization (SEO) & Metadata</span>
+              </h3>
+              <span className="text-[10px] text-slate-400">Canonical Web Visibility</span>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Meta Title
+                  <span className="text-[10px] text-slate-400 font-normal ml-1">
+                    (Recommended: 50-60 characters; defaults to product title if empty)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={70}
+                  value={seo.metaTitle || ''}
+                  onChange={e => setSeo({ ...seo, metaTitle: e.target.value })}
+                  placeholder={formData.name || 'e.g. Hikvision 2MP Turbo HD Bullet Camera | CamneX BD'}
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Meta Description
+                  <span className="text-[10px] text-slate-400 font-normal ml-1">
+                    (Recommended: 120-160 characters; defaults to summary if empty)
+                  </span>
+                </label>
+                <textarea
+                  rows={2}
+                  maxLength={180}
+                  value={seo.metaDescription || ''}
+                  onChange={e => setSeo({ ...seo, metaDescription: e.target.value })}
+                  placeholder={formData.shortDescription || 'Enter search engine snippet description...'}
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Keywords (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={keywordsText}
+                    onChange={e => setKeywordsText(e.target.value)}
+                    placeholder="cctv camera, 2mp bullet, hikvision dhaka"
+                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Canonical URL Override (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={seo.canonicalUrl || ''}
+                    onChange={e => setSeo({ ...seo, canonicalUrl: e.target.value })}
+                    placeholder="/product/ds-2ce16d0t-irpf"
+                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+                  />
+                </div>
               </div>
             </div>
           </div>
