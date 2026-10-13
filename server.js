@@ -550,8 +550,24 @@ app.get('/api/products', (req, res) => {
     }
 
     if (catTarget) {
-      query += ' AND (category_slug = ? OR category_id = ?)';
-      params.push(catTarget, catTarget);
+      if (catTarget === 'wifi-smart-devices' || catTarget === 'wifi-cameras' || catTarget === 'cat-wifi') {
+        query += " AND (category_slug IN ('wifi-smart-devices', 'wifi-cameras') OR category_id = 'cat-wifi' OR json_extract(data_json, '$.categoryId') = 'cat-wifi')";
+      } else {
+        query += ' AND (category_slug = ? OR category_id = ?)';
+        params.push(catTarget, catTarget);
+      }
+    }
+
+    const subcatTarget = req.query.subcategory || req.query.subcategoryId || req.query.subcat || req.query.wifi;
+    if (subcatTarget && subcatTarget !== 'all') {
+      query += ` AND (
+        json_extract(data_json, '$.subcategoryId') = ? OR
+        json_extract(data_json, '$.subcategorySlug') = ? OR
+        json_extract(data_json, '$.subcategory') = ? OR
+        json_extract(data_json, '$.subcategoryId') LIKE ? OR
+        json_extract(data_json, '$.subcategorySlug') LIKE ?
+      )`;
+      params.push(subcatTarget, subcatTarget, subcatTarget, `%${subcatTarget}%`, `%${subcatTarget}%`);
     }
 
     if (brandTarget) {
@@ -977,7 +993,12 @@ app.get('/api/categories', (req, res) => {
 app.get('/api/categories/:slug', (req, res) => {
   try {
     const slug = req.params.slug;
-    const row = db.prepare('SELECT data_json, is_archived FROM categories WHERE slug = ? OR id = ?').get(slug, slug);
+    const row = db.prepare(`
+      SELECT data_json, is_archived FROM categories 
+      WHERE slug = ? OR id = ? 
+      OR (slug = 'wifi-smart-devices' AND ? = 'wifi-cameras')
+      OR (slug = 'wifi-cameras' AND ? = 'wifi-smart-devices')
+    `).get(slug, slug, slug, slug);
     if (!row) return res.status(404).json({ error: 'Category not found' });
     const c = JSON.parse(row.data_json);
     c.isArchived = Boolean(row.is_archived);

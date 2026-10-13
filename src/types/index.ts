@@ -107,6 +107,15 @@ export interface PromoTileConfig {
   image?: string;
 }
 
+export interface Subcategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  order?: number;
+  enabled?: boolean;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -123,7 +132,7 @@ export interface Category {
   order: number;
   displayOrder?: number;
   status?: 'active' | 'inactive' | string;
-  subcategories?: any[];
+  subcategories?: Subcategory[];
 }
 
 export interface ProductPrice {
@@ -168,6 +177,7 @@ export interface Product {
   category: string;
   categoryId: string;
   subcategory?: string;
+  subcategoryId?: string;
   productType: 'physical' | 'service' | 'package_bundle';
   status: 'active' | 'draft' | 'archived';
   websiteVisible: boolean;
@@ -589,12 +599,14 @@ export interface HomepageSection {
   id: string;
   type: 'hero' | 'brands' | 'categories' | 'popular_products' | 'special_offers' | 'new_arrivals' | 'accessories' | 'services' | 'solutions' | 'packages' | 'trending' | 'category_row' | 'testimonials' | 'projects' | 'quote_cta' | 'credentials' | 'featured_products' | string;
   title: string;
+  eyebrow?: string;
   subtitle?: string;
   enabled: boolean;
   order: number;
   categoryId?: string;
   categorySlug?: string;
   itemLimit?: number;
+  showChipRow?: boolean;
   ctaData?: CtaSectionData;
   promoTile?: PromoTileConfig;
 }

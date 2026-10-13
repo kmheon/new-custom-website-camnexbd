@@ -280,7 +280,7 @@ export const INITIAL_HOMEPAGE_SECTIONS: HomepageSection[] = [
   { id: 'sec-cats', type: 'categories', title: 'Shop by Category', enabled: true, order: 3 },
   { id: 'sec-popular', type: 'popular_products', title: 'Popular Products', enabled: true, order: 4 },
   { id: 'sec-offers', type: 'special_offers', title: 'Special Offers', enabled: true, order: 5 },
-  { id: 'sec-wifi', type: 'wifi_cameras', title: 'Wi-Fi Cameras', subtitle: 'Single cameras you control from a phone app', enabled: true, order: 6, itemLimit: 6 },
+  { id: 'sec-wifi', type: 'wifi_series', title: 'Wi-Fi Series', eyebrow: 'Wi-Fi products', subtitle: 'Cameras, doorbells, lights and more you control from a phone app', enabled: true, order: 6, itemLimit: 8, showChipRow: true },
   { id: 'sec-new', type: 'new_arrivals', title: 'New Arrivals', enabled: true, order: 7 },
   { id: 'sec-pkgs', type: 'packages', title: 'CCTV Packages Selector', enabled: true, order: 8 },
   { id: 'sec-solutions', type: 'solutions', title: 'Our Solutions', enabled: true, order: 9 },
@@ -761,30 +761,32 @@ export const INITIAL_CATEGORIES: Category[] = [
   },
   {
     id: 'cat-wifi',
-    name: 'Wi-Fi Cameras',
-    slug: 'wifi-cameras',
-    description: 'Single cameras you control from a phone app',
+    name: 'Wi-Fi / Smart Devices',
+    slug: 'wifi-smart-devices',
+    description: 'Cameras, doorbells, lights and more you control from a phone app',
     image: '/images/hero/hikvision-bullet.png',
     promoTile: {
       enabled: true,
-      headline: 'Smart Wi-Fi Security Cameras',
-      subtext: 'Direct phone alerts & wireless storage',
-      buttonText: 'Explore Wi-Fi cameras',
-      link: '/category/wifi-cameras',
+      headline: 'Smart Wi-Fi Series',
+      subtext: 'Control cameras, lights & locks from your phone',
+      buttonText: 'Explore Wi-Fi Series',
+      link: '/category/wifi-smart-devices',
       bgStyle: 'orange',
       image: '/images/hero/hikvision-bullet.png'
     },
     specTemplateId: 'tpl-cctv',
     featured: true,
-    showOnHomepage: true,
+    showOnHomepage: false,
     displayOrder: 6,
     order: 6,
     showAsHomepageRow: true,
     subcategories: [
-      { id: 'subcat-wifi-indoor', name: 'Indoor 360°', slug: 'indoor-wifi-cameras' },
-      { id: 'subcat-wifi-outdoor', name: 'Outdoor Bullet', slug: 'outdoor-wifi-cameras' },
-      { id: 'subcat-wifi-ptz', name: 'Pan & Tilt', slug: 'pan-tilt-wifi-cameras' },
-      { id: 'subcat-wifi-doorbell', name: 'Smart Doorbell', slug: 'smart-doorbells' }
+      { id: 'subcat-wifi-cameras', name: 'Wi-Fi Cameras', slug: 'wifi-cameras', order: 1, enabled: true },
+      { id: 'subcat-video-doorbells', name: 'Video Doorbells', slug: 'video-doorbells', order: 2, enabled: true },
+      { id: 'subcat-smart-lights', name: 'Smart Lights', slug: 'smart-lights', order: 3, enabled: true },
+      { id: 'subcat-smart-plugs', name: 'Smart Plugs & Switches', slug: 'smart-plugs-switches', order: 4, enabled: true },
+      { id: 'subcat-smart-locks', name: 'Smart Locks', slug: 'smart-locks', order: 5, enabled: true },
+      { id: 'subcat-sensors-alarms', name: 'Sensors & Alarms', slug: 'sensors-alarms', order: 6, enabled: true }
     ]
   },
   {

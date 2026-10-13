@@ -818,8 +818,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     .slice(0, maxSpecialOffers);
   dedupSpecialOffers.forEach((p) => displayedProductIds.add(p.id));
 
-  // 2. Wi-Fi Cameras claims next (up to 8 cards; hidden if < 2)
-  const wifiCategory = categories.find((c) => c.id === 'cat-wifi' || c.slug === 'wifi-cameras');
+  // 2. Wi-Fi Series claims next (up to 8 cards; hidden if < 2)
+  const wifiCategory = categories.find((c) => c.id === 'cat-wifi' || c.slug === 'wifi-smart-devices' || c.slug === 'wifi-cameras');
   const dedupWifi = wifiProducts
     .filter((p) => !displayedProductIds.has(p.id))
     .slice(0, 8);

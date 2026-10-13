@@ -213,45 +213,67 @@
     },
     {
       "id": "cat-wifi",
-      "name": "Wi-Fi Cameras",
-      "slug": "wifi-cameras",
-      "description": "Single cameras you control from a phone app",
+      "name": "Wi-Fi / Smart Devices",
+      "slug": "wifi-smart-devices",
+      "description": "Cameras, doorbells, lights and more you control from a phone app",
       "image": "/images/hero/hikvision-bullet.png",
       "specTemplateId": "tpl-wifi",
       "featured": true,
-      "showOnHomepage": true,
+      "showOnHomepage": false,
       "displayOrder": 6,
       "order": 6,
       "showAsHomepageRow": true,
       "promoTile": {
         "enabled": true,
-        "headline": "Smart Wi-Fi Security Cameras",
-        "subtext": "Direct phone alerts & wireless storage",
-        "buttonText": "Explore Wi-Fi cameras",
-        "link": "/category/wifi-cameras",
+        "headline": "Smart Wi-Fi Series",
+        "subtext": "Control cameras, lights & locks from your phone",
+        "buttonText": "Explore Wi-Fi Series",
+        "link": "/category/wifi-smart-devices",
         "bgStyle": "orange",
         "image": "/images/hero/hikvision-bullet.png"
       },
       "subcategories": [
         {
-          "id": "subcat-wifi-indoor",
-          "name": "Indoor 360°",
-          "slug": "indoor-wifi-cameras"
+          "id": "subcat-wifi-cameras",
+          "name": "Wi-Fi Cameras",
+          "slug": "wifi-cameras",
+          "order": 1,
+          "enabled": true
         },
         {
-          "id": "subcat-wifi-outdoor",
-          "name": "Outdoor Bullet",
-          "slug": "outdoor-wifi-cameras"
+          "id": "subcat-video-doorbells",
+          "name": "Video Doorbells",
+          "slug": "video-doorbells",
+          "order": 2,
+          "enabled": true
         },
         {
-          "id": "subcat-wifi-ptz",
-          "name": "Pan & Tilt",
-          "slug": "pan-tilt-wifi-cameras"
+          "id": "subcat-smart-lights",
+          "name": "Smart Lights",
+          "slug": "smart-lights",
+          "order": 3,
+          "enabled": true
         },
         {
-          "id": "subcat-wifi-doorbell",
-          "name": "Smart Doorbell",
-          "slug": "smart-doorbells"
+          "id": "subcat-smart-plugs",
+          "name": "Smart Plugs & Switches",
+          "slug": "smart-plugs-switches",
+          "order": 4,
+          "enabled": true
+        },
+        {
+          "id": "subcat-smart-locks",
+          "name": "Smart Locks",
+          "slug": "smart-locks",
+          "order": 5,
+          "enabled": true
+        },
+        {
+          "id": "subcat-sensors-alarms",
+          "name": "Sensors & Alarms",
+          "slug": "sensors-alarms",
+          "order": 6,
+          "enabled": true
         }
       ]
     },
@@ -481,12 +503,14 @@
     },
     {
       "id": "sec-wifi",
-      "type": "wifi_cameras",
-      "title": "Wi-Fi Cameras",
-      "subtitle": "Single cameras you control from a phone app",
+      "type": "wifi_series",
+      "title": "Wi-Fi Series",
+      "subtitle": "Cameras, doorbells, lights and more you control from a phone app",
       "enabled": true,
       "order": 6,
-      "itemLimit": 6
+      "itemLimit": 8,
+      "eyebrow": "Wi-Fi products",
+      "showChipRow": true
     },
     {
       "id": "sec-brands",
@@ -4104,7 +4128,7 @@
       "brandId": "brand-ezviz",
       "brand": "EZVIZ",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": true,
       "isFeatured": true,
@@ -4127,7 +4151,10 @@
       "inventory": {
         "available": 25,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-h8c",
@@ -4137,7 +4164,7 @@
       "brandId": "brand-ezviz",
       "brand": "EZVIZ",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": true,
       "isFeatured": true,
@@ -4159,7 +4186,10 @@
       "inventory": {
         "available": 18,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-h3c",
@@ -4169,7 +4199,7 @@
       "brandId": "brand-ezviz",
       "brand": "EZVIZ",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": false,
       "isFeatured": true,
@@ -4191,7 +4221,10 @@
       "inventory": {
         "available": 20,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-hik-pt",
@@ -4201,7 +4234,7 @@
       "brandId": "brand-hikvision",
       "brand": "Hikvision",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": true,
       "isFeatured": true,
@@ -4223,7 +4256,10 @@
       "inventory": {
         "available": 15,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-hik-bullet",
@@ -4233,7 +4269,7 @@
       "brandId": "brand-hikvision",
       "brand": "Hikvision",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": false,
       "isFeatured": true,
@@ -4255,7 +4291,10 @@
       "inventory": {
         "available": 12,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-imou-ranger",
@@ -4265,7 +4304,7 @@
       "brandId": "brand-dahua",
       "brand": "Dahua",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": true,
       "isFeatured": true,
@@ -4287,7 +4326,10 @@
       "inventory": {
         "available": 30,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-imou-bullet",
@@ -4297,7 +4339,7 @@
       "brandId": "brand-dahua",
       "brand": "Dahua",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": false,
       "isFeatured": true,
@@ -4319,7 +4361,10 @@
       "inventory": {
         "available": 22,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-imou-cruiser",
@@ -4329,7 +4374,7 @@
       "brandId": "brand-dahua",
       "brand": "Dahua",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi / Wireless Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "status": "active",
       "isPopular": true,
       "isFeatured": true,
@@ -4351,7 +4396,10 @@
       "inventory": {
         "available": 14,
         "status": "in_stock"
-      }
+      },
+      "subcategoryId": "subcat-wifi-cameras",
+      "subcategory": "Wi-Fi Cameras",
+      "subcategorySlug": "wifi-cameras"
     },
     {
       "id": "prod-wifi-db2",
@@ -4362,7 +4410,7 @@
       "brandId": "brand-ezviz",
       "brand": "EZVIZ",
       "categoryId": "cat-wifi",
-      "category": "Wi-Fi Cameras",
+      "category": "Wi-Fi / Smart Devices",
       "shortDescription": "Wireless 2K smart video doorbell with wire-free battery installation and indoor chime.",
       "description": "Crisp 2K resolution video doorbell featuring PIR human detection, ultra-wide 176° field of view, and included indoor wireless chime.",
       "pricing": {
@@ -4397,7 +4445,10 @@
       ],
       "status": "active",
       "websiteVisible": true,
-      "isPopular": true
+      "isPopular": true,
+      "subcategoryId": "subcat-video-doorbells",
+      "subcategory": "Video Doorbells",
+      "subcategorySlug": "video-doorbells"
     }
   ],
   "INITIAL_PROJECTS": [
