@@ -4449,6 +4449,412 @@
       "subcategoryId": "subcat-video-doorbells",
       "subcategory": "Video Doorbells",
       "subcategorySlug": "video-doorbells"
+    },
+    {
+      "id": "prod-wifi-db1c",
+      "name": "EZVIZ DB1C 1080p Smart Wi-Fi Video Doorbell",
+      "shortName": "EZVIZ DB1C Video Doorbell",
+      "brand": "EZVIZ",
+      "brandId": "b-hikvision",
+      "modelNumber": "CS-DB1C-A0-1E2W2FR",
+      "sku": "EZVIZ-DB1C-1080P",
+      "category": "Wi-Fi / Smart Devices",
+      "categoryId": "cat-wifi",
+      "subcategory": "Video Doorbells",
+      "subcategoryId": "subcat-video-doorbells",
+      "subcategorySlug": "video-doorbells",
+      "productType": "physical",
+      "status": "active",
+      "websiteVisible": true,
+      "posAvailable": true,
+      "images": [
+        "/images/products/smart-doorbell.svg"
+      ],
+      "primaryImage": "/images/products/smart-doorbell.svg",
+      "shortDescription": "1080p Full HD video doorbell with AI human detection, 170° vertical field of view, and two-way audio talk.",
+      "description": "Compact weatherproof smart doorbell featuring dual-band 2.4/5GHz Wi-Fi connectivity and night vision up to 5 meters. Free EZVIZ app push notifications on doorstep rings.",
+      "keyFeatures": [
+        "1080p Full HD Video",
+        "170° Vertical Viewing Angle",
+        "AI-Powered Human Detection",
+        "Dual-Band 2.4 & 5 GHz Wi-Fi",
+        "IP65 Weather Resistance"
+      ],
+      "specifications": {
+        "resolution": "1080p",
+        "field_of_view": "170° Vertical",
+        "audio": "Two-Way Talk",
+        "wifi": "Dual-Band 2.4/5GHz"
+      },
+      "specs": {
+        "resolution": {
+          "label": "Resolution",
+          "value": "1080p",
+          "highlightValue": "1080p FHD",
+          "showInHighlights": true
+        },
+        "viewingAngle": {
+          "label": "FOV",
+          "value": "170°",
+          "highlightValue": "170° Vertical",
+          "showInHighlights": true
+        },
+        "audio": {
+          "label": "Audio",
+          "value": "Two-Way",
+          "highlightValue": "Two-Way Talk",
+          "showInHighlights": true
+        }
+      },
+      "pricing": {
+        "regularPrice": 8500,
+        "currency": "BDT"
+      },
+      "inventory": {
+        "trackQuantity": true,
+        "available": 12
+      },
+      "unit": "Piece",
+      "warrantyMonths": 12,
+      "isFeatured": false,
+      "isPopular": true,
+      "isDemo": true,
+      "sample": true,
+      "createdAt": "2026-03-25T10:00:00.000Z",
+      "updatedAt": "2026-03-25T10:00:00.000Z"
+    },
+    {
+      "id": "prod-wifi-light-lb1",
+      "name": "EZVIZ LB1 Smart Color LED Wi-Fi Bulb (E27)",
+      "shortName": "EZVIZ LB1 Color Smart Bulb",
+      "brand": "EZVIZ",
+      "brandId": "b-hikvision",
+      "modelNumber": "CS-HAL-LB1-LHAW",
+      "sku": "EZVIZ-LB1-RGB",
+      "category": "Wi-Fi / Smart Devices",
+      "categoryId": "cat-wifi",
+      "subcategory": "Smart Lights",
+      "subcategoryId": "subcat-smart-lights",
+      "subcategorySlug": "smart-lights",
+      "productType": "physical",
+      "status": "active",
+      "websiteVisible": true,
+      "posAvailable": true,
+      "images": [
+        "/images/products/smart-light.svg"
+      ],
+      "primaryImage": "/images/products/smart-light.svg",
+      "shortDescription": "Dimmable multicolor smart LED bulb with 16 million colors, 806 lumens brightness, and direct smartphone scheduling.",
+      "description": "Energy-saving 8W smart bulb fitting standard E27 sockets. Connects directly to 2.4GHz Wi-Fi with no hub required. Supports Alexa and Google Assistant voice automation.",
+      "keyFeatures": [
+        "16 Million Colors + Tunable White",
+        "806 Lumens Dimmable Brightness",
+        "No Hub Required (2.4GHz Wi-Fi)",
+        "Timer & Automation Schedules",
+        "Voice Control Compatible"
+      ],
+      "specifications": {
+        "brightness": "806 Lumens",
+        "fitting": "E27",
+        "power": "8W LED",
+        "connectivity": "2.4GHz Wi-Fi"
+      },
+      "specs": {
+        "brightness": {
+          "label": "Brightness",
+          "value": "806 Lumens",
+          "highlightValue": "806 Lumens",
+          "showInHighlights": true
+        },
+        "colors": {
+          "label": "Colors",
+          "value": "16 Million RGB",
+          "highlightValue": "16M Colors",
+          "showInHighlights": true
+        },
+        "fitting": {
+          "label": "Socket",
+          "value": "E27 Base",
+          "highlightValue": "E27 Fitting",
+          "showInHighlights": true
+        }
+      },
+      "pricing": {
+        "regularPrice": 1650,
+        "currency": "BDT"
+      },
+      "inventory": {
+        "trackQuantity": true,
+        "available": 25
+      },
+      "unit": "Piece",
+      "warrantyMonths": 12,
+      "isFeatured": false,
+      "isPopular": true,
+      "isDemo": true,
+      "sample": true,
+      "createdAt": "2026-03-25T10:00:00.000Z",
+      "updatedAt": "2026-03-25T10:00:00.000Z"
+    },
+    {
+      "id": "prod-wifi-light-strip",
+      "name": "EZVIZ T30-A Smart Wi-Fi RGB Light Strip (5 Meters)",
+      "shortName": "EZVIZ 5m RGB Smart Strip",
+      "brand": "EZVIZ",
+      "brandId": "b-hikvision",
+      "modelNumber": "CS-HAL-LS1-5M",
+      "sku": "EZVIZ-LS1-STRIP-5M",
+      "category": "Wi-Fi / Smart Devices",
+      "categoryId": "cat-wifi",
+      "subcategory": "Smart Lights",
+      "subcategoryId": "subcat-smart-lights",
+      "subcategorySlug": "smart-lights",
+      "productType": "physical",
+      "status": "active",
+      "websiteVisible": true,
+      "posAvailable": true,
+      "images": [
+        "/images/products/smart-light.svg"
+      ],
+      "primaryImage": "/images/products/smart-light.svg",
+      "shortDescription": "Flexible 5-meter adhesive RGB light strip with music sync, custom scene illumination, and app control.",
+      "description": "Customizable accent strip for TV backlighting, false ceilings, and ambient displays. Cuttable every 10cm with included high-tack mounting tape.",
+      "keyFeatures": [
+        "5 Meters Flexible Length",
+        "Music Rhythm Sync Mode",
+        "Cuttable and Expandable",
+        "App Remote Dimming & Scenes"
+      ],
+      "specifications": {
+        "length": "5 Meters",
+        "colors": "RGBIC",
+        "connectivity": "Wi-Fi 2.4GHz"
+      },
+      "specs": {
+        "length": {
+          "label": "Length",
+          "value": "5 Meters",
+          "highlightValue": "5m Strip",
+          "showInHighlights": true
+        },
+        "sync": {
+          "label": "Feature",
+          "value": "Music Sync",
+          "highlightValue": "Music Sync",
+          "showInHighlights": true
+        }
+      },
+      "pricing": {
+        "regularPrice": 2950,
+        "currency": "BDT"
+      },
+      "inventory": {
+        "trackQuantity": true,
+        "available": 15
+      },
+      "unit": "Set",
+      "warrantyMonths": 12,
+      "isFeatured": false,
+      "isPopular": false,
+      "isDemo": true,
+      "sample": true,
+      "createdAt": "2026-03-25T10:00:00.000Z",
+      "updatedAt": "2026-03-25T10:00:00.000Z"
+    },
+    {
+      "id": "prod-wifi-plug-t30",
+      "name": "EZVIZ T30-10B Smart Wi-Fi Plug with Power Metering",
+      "shortName": "EZVIZ T30 Smart Wi-Fi Plug",
+      "brand": "EZVIZ",
+      "brandId": "b-hikvision",
+      "modelNumber": "CS-T30-10B-EU",
+      "sku": "EZVIZ-T30-PLUG-10A",
+      "category": "Wi-Fi / Smart Devices",
+      "categoryId": "cat-wifi",
+      "subcategory": "Smart Plugs & Switches",
+      "subcategoryId": "subcat-smart-plugs",
+      "subcategorySlug": "smart-plugs-switches",
+      "productType": "physical",
+      "status": "active",
+      "websiteVisible": true,
+      "posAvailable": true,
+      "images": [
+        "/images/products/smart-plug.svg"
+      ],
+      "primaryImage": "/images/products/smart-plug.svg",
+      "shortDescription": "Compact 10A smart wall plug with energy consumption monitoring, countdown timers, and flame-retardant housing.",
+      "description": "Control AC appliances, water heaters, and chargers remotely from anywhere. Displays real-time wattage and kilowatt-hour tracking in the EZVIZ mobile app.",
+      "keyFeatures": [
+        "Real-Time Energy Metering",
+        "2300W Maximum Power Capacity",
+        "App Remote On/Off & Timers",
+        "Flame-Retardant 750°C Material"
+      ],
+      "specifications": {
+        "max_load": "10A / 2300W",
+        "voltage": "220-240V AC",
+        "connectivity": "2.4GHz Wi-Fi"
+      },
+      "specs": {
+        "maxLoad": {
+          "label": "Max Load",
+          "value": "10A / 2300W",
+          "highlightValue": "10A 2300W",
+          "showInHighlights": true
+        },
+        "metering": {
+          "label": "Energy",
+          "value": "Live Metering",
+          "highlightValue": "Power Meter",
+          "showInHighlights": true
+        }
+      },
+      "pricing": {
+        "regularPrice": 1450,
+        "currency": "BDT"
+      },
+      "inventory": {
+        "trackQuantity": true,
+        "available": 30
+      },
+      "unit": "Piece",
+      "warrantyMonths": 12,
+      "isFeatured": true,
+      "isPopular": true,
+      "isDemo": true,
+      "sample": true,
+      "createdAt": "2026-03-25T10:00:00.000Z",
+      "updatedAt": "2026-03-25T10:00:00.000Z"
+    },
+    {
+      "id": "prod-wifi-lock-dl01",
+      "name": "EZVIZ DL01S Smart Keyless Entry Deadbolt Lock",
+      "shortName": "EZVIZ DL01S Smart Deadbolt",
+      "brand": "EZVIZ",
+      "brandId": "b-hikvision",
+      "modelNumber": "CS-DL01S",
+      "sku": "EZVIZ-DL01S-LOCK",
+      "category": "Wi-Fi / Smart Devices",
+      "categoryId": "cat-wifi",
+      "subcategory": "Smart Locks",
+      "subcategoryId": "subcat-smart-locks",
+      "subcategorySlug": "smart-locks",
+      "productType": "physical",
+      "status": "active",
+      "websiteVisible": true,
+      "posAvailable": true,
+      "images": [
+        "/images/products/smart-lock.svg"
+      ],
+      "primaryImage": "/images/products/smart-lock.svg",
+      "shortDescription": "Keyless retrofit smart lock with digital keypad, temporary visitor passcodes, and auto-lock sensor.",
+      "description": "Fits over existing door deadbolts for fast 15-minute installation. Control access via Bluetooth or paired Wi-Fi gateway with real-time unlock logs.",
+      "keyFeatures": [
+        "Keypad Passcode & App Unlock",
+        "Temporary Visitor Access Codes",
+        "Door Status Auto-Lock Sensor",
+        "Emergency Power Interface"
+      ],
+      "specifications": {
+        "lock_type": "Deadbolt Retrofit",
+        "battery": "4 x AA Alkaline",
+        "connectivity": "Bluetooth & Wi-Fi"
+      },
+      "specs": {
+        "unlockMethod": {
+          "label": "Access",
+          "value": "Passcode & App",
+          "highlightValue": "Keypad + App",
+          "showInHighlights": true
+        },
+        "battery": {
+          "label": "Battery",
+          "value": "4x AA Batteries",
+          "highlightValue": "1-Year Life",
+          "showInHighlights": true
+        }
+      },
+      "pricing": {
+        "regularPrice": 16800,
+        "currency": "BDT"
+      },
+      "inventory": {
+        "trackQuantity": true,
+        "available": 6
+      },
+      "unit": "Set",
+      "warrantyMonths": 18,
+      "isFeatured": true,
+      "isPopular": false,
+      "isDemo": true,
+      "sample": true,
+      "createdAt": "2026-03-25T10:00:00.000Z",
+      "updatedAt": "2026-03-25T10:00:00.000Z"
+    },
+    {
+      "id": "prod-wifi-lock-dl05",
+      "name": "EZVIZ DL05 Biometric Smart Door Lock with Fingerprint Scanner",
+      "shortName": "EZVIZ DL05 Biometric Lock",
+      "brand": "EZVIZ",
+      "brandId": "b-hikvision",
+      "modelNumber": "CS-DL05-PRO",
+      "sku": "EZVIZ-DL05-FINGERPRINT",
+      "category": "Wi-Fi / Smart Devices",
+      "categoryId": "cat-wifi",
+      "subcategory": "Smart Locks",
+      "subcategoryId": "subcat-smart-locks",
+      "subcategorySlug": "smart-locks",
+      "productType": "physical",
+      "status": "active",
+      "websiteVisible": true,
+      "posAvailable": true,
+      "images": [
+        "/images/products/smart-lock.svg"
+      ],
+      "primaryImage": "/images/products/smart-lock.svg",
+      "shortDescription": "Commercial biometric smart lock with semiconductor fingerprint sensor, anti-peep keypad, and IC card keys.",
+      "description": "Heavy-duty zinc alloy exterior door lock with integrated doorbell chime, emergency mechanical key cylinder, and remote unlocking.",
+      "keyFeatures": [
+        "0.3s Rapid Fingerprint Recognition",
+        "Anti-Peep Virtual Password Entry",
+        "RFID Card & Smartphone App Unlock",
+        "Built-in Doorbell & Tamper Alarm"
+      ],
+      "specifications": {
+        "fingerprint_capacity": "50 Users",
+        "material": "Zinc Alloy",
+        "connectivity": "Wi-Fi 2.4GHz"
+      },
+      "specs": {
+        "biometrics": {
+          "label": "Fingerprint",
+          "value": "0.3s Sensor",
+          "highlightValue": "Biometric 0.3s",
+          "showInHighlights": true
+        },
+        "material": {
+          "label": "Chassis",
+          "value": "Zinc Alloy",
+          "highlightValue": "Zinc Alloy",
+          "showInHighlights": true
+        }
+      },
+      "pricing": {
+        "regularPrice": null,
+        "currency": "BDT"
+      },
+      "inventory": {
+        "trackQuantity": true,
+        "available": 4
+      },
+      "unit": "Set",
+      "warrantyMonths": 24,
+      "isFeatured": true,
+      "isPopular": true,
+      "isDemo": true,
+      "sample": true,
+      "createdAt": "2026-03-25T10:00:00.000Z",
+      "updatedAt": "2026-03-25T10:00:00.000Z"
     }
   ],
   "INITIAL_PROJECTS": [

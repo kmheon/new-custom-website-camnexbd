@@ -865,309 +865,6 @@ export const INITIAL_CATEGORIES: Category[] = [
 ];
 
 export const INITIAL_PRODUCTS: Product[] = [
-{
-    "id": "prod-wifi-c6n",
-    "name": "EZVIZ C6N 3MP Pan & Tilt Smart Wi-Fi Camera",
-    "modelNumber": "CS-C6N-D0-8B3WF",
-    "sku": "EZV-C6N-3MP",
-    "brandId": "brand-ezviz",
-    "brand": "EZVIZ",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": true,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "Motorized 360-degree pan and tilt Wi-Fi camera with smart tracking, two-way audio, and infrared night vision up to 10m.",
-    "pricing": {
-      "regularPrice": 4200,
-      "salePrice": 3850,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "3MP (2K)",
-      "wifi_band": "2.4 GHz",
-      "storage": "MicroSD up to 256GB",
-      "two_way_audio": true,
-      "power_source": "5V USB-C",
-      "app_support": "EZVIZ App"
-    },
-    "inventory": {
-      "available": 25,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-h8c",
-    "name": "EZVIZ H8c 4MP 360° Outdoor Pan & Tilt Wi-Fi Camera",
-    "modelNumber": "CS-H8c-R100-1K4WKFL",
-    "sku": "EZV-H8C-4MP",
-    "brandId": "brand-ezviz",
-    "brand": "EZVIZ",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": true,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "Weatherproof outdoor pan/tilt camera with AI human detection, color night vision, active defense siren, and strobe light.",
-    "pricing": {
-      "regularPrice": 9200,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "4MP (2K QHD)",
-      "wifi_band": "2.4 GHz",
-      "storage": "MicroSD up to 512GB",
-      "two_way_audio": true,
-      "power_source": "12V DC Plug-in",
-      "app_support": "EZVIZ App"
-    },
-    "inventory": {
-      "available": 18,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-h3c",
-    "name": "EZVIZ H3c 2K Color Night Vision Outdoor Wi-Fi Camera",
-    "modelNumber": "CS-H3c-R100-1K3WKFL",
-    "sku": "EZV-H3C-3MP",
-    "brandId": "brand-ezviz",
-    "brand": "EZVIZ",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": false,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "Reliable IP67 weatherproof outdoor bullet camera featuring color night vision and AI-powered human shape detection.",
-    "pricing": {
-      "regularPrice": 6500,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "3MP (2K)",
-      "wifi_band": "2.4 GHz",
-      "storage": "MicroSD up to 512GB",
-      "two_way_audio": true,
-      "power_source": "12V DC Plug-in",
-      "app_support": "EZVIZ App"
-    },
-    "inventory": {
-      "available": 20,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-hik-pt",
-    "name": "Hikvision 2MP Indoor Pan & Tilt Wi-Fi Camera",
-    "modelNumber": "DS-2CV2Q21FD-IW",
-    "sku": "HIK-2CV2Q21-2MP",
-    "brandId": "brand-hikvision",
-    "brand": "Hikvision",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": true,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "Dual-antenna indoor pan-tilt Wi-Fi camera with Hik-Connect cloud P2P, built-in microphone and speaker, and 10m IR.",
-    "pricing": {
-      "regularPrice": 5800,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "2MP (1080p)",
-      "wifi_band": "2.4 GHz",
-      "storage": "MicroSD up to 256GB",
-      "two_way_audio": true,
-      "power_source": "5V USB-C",
-      "app_support": "Hik-Connect"
-    },
-    "inventory": {
-      "available": 15,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-hik-bullet",
-    "name": "Hikvision 4MP Smart Wi-Fi Outdoor Bullet Camera",
-    "modelNumber": "DS-2CV1043G2-LIDW",
-    "sku": "HIK-2CV1043-4MP",
-    "brandId": "brand-hikvision",
-    "brand": "Hikvision",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": false,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "IP66 outdoor wireless bullet with smart dual lighting, onboard Wi-Fi range up to 120m in open field, and digital WDR.",
-    "pricing": {
-      "regularPrice": 8500,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "4MP (2K QHD)",
-      "wifi_band": "2.4 GHz",
-      "storage": "MicroSD up to 256GB",
-      "two_way_audio": true,
-      "power_source": "12V DC Plug-in",
-      "app_support": "Hik-Connect"
-    },
-    "inventory": {
-      "available": 12,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-imou-ranger",
-    "name": "Imou Ranger 2 4MP Indoor 360° Wi-Fi Camera",
-    "modelNumber": "IPC-A42P-D",
-    "sku": "IMOU-RANGER2-4MP",
-    "brandId": "brand-dahua",
-    "brand": "Dahua",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": true,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "High-resolution 4MP pan and tilt camera with abnormal sound alarm, physical privacy shutter, and human detection.",
-    "pricing": {
-      "regularPrice": 4600,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "4MP (2K QHD)",
-      "wifi_band": "2.4 GHz",
-      "storage": "MicroSD up to 256GB",
-      "two_way_audio": true,
-      "power_source": "5V USB-C",
-      "app_support": "DMSS / Imou Life"
-    },
-    "inventory": {
-      "available": 30,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-imou-bullet",
-    "name": "Imou Bullet 2C 4MP Weatherproof Outdoor Wi-Fi Camera",
-    "modelNumber": "IPC-F42P",
-    "sku": "IMOU-BULLET2C-4MP",
-    "brandId": "brand-dahua",
-    "brand": "Dahua",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": false,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "Weatherproof IP67 bullet camera with dual external antennas, built-in Wi-Fi hotspot mode, and 30m night vision.",
-    "pricing": {
-      "regularPrice": 5900,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "4MP (2K QHD)",
-      "wifi_band": "2.4 GHz",
-      "storage": "MicroSD up to 256GB",
-      "two_way_audio": false,
-      "power_source": "12V DC Plug-in",
-      "app_support": "DMSS / Imou Life"
-    },
-    "inventory": {
-      "available": 22,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-imou-cruiser",
-    "name": "Imou Cruiser 2 5MP 3K Outdoor PTZ Wi-Fi Camera",
-    "modelNumber": "IPC-GS7EP-5M0WE",
-    "sku": "IMOU-CRUISER2-5MP",
-    "brandId": "brand-dahua",
-    "brand": "Dahua",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi / Wireless Cameras",
-    "status": "active",
-    "isPopular": true,
-    "isFeatured": true,
-    "isDemo": true,
-    "sample": true,
-    "description": "5MP 3K outdoor speed dome featuring full panoramic coverage, smart full-color night vision, and Wi-Fi 6 connectivity.",
-    "pricing": {
-      "regularPrice": 11500,
-      "currency": "BDT"
-    },
-    "specifications": {
-      "resolution": "5MP (3K)",
-      "wifi_band": "Wi-Fi 6",
-      "storage": "MicroSD up to 512GB",
-      "two_way_audio": true,
-      "power_source": "12V DC Plug-in",
-      "app_support": "DMSS / Imou Life"
-    },
-    "inventory": {
-      "available": 14,
-      "status": "in_stock"
-    }
-  },
-  {
-    "id": "prod-wifi-db2",
-    "name": "EZVIZ DB2 2K Battery Video Doorbell with Chime",
-    "slug": "ezviz-db2-2k-battery-video-doorbell",
-    "modelNumber": "CS-DB2-A0-2C5WF",
-    "sku": "EZV-DB2-2K",
-    "brandId": "brand-ezviz",
-    "brand": "EZVIZ",
-    "categoryId": "cat-wifi",
-    "category": "Wi-Fi Cameras",
-    "shortDescription": "Wireless 2K smart video doorbell with wire-free battery installation and indoor chime.",
-    "description": "Crisp 2K resolution video doorbell featuring PIR human detection, ultra-wide 176° field of view, and included indoor wireless chime.",
-    "pricing": {
-      "regularPrice": 11500
-    },
-    "inventory": {
-      "available": 12,
-      "reserved": 0,
-      "lowStockThreshold": 3
-    },
-    "specifications": [
-      {
-        "key": "Resolution",
-        "value": "2K (2000 x 1504)"
-      },
-      {
-        "key": "Field of View",
-        "value": "176° Ultra-Wide Angle"
-      },
-      {
-        "key": "Night Vision",
-        "value": "Up to 5m Infrared"
-      },
-      {
-        "key": "Battery",
-        "value": "5200mAh Rechargeable"
-      },
-      {
-        "key": "Connectivity",
-        "value": "Wi-Fi 2.4GHz"
-      }
-    ],
-    "status": "active",
-    "websiteVisible": true,
-    "isPopular": true
-  },
   {
     "id": "prod-hik-irpf-2mp",
     "name": "Hikvision 2MP Audio Fixed Mini Bullet Camera",
@@ -1251,9 +948,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dome-camera.svg"
+      "/images/products/hikvision-dome.svg"
     ],
-    "primaryImage": "/images/products/dome-camera.svg",
+    "primaryImage": "/images/products/hikvision-dome.svg",
     "shortDescription": "Discreet 2MP ceiling dome camera with integrated microphone and wide-angle 2.8mm lens.",
     "description": "Ideal for indoor offices, retail stores, and banking counters requiring discreet audio and video capture.",
     "keyFeatures": [
@@ -1525,9 +1222,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dome-camera.svg"
+      "/images/products/hikvision-dome.svg"
     ],
-    "primaryImage": "/images/products/dome-camera.svg",
+    "primaryImage": "/images/products/hikvision-dome.svg",
     "shortDescription": "Compact full-color turret eyeball camera with warm white LED up to 20m distance.",
     "description": "Provides 24/7 vivid color images with high aperture lens and starlight sensor.",
     "keyFeatures": [
@@ -1593,9 +1290,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dvr-unit.svg"
+      "/images/products/hikvision-dvr.svg"
     ],
-    "primaryImage": "/images/products/dvr-unit.svg",
+    "primaryImage": "/images/products/hikvision-dvr.svg",
     "shortDescription": "4-channel smart AI DVR with deep learning human and vehicle motion detection.",
     "description": "Reduces false alarms with AcuSense motion classification. Supports up to 6 IP cameras in hybrid mode and 10TB SATA storage.",
     "keyFeatures": [
@@ -1654,9 +1351,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dvr-unit.svg"
+      "/images/products/hikvision-dvr.svg"
     ],
-    "primaryImage": "/images/products/dvr-unit.svg",
+    "primaryImage": "/images/products/hikvision-dvr.svg",
     "shortDescription": "8-channel enterprise AcuSense digital video recorder supporting human/vehicle classification.",
     "description": "High throughput AI DVR supporting 8 analog BNC cameras plus up to 4 network IP cameras. H.265 Pro+ encoding saves bandwidth.",
     "keyFeatures": [
@@ -1715,9 +1412,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dvr-unit.svg"
+      "/images/products/hikvision-dvr.svg"
     ],
-    "primaryImage": "/images/products/dvr-unit.svg",
+    "primaryImage": "/images/products/hikvision-dvr.svg",
     "shortDescription": "16-channel rackmount AcuSense DVR with dual SATA bays supporting up to 20TB total storage.",
     "description": "Designed for corporate offices, multi-storey commercial buildings, and factories needing high camera counts and AI tracking.",
     "keyFeatures": [
@@ -1775,9 +1472,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dvr-unit.svg"
+      "/images/products/hikvision-dvr.svg"
     ],
-    "primaryImage": "/images/products/dvr-unit.svg",
+    "primaryImage": "/images/products/hikvision-dvr.svg",
     "shortDescription": "8-channel AI digital video recorder with smart dual-stream and face recognition search.",
     "description": "Full-channel AI Coding reduces bandwidth by 50%. Compatible with HDCVI, AHD, TVI, CVBS, and IP cameras.",
     "keyFeatures": [
@@ -1835,9 +1532,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dvr-unit.svg"
+      "/images/products/hikvision-dvr.svg"
     ],
-    "primaryImage": "/images/products/dvr-unit.svg",
+    "primaryImage": "/images/products/hikvision-dvr.svg",
     "shortDescription": "Plug-and-play 4K NVR with 8 independent PoE network interfaces up to 80W power.",
     "description": "Connects IP cameras directly over ethernet cable. Decodes up to 8MP resolution with 4K HDMI video output.",
     "keyFeatures": [
@@ -2217,9 +1914,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/network-switch.svg"
+      "/images/products/ruijie-switch.svg"
     ],
-    "primaryImage": "/images/products/network-switch.svg",
+    "primaryImage": "/images/products/ruijie-switch.svg",
     "shortDescription": "Cloud-managed 5-port gigabit switch with 4 PoE+ ports and 54W power budget.",
     "description": "Compact steel desktop casing Designed for small CCTV setups and office IP phones. Free lifetime Ruijie Cloud management.",
     "keyFeatures": [
@@ -2284,9 +1981,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/network-switch.svg"
+      "/images/products/ruijie-switch.svg"
     ],
-    "primaryImage": "/images/products/network-switch.svg",
+    "primaryImage": "/images/products/ruijie-switch.svg",
     "shortDescription": "9-port gigabit switch with 8 PoE+ ports delivering up to 120W power budget.",
     "description": "High power budget accommodates PTZ cameras and Wi-Fi 6 access points with seamless cloud rebooting.",
     "keyFeatures": [
@@ -2352,9 +2049,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/network-switch.svg"
+      "/images/products/ruijie-switch.svg"
     ],
-    "primaryImage": "/images/products/network-switch.svg",
+    "primaryImage": "/images/products/ruijie-switch.svg",
     "shortDescription": "16-port gigabit rackmount switch for non-PoE network aggregation and high-speed data transfer.",
     "description": "Sturdy 19-inch metal chassis with 32 Gbps non-blocking backplane switching capacity.",
     "keyFeatures": [
@@ -2412,9 +2109,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/network-switch.svg"
+      "/images/products/ruijie-switch.svg"
     ],
-    "primaryImage": "/images/products/network-switch.svg",
+    "primaryImage": "/images/products/ruijie-switch.svg",
     "shortDescription": "24-port Gigabit Layer 2 managed switch with 4 SFP fiber uplink ports and 370W PoE budget.",
     "description": "Designed for enterprise campus networks and corporate headquarters requiring VLAN segmentation and optical backhaul.",
     "keyFeatures": [
@@ -2479,9 +2176,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/network-switch.svg"
+      "/images/products/ruijie-switch.svg"
     ],
-    "primaryImage": "/images/products/network-switch.svg",
+    "primaryImage": "/images/products/ruijie-switch.svg",
     "shortDescription": "24-port gigabit cloud switch with 24 PoE+ ports and 250W power budget.",
     "description": "Designed for dense IP camera clusters and office Wi-Fi setups with cloud dashboard visualization.",
     "keyFeatures": [
@@ -2787,9 +2484,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/hard-drive.svg"
+      "/images/products/surveillance-hdd.svg"
     ],
-    "primaryImage": "/images/products/hard-drive.svg",
+    "primaryImage": "/images/products/surveillance-hdd.svg",
     "shortDescription": "Built specifically for 24/7 continuous high-definition surveillance recording.",
     "description": "AllFrame technology reduces frame loss and improves video playback quality in security systems.",
     "keyFeatures": [
@@ -2846,9 +2543,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/hard-drive.svg"
+      "/images/products/surveillance-hdd.svg"
     ],
-    "primaryImage": "/images/products/hard-drive.svg",
+    "primaryImage": "/images/products/surveillance-hdd.svg",
     "shortDescription": "1TB 24/7 surveillance hard disk with AllFrame caching and 64MB cache buffer.",
     "description": "Handles write-heavy surveillance workloads up to 180 TB/year in home and retail security installations.",
     "keyFeatures": [
@@ -2905,9 +2602,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/hard-drive.svg"
+      "/images/products/surveillance-hdd.svg"
     ],
-    "primaryImage": "/images/products/hard-drive.svg",
+    "primaryImage": "/images/products/surveillance-hdd.svg",
     "shortDescription": "2TB enterprise surveillance drive with 64MB cache and tarnish-resistant components.",
     "description": "Designed for systems with up to 64 HD cameras. Provides 2-3 weeks continuous archival for typical 4-8 camera setups.",
     "keyFeatures": [
@@ -2964,9 +2661,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/hard-drive.svg"
+      "/images/products/surveillance-hdd.svg"
     ],
-    "primaryImage": "/images/products/hard-drive.svg",
+    "primaryImage": "/images/products/surveillance-hdd.svg",
     "shortDescription": "4TB surveillance hard drive with ImagePerfect firmware for crystal-clear video streaming.",
     "description": "Custom-built for NVR systems with built-in rotational vibration sensors for reliable multi-bay enclosures.",
     "keyFeatures": [
@@ -3424,9 +3121,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dome-camera.svg"
+      "/images/products/hikvision-dome.svg"
     ],
-    "primaryImage": "/images/products/dome-camera.svg",
+    "primaryImage": "/images/products/hikvision-dome.svg",
     "shortDescription": "All-metal eyeball camera with built-in microphone and 50m Smart IR illumination.",
     "description": "Rugged aluminum casing suited for harsh outdoor wall mounts or high-ceiling industrial rooms.",
     "keyFeatures": [
@@ -3492,9 +3189,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dvr-unit.svg"
+      "/images/products/hikvision-dvr.svg"
     ],
-    "primaryImage": "/images/products/dvr-unit.svg",
+    "primaryImage": "/images/products/hikvision-dvr.svg",
     "shortDescription": "32-channel high-density AI DVR supporting 4 SATA hard drives up to 40TB total.",
     "description": "Centralized recorder for hospitals, department stores, and large corporate campuses.",
     "keyFeatures": [
@@ -3552,9 +3249,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/dvr-unit.svg"
+      "/images/products/hikvision-dvr.svg"
     ],
-    "primaryImage": "/images/products/dvr-unit.svg",
+    "primaryImage": "/images/products/hikvision-dvr.svg",
     "shortDescription": "16-channel 5-in-1 digital video recorder with dual SATA bays and AI perimeter protection.",
     "description": "Offers 16 SMD Plus channels to detect people and vehicles accurately, preventing false motion triggers.",
     "keyFeatures": [
@@ -3730,9 +3427,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "websiteVisible": true,
     "posAvailable": true,
     "images": [
-      "/images/products/network-switch.svg"
+      "/images/products/ruijie-switch.svg"
     ],
-    "primaryImage": "/images/products/network-switch.svg",
+    "primaryImage": "/images/products/ruijie-switch.svg",
     "shortDescription": "Plug-and-play 5-port 10/100/1000 Mbps gigabit unmanaged compact desktop switch.",
     "description": "Cost-effective high-speed switch for home offices, cash registers, and small network clusters.",
     "keyFeatures": [
@@ -3775,6 +3472,742 @@ export const INITIAL_PRODUCTS: Product[] = [
     "sample": true,
     "createdAt": "2026-01-05T10:00:00.000Z",
     "updatedAt": "2026-02-15T10:00:00.000Z"
+  },
+  {
+    "id": "prod-wifi-c6n",
+    "name": "EZVIZ C6N 3MP Pan & Tilt Smart Wi-Fi Camera",
+    "modelNumber": "CS-C6N-D0-8B3WF",
+    "sku": "EZV-C6N-3MP",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Motorized 360-degree pan and tilt Wi-Fi camera with smart tracking, two-way audio, and infrared night vision up to 10m.",
+    "pricing": {
+      "regularPrice": 4200,
+      "salePrice": 3850,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "3MP (2K)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "5V USB-C",
+      "app_support": "EZVIZ App"
+    },
+    "inventory": {
+      "available": 25,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-h8c",
+    "name": "EZVIZ H8c 4MP 360° Outdoor Pan & Tilt Wi-Fi Camera",
+    "modelNumber": "CS-H8c-R100-1K4WKFL",
+    "sku": "EZV-H8C-4MP",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Weatherproof outdoor pan/tilt camera with AI human detection, color night vision, active defense siren, and strobe light.",
+    "pricing": {
+      "regularPrice": 9200,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 512GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "EZVIZ App"
+    },
+    "inventory": {
+      "available": 18,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-h3c",
+    "name": "EZVIZ H3c 2K Color Night Vision Outdoor Wi-Fi Camera",
+    "modelNumber": "CS-H3c-R100-1K3WKFL",
+    "sku": "EZV-H3C-3MP",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": false,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Reliable IP67 weatherproof outdoor bullet camera featuring color night vision and AI-powered human shape detection.",
+    "pricing": {
+      "regularPrice": 6500,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "3MP (2K)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 512GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "EZVIZ App"
+    },
+    "inventory": {
+      "available": 20,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-hik-pt",
+    "name": "Hikvision 2MP Indoor Pan & Tilt Wi-Fi Camera",
+    "modelNumber": "DS-2CV2Q21FD-IW",
+    "sku": "HIK-2CV2Q21-2MP",
+    "brandId": "brand-hikvision",
+    "brand": "Hikvision",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Dual-antenna indoor pan-tilt Wi-Fi camera with Hik-Connect cloud P2P, built-in microphone and speaker, and 10m IR.",
+    "pricing": {
+      "regularPrice": 5800,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "2MP (1080p)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "5V USB-C",
+      "app_support": "Hik-Connect"
+    },
+    "inventory": {
+      "available": 15,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-hik-bullet",
+    "name": "Hikvision 4MP Smart Wi-Fi Outdoor Bullet Camera",
+    "modelNumber": "DS-2CV1043G2-LIDW",
+    "sku": "HIK-2CV1043-4MP",
+    "brandId": "brand-hikvision",
+    "brand": "Hikvision",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": false,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "IP66 outdoor wireless bullet with smart dual lighting, onboard Wi-Fi range up to 120m in open field, and digital WDR.",
+    "pricing": {
+      "regularPrice": 8500,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "Hik-Connect"
+    },
+    "inventory": {
+      "available": 12,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-imou-ranger",
+    "name": "Imou Ranger 2 4MP Indoor 360° Wi-Fi Camera",
+    "modelNumber": "IPC-A42P-D",
+    "sku": "IMOU-RANGER2-4MP",
+    "brandId": "brand-dahua",
+    "brand": "Dahua",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "High-resolution 4MP pan and tilt camera with abnormal sound alarm, physical privacy shutter, and human detection.",
+    "pricing": {
+      "regularPrice": 4600,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": true,
+      "power_source": "5V USB-C",
+      "app_support": "DMSS / Imou Life"
+    },
+    "inventory": {
+      "available": 30,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-imou-bullet",
+    "name": "Imou Bullet 2C 4MP Weatherproof Outdoor Wi-Fi Camera",
+    "modelNumber": "IPC-F42P",
+    "sku": "IMOU-BULLET2C-4MP",
+    "brandId": "brand-dahua",
+    "brand": "Dahua",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": false,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "Weatherproof IP67 bullet camera with dual external antennas, built-in Wi-Fi hotspot mode, and 30m night vision.",
+    "pricing": {
+      "regularPrice": 5900,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "4MP (2K QHD)",
+      "wifi_band": "2.4 GHz",
+      "storage": "MicroSD up to 256GB",
+      "two_way_audio": false,
+      "power_source": "12V DC Plug-in",
+      "app_support": "DMSS / Imou Life"
+    },
+    "inventory": {
+      "available": 22,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-imou-cruiser",
+    "name": "Imou Cruiser 2 5MP 3K Outdoor PTZ Wi-Fi Camera",
+    "modelNumber": "IPC-GS7EP-5M0WE",
+    "sku": "IMOU-CRUISER2-5MP",
+    "brandId": "brand-dahua",
+    "brand": "Dahua",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "status": "active",
+    "isPopular": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "sample": true,
+    "description": "5MP 3K outdoor speed dome featuring full panoramic coverage, smart full-color night vision, and Wi-Fi 6 connectivity.",
+    "pricing": {
+      "regularPrice": 11500,
+      "currency": "BDT"
+    },
+    "specifications": {
+      "resolution": "5MP (3K)",
+      "wifi_band": "Wi-Fi 6",
+      "storage": "MicroSD up to 512GB",
+      "two_way_audio": true,
+      "power_source": "12V DC Plug-in",
+      "app_support": "DMSS / Imou Life"
+    },
+    "inventory": {
+      "available": 14,
+      "status": "in_stock"
+    },
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Wi-Fi Cameras",
+    "subcategorySlug": "wifi-cameras"
+  },
+  {
+    "id": "prod-wifi-db2",
+    "name": "EZVIZ DB2 2K Battery Video Doorbell with Chime",
+    "slug": "ezviz-db2-2k-battery-video-doorbell",
+    "modelNumber": "CS-DB2-A0-2C5WF",
+    "sku": "EZV-DB2-2K",
+    "brandId": "brand-ezviz",
+    "brand": "EZVIZ",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "shortDescription": "Wireless 2K smart video doorbell with wire-free battery installation and indoor chime.",
+    "description": "Crisp 2K resolution video doorbell featuring PIR human detection, ultra-wide 176° field of view, and included indoor wireless chime.",
+    "pricing": {
+      "regularPrice": 11500
+    },
+    "inventory": {
+      "available": 12,
+      "reserved": 0,
+      "lowStockThreshold": 3
+    },
+    "specifications": [
+      {
+        "key": "Resolution",
+        "value": "2K (2000 x 1504)"
+      },
+      {
+        "key": "Field of View",
+        "value": "176° Ultra-Wide Angle"
+      },
+      {
+        "key": "Night Vision",
+        "value": "Up to 5m Infrared"
+      },
+      {
+        "key": "Battery",
+        "value": "5200mAh Rechargeable"
+      },
+      {
+        "key": "Connectivity",
+        "value": "Wi-Fi 2.4GHz"
+      }
+    ],
+    "status": "active",
+    "websiteVisible": true,
+    "isPopular": true,
+    "subcategoryId": "subcat-video-doorbells",
+    "subcategory": "Video Doorbells",
+    "subcategorySlug": "video-doorbells"
+  },
+  {
+    "id": "prod-wifi-db1c",
+    "name": "EZVIZ DB1C 1080p Smart Wi-Fi Video Doorbell",
+    "shortName": "EZVIZ DB1C Video Doorbell",
+    "brand": "EZVIZ",
+    "brandId": "b-hikvision",
+    "modelNumber": "CS-DB1C-A0-1E2W2FR",
+    "sku": "EZVIZ-DB1C-1080P",
+    "category": "Wi-Fi / Smart Devices",
+    "categoryId": "cat-wifi",
+    "subcategory": "Video Doorbells",
+    "subcategoryId": "subcat-video-doorbells",
+    "subcategorySlug": "video-doorbells",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "images": [
+      "/images/products/smart-doorbell.svg"
+    ],
+    "primaryImage": "/images/products/smart-doorbell.svg",
+    "shortDescription": "1080p Full HD video doorbell with AI human detection, 170° vertical field of view, and two-way audio talk.",
+    "description": "Compact weatherproof smart doorbell featuring dual-band 2.4/5GHz Wi-Fi connectivity and night vision up to 5 meters. Free EZVIZ app push notifications on doorstep rings.",
+    "keyFeatures": [
+      "1080p Full HD Video",
+      "170° Vertical Viewing Angle",
+      "AI-Powered Human Detection",
+      "Dual-Band 2.4 & 5 GHz Wi-Fi",
+      "IP65 Weather Resistance"
+    ],
+    "specifications": {
+      "resolution": "1080p",
+      "field_of_view": "170° Vertical",
+      "audio": "Two-Way Talk",
+      "wifi": "Dual-Band 2.4/5GHz"
+    },
+    "specs": {
+      "resolution": {
+        "label": "Resolution",
+        "value": "1080p",
+        "highlightValue": "1080p FHD",
+        "showInHighlights": true
+      },
+      "viewingAngle": {
+        "label": "FOV",
+        "value": "170°",
+        "highlightValue": "170° Vertical",
+        "showInHighlights": true
+      },
+      "audio": {
+        "label": "Audio",
+        "value": "Two-Way",
+        "highlightValue": "Two-Way Talk",
+        "showInHighlights": true
+      }
+    },
+    "pricing": {
+      "regularPrice": 8500,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "trackQuantity": true,
+      "available": 12
+    },
+    "unit": "Piece",
+    "warrantyMonths": 12,
+    "isFeatured": false,
+    "isPopular": true,
+    "isDemo": true,
+    "sample": true,
+    "createdAt": "2026-03-25T10:00:00.000Z",
+    "updatedAt": "2026-03-25T10:00:00.000Z"
+  },
+  {
+    "id": "prod-wifi-light-lb1",
+    "name": "EZVIZ LB1 Smart Color LED Wi-Fi Bulb (E27)",
+    "shortName": "EZVIZ LB1 Color Smart Bulb",
+    "brand": "EZVIZ",
+    "brandId": "b-hikvision",
+    "modelNumber": "CS-HAL-LB1-LHAW",
+    "sku": "EZVIZ-LB1-RGB",
+    "category": "Wi-Fi / Smart Devices",
+    "categoryId": "cat-wifi",
+    "subcategory": "Smart Lights",
+    "subcategoryId": "subcat-smart-lights",
+    "subcategorySlug": "smart-lights",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "images": [
+      "/images/products/smart-light.svg"
+    ],
+    "primaryImage": "/images/products/smart-light.svg",
+    "shortDescription": "Dimmable multicolor smart LED bulb with 16 million colors, 806 lumens brightness, and direct smartphone scheduling.",
+    "description": "Energy-saving 8W smart bulb fitting standard E27 sockets. Connects directly to 2.4GHz Wi-Fi with no hub required. Supports Alexa and Google Assistant voice automation.",
+    "keyFeatures": [
+      "16 Million Colors + Tunable White",
+      "806 Lumens Dimmable Brightness",
+      "No Hub Required (2.4GHz Wi-Fi)",
+      "Timer & Automation Schedules",
+      "Voice Control Compatible"
+    ],
+    "specifications": {
+      "brightness": "806 Lumens",
+      "fitting": "E27",
+      "power": "8W LED",
+      "connectivity": "2.4GHz Wi-Fi"
+    },
+    "specs": {
+      "brightness": {
+        "label": "Brightness",
+        "value": "806 Lumens",
+        "highlightValue": "806 Lumens",
+        "showInHighlights": true
+      },
+      "colors": {
+        "label": "Colors",
+        "value": "16 Million RGB",
+        "highlightValue": "16M Colors",
+        "showInHighlights": true
+      },
+      "fitting": {
+        "label": "Socket",
+        "value": "E27 Base",
+        "highlightValue": "E27 Fitting",
+        "showInHighlights": true
+      }
+    },
+    "pricing": {
+      "regularPrice": 1650,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "trackQuantity": true,
+      "available": 25
+    },
+    "unit": "Piece",
+    "warrantyMonths": 12,
+    "isFeatured": false,
+    "isPopular": true,
+    "isDemo": true,
+    "sample": true,
+    "createdAt": "2026-03-25T10:00:00.000Z",
+    "updatedAt": "2026-03-25T10:00:00.000Z"
+  },
+  {
+    "id": "prod-wifi-light-strip",
+    "name": "EZVIZ T30-A Smart Wi-Fi RGB Light Strip (5 Meters)",
+    "shortName": "EZVIZ 5m RGB Smart Strip",
+    "brand": "EZVIZ",
+    "brandId": "b-hikvision",
+    "modelNumber": "CS-HAL-LS1-5M",
+    "sku": "EZVIZ-LS1-STRIP-5M",
+    "category": "Wi-Fi / Smart Devices",
+    "categoryId": "cat-wifi",
+    "subcategory": "Smart Lights",
+    "subcategoryId": "subcat-smart-lights",
+    "subcategorySlug": "smart-lights",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "images": [
+      "/images/products/smart-light.svg"
+    ],
+    "primaryImage": "/images/products/smart-light.svg",
+    "shortDescription": "Flexible 5-meter adhesive RGB light strip with music sync, custom scene illumination, and app control.",
+    "description": "Customizable accent strip for TV backlighting, false ceilings, and ambient displays. Cuttable every 10cm with included high-tack mounting tape.",
+    "keyFeatures": [
+      "5 Meters Flexible Length",
+      "Music Rhythm Sync Mode",
+      "Cuttable and Expandable",
+      "App Remote Dimming & Scenes"
+    ],
+    "specifications": {
+      "length": "5 Meters",
+      "colors": "RGBIC",
+      "connectivity": "Wi-Fi 2.4GHz"
+    },
+    "specs": {
+      "length": {
+        "label": "Length",
+        "value": "5 Meters",
+        "highlightValue": "5m Strip",
+        "showInHighlights": true
+      },
+      "sync": {
+        "label": "Feature",
+        "value": "Music Sync",
+        "highlightValue": "Music Sync",
+        "showInHighlights": true
+      }
+    },
+    "pricing": {
+      "regularPrice": 2950,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "trackQuantity": true,
+      "available": 15
+    },
+    "unit": "Set",
+    "warrantyMonths": 12,
+    "isFeatured": false,
+    "isPopular": false,
+    "isDemo": true,
+    "sample": true,
+    "createdAt": "2026-03-25T10:00:00.000Z",
+    "updatedAt": "2026-03-25T10:00:00.000Z"
+  },
+  {
+    "id": "prod-wifi-plug-t30",
+    "name": "EZVIZ T30-10B Smart Wi-Fi Plug with Power Metering",
+    "shortName": "EZVIZ T30 Smart Wi-Fi Plug",
+    "brand": "EZVIZ",
+    "brandId": "b-hikvision",
+    "modelNumber": "CS-T30-10B-EU",
+    "sku": "EZVIZ-T30-PLUG-10A",
+    "category": "Wi-Fi / Smart Devices",
+    "categoryId": "cat-wifi",
+    "subcategory": "Smart Plugs & Switches",
+    "subcategoryId": "subcat-smart-plugs",
+    "subcategorySlug": "smart-plugs-switches",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "images": [
+      "/images/products/smart-plug.svg"
+    ],
+    "primaryImage": "/images/products/smart-plug.svg",
+    "shortDescription": "Compact 10A smart wall plug with energy consumption monitoring, countdown timers, and flame-retardant housing.",
+    "description": "Control AC appliances, water heaters, and chargers remotely from anywhere. Displays real-time wattage and kilowatt-hour tracking in the EZVIZ mobile app.",
+    "keyFeatures": [
+      "Real-Time Energy Metering",
+      "2300W Maximum Power Capacity",
+      "App Remote On/Off & Timers",
+      "Flame-Retardant 750°C Material"
+    ],
+    "specifications": {
+      "max_load": "10A / 2300W",
+      "voltage": "220-240V AC",
+      "connectivity": "2.4GHz Wi-Fi"
+    },
+    "specs": {
+      "maxLoad": {
+        "label": "Max Load",
+        "value": "10A / 2300W",
+        "highlightValue": "10A 2300W",
+        "showInHighlights": true
+      },
+      "metering": {
+        "label": "Energy",
+        "value": "Live Metering",
+        "highlightValue": "Power Meter",
+        "showInHighlights": true
+      }
+    },
+    "pricing": {
+      "regularPrice": 1450,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "trackQuantity": true,
+      "available": 30
+    },
+    "unit": "Piece",
+    "warrantyMonths": 12,
+    "isFeatured": true,
+    "isPopular": true,
+    "isDemo": true,
+    "sample": true,
+    "createdAt": "2026-03-25T10:00:00.000Z",
+    "updatedAt": "2026-03-25T10:00:00.000Z"
+  },
+  {
+    "id": "prod-wifi-lock-dl01",
+    "name": "EZVIZ DL01S Smart Keyless Entry Deadbolt Lock",
+    "shortName": "EZVIZ DL01S Smart Deadbolt",
+    "brand": "EZVIZ",
+    "brandId": "b-hikvision",
+    "modelNumber": "CS-DL01S",
+    "sku": "EZVIZ-DL01S-LOCK",
+    "category": "Wi-Fi / Smart Devices",
+    "categoryId": "cat-wifi",
+    "subcategory": "Smart Locks",
+    "subcategoryId": "subcat-smart-locks",
+    "subcategorySlug": "smart-locks",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "images": [
+      "/images/products/smart-lock.svg"
+    ],
+    "primaryImage": "/images/products/smart-lock.svg",
+    "shortDescription": "Keyless retrofit smart lock with digital keypad, temporary visitor passcodes, and auto-lock sensor.",
+    "description": "Fits over existing door deadbolts for fast 15-minute installation. Control access via Bluetooth or paired Wi-Fi gateway with real-time unlock logs.",
+    "keyFeatures": [
+      "Keypad Passcode & App Unlock",
+      "Temporary Visitor Access Codes",
+      "Door Status Auto-Lock Sensor",
+      "Emergency Power Interface"
+    ],
+    "specifications": {
+      "lock_type": "Deadbolt Retrofit",
+      "battery": "4 x AA Alkaline",
+      "connectivity": "Bluetooth & Wi-Fi"
+    },
+    "specs": {
+      "unlockMethod": {
+        "label": "Access",
+        "value": "Passcode & App",
+        "highlightValue": "Keypad + App",
+        "showInHighlights": true
+      },
+      "battery": {
+        "label": "Battery",
+        "value": "4x AA Batteries",
+        "highlightValue": "1-Year Life",
+        "showInHighlights": true
+      }
+    },
+    "pricing": {
+      "regularPrice": 16800,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "trackQuantity": true,
+      "available": 6
+    },
+    "unit": "Set",
+    "warrantyMonths": 18,
+    "isFeatured": true,
+    "isPopular": false,
+    "isDemo": true,
+    "sample": true,
+    "createdAt": "2026-03-25T10:00:00.000Z",
+    "updatedAt": "2026-03-25T10:00:00.000Z"
+  },
+  {
+    "id": "prod-wifi-lock-dl05",
+    "name": "EZVIZ DL05 Biometric Smart Door Lock with Fingerprint Scanner",
+    "shortName": "EZVIZ DL05 Biometric Lock",
+    "brand": "EZVIZ",
+    "brandId": "b-hikvision",
+    "modelNumber": "CS-DL05-PRO",
+    "sku": "EZVIZ-DL05-FINGERPRINT",
+    "category": "Wi-Fi / Smart Devices",
+    "categoryId": "cat-wifi",
+    "subcategory": "Smart Locks",
+    "subcategoryId": "subcat-smart-locks",
+    "subcategorySlug": "smart-locks",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "images": [
+      "/images/products/smart-lock.svg"
+    ],
+    "primaryImage": "/images/products/smart-lock.svg",
+    "shortDescription": "Commercial biometric smart lock with semiconductor fingerprint sensor, anti-peep keypad, and IC card keys.",
+    "description": "Heavy-duty zinc alloy exterior door lock with integrated doorbell chime, emergency mechanical key cylinder, and remote unlocking.",
+    "keyFeatures": [
+      "0.3s Rapid Fingerprint Recognition",
+      "Anti-Peep Virtual Password Entry",
+      "RFID Card & Smartphone App Unlock",
+      "Built-in Doorbell & Tamper Alarm"
+    ],
+    "specifications": {
+      "fingerprint_capacity": "50 Users",
+      "material": "Zinc Alloy",
+      "connectivity": "Wi-Fi 2.4GHz"
+    },
+    "specs": {
+      "biometrics": {
+        "label": "Fingerprint",
+        "value": "0.3s Sensor",
+        "highlightValue": "Biometric 0.3s",
+        "showInHighlights": true
+      },
+      "material": {
+        "label": "Chassis",
+        "value": "Zinc Alloy",
+        "highlightValue": "Zinc Alloy",
+        "showInHighlights": true
+      }
+    },
+    "pricing": {
+      "regularPrice": null,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "trackQuantity": true,
+      "available": 4
+    },
+    "unit": "Set",
+    "warrantyMonths": 24,
+    "isFeatured": true,
+    "isPopular": true,
+    "isDemo": true,
+    "sample": true,
+    "createdAt": "2026-03-25T10:00:00.000Z",
+    "updatedAt": "2026-03-25T10:00:00.000Z"
   }
 ];
 

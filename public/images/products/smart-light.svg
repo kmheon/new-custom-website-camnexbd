@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#F4EEE6"/>
+    </linearGradient>
+    <radialGradient id="bulbGlow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="40%" stop-color="#FDE047"/>
+      <stop offset="75%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </radialGradient>
+    <linearGradient id="collarGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="screwGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#94A3B8"/>
+      <stop offset="50%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#64748B"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="24" fill="url(#bgLight)"/>
+
+  <!-- Radiating Ambient Glow Rings -->
+  <circle cx="200" cy="155" r="140" fill="none" stroke="#FDE047" stroke-width="1.5" stroke-dasharray="6 8" opacity="0.4"/>
+  <circle cx="200" cy="155" r="115" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.3"/>
+
+  <!-- Bulb Glass Enclosure -->
+  <path d="M 140 155 C 140 100 170 80 200 80 C 230 80 260 100 260 155 C 260 185 240 205 235 230 L 165 230 C 160 205 140 185 140 155 Z" 
+        fill="url(#bulbGlow)" stroke="#F59E0B" stroke-width="2"/>
+
+  <!-- Inner Soft LED Filament / Wi-Fi Smart Core -->
+  <circle cx="200" cy="150" r="28" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="200" cy="150" r="18" fill="#FDE047"/>
+  <path d="M 194 144 Q 200 138 206 144 M 190 148 Q 200 134 210 148" fill="none" stroke="#F15A24" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Smart Thermal Body / Base Collar -->
+  <path d="M 165 230 L 235 230 L 230 265 L 170 265 Z" fill="url(#collarGrad)" stroke="#CBD5E1" stroke-width="2"/>
+  <!-- Decorative Cooling Ribs -->
+  <line x1="185" y1="233" x2="185" y2="262" stroke="#94A3B8" stroke-width="1.5"/>
+  <line x1="200" y1="233" x2="200" y2="262" stroke="#F15A24" stroke-width="2"/>
+  <line x1="215" y1="233" x2="215" y2="262" stroke="#94A3B8" stroke-width="1.5"/>
+
+  <!-- E27 Screw Base Thread -->
+  <rect x="175" y="265" width="50" height="7" rx="3" fill="url(#screwGrad)"/>
+  <rect x="175" y="274" width="50" height="7" rx="3" fill="url(#screwGrad)"/>
+  <rect x="176" y="283" width="48" height="7" rx="3" fill="url(#screwGrad)"/>
+  <path d="M 183 292 C 183 298 217 298 217 292 Z" fill="#475569"/>
+</svg>
+

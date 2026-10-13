@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgDoorbell" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2"/>
+      <stop offset="100%" stop-color="#F4EEE6"/>
+    </linearGradient>
+    <linearGradient id="bellBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <radialGradient id="lensRing" cx="45%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="70%" stop-color="#0369A1"/>
+      <stop offset="100%" stop-color="#082F49"/>
+    </radialGradient>
+    <radialGradient id="buttonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F15A24"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="400" rx="24" fill="url(#bgDoorbell)"/>
+
+  <!-- Radio wave arcs indicating Wi-Fi transmission -->
+  <path d="M 140 70 Q 200 45 260 70" fill="none" stroke="#F15A24" stroke-width="2" stroke-dasharray="6 6" opacity="0.3"/>
+  <path d="M 155 85 Q 200 65 245 85" fill="none" stroke="#F15A24" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
+
+  <!-- Doorbell Chime / Main Outer Body -->
+  <rect x="135" y="90" width="130" height="230" rx="26" fill="url(#bellBody)" stroke="#334155" stroke-width="3"/>
+  <rect x="140" y="95" width="120" height="220" rx="22" fill="none" stroke="#475569" stroke-width="1" opacity="0.6"/>
+
+  <!-- Top Gloss / Bezel -->
+  <rect x="145" y="102" width="110" height="96" rx="16" fill="#020617"/>
+
+  <!-- Camera Optical Lens Assembly -->
+  <circle cx="200" cy="150" r="32" fill="#0F172A" stroke="#334155" stroke-width="2"/>
+  <circle cx="200" cy="150" r="24" fill="url(#lensRing)"/>
+  <circle cx="200" cy="150" r="12" fill="#020617"/>
+  <circle cx="196" cy="146" r="4" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="204" cy="154" r="2" fill="#38BDF8" opacity="0.8"/>
+
+  <!-- PIR Motion Sensor Dome -->
+  <ellipse cx="200" cy="208" rx="14" ry="7" fill="#1E293B" stroke="#475569" stroke-width="1.5"/>
+
+  <!-- Status Microphone / Speaker Perforations -->
+  <circle cx="185" cy="225" r="1.5" fill="#64748B"/>
+  <circle cx="195" cy="225" r="1.5" fill="#64748B"/>
+  <circle cx="205" cy="225" r="1.5" fill="#64748B"/>
+  <circle cx="215" cy="225" r="1.5" fill="#64748B"/>
+
+  <!-- Bottom Call Button with Illuminated LED Halo -->
+  <circle cx="200" cy="268" r="26" fill="none" stroke="#F15A24" stroke-width="2.5" opacity="0.85"/>
+  <circle cx="200" cy="268" r="20" fill="url(#buttonGlow)"/>
+  <!-- Bell Icon Symbol inside Button -->
+  <path d="M 194 270 C 194 263 206 263 206 270 L 208 273 L 192 273 Z M 198 274 A 2 2 0 0 0 202 274" fill="#FFFFFF"/>
+</svg>
+
