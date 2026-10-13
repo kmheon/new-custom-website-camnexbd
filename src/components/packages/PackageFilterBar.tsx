@@ -198,7 +198,7 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
                     tabIndex={isActive ? 0 : -1}
                     onKeyDown={(e) => handleSegmentKeyDown(e, idx)}
                     onClick={() => onFilterChange({ ...filters, systemSlug: seg.slug, page: 1 })}
-                    className={`h-[38px] px-3 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 min-w-[70px] whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                    className={`h-[44px] min-[1100px]:h-[38px] px-3 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 min-w-[70px] whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
                       isActive
                         ? 'bg-[#F15A24] text-white shadow-xs'
                         : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
@@ -252,137 +252,140 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
           </div>
         )}
 
-        {/* MIDDLE: Selects (Cameras & Night vision) */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 shrink-0">
-          {/* GROUP 2: Cameras Select */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-            <label
-              htmlFor="filter-cameras"
-              className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
-            >
-              Cameras
-            </label>
-            <div className="relative w-full sm:w-[185px] h-[38px]">
-              <select
-                id="filter-cameras"
-                aria-label="Filter packages by camera count"
-                value={filters.cameraCount || 'All'}
-                onChange={(e) => onFilterChange({ ...filters, cameraCount: e.target.value, page: 1 })}
-                className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+        {/* ROW 2 on tablet, ROW 2+3 on mobile, INLINE on desktop */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between w-full min-[1100px]:w-auto gap-3 min-[1100px]:gap-4 shrink-0">
+          {/* Selects: side by side on mobile (grid-cols-2) and tablet/desktop (flex-row) */}
+          <div className="grid grid-cols-2 md:flex md:flex-row items-stretch md:items-center gap-2.5 sm:gap-3 shrink-0">
+            {/* GROUP 2: Cameras Select */}
+            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+              <label
+                htmlFor="filter-cameras"
+                className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
               >
-                {options.cameraCounts.map((opt) => (
-                  <option
-                    key={opt.value}
-                    value={opt.value}
-                    disabled={opt.disabled}
-                    title={opt.disabled ? 'No packages' : undefined}
-                  >
-                    {opt.label} ({opt.count})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* GROUP 3: Night vision Select */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-            <label
-              htmlFor="filter-night-view"
-              className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
-            >
-              Night vision
-            </label>
-            <div className="relative w-full sm:w-[185px] h-[38px]">
-              <select
-                id="filter-night-view"
-                aria-label="Filter packages by night vision"
-                value={filters.nightViewSlug || 'all'}
-                onChange={(e) => onFilterChange({ ...filters, nightViewSlug: e.target.value, page: 1 })}
-                className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-              >
-                {options.nightViews.map((opt) => (
-                  <option
-                    key={opt.slug}
-                    value={opt.slug}
-                    disabled={opt.disabled}
-                    title={opt.disabled ? 'No packages' : undefined}
-                  >
-                    {opt.label} ({opt.count})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* FULL VARIANT: Extra "More filters" button & Sort select */}
-          {variant === 'full' && (
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowMoreFilters(!showMoreFilters)}
-                className={`h-[38px] px-3.5 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
-                  secondaryFilterCount > 0 || showMoreFilters
-                    ? 'bg-orange-50 text-[#F15A24] border border-[#F15A24]'
-                    : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>More filters</span>
-                {secondaryFilterCount > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-[#F15A24] text-white text-[11px] font-bold flex items-center justify-center ml-0.5">
-                    {secondaryFilterCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Sort Select */}
-              <div className="relative min-w-[150px] h-[38px]">
+                Cameras
+              </label>
+              <div className="relative w-full md:w-[170px] min-[1100px]:w-[185px] h-[44px] min-[1100px]:h-[38px]">
                 <select
-                  aria-label="Sort packages"
-                  value={filters.sortBy || 'recommended'}
-                  onChange={(e) => onFilterChange({ ...filters, sortBy: e.target.value, page: 1 })}
-                  className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                  id="filter-cameras"
+                  aria-label="Filter packages by camera count"
+                  value={filters.cameraCount || 'All'}
+                  onChange={(e) => onFilterChange({ ...filters, cameraCount: e.target.value, page: 1 })}
+                  className="w-full h-[44px] min-[1100px]:h-[38px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
                 >
-                  <option value="recommended">Recommended</option>
-                  <option value="price-asc">Price low to high</option>
-                  <option value="price-desc">Price high to low</option>
-                  <option value="cameras-asc">Cameras low to high</option>
-                  <option value="newest">Newest</option>
+                  {options.cameraCounts.map((opt) => (
+                    <option
+                      key={opt.value}
+                      value={opt.value}
+                      disabled={opt.disabled}
+                      title={opt.disabled ? 'No packages' : undefined}
+                    >
+                      {opt.label} ({opt.count})
+                    </option>
+                  ))}
                 </select>
-                <ArrowUpDown className="w-3.5 h-3.5 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
-          )}
-        </div>
 
-        {/* RIGHT END: "Showing X of Y" + Clear text button (Reserved width) */}
-        <div
-          data-slot="filterbar-counter"
-          className="min-w-[150px] shrink-0 flex items-center justify-between sm:justify-end gap-3 h-[38px] pt-2 sm:pt-0 border-t border-[#EDE8E1] min-[1100px]:border-0"
-        >
-          <span className="text-[14px] text-[#5B6472] whitespace-nowrap">
-            Showing <strong className="font-bold text-[#111827]">{shownCount}</strong> of{' '}
-            <strong className="font-bold text-[#111827]">{totalCount}</strong>
-          </span>
+            {/* GROUP 3: Night vision Select */}
+            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+              <label
+                htmlFor="filter-night-view"
+                className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
+              >
+                Night vision
+              </label>
+              <div className="relative w-full md:w-[170px] min-[1100px]:w-[185px] h-[44px] min-[1100px]:h-[38px]">
+                <select
+                  id="filter-night-view"
+                  aria-label="Filter packages by night vision"
+                  value={filters.nightViewSlug || 'all'}
+                  onChange={(e) => onFilterChange({ ...filters, nightViewSlug: e.target.value, page: 1 })}
+                  className="w-full h-[44px] min-[1100px]:h-[38px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                >
+                  {options.nightViews.map((opt) => (
+                    <option
+                      key={opt.slug}
+                      value={opt.slug}
+                      disabled={opt.disabled}
+                      title={opt.disabled ? 'No packages' : undefined}
+                    >
+                      {opt.label} ({opt.count})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
 
-          {isFilterActive && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="text-[14px] font-semibold text-[#F15A24] hover:underline cursor-pointer whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#F15A24] rounded px-1"
-            >
-              Clear
-            </button>
-          )}
+            {/* FULL VARIANT: Extra "More filters" button & Sort select */}
+            {variant === 'full' && (
+              <div className="col-span-2 md:col-span-1 flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowMoreFilters(!showMoreFilters)}
+                  className={`h-[38px] px-3.5 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                    secondaryFilterCount > 0 || showMoreFilters
+                      ? 'bg-orange-50 text-[#F15A24] border border-[#F15A24]'
+                      : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>More filters</span>
+                  {secondaryFilterCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-[#F15A24] text-white text-[11px] font-bold flex items-center justify-center ml-0.5">
+                      {secondaryFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Sort Select */}
+                <div className="relative min-w-[140px] h-[38px]">
+                  <select
+                    aria-label="Sort packages"
+                    value={filters.sortBy || 'recommended'}
+                    onChange={(e) => onFilterChange({ ...filters, sortBy: e.target.value, page: 1 })}
+                    className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                  >
+                    <option value="recommended">Recommended</option>
+                    <option value="price-asc">Price low to high</option>
+                    <option value="price-desc">Price high to low</option>
+                    <option value="cameras-asc">Cameras low to high</option>
+                    <option value="newest">Newest</option>
+                  </select>
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Counter + Clear: right-aligned on tablet & desktop, bottom row on mobile */}
+          <div
+            data-slot="filterbar-counter"
+            className="min-w-[140px] shrink-0 flex items-center justify-between md:justify-end gap-3 h-[38px] pt-2 md:pt-0 border-t border-[#EDE8E1] md:border-0"
+          >
+            <span className="text-[14px] text-[#5B6472] whitespace-nowrap">
+              Showing <strong className="font-bold text-[#111827]">{shownCount}</strong> of{' '}
+              <strong className="font-bold text-[#111827]">{totalCount}</strong>
+            </span>
+
+            {isFilterActive && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="text-[14px] font-semibold text-[#F15A24] hover:underline cursor-pointer whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#F15A24] rounded px-1"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* MOBILE / TABLET ONLY: One-line plain-language description of selected system type below bar */}
+      {/* MOBILE ONLY (< 768px): One-line plain-language description of selected system type below bar with reserved height */}
       <div
         data-slot="system-type-description"
-        className="block min-[1100px]:hidden text-[14px] text-[#5B6472] min-h-[20px] mt-2 px-1 text-left"
+        className="block md:hidden text-[14px] text-[#5B6472] min-h-[22px] mt-2 px-1 text-left"
       >
         {selectedSystemDescription}
       </div>
