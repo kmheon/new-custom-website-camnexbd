@@ -1401,106 +1401,93 @@ app.delete(['/api/spec-templates/:id', '/api/admin/spec-templates/:id'], require
 // 5. PACKAGES REST APIs
 // ============================================================================
 
-function calculateDynamicPackagePrice(packageId, cameraCount = 4, formFactor = 'bullet') {
-  const count = parseInt(cameraCount, 10) || 4;
+function calculateDynamicPackagePrice(packageId, cameraCount = null, formFactor = 'bullet') {
+  const pkgRow = db.prepare('SELECT data_json FROM packages WHERE id = ? OR slug = ?').get(packageId, packageId);
+  const pkg = pkgRow ? JSON.parse(pkgRow.data_json) : null;
   const ff = (formFactor || 'bullet').toLowerCase();
-  const pkgId = (packageId || '').toLowerCase();
-  const isColorPackage = pkgId.includes('color');
 
-  // 1. Determine component SKU requirements according to package type and engineering rules
-  let camSku = (ff === 'dome' || ff === 'turret') ? 'prod-hik-dome-2mp' : 'prod-hik-irpf-2mp';
-  if (isColorPackage) {
-    camSku = (ff === 'dome' || ff === 'turret') ? 'prod-hik-color-dome-2mp' : 'prod-hik-color-2mp';
+  if (pkg && Array.isArray(pkg.components) && pkg.components.length > 0) {
+    const supportedCounts = pkg.cameraCountsSupported || (pkg.cameraCount ? [pkg.cameraCount] : []);
+    const targetCount = cameraCount != null ? parseInt(cameraCount, 10) : pkg.cameraCount;
+
+    // Check if requested cameraCount is outside supported counts
+    let quotationRequired = Boolean(pkg.isQuoteOnly);
+    if (cameraCount != null && supportedCounts.length > 0 && !supportedCounts.includes(targetCount)) {
+      quotationRequired = true;
+    }
+
+    const missingComponents = [];
+    let totalPrice = 0;
+    const baseCamCount = pkg.cameraCount || 4;
+
+    const components = pkg.components.map(item => {
+      let qty = item.qty;
+      let sku = item.sku;
+      let name = item.name;
+      const isCamera = item.name.toLowerCase().includes('camera');
+
+      if (isCamera && cameraCount != null) {
+        qty = targetCount;
+        if ((ff === 'dome' || ff === 'turret') && sku === 'prod-hik-irpf-2mp') {
+          sku = 'prod-hik-dome-2mp';
+          name = 'Hikvision 2MP Indoor Audio Turret Dome Camera';
+        } else if (ff === 'bullet' && sku === 'prod-hik-dome-2mp') {
+          sku = 'prod-hik-irpf-2mp';
+          name = 'Hikvision 2MP Audio Fixed Mini Bullet Camera';
+        }
+      } else if (item.name.toLowerCase().includes('cable') && cameraCount != null) {
+        qty = Math.round(item.qty * (targetCount / baseCamCount));
+      } else if ((item.name.toLowerCase().includes('balun') || item.name.toLowerCase().includes('connector')) && cameraCount != null) {
+        qty = targetCount;
+      }
+
+      let unitPrice = item.unitPrice;
+      if (sku) {
+        const prod = db.prepare('SELECT price FROM products WHERE id = ? OR sku = ?').get(sku, sku);
+        if (prod && prod.price != null && prod.price > 0) {
+          unitPrice = prod.price;
+        }
+      }
+
+      if (unitPrice == null) {
+        quotationRequired = true;
+        missingComponents.push(name);
+        return {
+          name,
+          sku,
+          qty,
+          unitPrice: null,
+          lineTotal: null
+        };
+      } else {
+        const lineTotal = unitPrice * qty;
+        totalPrice += lineTotal;
+        return {
+          name,
+          sku,
+          qty,
+          unitPrice,
+          lineTotal
+        };
+      }
+    });
+
+    return {
+      totalPrice: quotationRequired ? null : totalPrice,
+      quotationRequired,
+      quotationReason: quotationRequired
+        ? `One or more components (${missingComponents.join(', ') || 'unsupported capacity'}) require an engineering quotation.`
+        : null,
+      components
+    };
   }
 
-  let dvrSku;
-  if (count <= 4) dvrSku = 'prod-hik-dvr-4ch';
-  else if (count <= 8) dvrSku = 'prod-hik-dvr-8ch';
-  else dvrSku = 'prod-hik-dvr-16ch';
-
-  let hddSku;
-  if (count <= 4) hddSku = 'prod-wd-purple-500gb';
-  else if (count <= 8) hddSku = 'prod-wd-purple-1tb';
-  else hddSku = 'prod-wd-purple-2tb';
-
-  const cableSku = 'cable-cat6';
-  const cableMeters = count * 10;
-
-  const powerSku = count > 8 ? 'acc-power-16ch' : 'acc-power';
-  const powerQty = 1;
-
-  const balunSku = 'acc-balun';
-  const balunQty = count;
-
-  const bomSpec = [
-    { role: 'camera', sku: camSku, qty: count, fallbackName: `Hikvision 2MP ${ff.toUpperCase()} Camera` },
-    { role: 'recorder', sku: dvrSku, qty: 1, fallbackName: `Hikvision Turbo HD DVR (${count > 8 ? '16-Ch' : count > 4 ? '8-Ch' : '4-Ch'})` },
-    { role: 'storage', sku: hddSku, qty: 1, fallbackName: `Western Digital Purple Surveillance HDD (${count >= 16 ? '2TB' : count >= 8 ? '1TB' : '500GB'})` },
-    { role: 'cable', sku: cableSku, qty: cableMeters, fallbackName: `Cat6 UTP Cable (${cableMeters}m)` },
-    { role: 'power', sku: powerSku, qty: powerQty, fallbackName: 'Centralized 12V Regulated DC Power Supply Unit' },
-    { role: 'connectors', sku: balunSku, qty: balunQty, fallbackName: `HD Video Baluns & DC Connectors (${balunQty} Sets)` }
-  ];
-
-  let quotationRequired = false;
-  const missingComponents = [];
-  let totalPrice = 0;
-
-  const components = bomSpec.map(item => {
-    // Dynamic lookup directly from SQLite products table
-    const row = db.prepare('SELECT id, name, model_number, sku, price, data_json FROM products WHERE id = ? OR sku = ?').get(item.sku, item.sku);
-    let name = item.fallbackName;
-    let model = item.sku;
-    let unitPrice = null;
-
-    if (row) {
-      name = row.name || name;
-      model = row.model_number || row.sku || model;
-      if (row.price !== null && row.price !== undefined && row.price > 0) {
-        unitPrice = row.price;
-      } else {
-        try {
-          const data = JSON.parse(row.data_json || '{}');
-          if (data.pricing?.regularPrice && data.pricing.regularPrice > 0) {
-            unitPrice = data.pricing.regularPrice;
-          }
-        } catch (_) {}
-      }
-    }
-
-    if (unitPrice === null || unitPrice === undefined) {
-      quotationRequired = true;
-      missingComponents.push(name);
-      return {
-        role: item.role,
-        sku: item.sku,
-        name,
-        model,
-        qty: item.qty,
-        unitPrice: null,
-        lineTotal: null
-      };
-    } else {
-      const lineTotal = unitPrice * item.qty;
-      totalPrice += lineTotal;
-      return {
-        role: item.role,
-        sku: item.sku,
-        name,
-        model,
-        qty: item.qty,
-        unitPrice,
-        lineTotal
-      };
-    }
-  });
-
+  // Fallback if package has no components defined
   return {
-    totalPrice: quotationRequired ? null : totalPrice,
-    quotationRequired,
-    quotationReason: quotationRequired
-      ? `One or more components (${missingComponents.join(', ')}) do not have standard published pricing and require an engineering quotation.`
-      : null,
-    components
+    totalPrice: pkg ? pkg.basePrice : null,
+    quotationRequired: pkg ? Boolean(pkg.isQuoteOnly) : true,
+    quotationReason: null,
+    components: []
   };
 }
 
@@ -1509,14 +1496,12 @@ app.get('/api/packages', (req, res) => {
     const rows = db.prepare('SELECT data_json FROM packages WHERE is_active = 1').all();
     const pkgs = rows.map(r => {
       const pkg = JSON.parse(r.data_json);
-      const minCameras = Array.isArray(pkg.cameraCountsSupported) && pkg.cameraCountsSupported.length > 0
-        ? Math.min(...pkg.cameraCountsSupported)
-        : (pkg.cameraCount || 4);
-      const dynamicBase = calculateDynamicPackagePrice(pkg.id, minCameras, 'bullet');
+      const dynamic = calculateDynamicPackagePrice(pkg.id);
       return {
         ...pkg,
-        basePrice: dynamicBase.totalPrice,
-        quotationRequired: dynamicBase.quotationRequired
+        basePrice: dynamic.totalPrice,
+        quotationRequired: dynamic.quotationRequired,
+        components: dynamic.components && dynamic.components.length > 0 ? dynamic.components : pkg.components
       };
     });
     res.json(pkgs);
@@ -1531,14 +1516,12 @@ app.get('/api/packages/:slug', (req, res) => {
     const row = db.prepare('SELECT data_json FROM packages WHERE slug = ? OR id = ?').get(slug, slug);
     if (!row) return res.status(404).json({ error: 'Package not found' });
     const pkg = JSON.parse(row.data_json);
-    const minCameras = Array.isArray(pkg.cameraCountsSupported) && pkg.cameraCountsSupported.length > 0
-      ? Math.min(...pkg.cameraCountsSupported)
-      : (pkg.cameraCount || 4);
-    const dynamicBase = calculateDynamicPackagePrice(pkg.id, minCameras, 'bullet');
+    const dynamic = calculateDynamicPackagePrice(pkg.id);
     res.json({
       ...pkg,
-      basePrice: dynamicBase.totalPrice,
-      quotationRequired: dynamicBase.quotationRequired
+      basePrice: dynamic.totalPrice,
+      quotationRequired: dynamic.quotationRequired,
+      components: dynamic.components && dynamic.components.length > 0 ? dynamic.components : pkg.components
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -76,7 +76,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
   renderSvgFallback
 }) => {
   const [showInclusionsModal, setShowInclusionsModal] = useState(false);
-  const isQuoteOnly = Boolean(pkg.isQuoteOnly || (pkg.cameraCount && pkg.cameraCount >= 32));
+  const isQuoteOnly = Boolean(pkg.isQuoteOnly || pkg.quotationRequired || !pkg.basePrice || (pkg.cameraCount && pkg.cameraCount >= 32));
   
   const allInclusions = (pkg.inclusions && pkg.inclusions.length > 0)
     ? pkg.inclusions

@@ -150,6 +150,72 @@ function runTests() {
   }
   console.log(`[PASS] Wireless packages: verified ${wirelessList.length} wireless packages contain neither "cable" nor "DVR" nor "NVR" in summary or components`);
 
+  // Test 11: Package pricing verification:
+  // - For every package: displayed price == sum of component line totals (or null/"Ask for price" if any component has no price).
+  // - Two packages with different components never share a price unless their components and quantities are identical.
+  const pricedPackages = [];
+  for (const pkg of packages) {
+    const components = pkg.components || [];
+    let calculatedSum = 0;
+    let hasUnpricedComponent = false;
+
+    for (const comp of components) {
+      if (comp.unitPrice == null) {
+        hasUnpricedComponent = true;
+      } else {
+        const expectedLineTotal = comp.qty * comp.unitPrice;
+        assert.strictEqual(
+          comp.lineTotal,
+          expectedLineTotal,
+          `Package ${pkg.id} component "${comp.name}" lineTotal ${comp.lineTotal} != qty ${comp.qty} * unitPrice ${comp.unitPrice}`
+        );
+        calculatedSum += expectedLineTotal;
+      }
+    }
+
+    if (hasUnpricedComponent || pkg.isQuoteOnly || pkg.basePrice == null) {
+      assert.strictEqual(
+        pkg.basePrice,
+        null,
+        `Package ${pkg.id} has unpriced components and must have null basePrice ("Ask for price")`
+      );
+    } else {
+      assert.strictEqual(
+        pkg.basePrice,
+        calculatedSum,
+        `Package ${pkg.id} basePrice ${pkg.basePrice} != sum of component line totals ${calculatedSum}`
+      );
+      pricedPackages.push({
+        id: pkg.id,
+        name: pkg.name,
+        price: pkg.basePrice,
+        componentsKey: JSON.stringify(components.map(c => ({ name: c.name, qty: c.qty, unitPrice: c.unitPrice })))
+      });
+    }
+  }
+
+  // Ensure two packages with different components never share a price unless components and quantities are identical
+  for (let i = 0; i < pricedPackages.length; i++) {
+    for (let j = i + 1; j < pricedPackages.length; j++) {
+      const p1 = pricedPackages[i];
+      const p2 = pricedPackages[j];
+      if (p1.price === p2.price) {
+        assert.strictEqual(
+          p1.componentsKey,
+          p2.componentsKey,
+          `Packages ${p1.id} and ${p2.id} share the price ৳${p1.price} but have different components`
+        );
+      }
+    }
+  }
+
+  // Specifically verify 2-camera Wi-Fi vs 2-camera Analogue do not share a price
+  const wifi2 = packages.find(p => p.id === 'pkg-wifi-2');
+  const analogue2 = packages.find(p => p.id === 'pkg-ir-2');
+  assert.ok(wifi2 && analogue2, 'Both pkg-wifi-2 and pkg-ir-2 must exist');
+  assert.notStrictEqual(wifi2.basePrice, analogue2.basePrice, 'pkg-wifi-2 and pkg-ir-2 must not share a price');
+  console.log(`[PASS] Package pricing: verified all ${packages.length} packages (displayed price == sum of components, 2-cam Wi-Fi ৳${wifi2.basePrice} != 2-cam Analogue ৳${analogue2.basePrice})`);
+
   console.log('\nALL PACKAGE FILTER TESTS PASSED SUCCESSFULLY!');
 }
 

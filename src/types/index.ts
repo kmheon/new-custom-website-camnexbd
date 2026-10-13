@@ -286,6 +286,14 @@ export interface SecurityPackage {
   isNightVisionIrOnly?: boolean; // Uses IRPF series, no fake color/audio
   isQuoteOnly?: boolean;
   componentQuantities?: Record<string, number>;
+  components?: Array<{
+    name: string;
+    sku?: string;
+    qty: number;
+    unitPrice?: number | null;
+    lineTotal?: number | null;
+  }>;
+  quotationRequired?: boolean;
   rules?: PackageComponentRule[];
   pricingRules?: Record<string, any>;
   basePrice?: number;

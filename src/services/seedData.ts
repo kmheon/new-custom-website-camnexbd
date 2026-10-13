@@ -3778,251 +3778,949 @@ export const INITIAL_PRODUCTS: Product[] = [
 
 export const INITIAL_PACKAGES: SecurityPackage[] = [
   {
-    id: 'pkg-cctv-night-vision',
-    name: '4-Camera Night Vision CCTV Package',
-    slug: '4-camera-night-vision-cctv-package',
-    badge: 'Affordable',
-    description: 'Analog HD surveillance engineered with Hikvision 2MP IRPF infrared night vision cameras.',
-    systemTypeId: 'systype-analogue',
-    systemTypeSlug: 'analogue',
-    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
-    seriesId: 'series-ir',
-    seriesName: 'Night Vision (IR)',
-    nightViewId: 'series-ir',
-    nightViewName: 'Night Vision (IR)',
-    cameraCountsSupported: [2, 4, 8, 16],
-    defaultCameraCount: 4,
-    supportedFormFactors: ['bullet', 'dome', 'turret'],
-    isNightVisionIrOnly: true,
-    basePrice: 17100,
-    rules: [
-      {
-        role: 'camera',
-        defaultModelId: 'prod-hik-irpf-2mp',
-        name: 'Hikvision 2MP IRPF IR Camera',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 1
-      },
-      {
-        role: 'recorder',
-        defaultModelId: 'prod-hik-dvr-4ch',
-        name: 'Hikvision Turbo HD DVR',
-        quantityFormula: 'fixed',
-        fixedQty: 1
-      },
-      {
-        role: 'storage',
-        defaultModelId: 'prod-wd-purple',
-        name: 'Surveillance HDD',
-        quantityFormula: 'lookup_camera_count',
-        storageLookup: {
-          2: { capacity: '500GB', modelId: 'hdd-500gb' },
-          4: { capacity: '500GB', modelId: 'hdd-500gb' },
-          8: { capacity: '1TB', modelId: 'hdd-1tb' },
-          16: { capacity: '2TB', modelId: 'hdd-2tb' }
-        }
-      },
-      {
-        role: 'cable',
-        defaultModelId: 'cable-cat6',
-        name: 'Cat6 Cable (10m per camera)',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 10
-      },
-      {
-        role: 'connectors',
-        defaultModelId: 'acc-balun',
-        name: 'Video Baluns & DC Power Pins',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 1
-      },
-      {
-        role: 'power',
-        defaultModelId: 'acc-power',
-        name: 'Centralized 12V Regulated Power Supply',
-        quantityFormula: 'fixed',
-        fixedQty: 1
-      }
+    "id": "pkg-ir-2",
+    "name": "2-Camera Night Vision CCTV Package",
+    "slug": "2-camera-night-vision-package",
+    "seriesId": "series-ir",
+    "seriesName": "Night Vision (IR)",
+    "technologyLabel": "Hikvision EXIR IR",
+    "badge": "Affordable",
+    "description": "Complete 2-camera 1080p surveillance with infrared night vision up to 20m, 4-channel DVR, and pre-terminated video cabling.",
+    "cameraCount": 2,
+    "cameraCountsSupported": [
+      2
     ],
-    isFeatured: true,
-    isDemo: true
+    "isNightVisionIrOnly": true,
+    "basePrice": 14600,
+    "isActive": true,
+    "isFeatured": false,
+    "isDemo": true,
+    "inclusions": [
+      "2x Hikvision 2MP IRPF Fixed Bullet Cameras",
+      "1x Hikvision 4-Channel Turbo HD DVR",
+      "1x Western Digital Purple 500GB HDD",
+      "40m High-Shield Coaxial Video Cable",
+      "1x 12V 5A Centralized Regulated Power Supply",
+      "Complete BNC and DC Video Connectors"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-ir",
+    "nightViewName": "Night Vision (IR)",
+    "components": [
+      {
+        "name": "Hikvision 2MP IRPF Fixed Bullet Camera",
+        "sku": "prod-hik-irpf-2mp",
+        "qty": 2,
+        "unitPrice": 2400,
+        "lineTotal": 4800
+      },
+      {
+        "name": "Hikvision 4-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-4ch",
+        "qty": 1,
+        "unitPrice": 4500,
+        "lineTotal": 4500
+      },
+      {
+        "name": "Western Digital Purple 500GB Surveillance HDD",
+        "sku": "prod-wd-purple-500gb",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 40,
+        "unitPrice": 30,
+        "lineTotal": 1200
+      },
+      {
+        "name": "12V 5A Centralized Regulated Power Supply",
+        "sku": "acc-power",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 2,
+        "unitPrice": 250,
+        "lineTotal": 500
+      }
+    ]
   },
   {
-    id: 'pkg-cctv-4cam-color',
-    name: '4-Camera Color CCTV Package',
-    slug: '4-camera-color-cctv-package',
-    badge: 'Most Popular',
-    description: 'Surveillance setup with full 24/7 color low-light video imaging and Turbo HD digital recording.',
-    systemTypeId: 'systype-analogue',
-    systemTypeSlug: 'analogue',
-    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
-    seriesId: 'series-color',
-    seriesName: 'Full-Color',
-    nightViewId: 'series-color',
-    nightViewName: 'Full-Color',
-    cameraCountsSupported: [2, 4, 8, 16],
-    defaultCameraCount: 4,
-    supportedFormFactors: ['bullet', 'dome'],
-    isNightVisionIrOnly: false,
-    basePrice: 19800,
-    rules: [
-      {
-        role: 'camera',
-        defaultModelId: 'prod-hik-irpf-2mp',
-        name: 'Hikvision Color Imaging Camera',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 1
-      },
-      {
-        role: 'recorder',
-        defaultModelId: 'prod-hik-dvr-4ch',
-        name: 'Hikvision 4-Channel Turbo HD DVR',
-        quantityFormula: 'fixed',
-        fixedQty: 1
-      },
-      {
-        role: 'storage',
-        defaultModelId: 'prod-wd-purple',
-        name: 'Surveillance HDD',
-        quantityFormula: 'lookup_camera_count',
-        storageLookup: {
-          2: { capacity: '500GB', modelId: 'hdd-500gb' },
-          4: { capacity: '1TB', modelId: 'hdd-1tb' },
-          8: { capacity: '2TB', modelId: 'hdd-2tb' },
-          16: { capacity: '4TB', modelId: 'hdd-4tb' }
-        }
-      },
-      {
-        role: 'cable',
-        defaultModelId: 'cable-cat6',
-        name: 'Cat6 Cable (10m per camera)',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 10
-      },
-      {
-        role: 'power',
-        defaultModelId: 'acc-power',
-        name: 'Centralized 12V Regulated Power Supply',
-        quantityFormula: 'fixed',
-        fixedQty: 1
-      }
+    "id": "pkg-ir-4",
+    "name": "4-Camera Night Vision CCTV Package",
+    "slug": "4-camera-night-vision-package",
+    "seriesId": "series-ir",
+    "seriesName": "Night Vision (IR)",
+    "technologyLabel": "Hikvision EXIR IR",
+    "badge": "Most Popular",
+    "description": "Complete 4-camera 1080p surveillance with smart EXIR infrared, 4-channel DVR, 1TB storage, and power distribution.",
+    "cameraCount": 4,
+    "cameraCountsSupported": [
+      4
     ],
-    isFeatured: true,
-    isDemo: true
+    "isNightVisionIrOnly": true,
+    "basePrice": 24100,
+    "isActive": true,
+    "isFeatured": true,
+    "featuredOnHomepage": true,
+    "isDemo": true,
+    "inclusions": [
+      "4x Hikvision 2MP IRPF Cameras",
+      "1x Hikvision 4-Channel Turbo HD DVR",
+      "1x Western Digital Purple 1TB Surveillance HDD",
+      "80m High-Shield Coaxial Video Cable",
+      "1x 12V 5A Centralized Regulated Power Supply",
+      "Complete BNC and DC Connectors"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-ir",
+    "nightViewName": "Night Vision (IR)",
+    "components": [
+      {
+        "name": "Hikvision 2MP IRPF Fixed Bullet Camera",
+        "sku": "prod-hik-irpf-2mp",
+        "qty": 4,
+        "unitPrice": 2400,
+        "lineTotal": 9600
+      },
+      {
+        "name": "Hikvision 4-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-4ch",
+        "qty": 1,
+        "unitPrice": 4500,
+        "lineTotal": 4500
+      },
+      {
+        "name": "Western Digital Purple 1TB Surveillance HDD",
+        "sku": "prod-wd-purple-1tb",
+        "qty": 1,
+        "unitPrice": 4800,
+        "lineTotal": 4800
+      },
+      {
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 80,
+        "unitPrice": 30,
+        "lineTotal": 2400
+      },
+      {
+        "name": "12V 5A Centralized Regulated Power Supply",
+        "sku": "acc-power",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 4,
+        "unitPrice": 250,
+        "lineTotal": 1000
+      }
+    ]
   },
   {
-    id: 'pkg-cctv-8cam',
-    name: '8-Camera Complete Business Package',
-    slug: '8-camera-business-cctv-package',
-    badge: 'Top Tier',
-    description: 'Comprehensive 8-camera commercial surveillance setup with 8-channel recorder and 2TB dedicated HDD.',
-    systemTypeId: 'systype-analogue',
-    systemTypeSlug: 'analogue',
-    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
-    seriesId: 'series-ir',
-    seriesName: 'Night Vision (IR)',
-    nightViewId: 'series-ir',
-    nightViewName: 'Night Vision (IR)',
-    cameraCountsSupported: [8, 16],
-    defaultCameraCount: 8,
-    supportedFormFactors: ['bullet', 'dome', 'turret'],
-    basePrice: 34500,
-    rules: [
-      {
-        role: 'camera',
-        defaultModelId: 'prod-hik-irpf-2mp',
-        name: 'Hikvision 2MP HD Camera',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 1
-      },
-      {
-        role: 'recorder',
-        defaultModelId: 'prod-hik-dvr-4ch',
-        name: 'Hikvision 8-Channel Turbo HD DVR',
-        quantityFormula: 'fixed',
-        fixedQty: 1
-      },
-      {
-        role: 'storage',
-        defaultModelId: 'prod-wd-purple',
-        name: 'Surveillance HDD 2TB',
-        quantityFormula: 'fixed',
-        fixedQty: 1
-      },
-      {
-        role: 'cable',
-        defaultModelId: 'cable-cat6',
-        name: 'Cat6 Cable (10m per camera)',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 10
-      },
-      {
-        role: 'power',
-        defaultModelId: 'acc-power',
-        name: 'Centralized 12V Regulated Power Supply',
-        quantityFormula: 'fixed',
-        fixedQty: 1
-      }
+    "id": "pkg-ir-8",
+    "name": "8-Camera Night Vision CCTV Package",
+    "slug": "8-camera-night-vision-package",
+    "seriesId": "series-ir",
+    "seriesName": "Night Vision (IR)",
+    "technologyLabel": "Hikvision EXIR IR",
+    "description": "8-channel infrared security system covering exterior perimeter and interior hallways with 2TB storage.",
+    "cameraCount": 8,
+    "cameraCountsSupported": [
+      8
     ],
-    isFeatured: true,
-    isDemo: true
+    "isNightVisionIrOnly": true,
+    "basePrice": 41500,
+    "isActive": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "inclusions": [
+      "8x Hikvision 2MP IRPF Cameras",
+      "1x Hikvision 8-Channel Turbo HD DVR",
+      "1x Western Digital Purple 2TB Surveillance HDD",
+      "160m High-Shield Video Cable",
+      "1x 12V 10A Heavy-Duty Power Supply",
+      "BNC & DC Power Connectors"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-ir",
+    "nightViewName": "Night Vision (IR)",
+    "components": [
+      {
+        "name": "Hikvision 2MP IRPF Fixed Bullet Camera",
+        "sku": "prod-hik-irpf-2mp",
+        "qty": 8,
+        "unitPrice": 2400,
+        "lineTotal": 19200
+      },
+      {
+        "name": "Hikvision 8-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-8ch",
+        "qty": 1,
+        "unitPrice": 6800,
+        "lineTotal": 6800
+      },
+      {
+        "name": "Western Digital Purple 2TB Surveillance HDD",
+        "sku": "prod-wd-purple-2tb",
+        "qty": 1,
+        "unitPrice": 6900,
+        "lineTotal": 6900
+      },
+      {
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 160,
+        "unitPrice": 30,
+        "lineTotal": 4800
+      },
+      {
+        "name": "12V 10A Heavy-Duty Power Supply",
+        "sku": "acc-power",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 8,
+        "unitPrice": 250,
+        "lineTotal": 2000
+      }
+    ]
   },
   {
-    id: 'pkg-cctv-16cam',
-    name: '16-Camera Enterprise Package',
-    slug: '16-camera-enterprise-cctv-package',
-    badge: 'Enterprise',
-    description: 'Facility surveillance kit covering warehouses, factories, and commercial campuses.',
-    systemTypeId: 'systype-analogue',
-    systemTypeSlug: 'analogue',
-    systemTypeName: 'Analogue / HD coaxial cameras (DVR)',
-    seriesId: 'series-ir',
-    seriesName: 'Night Vision (IR)',
-    nightViewId: 'series-ir',
-    nightViewName: 'Night Vision (IR)',
-    cameraCountsSupported: [16],
-    defaultCameraCount: 16,
-    supportedFormFactors: ['bullet', 'dome', 'turret'],
-    basePrice: 68000,
-    rules: [
+    "id": "pkg-ir-16",
+    "name": "16-Camera Night Vision CCTV Package",
+    "slug": "16-camera-night-vision-package",
+    "seriesId": "series-ir",
+    "seriesName": "Night Vision (IR)",
+    "technologyLabel": "Hikvision EXIR IR",
+    "description": "Comprehensive 16-channel infrared surveillance system for retail stores and multi-floor commercial facilities.",
+    "cameraCount": 16,
+    "cameraCountsSupported": [
+      16
+    ],
+    "isNightVisionIrOnly": true,
+    "basePrice": 78900,
+    "isActive": true,
+    "isFeatured": false,
+    "isDemo": true,
+    "inclusions": [
+      "16x Hikvision 2MP IRPF Cameras",
+      "1x Hikvision 16-Channel DVR Recorder",
+      "1x Western Digital Purple 4TB Surveillance HDD",
+      "320m High-Shield Video Cable",
+      "1x 12V 20A Industrial Power Supply",
+      "Connectors & Distribution Box"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-ir",
+    "nightViewName": "Night Vision (IR)",
+    "components": [
       {
-        role: 'camera',
-        defaultModelId: 'prod-hik-irpf-2mp',
-        name: 'Hikvision HD Camera',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 1
+        "name": "Hikvision 2MP IRPF Fixed Bullet Camera",
+        "sku": "prod-hik-irpf-2mp",
+        "qty": 16,
+        "unitPrice": 2400,
+        "lineTotal": 38400
       },
       {
-        role: 'recorder',
-        defaultModelId: 'prod-hik-dvr-4ch',
-        name: 'Hikvision 16-Channel HD DVR',
-        quantityFormula: 'fixed',
-        fixedQty: 1
+        "name": "Hikvision 16-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-16ch",
+        "qty": 1,
+        "unitPrice": 12500,
+        "lineTotal": 12500
       },
       {
-        role: 'storage',
-        defaultModelId: 'prod-wd-purple',
-        name: 'Surveillance HDD 4TB',
-        quantityFormula: 'fixed',
-        fixedQty: 1
+        "name": "Seagate SkyHawk 4TB Surveillance HDD",
+        "sku": "prod-st-skyhawk-4tb",
+        "qty": 1,
+        "unitPrice": 11200,
+        "lineTotal": 11200
       },
       {
-        role: 'cable',
-        defaultModelId: 'cable-cat6',
-        name: 'Cat6 Cable (10m per camera)',
-        quantityFormula: 'per_camera',
-        qtyPerCamera: 10
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 320,
+        "unitPrice": 30,
+        "lineTotal": 9600
       },
       {
-        role: 'power',
-        defaultModelId: 'acc-power',
-        name: 'Centralized 12V Regulated Power Supply',
-        quantityFormula: 'fixed',
-        fixedQty: 1
+        "name": "12V 20A Industrial Power Supply",
+        "sku": "acc-power-20a",
+        "qty": 1,
+        "unitPrice": 3200,
+        "lineTotal": 3200
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 16,
+        "unitPrice": 250,
+        "lineTotal": 4000
+      }
+    ]
+  },
+  {
+    "id": "pkg-hybrid-4",
+    "name": "4-Camera Smart Hybrid Light CCTV Package",
+    "slug": "4-camera-hybrid-light-package",
+    "seriesId": "series-hybrid",
+    "seriesName": "Hybrid Light",
+    "technologyLabel": "Smart Hybrid Light",
+    "description": "Intelligent dual-light security cameras that operate in infrared mode and switch to bright illumination upon motion.",
+    "cameraCount": 4,
+    "cameraCountsSupported": [
+      4
+    ],
+    "basePrice": 27300,
+    "isActive": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "inclusions": [
+      "4x 2MP Smart Hybrid Light Cameras",
+      "1x 4-Channel AcuSense DVR Recorder",
+      "1x Western Digital Purple 1TB HDD",
+      "80m Video Cable with Connectors",
+      "1x 12V 5A Central Power Supply",
+      "Mobile App P2P Configuration"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-hybrid",
+    "nightViewName": "Hybrid Light",
+    "components": [
+      {
+        "name": "Dahua 2MP HDCVI Smart Hybrid Light Camera",
+        "sku": "prod-dahua-2mp-bullet",
+        "qty": 4,
+        "unitPrice": 3200,
+        "lineTotal": 12800
+      },
+      {
+        "name": "Hikvision 4-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-4ch",
+        "qty": 1,
+        "unitPrice": 4500,
+        "lineTotal": 4500
+      },
+      {
+        "name": "Western Digital Purple 1TB Surveillance HDD",
+        "sku": "prod-wd-purple-1tb",
+        "qty": 1,
+        "unitPrice": 4800,
+        "lineTotal": 4800
+      },
+      {
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 80,
+        "unitPrice": 30,
+        "lineTotal": 2400
+      },
+      {
+        "name": "12V 5A Centralized Regulated Power Supply",
+        "sku": "acc-power",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 4,
+        "unitPrice": 250,
+        "lineTotal": 1000
+      }
+    ]
+  },
+  {
+    "id": "pkg-hybrid-8",
+    "name": "8-Camera Smart Hybrid Light CCTV Package",
+    "slug": "8-camera-hybrid-light-package",
+    "seriesId": "series-hybrid",
+    "seriesName": "Hybrid Light",
+    "technologyLabel": "Smart Hybrid Light",
+    "description": "8-channel smart dual-light surveillance system with AcuSense motion classification and color deterrence.",
+    "cameraCount": 8,
+    "cameraCountsSupported": [
+      8
+    ],
+    "basePrice": 47900,
+    "isActive": true,
+    "isFeatured": false,
+    "isDemo": true,
+    "inclusions": [
+      "8x 2MP Smart Hybrid Light Cameras",
+      "1x 8-Channel AcuSense DVR Recorder",
+      "1x Western Digital Purple 2TB HDD",
+      "160m Video Cable with Connectors",
+      "1x 12V 10A Central Power Supply",
+      "Full Site Configuration Setup"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-hybrid",
+    "nightViewName": "Hybrid Light",
+    "components": [
+      {
+        "name": "Dahua 2MP HDCVI Smart Hybrid Light Camera",
+        "sku": "prod-dahua-2mp-bullet",
+        "qty": 8,
+        "unitPrice": 3200,
+        "lineTotal": 25600
+      },
+      {
+        "name": "Hikvision 8-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-8ch",
+        "qty": 1,
+        "unitPrice": 6800,
+        "lineTotal": 6800
+      },
+      {
+        "name": "Western Digital Purple 2TB Surveillance HDD",
+        "sku": "prod-wd-purple-2tb",
+        "qty": 1,
+        "unitPrice": 6900,
+        "lineTotal": 6900
+      },
+      {
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 160,
+        "unitPrice": 30,
+        "lineTotal": 4800
+      },
+      {
+        "name": "12V 10A Central Power Supply",
+        "sku": "acc-power",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 8,
+        "unitPrice": 250,
+        "lineTotal": 2000
+      }
+    ]
+  },
+  {
+    "id": "pkg-color-4",
+    "name": "4-Camera Full-Color CCTV Package",
+    "slug": "4-camera-color-ready-made-package",
+    "seriesId": "series-color",
+    "seriesName": "Full-Color",
+    "technologyLabel": "Hikvision ColorVu",
+    "description": "ColorVu technology delivers round-the-clock vivid color imaging even in pitch darkness with F1.0 super-apertures.",
+    "cameraCount": 4,
+    "cameraCountsSupported": [
+      4
+    ],
+    "basePrice": 29700,
+    "isActive": true,
+    "isFeatured": true,
+    "isDemo": true,
+    "inclusions": [
+      "4x Hikvision 2MP ColorVu Cameras",
+      "1x 4-Channel AcuSense DVR",
+      "1x Western Digital Purple 1TB HDD",
+      "80m High-Shield Coaxial Cable",
+      "1x 12V 5A Centralized Power Supply",
+      "BNC & DC Power Connectors"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-color",
+    "nightViewName": "Full-Color",
+    "components": [
+      {
+        "name": "Hikvision 2MP ColorVu Audio Bullet Camera",
+        "sku": "prod-hik-color-2mp",
+        "qty": 4,
+        "unitPrice": 3800,
+        "lineTotal": 15200
+      },
+      {
+        "name": "Hikvision 4-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-4ch",
+        "qty": 1,
+        "unitPrice": 4500,
+        "lineTotal": 4500
+      },
+      {
+        "name": "Western Digital Purple 1TB Surveillance HDD",
+        "sku": "prod-wd-purple-1tb",
+        "qty": 1,
+        "unitPrice": 4800,
+        "lineTotal": 4800
+      },
+      {
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 80,
+        "unitPrice": 30,
+        "lineTotal": 2400
+      },
+      {
+        "name": "12V 5A Centralized Regulated Power Supply",
+        "sku": "acc-power",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 4,
+        "unitPrice": 250,
+        "lineTotal": 1000
+      }
+    ]
+  },
+  {
+    "id": "pkg-color-8",
+    "name": "8-Camera Full-Color CCTV Package",
+    "slug": "8-camera-color-ready-made-package",
+    "seriesId": "series-color",
+    "seriesName": "Full-Color",
+    "technologyLabel": "Hikvision ColorVu",
+    "badge": "Best Value",
+    "description": "Comprehensive 8-camera ColorVu setup providing clear daytime-like color surveillance all night long.",
+    "cameraCount": 8,
+    "cameraCountsSupported": [
+      8
+    ],
+    "basePrice": 52700,
+    "isActive": true,
+    "isFeatured": false,
+    "isDemo": true,
+    "inclusions": [
+      "8x Hikvision 2MP ColorVu Cameras",
+      "1x 8-Channel AcuSense DVR",
+      "1x Western Digital Purple 2TB HDD",
+      "160m Video Cable with Connectors",
+      "1x 12V 10A Central Power Supply",
+      "Mounting Brackets & Setup"
+    ],
+    "systemTypeId": "systype-analogue",
+    "systemTypeSlug": "analogue",
+    "systemTypeName": "Analogue / HD coaxial cameras (DVR)",
+    "nightViewId": "series-color",
+    "nightViewName": "Full-Color",
+    "components": [
+      {
+        "name": "Hikvision 2MP ColorVu Audio Bullet Camera",
+        "sku": "prod-hik-color-2mp",
+        "qty": 8,
+        "unitPrice": 3800,
+        "lineTotal": 30400
+      },
+      {
+        "name": "Hikvision 8-Channel Turbo HD DVR",
+        "sku": "prod-hik-dvr-8ch",
+        "qty": 1,
+        "unitPrice": 6800,
+        "lineTotal": 6800
+      },
+      {
+        "name": "Western Digital Purple 2TB Surveillance HDD",
+        "sku": "prod-wd-purple-2tb",
+        "qty": 1,
+        "unitPrice": 6900,
+        "lineTotal": 6900
+      },
+      {
+        "name": "High-Shield Coaxial Video Cable (meters)",
+        "sku": "cable-coaxial",
+        "qty": 160,
+        "unitPrice": 30,
+        "lineTotal": 4800
+      },
+      {
+        "name": "12V 10A Central Power Supply",
+        "sku": "acc-power",
+        "qty": 1,
+        "unitPrice": 1800,
+        "lineTotal": 1800
+      },
+      {
+        "name": "HD Video Baluns & DC Connectors",
+        "sku": "acc-balun",
+        "qty": 8,
+        "unitPrice": 250,
+        "lineTotal": 2000
+      }
+    ]
+  },
+  {
+    "id": "pkg-wifi-2",
+    "name": "2-Camera Wireless Smart Security Package",
+    "slug": "2-camera-wireless-package",
+    "seriesId": "series-ir",
+    "seriesName": "Night Vision (IR)",
+    "technologyLabel": "Dual-Band Wi-Fi",
+    "description": "Clean Wi-Fi security system with two-way voice communication, cloud/microSD local storage, and instant mobile alerts.",
+    "cameraCount": 2,
+    "cameraCountsSupported": [
+      2
+    ],
+    "basePrice": 11500,
+    "isActive": true,
+    "isFeatured": true,
+    "featuredOnHomepage": true,
+    "isDemo": true,
+    "inclusions": [
+      "2x 3MP Wireless Smart Cameras",
+      "2x 128GB High-Endurance MicroSD Cards",
+      "2x 12V 2A Regulated Power Adapters",
+      "Mobile Phone App Sync & Setup"
+    ],
+    "systemTypeId": "systype-wireless",
+    "systemTypeSlug": "wireless",
+    "systemTypeName": "Wireless / Wi-Fi cameras",
+    "nightViewId": "series-ir",
+    "nightViewName": "Night Vision (IR)",
+    "components": [
+      {
+        "name": "EZVIZ C6N 3MP Pan & Tilt Smart Wi-Fi Camera",
+        "sku": "prod-wifi-c6n",
+        "qty": 2,
+        "unitPrice": 4200,
+        "lineTotal": 8400
+      },
+      {
+        "name": "High-Endurance 128GB MicroSD Card",
+        "sku": "acc-microsd-128gb",
+        "qty": 2,
+        "unitPrice": 1200,
+        "lineTotal": 2400
+      },
+      {
+        "name": "12V 2A Regulated DC Power Adapter",
+        "sku": "acc-power-adapter",
+        "qty": 2,
+        "unitPrice": 350,
+        "lineTotal": 700
+      }
+    ]
+  },
+  {
+    "id": "pkg-wifi-4",
+    "name": "4-Camera Wireless Smart Security Kit",
+    "slug": "4-camera-wireless-smart-kit",
+    "seriesId": "series-ir",
+    "seriesName": "Night Vision (IR)",
+    "technologyLabel": "Wi-Fi 6 Wireless Kit",
+    "description": "4-camera wireless surveillance kit featuring dedicated wireless receiver with pre-installed 1TB storage.",
+    "cameraCount": 4,
+    "cameraCountsSupported": [
+      4
+    ],
+    "basePrice": 39050,
+    "isActive": true,
+    "isFeatured": false,
+    "isDemo": true,
+    "inclusions": [
+      "4x 3MP Weatherproof Wi-Fi Cameras",
+      "1x 4-Channel Wireless Smart Base Station",
+      "1x Western Digital Purple 1TB Surveillance Storage",
+      "4x 12V DC Camera Power Adapters",
+      "1x Base Station Power Adapter & HDMI Display Link"
+    ],
+    "systemTypeId": "systype-wireless",
+    "systemTypeSlug": "wireless",
+    "systemTypeName": "Wireless / Wi-Fi cameras",
+    "nightViewId": "series-ir",
+    "nightViewName": "Night Vision (IR)",
+    "components": [
+      {
+        "name": "EZVIZ H3c 2K Color Night Vision Outdoor Wi-Fi Camera",
+        "sku": "prod-wifi-h3c",
+        "qty": 4,
+        "unitPrice": 6500,
+        "lineTotal": 26000
+      },
+      {
+        "name": "4-Channel Wireless Smart Base Station",
+        "sku": "prod-wifi-base",
+        "qty": 1,
+        "unitPrice": 6500,
+        "lineTotal": 6500
+      },
+      {
+        "name": "Western Digital Purple 1TB Surveillance Storage",
+        "sku": "prod-wd-purple-1tb",
+        "qty": 1,
+        "unitPrice": 4800,
+        "lineTotal": 4800
+      },
+      {
+        "name": "12V DC Camera Power Adapter",
+        "sku": "acc-power-adapter",
+        "qty": 4,
+        "unitPrice": 350,
+        "lineTotal": 1400
+      },
+      {
+        "name": "Base Station Power Adapter & HDMI Display Link",
+        "sku": "acc-power-adapter",
+        "qty": 1,
+        "unitPrice": 350,
+        "lineTotal": 350
+      }
+    ]
+  },
+  {
+    "id": "pkg-ptz-16",
+    "name": "16-Camera Enterprise PTZ Complete Solution",
+    "slug": "16-camera-enterprise-ptz-package",
+    "seriesId": "series-enterprise",
+    "seriesName": "Enterprise & PTZ",
+    "technologyLabel": "Speed Dome PTZ & PoE",
+    "badge": "Top Tier",
+    "description": "Integrated 16-camera enterprise IP surveillance featuring a 360° optical zoom PTZ camera and Gigabit PoE switching.",
+    "cameraCount": 16,
+    "cameraCountsSupported": [
+      16
+    ],
+    "basePrice": null,
+    "isActive": true,
+    "isFeatured": true,
+    "featuredOnHomepage": true,
+    "isDemo": true,
+    "inclusions": [
+      "1x 4MP 25x Optical Zoom Speed Dome PTZ",
+      "15x 4K IP Fixed Turret Cameras",
+      "1x 16-Channel 4K Network Video Recorder (NVR)",
+      "1x 24-Port Gigabit PoE Switch",
+      "1x 6TB Enterprise Surveillance HDD",
+      "Cat6 Structured Network Cabling"
+    ],
+    "systemTypeId": "systype-ip",
+    "systemTypeSlug": "ip",
+    "systemTypeName": "IP / Network cameras (NVR, PoE)",
+    "nightViewId": "series-enterprise",
+    "nightViewName": "Enterprise & PTZ",
+    "components": [
+      {
+        "name": "Hikvision 2MP 4-Inch Speed Dome Mini PTZ Camera",
+        "sku": "prod-hik-ptz-2mp",
+        "qty": 1,
+        "unitPrice": 28500,
+        "lineTotal": 28500
+      },
+      {
+        "name": "Hikvision 8MP 4K Ultra HD Outdoor IR Bullet Camera",
+        "sku": "prod-hik-4k-bullet",
+        "qty": 15,
+        "unitPrice": 8500,
+        "lineTotal": 127500
+      },
+      {
+        "name": "Hikvision 16-Channel 4K NVR",
+        "sku": "prod-hik-nvr-16ch",
+        "qty": 1,
+        "unitPrice": 18500,
+        "lineTotal": 18500
+      },
+      {
+        "name": "Ruijie Reyee 24-Port Gigabit Smart Cloud PoE Switch",
+        "sku": "prod-ruijie-es224gc-p",
+        "qty": 1,
+        "unitPrice": 24500,
+        "lineTotal": 24500
+      },
+      {
+        "name": "6TB Enterprise Surveillance HDD",
+        "sku": "prod-hdd-6tb",
+        "qty": 1,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "Cat6 Structured Network Cabling",
+        "sku": "cable-cat6-struct",
+        "qty": 1,
+        "unitPrice": null,
+        "lineTotal": null
       }
     ],
-    isFeatured: true,
-    isDemo: true
+    "isQuoteOnly": true
+  },
+  {
+    "id": "pkg-ent-32",
+    "name": "32-Camera Enterprise Campus Security Setup",
+    "slug": "32-camera-enterprise-campus-setup",
+    "seriesId": "series-enterprise",
+    "seriesName": "Enterprise & PTZ",
+    "technologyLabel": "Multi-NVR High Capacity",
+    "description": "High-density 32-camera IP surveillance infrastructure designed for commercial buildings, factories, and campuses.",
+    "cameraCount": 32,
+    "cameraCountsSupported": [
+      32
+    ],
+    "isQuoteOnly": true,
+    "isActive": true,
+    "isFeatured": false,
+    "isDemo": true,
+    "inclusions": [
+      "32x 4K AI Enterprise IP Cameras",
+      "1x 32-Channel Enterprise NVR Array",
+      "2x 16-Port Gigabit Managed PoE Switches",
+      "2x 6TB Enterprise Surveillance HDDs",
+      "Cat6 STP Shielded Cabling Infrastructure",
+      "Rackmount Cabinet & PDU System"
+    ],
+    "systemTypeId": "systype-ip",
+    "systemTypeSlug": "ip",
+    "systemTypeName": "IP / Network cameras (NVR, PoE)",
+    "nightViewId": "series-enterprise",
+    "nightViewName": "Enterprise & PTZ",
+    "basePrice": null,
+    "components": [
+      {
+        "name": "4K AI Enterprise IP Camera",
+        "sku": "prod-ip-4k-ai",
+        "qty": 32,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "32-Channel Enterprise NVR Array",
+        "sku": "prod-nvr-32ch-arr",
+        "qty": 1,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "16-Port Gigabit Managed PoE Switch",
+        "sku": "prod-sw-16p-poe",
+        "qty": 2,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "6TB Enterprise Surveillance HDD",
+        "sku": "prod-hdd-6tb",
+        "qty": 2,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "Cat6 STP Shielded Cabling Infrastructure",
+        "sku": "cable-cat6-stp",
+        "qty": 1,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "Rackmount Cabinet & PDU System",
+        "sku": "acc-rack-pdu",
+        "qty": 1,
+        "unitPrice": null,
+        "lineTotal": null
+      }
+    ]
+  },
+  {
+    "id": "pkg-ent-64",
+    "name": "64-Camera High-Density Facility Surveillance",
+    "slug": "64-camera-high-density-facility",
+    "seriesId": "series-enterprise",
+    "seriesName": "Enterprise & PTZ",
+    "technologyLabel": "Multi-Server NVR Cluster",
+    "description": "Enterprise 64-camera security setup with multi-server NVR redundancy and optical fiber backbone.",
+    "cameraCount": 64,
+    "cameraCountsSupported": [
+      64
+    ],
+    "isQuoteOnly": true,
+    "isActive": true,
+    "isFeatured": false,
+    "isDemo": true,
+    "inclusions": [
+      "64x 4K AI Enterprise IP Cameras",
+      "2x 32-Channel Redundant Enterprise NVRs",
+      "4x 24-Port Managed Gigabit PoE Switches",
+      "4x 6TB Enterprise Surveillance HDDs",
+      "Optical Fiber Backbone Transceivers",
+      "Centralized Monitoring Console Rack"
+    ],
+    "systemTypeId": "systype-ip",
+    "systemTypeSlug": "ip",
+    "systemTypeName": "IP / Network cameras (NVR, PoE)",
+    "nightViewId": "series-enterprise",
+    "nightViewName": "Enterprise & PTZ",
+    "basePrice": null,
+    "components": [
+      {
+        "name": "4K AI Enterprise IP Camera",
+        "sku": "prod-ip-4k-ai",
+        "qty": 64,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "32-Channel Redundant Enterprise NVR",
+        "sku": "prod-nvr-32ch-arr",
+        "qty": 2,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "24-Port Managed Gigabit PoE Switch",
+        "sku": "prod-sw-24p-poe",
+        "qty": 4,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "6TB Enterprise Surveillance HDD",
+        "sku": "prod-hdd-6tb",
+        "qty": 4,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "Optical Fiber Backbone Transceiver",
+        "sku": "acc-fiber-tx",
+        "qty": 1,
+        "unitPrice": null,
+        "lineTotal": null
+      },
+      {
+        "name": "Centralized Monitoring Console Rack",
+        "sku": "acc-console-rack",
+        "qty": 1,
+        "unitPrice": null,
+        "lineTotal": null
+      }
+    ]
   }
 ];
 

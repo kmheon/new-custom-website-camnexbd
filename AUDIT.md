@@ -286,4 +286,22 @@ The following table outlines the endpoint groupings, the owning client applicati
 - **Automated Verification (`tests/test_package_filterbar_spec.js`)**:
   - Headless CDP assertions verify: desktop single-row layout (`scrollWidth === clientWidth`) across 1100px, 1280px, 1440px, and 1920px; vertical center alignment within 2px; typography font sizes >= 13px (labels) and >= 14px (controls/buttons); absence of old counter under cards; responsive 44px touch targets; and full `/packages` filtering and drawer interactions.
 
+### 7.9 Small Package Fixes: Segment Order, Wireless BOM, and Component Pricing
+- **Segment Labels & Casing (`src/utils/packageFilters.ts`, `PackageFilterBar.tsx`)**:
+  - Segment order admin-sortable: `All`, `IP`, `Analogue`, `Wi-Fi` with `order: 1, 2, 3`.
+  - Casing standardized: removed all-uppercase CSS text transformations on segment labels, rendering `"Analogue"` cleanly while retaining uppercase styling only on small inline labels (`System`, `Cameras`, `Night vision`).
+- **Wireless Summary & Component BOM (`src/components/cards/PackageCard.tsx`, `serverSeeds.json`)**:
+  - Wireless packages omit cable and DVR/NVR text from both generated summaries and component lists. Fixed summary generator to omit cable and recorder strings when the package components lack them, outputting `"2 cameras, 128GB storage"`.
+  - Re-seeded wireless package BOMs (`pkg-wifi-2` and `pkg-wifi-4`) with true wireless hardware (MicroSD storage, DC adapters, base station) and zero cable or DVR/NVR references.
+- **Component-Based Dynamic Package Pricing (`server.js`, `serverSeeds.json`, `camnex.db`)**:
+  - Resolved price mismatch where 2-camera Wi-Fi and 2-camera Analogue both rendered ৳209,400.
+  - Root causes identified and resolved:
+    1. Cable box pricing multiplier: `cableMeters` (20m/40m) was multiplied by ৳9,800 (the full 305m roll price), adding ৳196,000-৳392,000 in error.
+    2. Static analogue BOM fallback: `server.js` was previously running a hardcoded analogue BOM across all packages regardless of system type.
+  - Rebuilt `calculateDynamicPackagePrice()` to calculate prices strictly from each package's own component bill of materials (`qty * unitPrice` from product catalog).
+  - Unpriced packages or packages with quotation-required components output `basePrice: null` rendering "Ask for price".
+  - Verified no price collisions: every sample package total equals the exact sum of its component line totals, and packages with differing components have unique prices.
+- **Automated Verification (`tests/test_package_filters.js`, `tests/test_packages_dynamic.js`, `tests/test_package_filterbar_spec.js`)**:
+  - Automated tests verify segment order (`All, IP, Analogue, Wi-Fi`), absence of uppercase segment text, wireless package BOM purity (no cable/DVR/NVR), exact price sum parity (`displayed price == sum(qty * unitPrice)`), and strictly distinct pricing for 2-cam Wi-Fi (৳11,500) vs 2-cam Analogue (৳14,600).
+
 
