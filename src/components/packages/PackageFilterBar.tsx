@@ -137,14 +137,14 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
   const getSystemIcon = (slug: string) => {
     switch (slug) {
       case 'ip':
-        return <Video className="w-3.5 h-3.5" />;
+        return <Video className="w-3.5 h-3.5 shrink-0" />;
       case 'wireless':
-        return <Wifi className="w-3.5 h-3.5" />;
+        return <Wifi className="w-3.5 h-3.5 shrink-0" />;
       case 'analogue':
-        return <Camera className="w-3.5 h-3.5" />;
+        return <Camera className="w-3.5 h-3.5 shrink-0" />;
       case 'all':
       default:
-        return <Shield className="w-3.5 h-3.5" />;
+        return <Shield className="w-3.5 h-3.5 shrink-0" />;
     }
   };
 
@@ -166,24 +166,25 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
   return (
     <div className={`w-full ${className}`}>
       {/* 
-        DESKTOP (>= 1100px): EXACTLY ONE ROW
-        Height ~58px, white background #FFFFFF, 1px #EDE8E1 border, 16px radius, soft shadow, 12px padding, 16px gaps.
-        Hidden at < 1100px.
+        PACKAGE FILTER BAR:
+        Desktop (>= 1100px): Exactly ONE single row (56-64px high, #FFFFFF, 1px #EDE8E1 border, 16px radius, soft shadow, 12px padding, 16px gaps).
+        Tablet (768-1099px): Two rows inside the same bar (Row 1: segments full width; Row 2: selects + counter/clear).
+        Mobile (< 768px): Segments 2x2 grid, selects with stacked labels, counter row.
       */}
       <div
-        data-filterbar-desktop
-        className="hidden min-[1100px]:flex flex-row items-center justify-between w-full h-[58px] bg-white border border-[#EDE8E1] rounded-[16px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-3 py-2 gap-4"
+        data-filterbar
+        className="w-full bg-white border border-[#EDE8E1] rounded-[16px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-3 flex flex-col min-[1100px]:flex-row min-[1100px]:items-center min-[1100px]:justify-between gap-3 min-[1100px]:gap-4 min-[1100px]:h-[58px]"
       >
         {/* GROUP 1: Segmented Control + Info Button */}
         {options.systemTypes.length >= 2 && (
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none">
+          <div className="flex items-center gap-2 w-full min-[1100px]:w-auto shrink-0">
+            <span className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none hidden min-[1100px]:inline">
               System
             </span>
             <div
               role="tablist"
               aria-label="System"
-              className="flex items-center gap-1 shrink-0"
+              className="grid grid-cols-2 md:grid-cols-4 min-[1100px]:flex items-center gap-1.5 w-full min-[1100px]:w-auto shrink-0"
             >
               {options.systemTypes.map((seg, idx) => {
                 const isActive = (filters.systemSlug || 'all') === seg.slug;
@@ -218,7 +219,7 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
             </div>
 
             {/* Info Button & Popover */}
-            <div className="relative flex items-center h-[38px]" ref={infoRef}>
+            <div className="relative flex items-center h-[38px] shrink-0" ref={infoRef}>
               <button
                 type="button"
                 aria-label="System type descriptions"
@@ -232,7 +233,7 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
               {showInfoTooltip && (
                 <div
                   role="tooltip"
-                  className="absolute left-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-[#EDE8E1] p-3.5 z-50 text-left space-y-2 text-xs"
+                  className="absolute left-0 min-[1100px]:left-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-[#EDE8E1] p-3.5 z-50 text-left space-y-2 text-xs"
                 >
                   <p className="font-bold text-[#111827] text-sm border-b border-[#EDE8E1] pb-1.5">
                     Security System Types
@@ -251,112 +252,115 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
           </div>
         )}
 
-        {/* GROUP 2: Cameras Select */}
-        <div className="flex items-center gap-2 shrink-0">
-          <label
-            htmlFor="compact-filter-cameras"
-            className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none"
-          >
-            Cameras
-          </label>
-          <div className="relative min-w-[170px] max-w-[200px] h-[38px]">
-            <select
-              id="compact-filter-cameras"
-              aria-label="Filter packages by camera count"
-              value={filters.cameraCount || 'All'}
-              onChange={(e) => onFilterChange({ ...filters, cameraCount: e.target.value, page: 1 })}
-              className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+        {/* MIDDLE: Selects (Cameras & Night vision) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 shrink-0">
+          {/* GROUP 2: Cameras Select */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <label
+              htmlFor="filter-cameras"
+              className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
             >
-              {options.cameraCounts.map((opt) => (
-                <option
-                  key={opt.value}
-                  value={opt.value}
-                  disabled={opt.disabled}
-                  title={opt.disabled ? 'No packages' : undefined}
-                >
-                  {opt.label} ({opt.count})
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* GROUP 3: Night vision Select */}
-        <div className="flex items-center gap-2 shrink-0">
-          <label
-            htmlFor="compact-filter-night-view"
-            className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none"
-          >
-            Night vision
-          </label>
-          <div className="relative min-w-[170px] max-w-[200px] h-[38px]">
-            <select
-              id="compact-filter-night-view"
-              aria-label="Filter packages by night vision"
-              value={filters.nightViewSlug || 'all'}
-              onChange={(e) => onFilterChange({ ...filters, nightViewSlug: e.target.value, page: 1 })}
-              className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-            >
-              {options.nightViews.map((opt) => (
-                <option
-                  key={opt.slug}
-                  value={opt.slug}
-                  disabled={opt.disabled}
-                  title={opt.disabled ? 'No packages' : undefined}
-                >
-                  {opt.label} ({opt.count})
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* FULL VARIANT: Extra "More filters" button & Sort select */}
-        {variant === 'full' && (
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowMoreFilters(!showMoreFilters)}
-              className={`h-[38px] px-3.5 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
-                secondaryFilterCount > 0 || showMoreFilters
-                  ? 'bg-orange-50 text-[#F15A24] border border-[#F15A24]'
-                  : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>More filters</span>
-              {secondaryFilterCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-[#F15A24] text-white text-[11px] font-bold flex items-center justify-center ml-0.5">
-                  {secondaryFilterCount}
-                </span>
-              )}
-            </button>
-
-            {/* Sort Select */}
-            <div className="relative min-w-[150px] h-[38px]">
+              Cameras
+            </label>
+            <div className="relative w-full sm:w-[185px] h-[38px]">
               <select
-                aria-label="Sort packages"
-                value={filters.sortBy || 'recommended'}
-                onChange={(e) => onFilterChange({ ...filters, sortBy: e.target.value, page: 1 })}
+                id="filter-cameras"
+                aria-label="Filter packages by camera count"
+                value={filters.cameraCount || 'All'}
+                onChange={(e) => onFilterChange({ ...filters, cameraCount: e.target.value, page: 1 })}
                 className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
               >
-                <option value="recommended">Recommended</option>
-                <option value="price-asc">Price low to high</option>
-                <option value="price-desc">Price high to low</option>
-                <option value="cameras-asc">Cameras low to high</option>
-                <option value="newest">Newest</option>
+                {options.cameraCounts.map((opt) => (
+                  <option
+                    key={opt.value}
+                    value={opt.value}
+                    disabled={opt.disabled}
+                    title={opt.disabled ? 'No packages' : undefined}
+                  >
+                    {opt.label} ({opt.count})
+                  </option>
+                ))}
               </select>
-              <ArrowUpDown className="w-3.5 h-3.5 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
-        )}
+
+          {/* GROUP 3: Night vision Select */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <label
+              htmlFor="filter-night-view"
+              className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
+            >
+              Night vision
+            </label>
+            <div className="relative w-full sm:w-[185px] h-[38px]">
+              <select
+                id="filter-night-view"
+                aria-label="Filter packages by night vision"
+                value={filters.nightViewSlug || 'all'}
+                onChange={(e) => onFilterChange({ ...filters, nightViewSlug: e.target.value, page: 1 })}
+                className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+              >
+                {options.nightViews.map((opt) => (
+                  <option
+                    key={opt.slug}
+                    value={opt.slug}
+                    disabled={opt.disabled}
+                    title={opt.disabled ? 'No packages' : undefined}
+                  >
+                    {opt.label} ({opt.count})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* FULL VARIANT: Extra "More filters" button & Sort select */}
+          {variant === 'full' && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters(!showMoreFilters)}
+                className={`h-[38px] px-3.5 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                  secondaryFilterCount > 0 || showMoreFilters
+                    ? 'bg-orange-50 text-[#F15A24] border border-[#F15A24]'
+                    : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>More filters</span>
+                {secondaryFilterCount > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-[#F15A24] text-white text-[11px] font-bold flex items-center justify-center ml-0.5">
+                    {secondaryFilterCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Sort Select */}
+              <div className="relative min-w-[150px] h-[38px]">
+                <select
+                  aria-label="Sort packages"
+                  value={filters.sortBy || 'recommended'}
+                  onChange={(e) => onFilterChange({ ...filters, sortBy: e.target.value, page: 1 })}
+                  className="w-full h-[38px] pl-3 pr-8 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                >
+                  <option value="recommended">Recommended</option>
+                  <option value="price-asc">Price low to high</option>
+                  <option value="price-desc">Price high to low</option>
+                  <option value="cameras-asc">Cameras low to high</option>
+                  <option value="newest">Newest</option>
+                </select>
+                <ArrowUpDown className="w-3.5 h-3.5 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* RIGHT END: "Showing X of Y" + Clear text button (Reserved width) */}
         <div
           data-slot="filterbar-counter"
-          className="min-w-[150px] shrink-0 flex items-center justify-end gap-3 h-[38px]"
+          className="min-w-[150px] shrink-0 flex items-center justify-between sm:justify-end gap-3 h-[38px] pt-2 sm:pt-0 border-t border-[#EDE8E1] min-[1100px]:border-0"
         >
           <span className="text-[14px] text-[#5B6472] whitespace-nowrap">
             Showing <strong className="font-bold text-[#111827]">{shownCount}</strong> of{' '}
@@ -375,252 +379,10 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
         </div>
       </div>
 
-      {/* 
-        TABLET (768px - 1099px): TWO ROWS INSIDE SAME WHITE BAR
-        Row 1: Segmented control full width, equal segments.
-        Row 2: Two selects side by side with counter and Clear at the right.
-      */}
+      {/* MOBILE / TABLET ONLY: One-line plain-language description of selected system type below bar */}
       <div
-        data-filterbar-tablet
-        className="hidden md:flex min-[1100px]:hidden flex-col w-full bg-white border border-[#EDE8E1] rounded-[16px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-3 gap-3"
-      >
-        {/* ROW 1: Segmented control full width */}
-        {options.systemTypes.length >= 2 && (
-          <div className="flex items-center gap-2 w-full">
-            <span className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none">
-              System:
-            </span>
-            <div
-              role="tablist"
-              aria-label="System"
-              className="grid grid-cols-4 gap-1.5 flex-1"
-            >
-              {options.systemTypes.map((seg, idx) => {
-                const isActive = (filters.systemSlug || 'all') === seg.slug;
-                return (
-                  <button
-                    key={seg.slug}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-pressed={isActive}
-                    tabIndex={isActive ? 0 : -1}
-                    onKeyDown={(e) => handleSegmentKeyDown(e, idx)}
-                    onClick={() => onFilterChange({ ...filters, systemSlug: seg.slug, page: 1 })}
-                    className={`h-[38px] px-2 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 w-full whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
-                      isActive
-                        ? 'bg-[#F15A24] text-white shadow-xs'
-                        : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
-                    }`}
-                  >
-                    {getSystemIcon(seg.slug)}
-                    <span>{seg.shortLabel}</span>
-                    <span
-                      className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
-                      }`}
-                    >
-                      {seg.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ROW 2: Two selects side by side + counter and Clear at right */}
-        <div className="flex items-center justify-between gap-3 w-full">
-          <div className="flex items-center gap-3 flex-1">
-            {/* Cameras */}
-            <div className="flex items-center gap-1.5 flex-1">
-              <label htmlFor="tablet-filter-cameras" className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0">
-                Cameras
-              </label>
-              <div className="relative flex-1 h-[38px]">
-                <select
-                  id="tablet-filter-cameras"
-                  value={filters.cameraCount || 'All'}
-                  onChange={(e) => onFilterChange({ ...filters, cameraCount: e.target.value, page: 1 })}
-                  className="w-full h-[38px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-                >
-                  {options.cameraCounts.map((opt) => (
-                    <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-                      {opt.label} ({opt.count})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Night vision */}
-            <div className="flex items-center gap-1.5 flex-1">
-              <label htmlFor="tablet-filter-night-view" className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0">
-                Night vision
-              </label>
-              <div className="relative flex-1 h-[38px]">
-                <select
-                  id="tablet-filter-night-view"
-                  value={filters.nightViewSlug || 'all'}
-                  onChange={(e) => onFilterChange({ ...filters, nightViewSlug: e.target.value, page: 1 })}
-                  className="w-full h-[38px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-                >
-                  {options.nightViews.map((opt) => (
-                    <option key={opt.slug} value={opt.slug} disabled={opt.disabled}>
-                      {opt.label} ({opt.count})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Right counter & clear */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[14px] text-[#5B6472] whitespace-nowrap">
-              Showing <strong className="font-bold text-[#111827]">{shownCount}</strong> of{' '}
-              <strong className="font-bold text-[#111827]">{totalCount}</strong>
-            </span>
-            {isFilterActive && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="text-[14px] font-semibold text-[#F15A24] hover:underline cursor-pointer whitespace-nowrap"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 
-        MOBILE (< 768px):
-        Segmented control full width (2x2 grid if needed),
-        two selects side by side with labels above selects instead of inline,
-        then counter row.
-        Below the bar on mobile: one-line description of selected system type (reserved height).
-      */}
-      <div
-        data-filterbar-mobile
-        className="flex md:hidden flex-col w-full bg-white border border-[#EDE8E1] rounded-[16px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-3 gap-3"
-      >
-        {/* Mobile Segments (2x2 grid) */}
-        {options.systemTypes.length >= 2 && (
-          <div
-            role="tablist"
-            aria-label="System"
-            className="grid grid-cols-2 gap-2 w-full"
-          >
-            {options.systemTypes.map((seg, idx) => {
-              const isActive = (filters.systemSlug || 'all') === seg.slug;
-              return (
-                <button
-                  key={seg.slug}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-pressed={isActive}
-                  tabIndex={isActive ? 0 : -1}
-                  onKeyDown={(e) => handleSegmentKeyDown(e, idx)}
-                  onClick={() => onFilterChange({ ...filters, systemSlug: seg.slug, page: 1 })}
-                  className={`h-[40px] px-2 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
-                    isActive
-                      ? 'bg-[#F15A24] text-white shadow-xs'
-                      : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
-                  }`}
-                >
-                  {getSystemIcon(seg.slug)}
-                  <span>{seg.shortLabel}</span>
-                  <span
-                    className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
-                    }`}
-                  >
-                    {seg.count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Mobile Selects (Labels above selects) */}
-        <div className="grid grid-cols-2 gap-2 w-full">
-          <div className="flex flex-col">
-            <label
-              htmlFor="mobile-filter-cameras"
-              className="text-[13px] uppercase font-semibold text-[#5B6472] mb-1 block text-left"
-            >
-              Cameras
-            </label>
-            <div className="relative w-full h-[40px]">
-              <select
-                id="mobile-filter-cameras"
-                value={filters.cameraCount || 'All'}
-                onChange={(e) => onFilterChange({ ...filters, cameraCount: e.target.value, page: 1 })}
-                className="w-full h-[40px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-              >
-                {options.cameraCounts.map((opt) => (
-                  <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-                    {opt.label} ({opt.count})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          <div className="flex flex-col">
-            <label
-              htmlFor="mobile-filter-night-view"
-              className="text-[13px] uppercase font-semibold text-[#5B6472] mb-1 block text-left"
-            >
-              Night vision
-            </label>
-            <div className="relative w-full h-[40px]">
-              <select
-                id="mobile-filter-night-view"
-                value={filters.nightViewSlug || 'all'}
-                onChange={(e) => onFilterChange({ ...filters, nightViewSlug: e.target.value, page: 1 })}
-                className="w-full h-[40px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-              >
-                {options.nightViews.map((opt) => (
-                  <option key={opt.slug} value={opt.slug} disabled={opt.disabled}>
-                    {opt.label} ({opt.count})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Counter Row */}
-        <div className="flex items-center justify-between w-full pt-1 border-t border-[#EDE8E1]">
-          <span className="text-[14px] text-[#5B6472]">
-            Showing <strong className="font-bold text-[#111827]">{shownCount}</strong> of{' '}
-            <strong className="font-bold text-[#111827]">{totalCount}</strong>
-          </span>
-
-          {isFilterActive && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="text-[14px] font-semibold text-[#F15A24] hover:underline cursor-pointer"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* MOBILE ONLY: One-line plain-language description of selected system type below bar */}
-      <div
-        data-slot="mobile-system-description"
-        className="block md:hidden text-[14px] text-[#5B6472] min-h-[20px] mt-2 px-1 text-left"
+        data-slot="system-type-description"
+        className="block min-[1100px]:hidden text-[14px] text-[#5B6472] min-h-[20px] mt-2 px-1 text-left"
       >
         {selectedSystemDescription}
       </div>

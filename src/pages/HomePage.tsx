@@ -41,6 +41,7 @@ import { CategoryGrid } from '../components/CategoryGrid';
 import { CardGrid } from '../components/cards/CardGrid';
 import { CardRow } from '../components/cards/CardRow';
 import { PackageCard } from '../components/cards/PackageCard';
+import { PackageFilterBar } from '../components/packages/PackageFilterBar';
 import { Term } from '../components/common/Term';
 import {
   cmsService,
@@ -974,141 +975,29 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               className="mb-5"
             />
 
-            {/* 1. FILTER TOOLBAR: Sits directly on section background without bordered container */}
+            {/* 1. FILTER BAR: Single row compact filter bar */}
             <div className="mb-8">
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                {/* Left: Segmented Control & Plain-Language Description */}
-                <div className="flex flex-col items-start flex-1 min-w-0">
-                  {visibleSystemTypes.length > 1 && (
-                    <div
-                      role="tablist"
-                      aria-label="Filter packages by system type"
-                      className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto shrink-0"
-                    >
-                      {systemSegments.map((seg) => {
-                        const isActive = systemFilter === seg.slug;
-                        return (
-                          <button
-                            key={seg.id}
-                            type="button"
-                            role="tab"
-                            aria-selected={isActive}
-                            aria-pressed={isActive}
-                            onClick={() =>
-                              updatePackageFilters(
-                                seg.slug,
-                                packageCountFilter,
-                                nightViewFilter
-                              )
-                            }
-                            className={`h-9 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 min-w-[70px] whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
-                              isActive
-                                ? 'bg-[#F15A24] text-white shadow-xs border border-transparent'
-                                : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
-                            }`}
-                          >
-                            {seg.icon}
-                            <span>{seg.label}</span>
-                            <span
-                              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 ${
-                                isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
-                              }`}
-                            >
-                              {seg.count}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Selected type's one-line plain-language description below control (muted, 14px, reserved one line) */}
-                  <div
-                    data-slot="system-type-description"
-                    className="text-sm text-[#5B6472] min-h-[22px] mt-2 flex items-center text-left"
-                  >
-                    {selectedSystemDescription}
-                  </div>
-                </div>
-
-                {/* Right: Two labeled dropdowns + optional clear filters */}
-                <div className="flex flex-col sm:flex-row sm:items-start gap-6 shrink-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto">
-                    {/* (b) "Number of cameras" dropdown */}
-                    <div className="flex flex-col">
-                      <label
-                        htmlFor="filter-cameras"
-                        className="text-[11px] font-semibold text-[#5B6472] mb-1.5 block text-left"
-                      >
-                        Number of cameras
-                      </label>
-                      <div className="relative w-full sm:w-[210px] min-w-[200px]">
-                        <select
-                          id="filter-cameras"
-                          aria-label="Filter packages by camera count"
-                          value={packageCountFilter}
-                          onChange={(e) => updatePackageFilters(systemFilter, e.target.value, nightViewFilter)}
-                          className="w-full h-[44px] pl-3.5 pr-9 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-                        >
-                          <option value="All">All ({badgeCounts.cameraCounts['All'] || packages.length})</option>
-                          {allAvailableCounts.map((num) => {
-                            const countStr = String(num);
-                            const matchCount = badgeCounts.cameraCounts[countStr] || 0;
-                            return (
-                              <option key={num} value={countStr} disabled={matchCount === 0}>
-                                {num} cameras ({matchCount})
-                              </option>
-                            );
-                          })}
-                        </select>
-                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      </div>
-                    </div>
-
-                    {/* (c) "Night vision" dropdown */}
-                    <div className="flex flex-col">
-                      <label
-                        htmlFor="filter-night-view"
-                        className="text-[11px] font-semibold text-[#5B6472] mb-1.5 block text-left"
-                      >
-                        Night vision
-                      </label>
-                      <div className="relative w-full sm:w-[210px] min-w-[200px]">
-                        <select
-                          id="filter-night-view"
-                          aria-label="Filter packages by night vision"
-                          value={nightViewFilter}
-                          onChange={(e) => updatePackageFilters(systemFilter, packageCountFilter, e.target.value)}
-                          className="w-full h-[44px] pl-3.5 pr-9 rounded-xl bg-white border border-[#EDE8E1] text-xs font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
-                        >
-                          <option value="all">All ({badgeCounts.nightViews['all'] || packages.length})</option>
-                          {packageSeriesList.map((series) => {
-                            const matchCount = badgeCounts.nightViews[series.slug] || 0;
-                            return (
-                              <option key={series.id} value={series.slug} disabled={matchCount === 0}>
-                                {getNightViewOptionLabel(series)} ({matchCount})
-                              </option>
-                            );
-                          })}
-                        </select>
-                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* (d) "Clear filters" text button, visible only when a filter is active */}
-                  {isFilterActive && (
-                    <button
-                      type="button"
-                      onClick={() => updatePackageFilters('all', 'All', 'all')}
-                      className="h-[44px] px-2 text-xs font-bold text-[#F15A24] hover:underline flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap self-center sm:self-end"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Clear filters</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+              <PackageFilterBar
+                variant="compact"
+                packages={packages}
+                systemTypes={packageSystemTypes}
+                seriesList={packageSeriesList}
+                filters={{
+                  systemSlug: systemFilter,
+                  cameraCount: packageCountFilter,
+                  nightViewSlug: nightViewFilter
+                }}
+                onFilterChange={(newFilters) => {
+                  updatePackageFilters(
+                    newFilters.systemSlug || 'all',
+                    newFilters.cameraCount || 'All',
+                    newFilters.nightViewSlug || 'all'
+                  );
+                }}
+                onClearFilters={() => updatePackageFilters('all', 'All', 'all')}
+                totalFilteredCount={filteredPackages.length}
+                totalPackagesCount={packages.length}
+              />
             </div>
 
             {/* Package Cards Row (max 4 cards) or Friendly Empty State */}
@@ -1147,10 +1036,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </CardRow>
 
                 {displayPackages.length > 4 && (
-                  <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
-                    <span className="text-xs font-medium text-[#5B6472]">
-                      Showing 4 of {displayPackages.length} packages
-                    </span>
+                  <div className="mt-5 flex items-center justify-center">
                     <button
                       type="button"
                       onClick={() => onNavigate('packages')}

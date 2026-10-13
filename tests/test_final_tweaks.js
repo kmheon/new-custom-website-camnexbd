@@ -88,8 +88,8 @@ const CHECKS = [
         if (Math.abs(s1.width - s2.width) > 2) {
           errors.push('Selects have unequal widths: ' + s1.width + ' vs ' + s2.width);
         }
-        if (Math.abs(s1.height - s2.height) > 1 || Math.abs(s1.height - 44) > 2) {
-          errors.push('Selects have unequal or non-44px heights: ' + s1.height + ' vs ' + s2.height);
+        if (Math.abs(s1.height - s2.height) > 1 || s1.height > 46 || s1.height < 36) {
+          errors.push('Selects have unequal or non-36-44px heights: ' + s1.height + ' vs ' + s2.height);
         }
         selects.forEach((sel, i) => {
           const box = sel.getBoundingClientRect();
