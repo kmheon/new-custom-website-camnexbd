@@ -343,8 +343,34 @@ function sortPackages(packages, sortBy = 'recommended') {
   }
 }
 
+function formatSystemShortLabel(slug, shortLabel) {
+  if (shortLabel) {
+    const trimmed = shortLabel.trim();
+    if (trimmed.toUpperCase() === 'ANALOGUE' || trimmed.toLowerCase() === 'analogue') return 'Analogue';
+    if (trimmed.toUpperCase() === 'IP') return 'IP';
+    if (trimmed.toUpperCase() === 'WI-FI' || trimmed.toUpperCase() === 'WIFI') return 'Wi-Fi';
+    if (trimmed.toUpperCase() === 'ALL') return 'All';
+    if (trimmed === trimmed.toUpperCase() && trimmed.length > 2) {
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    }
+    return trimmed;
+  }
+  const clean = (slug || '').toLowerCase();
+  if (clean === 'ip') return 'IP';
+  if (clean === 'analogue' || clean === 'analog') return 'Analogue';
+  if (clean === 'wireless' || clean === 'wifi' || clean === 'wi-fi') return 'Wi-Fi';
+  if (clean === 'all') return 'All';
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
 function availableOptions(packages, filters = { systemSlug: 'all', cameraCount: 'All', nightViewSlug: 'all' }, options) {
-  const systemTypesList = (options && options.systemTypes) || [];
+  const rawList = (options && options.systemTypes) || [];
+  const systemTypesList = [...rawList].sort((a, b) => {
+    const orderMap = { ip: 1, analogue: 2, wireless: 3 };
+    const oa = a.order != null ? a.order : (a.display_order != null ? a.display_order : (orderMap[a.slug] || 99));
+    const ob = b.order != null ? b.order : (b.display_order != null ? b.display_order : (orderMap[b.slug] || 99));
+    return oa - ob;
+  });
   const seriesList = (options && options.seriesList) || [];
 
   const systemTypes = [];
@@ -366,7 +392,7 @@ function availableOptions(packages, filters = { systemSlug: 'all', cameraCount: 
         id: st.id,
         slug: st.slug.toLowerCase(),
         name: st.name,
-        shortLabel: st.shortLabel || (st.slug === 'wireless' ? 'Wi-Fi' : st.slug.toUpperCase()),
+        shortLabel: formatSystemShortLabel(st.slug, st.shortLabel),
         description: st.description,
         icon: st.icon,
         count,
@@ -560,6 +586,7 @@ module.exports = {
   extractPackageBrands,
   extractPackageInstallation,
   sortPackages,
-  availableOptions
+  availableOptions,
+  formatSystemShortLabel
 };
 

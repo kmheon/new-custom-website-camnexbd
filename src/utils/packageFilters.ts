@@ -446,12 +446,37 @@ export function calculateBadgeCounts(
 /**
  * Pure function to derive all available options and counts directly from package dataset
  */
+export function formatSystemShortLabel(slug: string, shortLabel?: string): string {
+  if (shortLabel) {
+    const trimmed = shortLabel.trim();
+    if (trimmed.toUpperCase() === 'ANALOGUE' || trimmed.toLowerCase() === 'analogue') return 'Analogue';
+    if (trimmed.toUpperCase() === 'IP') return 'IP';
+    if (trimmed.toUpperCase() === 'WI-FI' || trimmed.toUpperCase() === 'WIFI') return 'Wi-Fi';
+    if (trimmed.toUpperCase() === 'ALL') return 'All';
+    if (trimmed === trimmed.toUpperCase() && trimmed.length > 2) {
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    }
+    return trimmed;
+  }
+  const clean = slug.toLowerCase();
+  if (clean === 'ip') return 'IP';
+  if (clean === 'analogue' || clean === 'analog') return 'Analogue';
+  if (clean === 'wireless' || clean === 'wifi' || clean === 'wi-fi') return 'Wi-Fi';
+  if (clean === 'all') return 'All';
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
 export function availableOptions(
   packages: SecurityPackage[],
   filters: FilterState = { systemSlug: 'all', cameraCount: 'All', nightViewSlug: 'all' },
   options?: { systemTypes?: PackageSystemType[]; seriesList?: PackageSeries[] }
 ): AvailableOptions {
-  const systemTypesList = options?.systemTypes || [];
+  const systemTypesList = [...(options?.systemTypes || [])].sort((a, b) => {
+    const orderMap: Record<string, number> = { ip: 1, analogue: 2, wireless: 3 };
+    const oa = a.order ?? (a as any).display_order ?? orderMap[a.slug] ?? 99;
+    const ob = b.order ?? (b as any).display_order ?? orderMap[b.slug] ?? 99;
+    return oa - ob;
+  });
   const seriesList = options?.seriesList || [];
 
   // 1. System types (only enabled that have packages)
@@ -475,7 +500,7 @@ export function availableOptions(
         id: st.id,
         slug: st.slug.toLowerCase(),
         name: st.name,
-        shortLabel: st.shortLabel || (st.slug === 'wireless' ? 'Wi-Fi' : st.slug.toUpperCase()),
+        shortLabel: formatSystemShortLabel(st.slug, st.shortLabel),
         description: st.description,
         icon: st.icon,
         count,

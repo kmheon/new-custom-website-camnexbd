@@ -367,33 +367,13 @@ export const INITIAL_SERVICES: ServiceOffering[] = [
 
 export const INITIAL_PACKAGE_SYSTEM_TYPES: PackageSystemType[] = [
   {
-    id: 'systype-analogue',
-    name: 'Analogue / HD coaxial cameras (DVR)',
-    slug: 'analogue',
-    shortLabel: 'Analogue',
-    description: 'Coaxial video cable with centralized 12V DC power supply and Turbo HD digital video recorder (DVR).',
-    icon: 'Radio',
-    order: 1,
-    enabled: true,
-    ruleSet: {
-      recorderType: 'dvr',
-      cableType: 'coaxial_dc',
-      cableMetersPerCam: 20,
-      powerSupplyType: 'centralized_12v',
-      storageType: 'surveillance_hdd',
-      storageMap: { 2: '500GB', 4: '1TB', 8: '2TB', 16: '4TB' },
-      hasBaluns: true,
-      descriptionSummary: 'DVR, video and power cable per camera, centralized 12V power supply'
-    }
-  },
-  {
     id: 'systype-ip',
     name: 'IP / Network cameras (NVR, PoE)',
     slug: 'ip',
     shortLabel: 'IP',
     description: 'Network IP cameras with Power over Ethernet (PoE) delivery through NVR or Gigabit switch.',
     icon: 'Network',
-    order: 2,
+    order: 1,
     enabled: true,
     ruleSet: {
       recorderType: 'nvr',
@@ -404,6 +384,26 @@ export const INITIAL_PACKAGE_SYSTEM_TYPES: PackageSystemType[] = [
       storageMap: { 4: '1TB', 8: '2TB', 16: '6TB', 32: '12TB', 64: '24TB' },
       hasBaluns: false,
       descriptionSummary: 'NVR, PoE through NVR or switch, Cat6 network cable per camera'
+    }
+  },
+  {
+    id: 'systype-analogue',
+    name: 'Analogue / HD coaxial cameras (DVR)',
+    slug: 'analogue',
+    shortLabel: 'Analogue',
+    description: 'Coaxial video cable with centralized 12V DC power supply and Turbo HD digital video recorder (DVR).',
+    icon: 'Radio',
+    order: 2,
+    enabled: true,
+    ruleSet: {
+      recorderType: 'dvr',
+      cableType: 'coaxial_dc',
+      cableMetersPerCam: 20,
+      powerSupplyType: 'centralized_12v',
+      storageType: 'surveillance_hdd',
+      storageMap: { 2: '500GB', 4: '1TB', 8: '2TB', 16: '4TB' },
+      hasBaluns: true,
+      descriptionSummary: 'DVR, video and power cable per camera, centralized 12V power supply'
     }
   },
   {

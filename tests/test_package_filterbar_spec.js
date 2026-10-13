@@ -189,6 +189,27 @@ async function main() {
             errs.push('Bar has dark slate background color: ' + bgBar);
           }
 
+          // Check segment order (All, IP, Analogue, Wi-Fi) and case (not uppercase)
+          const tabEls = Array.from(bar.querySelectorAll('button[role="tab"]'));
+          const tabTexts = tabEls.map(t => {
+            const spans = Array.from(t.querySelectorAll('span'));
+            const labelSpan = spans.find(s => !s.className.includes('rounded-full'));
+            return labelSpan ? labelSpan.textContent.trim() : t.textContent.trim();
+          });
+          const expectedOrder = ['All', 'IP', 'Analogue', 'Wi-Fi'];
+          if (JSON.stringify(tabTexts) !== JSON.stringify(expectedOrder)) {
+            errs.push('Segment labels wrong order, expected ' + JSON.stringify(expectedOrder) + ', got: ' + JSON.stringify(tabTexts));
+          }
+          tabEls.forEach((t, i) => {
+            const cs = window.getComputedStyle(t);
+            if (cs.textTransform === 'uppercase') {
+              errs.push('Segment button ' + tabTexts[i] + ' has text-transform: uppercase');
+            }
+            if (tabTexts[i] && tabTexts[i].length > 2 && tabTexts[i] === tabTexts[i].toUpperCase()) {
+              errs.push('Segment label ' + tabTexts[i] + ' is all uppercase');
+            }
+          });
+
           // Typography check
           const labels = Array.from(bar.querySelectorAll('label, span.text-\\\\[13px\\\\]'));
           labels.forEach(l => {

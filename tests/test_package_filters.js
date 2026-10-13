@@ -27,7 +27,8 @@ const {
   buildFilterQuery,
   parseFilterQuery,
   slugifyFilter,
-  normalizeCameraCount
+  normalizeCameraCount,
+  availableOptions
 } = require('./helpers/packageFiltersHelper');
 
 function runTests() {
@@ -108,9 +109,20 @@ function runTests() {
   // Legacy param mapping: ?series=full-color
   const legacySeries = parseFilterQuery('?series=full-color', { systemTypes, seriesList });
   assert.strictEqual(legacySeries.nightViewSlug, 'full-color', 'Legacy ?series=full-color should map to view=full-color');
-  console.log('[PASS] Legacy parameter mapping: ?series=full-color -> view=full-color');
+  // Test 9: System-type segment order and case: All, IP, Analogue, Wi-Fi; no segment label uppercase
+  const opts = availableOptions(packages, { systemSlug: 'all', cameraCount: 'All', nightViewSlug: 'all' }, { systemTypes, seriesList });
+  const segLabels = opts.systemTypes.map(st => st.shortLabel);
+  assert.deepStrictEqual(segLabels, ['All', 'IP', 'Analogue', 'Wi-Fi'], 'Segments must be in order: All, IP, Analogue, Wi-Fi');
+  
+  for (const label of segLabels) {
+    if (label.length > 2) {
+      assert.notStrictEqual(label, label.toUpperCase(), `Segment label "${label}" must NOT be all-uppercase`);
+    }
+  }
+  assert.strictEqual(segLabels[2], 'Analogue', 'Analogue label must be "Analogue", not "ANALOGUE"');
+  console.log('[PASS] Segment labels order & case: All, IP, Analogue, Wi-Fi (no uppercase words)');
 
-  console.log('\nALL 9 PACKAGE FILTER TESTS PASSED SUCCESSFULLY!');
+  console.log('\nALL PACKAGE FILTER TESTS PASSED SUCCESSFULLY!');
 }
 
 runTests();
