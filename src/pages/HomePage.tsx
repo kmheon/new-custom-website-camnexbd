@@ -42,6 +42,7 @@ import { CardGrid } from '../components/cards/CardGrid';
 import { CardRow } from '../components/cards/CardRow';
 import { PackageCard } from '../components/cards/PackageCard';
 import { PackageFilterBar } from '../components/packages/PackageFilterBar';
+import { WifiSubcategoryChips, normalizeWifiSlug, toWifiUrlParam } from '../components/common/WifiSubcategoryChips';
 import { Term } from '../components/common/Term';
 import {
   cmsService,
@@ -59,7 +60,8 @@ import {
   ServiceOffering,
   Testimonial,
   ProjectCaseStudy,
-  ScenarioItem
+  ScenarioItem,
+  HomepageSection
 } from '../types';
 import {
   filterPackages,
@@ -340,6 +342,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [projects, setProjects] = useState<ProjectCaseStudy[]>([]);
+  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>([]);
+
+  // Wi-Fi series subcategory filter state (URL synced with ?wifi=)
+  const [selectedWifiSubcat, setSelectedWifiSubcat] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('wifi');
+      return normalizeWifiSlug(p);
+    }
+    return 'all';
+  });
 
   // Package filters: System type (IP, Analogue, Wireless), Camera count, and Night view series
   const [systemFilter, setSystemFilter] = useState<string>('all');
@@ -506,7 +518,22 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     // Fetch proof sections (testimonials and projects)
     cmsService.getTestimonials().then(setTestimonials);
     cmsService.getProjects().then(setProjects);
+
+    // Fetch homepage sections
+    cmsService.getHomepageSections().then((secs) => {
+      if (secs && secs.length > 0) setHomepageSections(secs);
+    });
   }, [loadSettings, checkAuth]);
+
+  // Synchronize Wi-Fi series subcategory on browser back / forward
+  useEffect(() => {
+    const handlePopState = () => {
+      const p = new URLSearchParams(window.location.search).get('wifi');
+      setSelectedWifiSubcat(normalizeWifiSlug(p));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Quick Service Request callback submit handler
   const handleCallbackSubmit = async (e: React.FormEvent) => {
@@ -818,14 +845,71 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     .slice(0, maxSpecialOffers);
   dedupSpecialOffers.forEach((p) => displayedProductIds.add(p.id));
 
-  // 2. Wi-Fi Series claims next (up to 8 cards; hidden if < 2)
+  // 2. Wi-Fi Series claims next (up to 8 cards; hidden if < 2 Wi-Fi products exist)
   const wifiCategory = categories.find((c) => c.id === 'cat-wifi' || c.slug === 'wifi-smart-devices' || c.slug === 'wifi-cameras');
-  const dedupWifi = wifiProducts
-    .filter((p) => !displayedProductIds.has(p.id))
-    .slice(0, 8);
-  if (dedupWifi.length >= 2) {
-    dedupWifi.forEach((p) => displayedProductIds.add(p.id));
+  const wifiSectionConfig = homepageSections.find((s) => s.type === 'wifi_series' || s.id === 'sec-wifi' || s.type === 'wifi_cameras');
+  if (wifiProducts.length >= 2) {
+    wifiProducts.forEach((p) => displayedProductIds.add(p.id));
   }
+
+  const handleSelectWifiSubcat = (slug: string) => {
+    setSelectedWifiSubcat(slug);
+    const url = new URL(window.location.href);
+    if (slug === 'all') {
+      url.searchParams.delete('wifi');
+    } else {
+      url.searchParams.set('wifi', toWifiUrlParam(slug));
+    }
+    window.history.pushState({}, '', url.toString());
+  };
+
+  const wifiCountsBySlug = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const subcats = wifiCategory?.subcategories || [];
+    subcats.forEach((sc) => {
+      counts[sc.slug] = wifiProducts.filter((p) => {
+        if (p.subcategoryId) {
+          if (sc.id && p.subcategoryId === sc.id) return true;
+        }
+        return p.subcategorySlug === sc.slug;
+      }).length;
+    });
+    return counts;
+  }, [wifiCategory, wifiProducts]);
+
+  const wifiItemLimit = wifiSectionConfig?.itemLimit ?? 8;
+  const filteredWifiProducts = useMemo(() => {
+    if (selectedWifiSubcat === 'all') {
+      return wifiProducts.slice(0, wifiItemLimit);
+    }
+    const matching = wifiProducts.filter((p) => {
+      if (p.subcategoryId) {
+        if (selectedWifiSubcat === 'video-doorbells' && p.subcategoryId === 'subcat-video-doorbells') return true;
+        if (selectedWifiSubcat === 'wifi-cameras' && p.subcategoryId === 'subcat-wifi-cameras') return true;
+        if (selectedWifiSubcat === 'smart-lights' && p.subcategoryId === 'subcat-smart-lights') return true;
+        if (selectedWifiSubcat === 'smart-plugs-switches' && p.subcategoryId === 'subcat-smart-plugs') return true;
+        if (selectedWifiSubcat === 'smart-locks' && p.subcategoryId === 'subcat-smart-locks') return true;
+        if (selectedWifiSubcat === 'sensors-alarms' && p.subcategoryId === 'subcat-sensors-alarms') return true;
+      }
+      return p.subcategorySlug === selectedWifiSubcat;
+    });
+    return matching.slice(0, wifiItemLimit);
+  }, [wifiProducts, selectedWifiSubcat, wifiItemLimit]);
+
+  const activeSubcatTotalCount = useMemo(() => {
+    if (selectedWifiSubcat === 'all') return wifiProducts.length;
+    return wifiProducts.filter((p) => {
+      if (p.subcategoryId) {
+        if (selectedWifiSubcat === 'video-doorbells' && p.subcategoryId === 'subcat-video-doorbells') return true;
+        if (selectedWifiSubcat === 'wifi-cameras' && p.subcategoryId === 'subcat-wifi-cameras') return true;
+        if (selectedWifiSubcat === 'smart-lights' && p.subcategoryId === 'subcat-smart-lights') return true;
+        if (selectedWifiSubcat === 'smart-plugs-switches' && p.subcategoryId === 'subcat-smart-plugs') return true;
+        if (selectedWifiSubcat === 'smart-locks' && p.subcategoryId === 'subcat-smart-locks') return true;
+        if (selectedWifiSubcat === 'sensors-alarms' && p.subcategoryId === 'subcat-sensors-alarms') return true;
+      }
+      return p.subcategorySlug === selectedWifiSubcat;
+    }).length;
+  }, [wifiProducts, selectedWifiSubcat]);
 
   // 3. Popular Products claims next (at least 4 cards per row)
   const dedupPopular = popularProducts
@@ -923,23 +1007,40 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         sliderConfig={settings?.specialOfferSlider}
       />
 
-      {/* 4.5. WI-FI / WIRELESS CAMERAS (Lead-in tile + product cards, soft tinted background #FAF7F2) */}
-      {dedupWifi.length >= 2 && (
+      {/* 4.5. WI-FI SERIES ROW (replaces Wi-Fi cameras row; lead-in promo tile + product cards, soft tinted background #FAF7F2) */}
+      {wifiProducts.length >= 2 && wifiSectionConfig?.enabled !== false && (
         <ProductRow
-          eyebrow="Wi-Fi cameras"
-          title={wifiCategory?.name || "Wi-Fi Cameras"}
-          subtitle={wifiCategory?.description || "Single cameras you control from a phone app"}
-          products={dedupWifi}
-          actionText={`View all (${dedupWifi.length})`}
-          onAction={() => onNavigate('category', 'wifi-cameras')}
+          eyebrow={wifiSectionConfig?.eyebrow || "Wi-Fi products"}
+          title={wifiSectionConfig?.title || wifiCategory?.name || "Wi-Fi Series"}
+          subtitle={wifiSectionConfig?.subtitle || wifiCategory?.description || "Cameras, doorbells, lights and more you control from a phone app"}
+          products={filteredWifiProducts}
+          actionText={`View all (${activeSubcatTotalCount})`}
+          onAction={() => {
+            if (selectedWifiSubcat !== 'all') {
+              onNavigate('category', `wifi-smart-devices?subcat=${selectedWifiSubcat}`);
+            } else {
+              onNavigate('category', 'wifi-smart-devices');
+            }
+          }}
           onNavigate={onNavigate}
           variant="canvas"
-          promoTile={wifiCategory?.promoTile || {
+          filterSlot={
+            wifiSectionConfig?.showChipRow !== false ? (
+              <WifiSubcategoryChips
+                subcategories={wifiCategory?.subcategories || []}
+                activeSlug={selectedWifiSubcat}
+                onSelect={handleSelectWifiSubcat}
+                totalCount={wifiProducts.length}
+                countsBySlug={wifiCountsBySlug}
+              />
+            ) : undefined
+          }
+          promoTile={wifiSectionConfig?.promoTile || wifiCategory?.promoTile || {
             enabled: true,
-            headline: 'Smart Wi-Fi Security Cameras',
-            subtext: 'Direct phone alerts & wireless storage',
-            buttonText: 'Explore Wi-Fi cameras',
-            link: '/category/wifi-cameras',
+            headline: 'Smart Wi-Fi Series',
+            subtext: 'Cameras, doorbells, lights and locks you control from your phone',
+            buttonText: 'Explore Wi-Fi Series',
+            link: '/category/wifi-smart-devices',
             bgStyle: 'orange',
             image: wifiCategory?.image || '/images/hero/hikvision-bullet.png'
           }}

@@ -43,8 +43,9 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
 
   useEffect(() => {
     setSelectedSpecs({});
-    if (categorySlug) {
-      categoryService.getCategoryBySlug(categorySlug).then(cat => {
+    const cleanCategorySlug = (categorySlug || '').split('?')[0];
+    if (cleanCategorySlug) {
+      categoryService.getCategoryBySlug(cleanCategorySlug).then(cat => {
         setCurrentCategory(cat);
         if (cat) {
           specTemplateService.getTemplateByCategorySlug(cat.slug).then(setSpecTemplate);
@@ -74,8 +75,10 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
+      const cleanCategorySlug = (categorySlug || '').split('?')[0];
+      const subcatParam = new URLSearchParams(categorySlug?.includes('?') ? categorySlug.split('?')[1] : window.location.search).get('subcat');
       const res = await productService.getProducts({
-        categorySlug,
+        categorySlug: cleanCategorySlug,
         brandSlug,
         specFilters: selectedSpecs,
         sortBy,
@@ -83,8 +86,21 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         maxPrice: priceRange.max,
         limit: 24
       });
-      setProducts(res.items);
-      setTotalProducts(res.total);
+      let items = res.items;
+      if (subcatParam && subcatParam !== 'all') {
+        const norm = subcatParam.toLowerCase();
+        items = items.filter(p => {
+          if (p.subcategoryId && (p.subcategoryId === norm || p.subcategoryId === `subcat-${norm}`)) return true;
+          return p.subcategorySlug === norm ||
+            (norm.includes('doorbell') && p.subcategoryId === 'subcat-video-doorbells') ||
+            (norm.includes('camera') && p.subcategoryId === 'subcat-wifi-cameras') ||
+            (norm.includes('light') && p.subcategoryId === 'subcat-smart-lights') ||
+            (norm.includes('plug') && p.subcategoryId === 'subcat-smart-plugs') ||
+            (norm.includes('lock') && p.subcategoryId === 'subcat-smart-locks');
+        });
+      }
+      setProducts(items);
+      setTotalProducts(subcatParam && subcatParam !== 'all' ? items.length : res.total);
     } finally {
       setIsLoading(false);
     }

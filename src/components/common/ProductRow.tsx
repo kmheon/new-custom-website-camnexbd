@@ -17,6 +17,7 @@ interface ProductRowProps {
   onNavigate: (route: string, param?: string) => void;
   variant?: 'canvas' | 'panel';
   promoTile?: PromoTileConfig;
+  filterSlot?: React.ReactNode;
 }
 
 export const ProductRow: React.FC<ProductRowProps> = ({
@@ -28,7 +29,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   onAction,
   onNavigate,
   variant = 'canvas',
-  promoTile
+  promoTile,
+  filterSlot
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -80,6 +82,13 @@ export const ProductRow: React.FC<ProductRowProps> = ({
           </div>
         )}
       </div>
+
+      {/* Optional Filter Slot (e.g. Subcategory filter chips) */}
+      {filterSlot && (
+        <div className="mb-6 min-h-[44px]" data-slot="product-row-filter">
+          {filterSlot}
+        </div>
+      )}
 
       {/* Mobile Strip variant (below 768px): banner above the scroll row */}
       {hasPromoTile && promoTile && (
