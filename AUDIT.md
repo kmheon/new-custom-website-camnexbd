@@ -266,3 +266,24 @@ The following table outlines the endpoint groupings, the owning client applicati
 - **Automated Verification (`tests/test_item_lines.js`, `tests/test_final_tweaks.js`)**:
   - Headless CDP assertions verify: equal select widths/heights (44px), chevron inside select bounding box, zero instances of "Night picture", default 4 cards contain at least two types and include featured package of each, every component line matches `/^\d+ × .+/`, zero occurrences of "x" as a quantity marker, and 1280px non-wrapping toolbar layout.
 
+### 7.8 Package Filter Bar: Single Row Architecture & Verification
+- **Shared `<PackageFilterBar variant="compact | full">` Component (`src/components/packages/PackageFilterBar.tsx`, `src/utils/packageFilters.ts`)**:
+  - Implements shared pure filtering and count derivation functions (`filterPackages`, `availableOptions`).
+  - Supports synchronized URL slug query parameters (`?system=&cameras=&view=`) with backward-compatible mapping (`?type=`, `?series=`).
+  - Roving tabindex (ArrowLeft/ArrowRight) across system type segments with explicit ARIA roles (`role="tablist"`, `role="tab"`, `aria-selected`).
+- **Compact Homepage Filter Bar (Desktop >= 1100px)**:
+  - Single flex row container (58px height, `#FFFFFF` background, 1px `#EDE8E1` border, 16px radius, soft shadow, 12px padding).
+  - Group 1: "System" segmented control ("All", "IP", "Analogue", "Wi-Fi" with icons and count badges; active segment filled `#F15A24` orange) + info popover button `(i)` explaining system types.
+  - Group 2 & 3: Compact custom-styled selects for "Cameras" and "Night vision" with inside chevron icons and synchronized option counts.
+  - Right End: Live counter ("Showing 4 of 13") with reserved space and contextual "Clear" button.
+  - Bottom "Showing N of M packages" removed from beneath cards, preserving only the primary "See all N packages" button.
+- **Responsive Tablet & Mobile Behavior**:
+  - Tablet (768px-1099px): Two clean rows inside the single white card (Row 1: system segments full width + info popover; Row 2: selects + counter/clear).
+  - Mobile (< 768px): 2x2 grid of system segments, stacked selects side-by-side with 44px min tap targets, and dedicated one-line plain language description below the bar with reserved height.
+- **Full Variant on `/packages` Route (`src/pages/PackagesPage.tsx`)**:
+  - Includes extended filters drawer ("More filters"), multi-select facet checkboxes, price range, storage, channels, form factor, resolution, audio, brand, and installation.
+  - Sort select ("Recommended", "Price: Low to High", "Price: High to Low", "Camera count"), active removable filter chips with "Clear all", and 12-item pagination with URL state reflection (`?page=`).
+- **Automated Verification (`tests/test_package_filterbar_spec.js`)**:
+  - Headless CDP assertions verify: desktop single-row layout (`scrollWidth === clientWidth`) across 1100px, 1280px, 1440px, and 1920px; vertical center alignment within 2px; typography font sizes >= 13px (labels) and >= 14px (controls/buttons); absence of old counter under cards; responsive 44px touch targets; and full `/packages` filtering and drawer interactions.
+
+

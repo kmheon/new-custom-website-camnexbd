@@ -177,14 +177,14 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
       >
         {/* GROUP 1: Segmented Control + Info Button */}
         {options.systemTypes.length >= 2 && (
-          <div className="flex items-center gap-2 w-full min-[1100px]:w-auto shrink-0">
-            <span className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none hidden min-[1100px]:inline">
+          <div className="flex items-center gap-1.5 w-full min-[1100px]:w-auto shrink-0">
+            <span className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none hidden min-[1180px]:inline">
               System
             </span>
             <div
               role="tablist"
               aria-label="System"
-              className="grid grid-cols-2 md:grid-cols-4 min-[1100px]:flex items-center gap-1.5 w-full min-[1100px]:w-auto shrink-0"
+              className="flex-1 min-w-0 grid grid-cols-2 md:grid-cols-4 min-[1100px]:flex min-[1100px]:w-auto items-center gap-1 shrink-0"
             >
               {options.systemTypes.map((seg, idx) => {
                 const isActive = (filters.systemSlug || 'all') === seg.slug;
@@ -198,7 +198,7 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
                     tabIndex={isActive ? 0 : -1}
                     onKeyDown={(e) => handleSegmentKeyDown(e, idx)}
                     onClick={() => onFilterChange({ ...filters, systemSlug: seg.slug, page: 1 })}
-                    className={`h-[44px] min-[1100px]:h-[38px] px-3 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 min-w-[70px] whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                    className={`h-[44px] min-[1100px]:h-[38px] px-2 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-1 min-w-0 whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
                       isActive
                         ? 'bg-[#F15A24] text-white shadow-xs'
                         : 'bg-white text-[#111827] border border-[#EDE8E1] hover:bg-slate-50'
@@ -207,7 +207,7 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
                     {getSystemIcon(seg.slug)}
                     <span>{seg.shortLabel}</span>
                     <span
-                      className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 ${
+                      className={`text-[11px] px-1 py-0.2 rounded-full font-bold ml-0.5 ${
                         isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#5B6472]'
                       }`}
                     >
@@ -253,24 +253,24 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
         )}
 
         {/* ROW 2 on tablet, ROW 2+3 on mobile, INLINE on desktop */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between w-full min-[1100px]:w-auto gap-3 min-[1100px]:gap-4 shrink-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between w-full min-[1100px]:w-auto gap-2 shrink-0">
           {/* Selects: side by side on mobile (grid-cols-2) and tablet/desktop (flex-row) */}
-          <div className="grid grid-cols-2 md:flex md:flex-row items-stretch md:items-center gap-2.5 sm:gap-3 shrink-0">
+          <div className="grid grid-cols-2 md:flex md:flex-row items-stretch md:items-center gap-1.5 sm:gap-2 shrink-0">
             {/* GROUP 2: Cameras Select */}
-            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+            <div className="flex flex-col md:flex-row md:items-center gap-1">
               <label
                 htmlFor="filter-cameras"
                 className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
               >
                 Cameras
               </label>
-              <div className="relative w-full md:w-[170px] min-[1100px]:w-[185px] h-[44px] min-[1100px]:h-[38px]">
+              <div className="relative w-full md:w-[155px] min-[1100px]:w-[120px] min-[1240px]:w-[145px] h-[44px] min-[1100px]:h-[38px]">
                 <select
                   id="filter-cameras"
                   aria-label="Filter packages by camera count"
                   value={filters.cameraCount || 'All'}
                   onChange={(e) => onFilterChange({ ...filters, cameraCount: e.target.value, page: 1 })}
-                  className="w-full h-[44px] min-[1100px]:h-[38px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                  className="w-full h-[44px] min-[1100px]:h-[38px] pl-2 pr-6 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
                 >
                   {options.cameraCounts.map((opt) => (
                     <option
@@ -283,25 +283,25 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#5B6472] absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
             {/* GROUP 3: Night vision Select */}
-            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+            <div className="flex flex-col md:flex-row md:items-center gap-1">
               <label
                 htmlFor="filter-night-view"
                 className="text-[13px] uppercase font-semibold text-[#5B6472] shrink-0 select-none text-left"
               >
                 Night vision
               </label>
-              <div className="relative w-full md:w-[170px] min-[1100px]:w-[185px] h-[44px] min-[1100px]:h-[38px]">
+              <div className="relative w-full md:w-[155px] min-[1100px]:w-[120px] min-[1240px]:w-[145px] h-[44px] min-[1100px]:h-[38px]">
                 <select
                   id="filter-night-view"
                   aria-label="Filter packages by night vision"
                   value={filters.nightViewSlug || 'all'}
                   onChange={(e) => onFilterChange({ ...filters, nightViewSlug: e.target.value, page: 1 })}
-                  className="w-full h-[44px] min-[1100px]:h-[38px] pl-3 pr-7 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
+                  className="w-full h-[44px] min-[1100px]:h-[38px] pl-2 pr-6 rounded-xl bg-white border border-[#EDE8E1] text-[14px] font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#F15A24] cursor-pointer appearance-none shadow-2xs"
                 >
                   {options.nightViews.map((opt) => (
                     <option
@@ -314,7 +314,7 @@ export const PackageFilterBar: React.FC<PackageFilterBarProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-4 h-4 text-[#5B6472] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#5B6472] absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
