@@ -304,4 +304,28 @@ The following table outlines the endpoint groupings, the owning client applicati
 - **Automated Verification (`tests/test_package_filters.js`, `tests/test_packages_dynamic.js`, `tests/test_package_filterbar_spec.js`)**:
   - Automated tests verify segment order (`All, IP, Analogue, Wi-Fi`), absence of uppercase segment text, wireless package BOM purity (no cable/DVR/NVR), exact price sum parity (`displayed price == sum(qty * unitPrice)`), and strictly distinct pricing for 2-cam Wi-Fi (৳11,500) vs 2-cam Analogue (৳14,600).
 
+### 7.10 Wi-Fi Series Row Architecture & Subcategory Filtering
+- **Row Content & Taxonomy Model (`src/types/index.ts`, `serverSeeds.json`, `camnex.db`)**:
+  - Top-level category group `"Wi-Fi / Smart Devices"` (`cat-wifi`, slug `wifi-smart-devices`) created with 6 subcategories: Wi-Fi Cameras, Video Doorbells, Smart Lights, Smart Plugs & Switches, Smart Locks, and Sensors & Alarms.
+  - Row retitled `"Wi-Fi Series"`, eyebrow: `"Wi-Fi products"`, subtitle: `"Cameras, doorbells, lights and more you control from a phone app"`.
+  - Products selected strictly by category and subcategory IDs (`cat-wifi` / `subcat-*`), never by string matching on product names or titles. Networking hardware (routers, access points, PoE switches) strictly excluded and isolated to Networking categories.
+  - Permanent vector placeholder illustrations created in `public/images/products/`: `smart-doorbell.svg`, `smart-light.svg`, `smart-plug.svg`, and `smart-lock.svg`.
+  - Sample content expanded to 15 products across 5 active subcategories, clearly flagged with `isDemo: true, sample: true`. Clean database remains 100% empty.
+- **In-Place Subcategory Filter Chips (`src/components/common/WifiSubcategoryChips.tsx`, `HomePage.tsx`)**:
+  - Desktop (>=768px): One line of chips (`All` first, then subcategories with active products + counts; at most 6 chips, `scrollWidth <= clientWidth` with zero overflow/wrapping, More dropdown for >6).
+  - Mobile (<768px): Native select (`aria-label="Filter Wi-Fi series subcategory"`) displaying identical options and counts.
+  - Clicking any chip filters the row in place with zero page reload, updates the visible cards, updates the `"View all (N)"` counter, and updates URL query parameter (`?wifi=doorbells` or slug).
+  - Browser reload and forward/back navigation (`popstate`) restore active filter state seamlessly.
+  - Subcategories with 0 products (e.g. Sensors & Alarms) are hidden from chip switcher.
+  - Row requires at least 2 Wi-Fi products to render (`wifiProducts.length >= 2`).
+  - First item is the orange promo tile retitled `"Smart Wi-Fi Series"` adhering to standard promo tile rules.
+- **Admin Dashboard Integration (`src/pages/AdminDashboard.tsx`, `src/components/admin/ProductEditModal.tsx`)**:
+  - Category Form: supports parent category group assignment, full subcategory management (add, rename, reorder, toggle enabled/disabled, delete), status/enabled flag, and promo tile editor.
+  - Homepage Sections Editor: renames section to "Wi-Fi Series", migrates legacy "Wi-Fi Cameras" settings, and allows configuring row title, eyebrow, subtitle, number of cards (`itemLimit`), and subcategory chip row toggle.
+  - Product Edit Modal: dynamic subcategory dropdown appears when selected category has subcategories.
+- **Automated Verification (`tests/test_wifi_series.js`)**:
+  - Full CDP test suite verifies: zero networking hardware in Wi-Fi row, exact card filtering per chip, URL sync (`?wifi=doorbells`), reload/back state restoration, desktop single-row overflow prevention, mobile select presentation, equal heights for cards and promo tile, and exclusion of zero-product subcategories.
+  - Full-resolution screenshots captured and visually verified at 375px, 768px, and 1280px (`scratch/shots/wifi-series-*.png`).
+
+
 

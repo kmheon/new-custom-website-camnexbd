@@ -294,6 +294,7 @@ async function main() {
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
     results.push(await runTestSuite('Package Pure Filters Suite', path.join(__dirname, 'test_package_filters.js'), testEnv));
     results.push(await runTestSuite('Package Filter Bar Specification Suite (CDP)', path.join(__dirname, 'test_package_filterbar_spec.js'), testEnv));
+    results.push(await runTestSuite('Wi-Fi Series Row Specification Suite (CDP)', path.join(__dirname, 'test_wifi_series.js'), testEnv));
     results.push(await runTestSuite('Media Upload Suite', path.join(__dirname, 'test_media_upload.js'), testEnv));
     results.push(await runTestSuite('Admin Completeness Suite', path.join(__dirname, 'test_admin_completeness.js'), testEnv));
     results.push(await runTestSuite('RBAC & Identity Suite', path.join(__dirname, 'test_rbac.js'), testEnv));
