@@ -820,12 +820,12 @@
     },
     {
       "id": "pkg-wifi-4",
-      "name": "4-Camera Wireless NVR Security Kit",
-      "slug": "4-camera-wireless-nvr-kit",
+      "name": "4-Camera Wireless Smart Security Kit",
+      "slug": "4-camera-wireless-smart-kit",
       "seriesId": "series-ir",
       "seriesName": "Night Vision (IR)",
       "technologyLabel": "Wi-Fi 6 Wireless Kit",
-      "description": "4-camera wireless surveillance kit featuring dedicated wireless NVR receiver with pre-installed 1TB hard drive.",
+      "description": "4-camera wireless surveillance kit featuring dedicated wireless receiver with pre-installed 1TB storage.",
       "cameraCount": 4,
       "cameraCountsSupported": [
         4
@@ -836,10 +836,10 @@
       "isDemo": true,
       "inclusions": [
         "4x 3MP Weatherproof Wi-Fi Cameras",
-        "1x 4-Channel Wireless NVR Receiver",
-        "1x Western Digital Purple 1TB HDD",
+        "1x 4-Channel Wireless Smart Base Station",
+        "1x Western Digital Purple 1TB Surveillance Storage",
         "4x 12V DC Camera Power Adapters",
-        "1x NVR Power Adapter & HDMI Cable"
+        "1x Base Station Power Adapter & HDMI Display Link"
       ],
       "systemTypeId": "systype-wireless",
       "systemTypeSlug": "wireless",

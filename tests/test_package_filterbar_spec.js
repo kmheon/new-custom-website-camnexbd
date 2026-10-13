@@ -239,6 +239,21 @@ async function main() {
                 errs.push('Old "Showing N of M packages" text still present beneath cards');
               }
             }
+
+            // Wireless cards check: summary and components contain neither "cable" nor "DVR" nor "NVR"
+            const wifiCards = Array.from(section.querySelectorAll('[data-package-id*="wifi"], [data-card-id*="wifi"]'));
+            wifiCards.forEach(c => {
+              const text = c.innerText;
+              if (/\bcable\b/i.test(text)) {
+                errs.push('Wireless package card contains "cable": ' + text.slice(0, 100));
+              }
+              if (/\bdvr\b/i.test(text)) {
+                errs.push('Wireless package card contains "DVR": ' + text.slice(0, 100));
+              }
+              if (/\bnvr\b/i.test(text)) {
+                errs.push('Wireless package card contains "NVR": ' + text.slice(0, 100));
+              }
+            });
           }
 
           return errs;

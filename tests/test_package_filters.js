@@ -28,7 +28,8 @@ const {
   parseFilterQuery,
   slugifyFilter,
   normalizeCameraCount,
-  availableOptions
+  availableOptions,
+  generatePackageSummary
 } = require('./helpers/packageFiltersHelper');
 
 function runTests() {
@@ -121,6 +122,33 @@ function runTests() {
   }
   assert.strictEqual(segLabels[2], 'Analogue', 'Analogue label must be "Analogue", not "ANALOGUE"');
   console.log('[PASS] Segment labels order & case: All, IP, Analogue, Wi-Fi (no uppercase words)');
+
+  // Test 10: Wireless packages summary and inclusions contain neither "cable" nor "DVR" nor "NVR"
+  const wirelessList = packages.filter(p => (
+    p.systemTypeSlug === 'wireless' ||
+    (p.systemTypeId && p.systemTypeId.includes('wireless')) ||
+    (p.name && p.name.includes('Wireless'))
+  ));
+  assert.ok(wirelessList.length >= 2, 'Should have at least 2 wireless packages');
+
+  for (const wp of wirelessList) {
+    const summary = generatePackageSummary(wp);
+    assert.strictEqual(
+      /cable|dvr|nvr/i.test(summary),
+      false,
+      `Wireless package ${wp.id} summary "${summary}" must not contain cable, DVR, or NVR`
+    );
+
+    const inclusions = wp.inclusions || [];
+    for (const inc of inclusions) {
+      assert.strictEqual(
+        /cable|dvr|nvr/i.test(inc),
+        false,
+        `Wireless package ${wp.id} inclusion "${inc}" must not contain cable, DVR, or NVR`
+      );
+    }
+  }
+  console.log(`[PASS] Wireless packages: verified ${wirelessList.length} wireless packages contain neither "cable" nor "DVR" nor "NVR" in summary or components`);
 
   console.log('\nALL PACKAGE FILTER TESTS PASSED SUCCESSFULLY!');
 }

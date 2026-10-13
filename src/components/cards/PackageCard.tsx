@@ -19,19 +19,35 @@ export interface PackageCardProps {
 }
 
 // Generate concise summary line from package specifications
-function generatePackageSummary(pkg: SecurityPackage): string {
+export function generatePackageSummary(pkg: SecurityPackage): string {
   const parts: string[] = [];
   if (pkg.cameraCount) {
     parts.push(`${pkg.cameraCount} cameras`);
   }
-  const sys = (pkg.systemType || '').toLowerCase();
-  const inclusions = pkg.inclusions || [];
-  if (sys.includes('ip') || inclusions.some(i => i.toLowerCase().includes('nvr'))) {
-    parts.push('1 NVR recorder');
-  } else if (sys.includes('analogue') || inclusions.some(i => i.toLowerCase().includes('dvr'))) {
-    parts.push('1 DVR recorder');
+
+  const isWireless = (
+    pkg.systemTypeSlug === 'wireless' ||
+    Boolean(pkg.systemTypeId && (pkg.systemTypeId.includes('wireless') || pkg.systemTypeId.includes('wifi'))) ||
+    Boolean(pkg.systemTypeName && (pkg.systemTypeName.toLowerCase().includes('wireless') || pkg.systemTypeName.toLowerCase().includes('wi-fi'))) ||
+    Boolean(pkg.systemType && (pkg.systemType.toLowerCase().includes('wireless') || pkg.systemType.toLowerCase().includes('wi-fi'))) ||
+    Boolean(pkg.name && (pkg.name.toLowerCase().includes('wireless') || pkg.name.toLowerCase().includes('wi-fi')))
+  );
+
+  const inclusions = (pkg.inclusions || []).map(i => i.toLowerCase());
+  const rules = (pkg.rules || []).map((r: any) => ((r.name || r.productName || '') + '').toLowerCase());
+  const allItems = [...inclusions, ...rules];
+
+  // Recorders: mention DVR / NVR ONLY if NOT wireless and package actually has a recorder
+  if (!isWireless) {
+    if (allItems.some(i => i.includes('nvr') || i.includes('network video recorder'))) {
+      parts.push('1 NVR recorder');
+    } else if (allItems.some(i => i.includes('dvr') || i.includes('turbo hd dvr'))) {
+      parts.push('1 DVR recorder');
+    }
   }
-  const storageItem = inclusions.find(i => /\b\d+\s*(tb|gb)\b/i.test(i));
+
+  // Storage
+  const storageItem = (pkg.inclusions || []).find(i => /\b\d+\s*(tb|gb)\b/i.test(i));
   if (storageItem) {
     const match = storageItem.match(/\b\d+\s*(tb|gb)\b/i);
     if (match) parts.push(`${match[0].toUpperCase()} storage`);
@@ -39,10 +55,19 @@ function generatePackageSummary(pkg: SecurityPackage): string {
     const est = pkg.cameraCount >= 16 ? '2 TB' : pkg.cameraCount >= 8 ? '1 TB' : '500 GB';
     parts.push(`${est} storage`);
   }
-  if (pkg.cameraCount && !sys.includes('wireless') && !sys.includes('wi-fi')) {
-    parts.push(`${pkg.cameraCount * 10} m cable`);
+
+  // Cable: mention cable ONLY if NOT wireless and package actually has cable in components
+  if (!isWireless && allItems.some(i => i.includes('cable') || i.includes('coaxial') || i.includes('cat6'))) {
+    const cableMatch = (pkg.inclusions || []).find(i => /\b\d+\s*m\b/i.test(i));
+    if (cableMatch) {
+      const match = cableMatch.match(/\b\d+\s*m\b/i);
+      parts.push(`${match[0].toLowerCase()} cable`);
+    } else if (pkg.cameraCount) {
+      parts.push(`${pkg.cameraCount * 10} m cable`);
+    }
   }
-  return parts.join(', ') || 'Camera set with recorder, storage and cables';
+
+  return parts.join(', ') || (isWireless ? 'Wireless smart security camera set' : 'Camera set with recorder, storage and cables');
 }
 
 export const PackageCard: React.FC<PackageCardProps> = ({
