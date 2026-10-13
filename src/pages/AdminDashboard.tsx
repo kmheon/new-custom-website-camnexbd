@@ -15,7 +15,7 @@ import {
 } from '../services';
 import { INITIAL_CTA_DATA } from '../services/seedData';
 import {
-  Product, Category, Brand, SpecTemplate, SecurityPackage, PackageSeries, PackageSystemType, ServiceOffering, Order,
+  Product, Category, Subcategory, Brand, SpecTemplate, SecurityPackage, PackageSeries, PackageSystemType, ServiceOffering, Order,
   QuoteRequest, SiteSettings, HomepageSection, ProductResearchResult, Role,
   HeroSlide, HeroFeatureHighlight
 } from '../types';
@@ -214,7 +214,28 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     packageService.getPackageSystemTypes().then(setPackageSystemTypes);
     orderService.getAllOrders().then(setOrders);
     quoteService.getQuotes().then(setQuotes);
-    cmsService.getHomepageSections().then(setSections);
+    cmsService.getHomepageSections().then((secs) => {
+      let migrated = false;
+      const updated = (secs || []).map((s) => {
+        if (s.id === 'sec-wifi' && (s.type === 'wifi_cameras' || s.title === 'Wi-Fi Cameras')) {
+          migrated = true;
+          return {
+            ...s,
+            type: 'wifi_series',
+            title: 'Wi-Fi Series',
+            eyebrow: s.eyebrow || 'Wi-Fi products',
+            subtitle: s.subtitle || 'Cameras, doorbells, lights and more you control from a phone app',
+            itemLimit: s.itemLimit ?? 8,
+            showChipRow: s.showChipRow !== false
+          };
+        }
+        return s;
+      });
+      if (migrated) {
+        cmsService.updateHomepageSections(updated);
+      }
+      setSections(updated);
+    });
     cmsService.getHeroSlides().then(setHeroSlides);
   };
 
@@ -1564,8 +1585,97 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         </div>
                       )}
 
+                      {/* WI-FI SERIES SECTION SETTINGS */}
+                      {(s.type === 'wifi_series' || s.type === 'wifi_cameras' || s.id === 'sec-wifi') && (
+                        <div className="pt-3 border-t border-slate-800/80 space-y-3 text-xs">
+                          <div className="text-[#F15A24] font-bold text-xs uppercase tracking-wider">
+                            Wi-Fi Series Section Settings
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <span className="text-slate-400 block mb-1">Row Title</span>
+                              <input
+                                type="text"
+                                value={s.title || 'Wi-Fi Series'}
+                                onChange={async (e) => {
+                                  const updated = [...sections];
+                                  updated[idx].title = e.target.value;
+                                  await cmsService.updateHomepageSections(updated);
+                                  setSections(updated);
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block mb-1">Eyebrow</span>
+                              <input
+                                type="text"
+                                value={s.eyebrow || 'Wi-Fi products'}
+                                onChange={async (e) => {
+                                  const updated = [...sections];
+                                  updated[idx].eyebrow = e.target.value;
+                                  await cmsService.updateHomepageSections(updated);
+                                  setSections(updated);
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-1">Subtitle</span>
+                            <input
+                              type="text"
+                              value={s.subtitle || 'Cameras, doorbells, lights and more you control from a phone app'}
+                              onChange={async (e) => {
+                                const updated = [...sections];
+                                updated[idx].subtitle = e.target.value;
+                                await cmsService.updateHomepageSections(updated);
+                                setSections(updated);
+                              }}
+                              className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs"
+                            />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                            <div>
+                              <span className="text-slate-400 block mb-1">Number of Cards (Item Limit)</span>
+                              <input
+                                type="number"
+                                min={2}
+                                max={24}
+                                value={s.itemLimit ?? 8}
+                                onChange={async (e) => {
+                                  const updated = [...sections];
+                                  updated[idx].itemLimit = parseInt(e.target.value, 10) || 8;
+                                  await cmsService.updateHomepageSections(updated);
+                                  setSections(updated);
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs"
+                              />
+                            </div>
+                            <div className="pt-4">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={s.showChipRow !== false}
+                                  onChange={async (e) => {
+                                    const updated = [...sections];
+                                    updated[idx].showChipRow = e.target.checked;
+                                    await cmsService.updateHomepageSections(updated);
+                                    setSections(updated);
+                                  }}
+                                  className="rounded border-slate-700 text-orange-600 focus:ring-orange-500 w-4 h-4"
+                                />
+                                <span className="text-xs font-bold text-slate-300">
+                                  Show Subcategory Filter Chips Row
+                                </span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* ROW PROMO TILE EDITOR (for product row sections) */}
-                      {['popular_products', 'new_arrivals', 'accessories', 'special_offers', 'category_row', 'wifi_cameras', 'featured_products'].includes(s.type) && (
+                      {['popular_products', 'new_arrivals', 'accessories', 'special_offers', 'category_row', 'wifi_cameras', 'wifi_series', 'featured_products'].includes(s.type) && (
                         <div className="pt-3 border-t border-slate-800/80">
                           <PromoTileEditor
                             value={s.promoTile}
@@ -3917,6 +4027,166 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   <option key={t.id} value={t.id}>{t.name} ({t.fields.length} specs)</option>
                 ))}
               </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Parent Category Group</label>
+                <select
+                  value={editingCategory.parentId || ''}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, parentId: e.target.value || null })}
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
+                >
+                  <option value="">None (Top-Level Category Group)</option>
+                  {categories.filter(c => c.id !== editingCategory.id).map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Status / Enabled</label>
+                <select
+                  value={editingCategory.status || 'active'}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, status: e.target.value })}
+                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
+                >
+                  <option value="active">Active (Enabled)</option>
+                  <option value="inactive">Inactive (Disabled)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* SUBCATEGORIES MANAGEMENT */}
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Subcategories</h4>
+                  <p className="text-[10px] text-slate-500">Manage subcategories (add, rename, reorder, enable/disable).</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = editingCategory.subcategories || [];
+                    const nextOrder = current.length + 1;
+                    const newSub: Subcategory = {
+                      id: `subcat-${Date.now()}`,
+                      name: `New Subcategory ${nextOrder}`,
+                      slug: `new-subcategory-${nextOrder}`,
+                      order: nextOrder,
+                      enabled: true
+                    };
+                    setEditingCategory({ ...editingCategory, subcategories: [...current, newSub] });
+                  }}
+                  className="px-2.5 py-1 text-xs font-bold bg-[#F15A24] text-white rounded-lg hover:bg-[#d94e1b] transition-colors cursor-pointer"
+                >
+                  + Add Subcategory
+                </button>
+              </div>
+
+              {(!editingCategory.subcategories || editingCategory.subcategories.length === 0) ? (
+                <div className="text-[11px] text-slate-400 italic py-2 text-center bg-white rounded-lg border border-dashed border-slate-200">
+                  No subcategories defined for this group.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {editingCategory.subcategories.map((sc, scIdx) => (
+                    <div key={sc.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 text-xs">
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          disabled={scIdx === 0}
+                          onClick={() => {
+                            const subs = [...(editingCategory.subcategories || [])];
+                            const temp = subs[scIdx];
+                            subs[scIdx] = subs[scIdx - 1];
+                            subs[scIdx - 1] = temp;
+                            subs.forEach((s, i) => { s.order = i + 1; });
+                            setEditingCategory({ ...editingCategory, subcategories: subs });
+                          }}
+                          className="text-slate-400 hover:text-slate-700 disabled:opacity-20 text-[10px] cursor-pointer"
+                          title="Move Up"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          disabled={scIdx === (editingCategory.subcategories?.length || 1) - 1}
+                          onClick={() => {
+                            const subs = [...(editingCategory.subcategories || [])];
+                            const temp = subs[scIdx];
+                            subs[scIdx] = subs[scIdx + 1];
+                            subs[scIdx + 1] = temp;
+                            subs.forEach((s, i) => { s.order = i + 1; });
+                            setEditingCategory({ ...editingCategory, subcategories: subs });
+                          }}
+                          className="text-slate-400 hover:text-slate-700 disabled:opacity-20 text-[10px] cursor-pointer"
+                          title="Move Down"
+                        >
+                          ▼
+                        </button>
+                      </div>
+
+                      <input
+                        type="text"
+                        value={sc.name}
+                        onChange={(e) => {
+                          const subs = [...(editingCategory.subcategories || [])];
+                          subs[scIdx] = {
+                            ...subs[scIdx],
+                            name: e.target.value,
+                            slug: subs[scIdx].slug || e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                          };
+                          setEditingCategory({ ...editingCategory, subcategories: subs });
+                        }}
+                        placeholder="Subcategory Name"
+                        className="flex-1 bg-white border border-slate-300 text-xs p-1.5 rounded font-medium"
+                      />
+
+                      <input
+                        type="text"
+                        value={sc.slug}
+                        onChange={(e) => {
+                          const subs = [...(editingCategory.subcategories || [])];
+                          subs[scIdx] = { ...subs[scIdx], slug: e.target.value };
+                          setEditingCategory({ ...editingCategory, subcategories: subs });
+                        }}
+                        placeholder="Slug"
+                        className="w-28 bg-white border border-slate-300 text-xs p-1.5 rounded font-mono text-[11px]"
+                      />
+
+                      <label className="flex items-center gap-1 cursor-pointer shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={sc.enabled !== false}
+                          onChange={(e) => {
+                            const subs = [...(editingCategory.subcategories || [])];
+                            subs[scIdx] = { ...subs[scIdx], enabled: e.target.checked };
+                            setEditingCategory({ ...editingCategory, subcategories: subs });
+                          }}
+                          className="rounded text-orange-600 w-3.5 h-3.5"
+                        />
+                        <span className="text-[10px] font-bold text-slate-600">
+                          {sc.enabled !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const subs = (editingCategory.subcategories || []).filter((_, i) => i !== scIdx);
+                          subs.forEach((s, i) => { s.order = i + 1; });
+                          setEditingCategory({ ...editingCategory, subcategories: subs });
+                        }}
+                        className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                        title="Delete Subcategory"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>

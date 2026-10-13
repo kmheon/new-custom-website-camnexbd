@@ -47,6 +47,9 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
         brandId: product.brandId || (brands[0]?.id || 'b-hikvision'),
         category: product.category || (categories[0]?.name || 'CCTV Cameras'),
         categoryId: product.categoryId || (categories[0]?.id || 'cctv-cameras'),
+        subcategoryId: product.subcategoryId || '',
+        subcategory: product.subcategory || '',
+        subcategorySlug: product.subcategorySlug || '',
         productType: product.productType || 'physical',
         status: product.status || 'active',
         websiteVisible: product.websiteVisible !== false,
@@ -305,13 +308,47 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 <label className="text-xs font-bold text-slate-700 block mb-1">Category *</label>
                 <select
                   value={formData.categoryId || ''}
-                  onChange={e => handleCategoryChange(e.target.value)}
+                  onChange={e => {
+                    handleCategoryChange(e.target.value);
+                    const catObj = categories.find(item => item.id === e.target.value);
+                    const defaultSub = catObj?.subcategories?.[0];
+                    setFormData(prev => ({
+                      ...prev,
+                      subcategoryId: defaultSub ? defaultSub.id : undefined,
+                      subcategory: defaultSub ? defaultSub.name : undefined,
+                      subcategorySlug: defaultSub ? defaultSub.slug : undefined
+                    }));
+                  }}
                   className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
                 >
                   {categories.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+
+                {selectedCategoryObj?.subcategories && selectedCategoryObj.subcategories.length > 0 && (
+                  <div className="mt-2">
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">Subcategory</label>
+                    <select
+                      value={formData.subcategoryId || ''}
+                      onChange={e => {
+                        const sc = selectedCategoryObj.subcategories?.find(s => s.id === e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          subcategoryId: e.target.value || undefined,
+                          subcategory: sc ? sc.name : undefined,
+                          subcategorySlug: sc ? sc.slug : undefined
+                        }));
+                      }}
+                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
+                    >
+                      <option value="">-- General Category (None) --</option>
+                      {selectedCategoryObj.subcategories.map(sc => (
+                        <option key={sc.id} value={sc.id}>{sc.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div>
