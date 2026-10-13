@@ -9,6 +9,7 @@ import { Button } from './components/common/UI';
 import { useCartStore, useSettingsStore } from './store';
 
 // Lazy-loaded routes for code splitting and performance optimization
+const PackagesPage = lazy(() => import('./pages/PackagesPage').then(m => ({ default: m.PackagesPage })));
 const PackageBuilderPage = lazy(() => import('./pages/PackageBuilderPage').then(m => ({ default: m.PackageBuilderPage })));
 const ComparePage = lazy(() => import('./pages/ComparePage').then(m => ({ default: m.ComparePage })));
 const CartAndCheckoutPage = lazy(() => import('./pages/CartAndCheckoutPage').then(m => ({ default: m.CartAndCheckoutPage })));
@@ -209,9 +210,13 @@ export default function App() {
           {currentRoute === 'catalog' && <CatalogPage onNavigate={navigate} />}
           {currentRoute === 'category' && <CatalogPage onNavigate={navigate} categorySlug={routeParam} />}
           {currentRoute === 'brand' && <CatalogPage onNavigate={navigate} brandSlug={routeParam} />}
-          {currentRoute === 'product' && <ProductDetailPage productId={routeParam || 'prod-hik-irpf-2mp'} onNavigate={navigate} />}
-          {currentRoute === 'packages' && <PackageBuilderPage packageSlug={routeParam} onNavigate={navigate} />}
-          {currentRoute === 'compare' && <ComparePage onNavigate={navigate} />}
+          {currentRoute === 'packages' && (
+            routeParam ? (
+              <PackageBuilderPage packageSlug={routeParam} onNavigate={navigate} />
+            ) : (
+              <PackagesPage onNavigate={navigate} />
+            )
+          )}
           {currentRoute === 'cart' && <CartAndCheckoutPage onNavigate={navigate} initialStep="cart" />}
           {currentRoute === 'checkout' && <CartAndCheckoutPage onNavigate={navigate} initialStep="checkout" />}
           {currentRoute === 'tracking' && <OrderTrackingPage initialOrderNumber={routeParam} onNavigate={navigate} />}
