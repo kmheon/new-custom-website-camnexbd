@@ -250,6 +250,289 @@ function parseFilterQuery(input, options) {
   };
 }
 
+function normalizeNightViewSlug(slug) {
+  const s = slugifyFilter(slug);
+  if (s === 'night-vision' || s === 'black-and-white' || s === 'ir' || s === 'night-vision-ir') {
+    return 'night-vision-ir';
+  }
+  return s;
+}
+
+function extractPackageStorage(pkg) {
+  const text = `${pkg.storageDescription || ''} ${(pkg.inclusions || []).join(' ')} ${pkg.name} ${pkg.description || ''}`;
+  const match = text.match(/(\d+\s*(?:TB|GB))/i);
+  return match ? match[1].replace(/\s+/g, '').toUpperCase() : null;
+}
+
+function extractPackageChannels(pkg) {
+  const text = `${pkg.dvrModel || ''} ${(pkg.inclusions || []).join(' ')} ${pkg.name}`;
+  const match = text.match(/(\d+)\s*[- ]*(?:Channel|Ch\b)/i);
+  return match ? match[1] : null;
+}
+
+function extractPackageCameraTypes(pkg) {
+  const text = `${(pkg.inclusions || []).join(' ')} ${pkg.name} ${pkg.description || ''}`;
+  const types = [];
+  if (/bullet/i.test(text)) types.push('Bullet');
+  if (/dome/i.test(text) && !/speed dome/i.test(text)) types.push('Dome');
+  if (/turret/i.test(text)) types.push('Turret');
+  if (/ptz|speed dome/i.test(text)) types.push('PTZ');
+  return types;
+}
+
+function extractPackageResolution(pkg) {
+  const text = `${pkg.cameraResolution || ''} ${(pkg.inclusions || []).join(' ')} ${pkg.name}`;
+  const match = text.match(/(2MP|3MP|4MP|5MP|6MP|8MP|4K)/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function extractPackageAudio(pkg) {
+  const text = `${(pkg.inclusions || []).join(' ')} ${pkg.name} ${pkg.description || ''}`;
+  return /audio|mic|two-way/i.test(text) ? 'with-audio' : 'without-audio';
+}
+
+function extractPackageBrands(pkg) {
+  const text = `${(pkg.inclusions || []).join(' ')} ${pkg.name} ${pkg.description || ''}`;
+  const brands = [];
+  if (/hikvision/i.test(text)) brands.push('Hikvision');
+  if (/western digital|wd purple/i.test(text)) brands.push('Western Digital');
+  if (/dahua/i.test(text)) brands.push('Dahua');
+  if (/zkteco/i.test(text)) brands.push('ZKTeco');
+  if (/ruijie|reyee/i.test(text)) brands.push('Ruijie');
+  return brands;
+}
+
+function extractPackageInstallation(pkg) {
+  const text = `${(pkg.inclusions || []).join(' ')} ${pkg.description || ''}`;
+  return /setup|configuration|installation|mounting/i.test(text);
+}
+
+function sortPackages(packages, sortBy = 'recommended') {
+  const list = [...packages];
+  switch (sortBy) {
+    case 'price-asc':
+      return list.sort((a, b) => {
+        const pa = (a.basePrice != null && a.basePrice > 0 && !a.isQuoteOnly) ? a.basePrice : Infinity;
+        const pb = (b.basePrice != null && b.basePrice > 0 && !b.isQuoteOnly) ? b.basePrice : Infinity;
+        return pa - pb;
+      });
+    case 'price-desc':
+      return list.sort((a, b) => {
+        const pa = (a.basePrice != null && a.basePrice > 0 && !a.isQuoteOnly) ? a.basePrice : -Infinity;
+        const pb = (b.basePrice != null && b.basePrice > 0 && !b.isQuoteOnly) ? b.basePrice : -Infinity;
+        return pb - pa;
+      });
+    case 'cameras-asc':
+      return list.sort((a, b) => (a.cameraCount || 0) - (b.cameraCount || 0));
+    case 'newest':
+      return list.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
+    case 'recommended':
+    default:
+      return list.sort((a, b) => {
+        if (a.featuredOnHomepage && !b.featuredOnHomepage) return -1;
+        if (!a.featuredOnHomepage && b.featuredOnHomepage) return 1;
+        if (a.badge && !b.badge) return -1;
+        if (!a.badge && b.badge) return 1;
+        return 0;
+      });
+  }
+}
+
+function availableOptions(packages, filters = { systemSlug: 'all', cameraCount: 'All', nightViewSlug: 'all' }, options) {
+  const systemTypesList = (options && options.systemTypes) || [];
+  const seriesList = (options && options.seriesList) || [];
+
+  const systemTypes = [];
+  systemTypes.push({
+    id: 'st-all',
+    slug: 'all',
+    name: 'All',
+    shortLabel: 'All',
+    description: 'Camera sets for homes, shops and offices',
+    count: packages.length,
+    enabled: true
+  });
+
+  systemTypesList.forEach(st => {
+    if (st.enabled === false) return;
+    const count = packages.filter(p => getPackageSystemSlug(p, systemTypesList) === st.slug.toLowerCase()).length;
+    if (count > 0) {
+      systemTypes.push({
+        id: st.id,
+        slug: st.slug.toLowerCase(),
+        name: st.name,
+        shortLabel: st.shortLabel || (st.slug === 'wireless' ? 'Wi-Fi' : st.slug.toUpperCase()),
+        description: st.description,
+        icon: st.icon,
+        count,
+        enabled: true
+      });
+    }
+  });
+
+  const allCounts = getAvailableCameraCounts(packages, 'all', systemTypesList);
+  const badgeCounts = calculateBadgeCounts(packages, filters, allCounts, seriesList, systemTypesList);
+
+  const cameraCounts = [
+    { value: 'All', label: 'All', count: badgeCounts.cameraCounts['All'] || packages.length, disabled: false }
+  ];
+  allCounts.forEach(num => {
+    const cStr = String(num);
+    const count = badgeCounts.cameraCounts[cStr] || 0;
+    cameraCounts.push({
+      value: cStr,
+      label: `${num} cameras`,
+      count,
+      disabled: count === 0
+    });
+  });
+
+  const nightViews = [
+    { value: 'all', slug: 'all', label: 'All', count: badgeCounts.nightViews['all'] || packages.length, disabled: false }
+  ];
+  seriesList.forEach(series => {
+    const count = badgeCounts.nightViews[series.slug] || 0;
+    let label = series.name;
+    if (series.slug === 'night-vision-ir' || series.slug === 'black-and-white') label = 'Black and white';
+    else if (series.slug === 'hybrid-light') label = 'Hybrid light';
+    else if (series.slug === 'full-color') label = 'Full color';
+    else if (series.slug === 'enterprise-ptz') label = 'Enterprise & PTZ';
+
+    nightViews.push({
+      slug: series.slug,
+      label,
+      count,
+      disabled: count === 0
+    });
+  });
+
+  const prices = packages.map(p => p.basePrice).filter(p => typeof p === 'number' && p > 0);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
+  const hasAskForPrice = packages.some(p => p.basePrice == null || p.basePrice <= 0 || p.isQuoteOnly);
+  const priceRange = { min: minPrice, max: maxPrice, hasAskForPrice };
+
+  const rawStorages = new Set();
+  packages.forEach(p => {
+    const s = extractPackageStorage(p);
+    if (s) rawStorages.add(s);
+  });
+  let storageSizes;
+  if (rawStorages.size >= 2) {
+    const sorted = Array.from(rawStorages).sort((a, b) => {
+      const getBytes = (val) => {
+        const num = parseFloat(val);
+        return val.includes('TB') ? num * 1024 : num;
+      };
+      return getBytes(a) - getBytes(b);
+    });
+    storageSizes = sorted.map(st => {
+      const matches = filterPackages(packages, { ...filters, storage: st }, options).length;
+      return { value: st.toLowerCase(), label: st, count: matches, disabled: matches === 0 };
+    });
+  }
+
+  const rawChannels = new Set();
+  packages.forEach(p => {
+    const ch = extractPackageChannels(p);
+    if (ch) rawChannels.add(ch);
+  });
+  let recorderChannels;
+  if (rawChannels.size >= 2) {
+    const sorted = Array.from(rawChannels).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    recorderChannels = sorted.map(ch => {
+      const matches = filterPackages(packages, { ...filters, channels: ch }, options).length;
+      return { value: ch, label: `${ch}-Channel`, count: matches, disabled: matches === 0 };
+    });
+  }
+
+  const rawCamTypes = new Set();
+  packages.forEach(p => {
+    extractPackageCameraTypes(p).forEach(t => rawCamTypes.add(t));
+  });
+  let cameraTypes;
+  if (rawCamTypes.size >= 2) {
+    cameraTypes = Array.from(rawCamTypes).map(t => {
+      const slug = slugifyFilter(t);
+      const matches = filterPackages(packages, { ...filters, cameraType: slug }, options).length;
+      return { value: slug, label: t, count: matches, disabled: matches === 0 };
+    });
+  }
+
+  const rawResolutions = new Set();
+  packages.forEach(p => {
+    const r = extractPackageResolution(p);
+    if (r) rawResolutions.add(r);
+  });
+  let resolutions;
+  if (rawResolutions.size >= 2) {
+    resolutions = Array.from(rawResolutions).map(r => {
+      const slug = slugifyFilter(r);
+      const matches = filterPackages(packages, { ...filters, resolution: slug }, options).length;
+      return { value: slug, label: r, count: matches, disabled: matches === 0 };
+    });
+  }
+
+  const rawAudio = new Set();
+  packages.forEach(p => rawAudio.add(extractPackageAudio(p)));
+  let audioOptions;
+  if (rawAudio.size >= 2) {
+    audioOptions = [
+      { value: 'with-audio', label: 'With audio', count: filterPackages(packages, { ...filters, audio: 'with-audio' }, options).length, disabled: false },
+      { value: 'without-audio', label: 'Without audio', count: filterPackages(packages, { ...filters, audio: 'without-audio' }, options).length, disabled: false }
+    ];
+  }
+
+  const rawBrands = new Set();
+  packages.forEach(p => {
+    extractPackageBrands(p).forEach(b => rawBrands.add(b));
+  });
+  let brands;
+  if (rawBrands.size >= 2) {
+    brands = Array.from(rawBrands).map(b => {
+      const slug = slugifyFilter(b);
+      const matches = filterPackages(packages, { ...filters, brand: slug }, options).length;
+      return { value: slug, label: b, count: matches, disabled: matches === 0 };
+    });
+  }
+
+  const rawTags = new Set();
+  packages.forEach(p => {
+    if (p.badge) rawTags.add(p.badge);
+  });
+  let tags;
+  if (rawTags.size >= 2) {
+    tags = Array.from(rawTags).map(t => {
+      const slug = slugifyFilter(t);
+      const matches = filterPackages(packages, { ...filters, tag: slug }, options).length;
+      return { value: slug, label: t, count: matches, disabled: matches === 0 };
+    });
+  }
+
+  const hasInst = packages.some(p => extractPackageInstallation(p));
+  let installationOptions;
+  if (hasInst) {
+    installationOptions = [
+      { value: 'available', label: 'Installation available', count: filterPackages(packages, { ...filters, installation: 'available' }, options).length, disabled: false }
+    ];
+  }
+
+  return {
+    systemTypes,
+    cameraCounts,
+    nightViews,
+    priceRange,
+    storageSizes,
+    recorderChannels,
+    cameraTypes,
+    resolutions,
+    audioOptions,
+    brands,
+    tags,
+    installationOptions
+  };
+}
+
 module.exports = {
   normalizeCameraCount,
   slugifyFilter,
@@ -262,6 +545,16 @@ module.exports = {
   resolveDependentFilterSelection,
   getFilterConflictState,
   buildFilterQuery,
-  parseFilterQuery
+  parseFilterQuery,
+  normalizeNightViewSlug,
+  extractPackageStorage,
+  extractPackageChannels,
+  extractPackageCameraTypes,
+  extractPackageResolution,
+  extractPackageAudio,
+  extractPackageBrands,
+  extractPackageInstallation,
+  sortPackages,
+  availableOptions
 };
 

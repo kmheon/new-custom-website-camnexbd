@@ -40,7 +40,7 @@ function cleanTempDbFiles() {
   }
 }
 
-async function waitForServer(port, maxAttempts = 30) {
+async function waitForServer(port, maxAttempts = 80) {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await new Promise((resolve, reject) => {
@@ -247,6 +247,7 @@ async function main() {
     stdio: ['ignore', 'pipe', 'pipe']
   });
 
+  serverProc.stdout.resume();
   serverProc.stderr.on('data', (d) => {
     const s = d.toString().trim();
     if (s) console.error(`[TEMP-SERVER-ERR] ${s}`);
