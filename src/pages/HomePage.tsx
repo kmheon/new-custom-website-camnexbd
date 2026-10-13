@@ -1007,18 +1007,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <Camera className="w-6 h-6" />
                 </div>
                 <h3 className="font-heading font-bold text-lg text-[#111827]">
-                  {conflictState.message || 'No packages match your selected filters'}
+                  No packages match these filters
                 </h3>
                 <p className="text-xs text-[#5B6472] leading-relaxed">
-                  We could not find any CCTV kits for {packageCountFilter !== 'All' ? `${packageCountFilter} cameras` : 'selected filters'} under this configuration. Try clearing conflicting filters below:
+                  We could not find any CCTV kits for {packageCountFilter !== 'All' ? `${packageCountFilter} cameras` : 'the selected filters'} under this configuration. Try resetting the filters below:
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
                   <button
                     type="button"
                     onClick={() => updatePackageFilters('all', 'All', 'all')}
-                    className="px-5 py-2 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                    className="px-5 py-2.5 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
                   >
-                    Reset all filters
+                    Reset filters
                   </button>
                 </div>
               </div>

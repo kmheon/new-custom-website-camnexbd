@@ -105,9 +105,12 @@ function runTests() {
   // Legacy param mapping: ?type=Full-Color
   const legacyColor = parseFilterQuery('?type=Full-Color', { systemTypes, seriesList });
   assert.strictEqual(legacyColor.nightViewSlug, 'full-color', 'Legacy ?type=Full-Color should map to view=full-color');
-  console.log('[PASS] Legacy parameter mapping: ?type=Wireless -> system=wireless, ?type=Full-Color -> view=full-color');
+  // Legacy param mapping: ?series=full-color
+  const legacySeries = parseFilterQuery('?series=full-color', { systemTypes, seriesList });
+  assert.strictEqual(legacySeries.nightViewSlug, 'full-color', 'Legacy ?series=full-color should map to view=full-color');
+  console.log('[PASS] Legacy parameter mapping: ?series=full-color -> view=full-color');
 
-  console.log('\nALL 8 PACKAGE FILTER TESTS PASSED SUCCESSFULLY!');
+  console.log('\nALL 9 PACKAGE FILTER TESTS PASSED SUCCESSFULLY!');
 }
 
 runTests();

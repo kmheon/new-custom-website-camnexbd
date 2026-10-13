@@ -811,7 +811,7 @@ export function parseFilterQuery(
   let cameraCount = normalizeCameraCount(params.get('cameras'));
   let nightViewSlug = params.get('view') ? slugifyFilter(params.get('view')!) : 'all';
 
-  // Legacy query param mapping: ?type=...
+  // Legacy query param mapping: ?type=... or ?series=...
   const legacyType = params.get('type');
   if (legacyType && legacyType !== 'All' && legacyType !== 'All Types') {
     const legacySlug = slugifyFilter(legacyType);
@@ -823,9 +823,14 @@ export function parseFilterQuery(
       if (systemSlug === 'all') systemSlug = 'analogue';
     } else {
       if (nightViewSlug === 'all') {
-        nightViewSlug = legacySlug;
+        nightViewSlug = normalizeNightViewSlug(legacySlug);
       }
     }
+  }
+
+  const legacySeries = params.get('series');
+  if (legacySeries && legacySeries !== 'all' && nightViewSlug === 'all') {
+    nightViewSlug = normalizeNightViewSlug(slugifyFilter(legacySeries));
   }
 
   const minPrice = params.get('min_price') ? parseInt(params.get('min_price')!, 10) : undefined;

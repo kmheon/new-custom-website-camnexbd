@@ -243,6 +243,11 @@ function parseFilterQuery(input, options) {
     }
   }
 
+  const legacySeries = params.get('series');
+  if (legacySeries && legacySeries !== 'all' && nightViewSlug === 'all') {
+    nightViewSlug = slugifyFilter(legacySeries);
+  }
+
   return {
     systemSlug,
     cameraCount,
