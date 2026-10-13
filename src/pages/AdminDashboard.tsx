@@ -51,6 +51,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalProductsCount, setTotalProductsCount] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [templates, setTemplates] = useState<SpecTemplate[]>([]);
@@ -119,6 +120,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       await productService.deleteProduct(id);
       const res = await productService.getProducts({ limit: 100 });
       setProducts(res.items);
+      if (typeof res?.total === 'number') setTotalProductsCount(res.total);
     } catch (err: any) {
       alert(err.message || 'Failed to delete product');
     }
@@ -152,6 +154,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       await productService.updateProduct(targetProduct.id, { pricing: updatedPricing });
       const res = await productService.getProducts({ limit: 100 });
       setProducts(res.items);
+      if (typeof res?.total === 'number') setTotalProductsCount(res.total);
       setQuickOfferProductId('');
       setQuickOfferSalePrice('');
     } catch (err: any) {
@@ -166,6 +169,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       await productService.updateProduct(p.id, { pricing: updatedPricing });
       const res = await productService.getProducts({ limit: 100 });
       setProducts(res.items);
+      if (typeof res?.total === 'number') setTotalProductsCount(res.total);
     } catch (err: any) {
       alert(`Failed to remove offer: ${err.message}`);
     }
@@ -222,7 +226,14 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const refreshAllData = async () => {
     try {
       await Promise.allSettled([
-        productService.getProducts({ limit: 100 }).then(r => setProducts(r.items)),
+        productService.getProducts({ limit: 100 }).then(r => {
+          if (r) {
+            setProducts(Array.isArray(r.items) ? r.items : (Array.isArray(r) ? r : []));
+            if (typeof r.total === 'number') {
+              setTotalProductsCount(r.total);
+            }
+          }
+        }),
         categoryService.getCategories().then(setCategories),
         brandService.getBrands().then(setBrands),
         specTemplateService.getTemplates().then(setTemplates),
@@ -786,7 +797,9 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     Object.keys(p.specifications).length > 0 &&
     (p.pricing?.regularPrice || p.pricing?.salePrice)
   );
-  const catalogReadinessScore = products.length > 0 ? Math.round((fullyReadyProducts.length / products.length) * 100) : 100;
+  // Catalog Product Total: use official API total if provided (including legitimate 0), fallback to loaded products length
+  const displayedProductTotal = typeof totalProductsCount === 'number' ? totalProductsCount : products.length;
+  const catalogReadinessScore = displayedProductTotal > 0 ? Math.round((fullyReadyProducts.length / displayedProductTotal) * 100) : 100;
 
   // Dashboard Overview: Real Orders & Revenue Metrics
   const pendingOrders = orders.filter(o => o.status === 'pending');
@@ -802,8 +815,12 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const activeCategories = categories.filter(c => c.status !== 'inactive');
   const totalSubcategories = categories.reduce((sum, c) => sum + (c.subcategories?.length || 0), 0);
 
-  // Urgent Operational Work Queue Count
-  const totalWorkQueueCount = pendingOrders.length + unverifiedPayments.length + pendingQuotes.length;
+  // Urgent Operational Work Queue Count: deduplicate orders that have both pending confirmation and unverified payment
+  const orderIdsNeedingAction = new Set([
+    ...pendingOrders.map(o => o.id),
+    ...unverifiedPayments.map(o => o.id)
+  ]);
+  const totalWorkQueueCount = orderIdsNeedingAction.size + pendingQuotes.length;
 
   // Real System & Store Activity Feed (Audit Logs or Synthesized Orders & Inquiries)
   const combinedRecentActivity = (() => {
@@ -811,6 +828,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       return dashboardAuditLogs.map(log => ({
         id: log.id,
         type: 'audit' as const,
+        provenance: 'Audit Log' as const,
         entity: log.entity || 'system',
         action: log.action || 'event',
         title: `${log.actorName || 'System'} ${log.action} ${log.entity}`,
@@ -822,6 +840,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     const events: Array<{
       id: string;
       type: 'order' | 'quote';
+      provenance: 'Store Activity';
       entity: string;
       action: string;
       title: string;
@@ -834,6 +853,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       events.push({
         id: `act-ord-${o.id}`,
         type: 'order',
+        provenance: 'Store Activity',
         entity: 'order',
         action: o.status,
         title: `Order #${o.orderNumber} placed`,
@@ -847,6 +867,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       events.push({
         id: `act-qt-${q.id}`,
         type: 'quote',
+        provenance: 'Store Activity',
         entity: 'quote',
         action: q.status,
         title: `Quote inquiry received`,
@@ -858,6 +879,18 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
     return events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8);
   })();
+
+  // Determine feed provenance badge strictly from the rendered events
+  const renderedFeedEvents = combinedRecentActivity.slice(0, 5);
+  const feedHasAudit = renderedFeedEvents.some(e => e.type === 'audit');
+  const feedHasStore = renderedFeedEvents.some(e => e.type === 'order' || e.type === 'quote');
+  const feedProvenanceBadge = renderedFeedEvents.length === 0
+    ? { label: 'Live Events', color: 'bg-slate-500' }
+    : feedHasAudit && feedHasStore
+    ? { label: 'Combined Stream', color: 'bg-indigo-400' }
+    : feedHasAudit
+    ? { label: 'Audit Log', color: 'bg-sky-400' }
+    : { label: 'Store Activity', color: 'bg-emerald-400' };
 
   return (
     <div className="bg-slate-900 min-h-screen text-slate-100 flex flex-col">
@@ -1039,7 +1072,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   <div className="flex items-start justify-between">
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Catalog Products</span>
-                      <div className="text-3xl font-black text-white font-heading tracking-tight">{products.length}</div>
+                      <div className="text-3xl font-black text-white font-heading tracking-tight">{displayedProductTotal}</div>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[#F15A24] group-hover:scale-110 transition-transform">
                       <Package className="w-5 h-5" />
@@ -1264,9 +1297,14 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                                   <ShoppingCart className="w-4 h-4" />
                                 </div>
                                 <div>
-                                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                                  <div className="text-xs font-bold text-white flex items-center gap-2 flex-wrap">
                                     <span>Confirm Order #{ord.orderNumber}</span>
                                     <span className="text-[10px] font-mono text-[#F15A24]">৳{(ord.total || 0).toLocaleString()}</span>
+                                    {ord.paymentStatus === 'unverified' && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        Payment Unverified
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-[11px] text-slate-400 mt-0.5">
                                     {ord.customerName} ({ord.customerPhone}) · {formatRelativeTime(ord.createdAt)}
@@ -1340,9 +1378,9 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   </div>
 
                   <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                    <span>Pending Orders: <strong className="text-white">{pendingOrders.length}</strong> · Pending Quotes: <strong className="text-white">{pendingQuotes.length}</strong></span>
+                    <span>Pending Orders: <strong className="text-white">{pendingOrders.length}</strong> · Unverified Payments: <strong className="text-white">{unverifiedPayments.length}</strong> · Pending Quotes: <strong className="text-white">{pendingQuotes.length}</strong></span>
                     <button
-                      onClick={() => setActiveModule(pendingOrders.length > 0 ? 'orders' : 'quotes')}
+                      onClick={() => setActiveModule(pendingOrders.length > 0 ? 'orders' : (unverifiedPayments.length > 0 ? 'orders' : 'quotes'))}
                       className="text-xs text-slate-300 hover:text-white flex items-center gap-1 font-medium"
                     >
                       <span>Open Queues</span>
@@ -1386,7 +1424,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         />
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-slate-500">
-                        <span>{fullyReadyProducts.length} of {products.length} products fully production-ready</span>
+                        <span>{fullyReadyProducts.length} of {displayedProductTotal} products fully production-ready</span>
                         <span>Target: 100%</span>
                       </div>
                     </div>
@@ -1462,7 +1500,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   </div>
 
                   <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                    <span>Incomplete Products: <strong className={products.length - fullyReadyProducts.length > 0 ? "text-amber-400" : "text-white"}>{products.length - fullyReadyProducts.length}</strong></span>
+                    <span>Incomplete Products: <strong className={displayedProductTotal - fullyReadyProducts.length > 0 ? "text-amber-400" : "text-white"}>{Math.max(0, displayedProductTotal - fullyReadyProducts.length)}</strong></span>
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
@@ -1491,8 +1529,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] text-slate-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Live Events</span>
+                        <span className={`w-1.5 h-1.5 rounded-full ${feedProvenanceBadge.color} animate-pulse`} />
+                        <span className="font-semibold text-slate-300">{feedProvenanceBadge.label}</span>
                       </div>
                     </div>
 
@@ -1513,6 +1551,13 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                                 <div className="space-y-0.5">
                                   <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
                                     <span>{act.title}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
+                                      act.type === 'audit'
+                                        ? 'bg-sky-950/80 text-sky-300 border border-sky-800/60'
+                                        : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/60'
+                                    }`}>
+                                      {act.provenance}
+                                    </span>
                                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 uppercase font-mono">
                                       {act.action}
                                     </span>
@@ -5277,7 +5322,14 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           brands={brands}
           templates={templates}
           onSaveSuccess={() => {
-            productService.getProducts({ limit: 100 }).then(res => setProducts(res.items));
+            productService.getProducts({ limit: 100 }).then(res => {
+              if (res) {
+                setProducts(Array.isArray(res.items) ? res.items : (Array.isArray(res) ? res : []));
+                if (typeof res.total === 'number') {
+                  setTotalProductsCount(res.total);
+                }
+              }
+            });
           }}
         />
       )}
