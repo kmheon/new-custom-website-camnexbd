@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Package, FolderTree, Tag, Sliders, Layers, ShoppingCart, Users,
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
-  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench, Building2
+  Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench, Building2,
+  Clock, AlertTriangle, CheckCircle2, ChevronRight, Activity, Zap
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
@@ -13,6 +14,7 @@ import {
   productService, categoryService, brandService, specTemplateService,
   packageService, orderService, quoteService, cmsService, productResearchService
 } from '../services';
+import { apiFetch } from '../services/apiClient';
 import { INITIAL_CTA_DATA } from '../services/seedData';
 import {
   Product, Category, Subcategory, Brand, SpecTemplate, SecurityPackage, PackageSeries, PackageSystemType, ServiceOffering, Order,
@@ -59,6 +61,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [dashboardAuditLogs, setDashboardAuditLogs] = useState<any[]>([]);
+  const [isRefreshingDashboard, setIsRefreshingDashboard] = useState(false);
   
   // Hero Slide Editor Modal State
   const [slideModalOpen, setSlideModalOpen] = useState(false);
@@ -204,39 +208,66 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     }
   };
 
-  const refreshAllData = () => {
-    productService.getProducts({ limit: 100 }).then(r => setProducts(r.items));
-    categoryService.getCategories().then(setCategories);
-    brandService.getBrands().then(setBrands);
-    specTemplateService.getTemplates().then(setTemplates);
-    packageService.getPackages().then(setPackages);
-    packageService.getPackageSeries().then(setPackageSeries);
-    packageService.getPackageSystemTypes().then(setPackageSystemTypes);
-    orderService.getAllOrders().then(setOrders);
-    quoteService.getQuotes().then(setQuotes);
-    cmsService.getHomepageSections().then((secs) => {
-      let migrated = false;
-      const updated = (secs || []).map((s) => {
-        if (s.id === 'sec-wifi' && (s.type === 'wifi_cameras' || s.title === 'Wi-Fi Cameras')) {
-          migrated = true;
-          return {
-            ...s,
-            type: 'wifi_series',
-            title: 'Wi-Fi Series',
-            eyebrow: s.eyebrow || 'Wi-Fi products',
-            subtitle: s.subtitle || 'Cameras, doorbells, lights and more you control from a phone app',
-            itemLimit: s.itemLimit ?? 8,
-            showChipRow: s.showChipRow !== false
-          };
-        }
-        return s;
-      });
-      if (migrated) {
-        cmsService.updateHomepageSections(updated);
+  const loadAuditLogs = async () => {
+    try {
+      const res = await apiFetch<any>('/audit-logs?limit=8');
+      if (res && Array.isArray(res.items)) {
+        setDashboardAuditLogs(res.items);
       }
-      setSections(updated);
-    });
-    cmsService.getHeroSlides().then(setHeroSlides);
+    } catch (_) {
+      // Handled gracefully when audit table is empty or permission restricted
+    }
+  };
+
+  const refreshAllData = async () => {
+    try {
+      await Promise.allSettled([
+        productService.getProducts({ limit: 100 }).then(r => setProducts(r.items)),
+        categoryService.getCategories().then(setCategories),
+        brandService.getBrands().then(setBrands),
+        specTemplateService.getTemplates().then(setTemplates),
+        packageService.getPackages().then(setPackages),
+        packageService.getPackageSeries().then(setPackageSeries),
+        packageService.getPackageSystemTypes().then(setPackageSystemTypes),
+        orderService.getAllOrders().then(setOrders),
+        quoteService.getQuotes().then(setQuotes),
+        loadAuditLogs(),
+        cmsService.getHomepageSections().then((secs) => {
+          let migrated = false;
+          const updated = (secs || []).map((s) => {
+            if (s.id === 'sec-wifi' && (s.type === 'wifi_cameras' || s.title === 'Wi-Fi Cameras')) {
+              migrated = true;
+              return {
+                ...s,
+                type: 'wifi_series',
+                title: 'Wi-Fi Series',
+                eyebrow: s.eyebrow || 'Wi-Fi products',
+                subtitle: s.subtitle || 'Cameras, doorbells, lights and more you control from a phone app',
+                itemLimit: s.itemLimit ?? 8,
+                showChipRow: s.showChipRow !== false
+              };
+            }
+            return s;
+          });
+          if (migrated) {
+            cmsService.updateHomepageSections(updated);
+          }
+          setSections(updated);
+        }),
+        cmsService.getHeroSlides().then(setHeroSlides)
+      ]);
+    } catch (err) {
+      console.warn('Dashboard data refresh partial error', err);
+    }
+  };
+
+  const handleRefreshDashboard = async () => {
+    setIsRefreshingDashboard(true);
+    try {
+      await refreshAllData();
+    } finally {
+      setIsRefreshingDashboard(false);
+    }
   };
 
   const handleOpenNewSlide = () => {
@@ -712,6 +743,122 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   );
 }
 
+  // Dashboard Overview: Real-time Date & Relative Time Helper
+  const currentDateFormatted = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+
+  const formatRelativeTime = (timeStr?: string) => {
+    if (!timeStr) return '';
+    try {
+      const d = new Date(timeStr);
+      const diffMs = Date.now() - d.getTime();
+      if (isNaN(diffMs)) return timeStr;
+      const mins = Math.floor(diffMs / 60000);
+      if (mins < 1) return 'Just now';
+      if (mins < 60) return `${mins}m ago`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}h ago`;
+      const days = Math.floor(hrs / 24);
+      if (days < 7) return `${days}d ago`;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch {
+      return timeStr;
+    }
+  };
+
+  // Dashboard Overview: Real Catalog Metrics
+  const activeProducts = products.filter(p => p.status === 'active');
+  const draftProducts = products.filter(p => p.status !== 'active');
+  const productsWithImage = products.filter(p => !isPlaceholderImage(p.primaryImage));
+  const missingImages = products.filter(p => isPlaceholderImage(p.primaryImage));
+  const missingModelOrSku = products.filter(p => !p.modelNumber?.trim() || !p.sku?.trim());
+  const missingSpecs = products.filter(p => !p.specifications || Object.keys(p.specifications).length === 0);
+  const fullyReadyProducts = products.filter(p =>
+    p.status === 'active' &&
+    !isPlaceholderImage(p.primaryImage) &&
+    p.modelNumber?.trim() &&
+    p.sku?.trim() &&
+    p.specifications &&
+    Object.keys(p.specifications).length > 0 &&
+    (p.pricing?.regularPrice || p.pricing?.salePrice)
+  );
+  const catalogReadinessScore = products.length > 0 ? Math.round((fullyReadyProducts.length / products.length) * 100) : 100;
+
+  // Dashboard Overview: Real Orders & Revenue Metrics
+  const pendingOrders = orders.filter(o => o.status === 'pending');
+  const processingOrders = orders.filter(o => o.status === 'processing' || o.status === 'confirmed');
+  const unverifiedPayments = orders.filter(o => o.paymentStatus === 'unverified');
+  const totalOrderRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+  // Dashboard Overview: Real Quotes Metrics
+  const pendingQuotes = quotes.filter(q => q.status === 'pending');
+  const quotedQuotes = quotes.filter(q => q.status === 'quoted');
+
+  // Dashboard Overview: Real Category Metrics
+  const activeCategories = categories.filter(c => c.status !== 'inactive');
+  const totalSubcategories = categories.reduce((sum, c) => sum + (c.subcategories?.length || 0), 0);
+
+  // Urgent Operational Work Queue Count
+  const totalWorkQueueCount = pendingOrders.length + unverifiedPayments.length + pendingQuotes.length;
+
+  // Real System & Store Activity Feed (Audit Logs or Synthesized Orders & Inquiries)
+  const combinedRecentActivity = React.useMemo(() => {
+    if (dashboardAuditLogs && dashboardAuditLogs.length > 0) {
+      return dashboardAuditLogs.map(log => ({
+        id: log.id,
+        type: 'audit' as const,
+        entity: log.entity || 'system',
+        action: log.action || 'event',
+        title: `${log.actorName || 'System'} ${log.action} ${log.entity}`,
+        subtitle: log.entityId ? `ID: ${log.entityId}` : '',
+        timestamp: log.createdAt,
+        actor: log.actorName || 'System'
+      }));
+    }
+    const events: Array<{
+      id: string;
+      type: 'order' | 'quote';
+      entity: string;
+      action: string;
+      title: string;
+      subtitle: string;
+      timestamp: string;
+      actor: string;
+    }> = [];
+
+    orders.forEach(o => {
+      events.push({
+        id: `act-ord-${o.id}`,
+        type: 'order',
+        entity: 'order',
+        action: o.status,
+        title: `Order #${o.orderNumber} placed`,
+        subtitle: `${o.customerName} · ৳${(o.total || 0).toLocaleString()}`,
+        timestamp: o.createdAt,
+        actor: o.customerName
+      });
+    });
+
+    quotes.forEach(q => {
+      events.push({
+        id: `act-qt-${q.id}`,
+        type: 'quote',
+        entity: 'quote',
+        action: q.status,
+        title: `Quote inquiry received`,
+        subtitle: `${q.customerName} · ${q.serviceType || 'Premise Survey'}`,
+        timestamp: q.createdAt,
+        actor: q.customerName
+      });
+    });
+
+    return events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8);
+  }, [dashboardAuditLogs, orders, quotes]);
+
   return (
     <div className="bg-slate-900 min-h-screen text-slate-100 flex flex-col">
       <SEO title="Website Manager | CamneX Business Platform" description="Website administration portal." noIndex={true} />
@@ -846,58 +993,635 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           {/* 1. DASHBOARD OVERVIEW */}
           {activeModule === 'dashboard' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              {/* Dashboard Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                 <div>
-                  <h2 className="text-xl font-bold font-heading text-white">Business Platform Overview</h2>
-                  <p className="text-xs text-slate-400">Phase 1 E-Commerce Operations & Queue Summary</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-xl lg:text-2xl font-black font-heading text-white tracking-tight">Business Platform Overview</h2>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-xs text-slate-300 font-medium shadow-inner">
+                      <Calendar className="w-3.5 h-3.5 text-[#F15A24]" />
+                      <span>{currentDateFormatted}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Phase 1 E-Commerce Operations & Queue Summary</p>
                 </div>
-                <Button size="sm" onClick={() => setAssistantModalOpen(true)}>
-                  <Sparkles className="w-4 h-4 mr-1.5" />
-                  <span>Product Research Assistant</span>
-                </Button>
+
+                <div className="flex items-center gap-2.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRefreshDashboard}
+                    disabled={isRefreshingDashboard}
+                    className="border-slate-800 bg-slate-950/80 text-slate-300 hover:text-white hover:bg-slate-900 text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                    title="Reload dashboard data"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-[#F15A24] ${isRefreshingDashboard ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingDashboard ? 'Refreshing...' : 'Refresh'}</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setAssistantModalOpen(true)}
+                    className="bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold shadow-lg shadow-orange-500/20 flex items-center gap-1.5 transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Product Research Assistant</span>
+                  </Button>
+                </div>
               </div>
 
-              {/* Metric Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                  <div className="text-2xl font-black text-white font-heading">{products.length}</div>
-                  <div className="text-xs text-slate-400 mt-1">Catalog Products</div>
+              {/* Metric KPI Cards (4-Card Operational Summary) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 1. Catalog Products */}
+                <div
+                  onClick={() => setActiveModule('products')}
+                  className="group p-5 bg-slate-950 rounded-2xl border border-slate-800 hover:border-[#F15A24]/60 hover:bg-slate-900/60 transition-all cursor-pointer shadow-sm relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Catalog Products</span>
+                      <div className="text-3xl font-black text-white font-heading tracking-tight">{products.length}</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[#F15A24] group-hover:scale-110 transition-transform">
+                      <Package className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">
+                      <span className="text-emerald-400 font-semibold">{activeProducts.length} active</span> · <span className="text-slate-500">{draftProducts.length} draft</span>
+                    </span>
+                    <span className="text-[11px] text-[#F15A24] font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                      Manage <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                  <div className="text-2xl font-black text-[#F15A24] font-heading">{orders.length}</div>
-                  <div className="text-xs text-slate-400 mt-1">Total Orders</div>
+
+                {/* 2. Total Orders */}
+                <div
+                  onClick={() => setActiveModule('orders')}
+                  className="group p-5 bg-slate-950 rounded-2xl border border-slate-800 hover:border-blue-500/60 hover:bg-slate-900/60 transition-all cursor-pointer shadow-sm relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Orders</span>
+                      <div className="text-3xl font-black text-[#F15A24] font-heading tracking-tight">{orders.length}</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                      <ShoppingCart className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">
+                      <span className={pendingOrders.length > 0 ? "text-amber-400 font-bold" : "text-slate-400"}>
+                        {pendingOrders.length} pending
+                      </span> · <span className="text-blue-400 font-semibold">{processingOrders.length} in progress</span>
+                    </span>
+                    <span className="text-[11px] text-blue-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                      Orders <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                  <div className="text-2xl font-black text-emerald-400 font-heading">{quotes.length}</div>
-                  <div className="text-xs text-slate-400 mt-1">Quote Inquiries</div>
+
+                {/* 3. Quote Inquiries */}
+                <div
+                  onClick={() => setActiveModule('quotes')}
+                  className="group p-5 bg-slate-950 rounded-2xl border border-slate-800 hover:border-emerald-500/60 hover:bg-slate-900/60 transition-all cursor-pointer shadow-sm relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Quote Inquiries</span>
+                      <div className="text-3xl font-black text-emerald-400 font-heading tracking-tight">{quotes.length}</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">
+                      <span className={pendingQuotes.length > 0 ? "text-amber-400 font-bold" : "text-slate-400"}>
+                        {pendingQuotes.length} awaiting review
+                      </span> · <span className="text-slate-500">{quotedQuotes.length} quoted</span>
+                    </span>
+                    <span className="text-[11px] text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                      Quotes <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                  <div className="text-2xl font-black text-blue-400 font-heading">{categories.length}</div>
-                  <div className="text-xs text-slate-400 mt-1">Categories Configured</div>
+
+                {/* 4. Categories Configured */}
+                <div
+                  onClick={() => setActiveModule('categories')}
+                  className="group p-5 bg-slate-950 rounded-2xl border border-slate-800 hover:border-purple-500/60 hover:bg-slate-900/60 transition-all cursor-pointer shadow-sm relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Categories Configured</span>
+                      <div className="text-3xl font-black text-purple-400 font-heading tracking-tight">{categories.length}</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                      <FolderTree className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">
+                      <span className="text-purple-300 font-semibold">{activeCategories.length} active</span> · <span className="text-slate-500">{totalSubcategories} subcategories</span>
+                    </span>
+                    <span className="text-[11px] text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                      Manage <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Recent Orders Queue */}
-              <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 space-y-4">
-                <h3 className="font-bold text-sm text-white">Recent Hardware Orders</h3>
-                {orders.length > 0 ? (
-                  <div className="divide-y divide-slate-800 text-xs">
-                    {orders.slice(0, 5).map(ord => (
-                      <div key={ord.id} className="py-3 flex items-center justify-between">
-                        <div>
-                          <span className="font-bold text-white font-mono">{ord.orderNumber}</span>
-                          <span className="text-slate-400 ml-2">{ord.customerName} ({ord.customerPhone})</span>
+              {/* 4 Main Operational Panels: 2x2 Grid */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+                {/* PANEL A: Recent Hardware Orders */}
+                <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                          <ShoppingCart className="w-4 h-4" />
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-[#F15A24]">৳{ord.total?.toLocaleString ? ord.total.toLocaleString() : (ord.total ?? 0)}</span>
-                          <Badge variant="dark">{ord.status}</Badge>
+                        <div>
+                          <h3 className="font-bold text-sm text-white">Recent Hardware Orders</h3>
+                          <p className="text-[11px] text-slate-400">Latest dispatch transactions & status</p>
                         </div>
                       </div>
-                    ))}
+                      <button
+                        onClick={() => setActiveModule('orders')}
+                        className="text-xs text-[#F15A24] hover:text-[#ff7847] font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <span>View All ({orders.length})</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="mt-4">
+                      {orders.length > 0 ? (
+                        <div className="divide-y divide-slate-800/80">
+                          {orders.slice(0, 5).map(ord => (
+                            <div key={ord.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-900/30 px-2 rounded-lg transition-colors">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-white font-mono text-xs">{ord.orderNumber}</span>
+                                  {ord.paymentStatus === 'unverified' && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                      Unverified
+                                    </span>
+                                  )}
+                                  {ord.paymentStatus === 'paid' && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                      Paid
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-slate-400 text-xs">
+                                  <span className="text-slate-200 font-medium">{ord.customerName}</span>
+                                  {ord.customerPhone && <span className="text-slate-500 ml-1.5 font-mono text-[11px]">({ord.customerPhone})</span>}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between sm:justify-end gap-3">
+                                <div className="text-right">
+                                  <div className="font-bold text-[#F15A24] text-xs">
+                                    ৳{ord.total?.toLocaleString ? ord.total.toLocaleString() : (ord.total ?? 0)}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500">
+                                    {formatRelativeTime(ord.createdAt)}
+                                  </div>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded text-[11px] font-bold capitalize ${
+                                  ord.status === 'delivered' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                                  ord.status === 'processing' || ord.status === 'confirmed' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                                  ord.status === 'cancelled' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
+                                  'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                }`}>
+                                  {ord.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-12 text-center">
+                          <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mx-auto mb-3">
+                            <ShoppingCart className="w-6 h-6" />
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-300">No orders placed yet</h4>
+                          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                            Customer hardware orders placed through the online checkout will appear here in real time.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-500">No orders placed yet.</p>
-                )}
+
+                  {orders.length > 0 && (
+                    <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                      <span>Total Volume: <strong className="text-white">৳{totalOrderRevenue.toLocaleString()}</strong></span>
+                      <button
+                        onClick={() => setActiveModule('orders')}
+                        className="text-xs text-slate-300 hover:text-white flex items-center gap-1 font-medium"
+                      >
+                        <span>Manage Dispatch</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* PANEL B: Action Center / Pending Work Queue */}
+                <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                          <AlertCircle className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-white">Action Center & Work Queue</h3>
+                          <p className="text-[11px] text-slate-400">Items requiring immediate operator response</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          totalWorkQueueCount > 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        }`}>
+                          {totalWorkQueueCount} {totalWorkQueueCount === 1 ? 'task' : 'tasks'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {totalWorkQueueCount > 0 ? (
+                        <>
+                          {/* Pending Confirmation Orders */}
+                          {pendingOrders.slice(0, 2).map(ord => (
+                            <div key={`queue-ord-${ord.id}`} className="p-3 rounded-xl bg-slate-900/60 border border-amber-500/20 flex items-center justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 mt-0.5">
+                                  <ShoppingCart className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                                    <span>Confirm Order #{ord.orderNumber}</span>
+                                    <span className="text-[10px] font-mono text-[#F15A24]">৳{(ord.total || 0).toLocaleString()}</span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 mt-0.5">
+                                    {ord.customerName} ({ord.customerPhone}) · {formatRelativeTime(ord.createdAt)}
+                                  </div>
+                                </div>
+                              </div>
+                              <Button size="sm" onClick={() => setActiveModule('orders')} className="text-xs bg-[#F15A24] hover:bg-[#D94D1C] text-white py-1 px-3">
+                                Process
+                              </Button>
+                            </div>
+                          ))}
+
+                          {/* Unverified Payments */}
+                          {unverifiedPayments.slice(0, 2).map(ord => (
+                            <div key={`queue-pay-${ord.id}`} className="p-3 rounded-xl bg-slate-900/60 border border-blue-500/20 flex items-center justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 mt-0.5">
+                                  <Shield className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                                    <span>Verify Payment #{ord.orderNumber}</span>
+                                    <span className="text-[10px] text-blue-400 uppercase font-mono">{ord.paymentMethod}</span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 mt-0.5">
+                                    {ord.customerName} · {ord.paymentDetails?.transactionId ? `Trx: ${ord.paymentDetails.transactionId}` : 'Awaiting Audit'}
+                                  </div>
+                                </div>
+                              </div>
+                              <Button size="sm" variant="outline" onClick={() => setActiveModule('orders')} className="text-xs border-slate-700 text-slate-200 py-1 px-3">
+                                Audit
+                              </Button>
+                            </div>
+                          ))}
+
+                          {/* Pending Quotes */}
+                          {pendingQuotes.slice(0, 2).map(q => (
+                            <div key={`queue-qt-${q.id}`} className="p-3 rounded-xl bg-slate-900/60 border border-purple-500/20 flex items-center justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 mt-0.5">
+                                  <FileText className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                                    <span>Review Quote: {q.customerName}</span>
+                                    <span className="text-[10px] text-purple-400 capitalize">{q.propertyType || 'Premise'}</span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 mt-0.5">
+                                    {q.phone} · {formatRelativeTime(q.createdAt)}
+                                  </div>
+                                </div>
+                              </div>
+                              <Button size="sm" onClick={() => setActiveModule('quotes')} className="text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-3">
+                                Review
+                              </Button>
+                            </div>
+                          ))}
+                        </>
+                      ) : (
+                        <div className="py-12 text-center">
+                          <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto mb-3">
+                            <CheckCircle2 className="w-6 h-6" />
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-200">All Queues Clear</h4>
+                          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                            No pending hardware orders, unverified payments, or quote inquiries awaiting staff action.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                    <span>Pending Orders: <strong className="text-white">{pendingOrders.length}</strong> · Pending Quotes: <strong className="text-white">{pendingQuotes.length}</strong></span>
+                    <button
+                      onClick={() => setActiveModule(pendingOrders.length > 0 ? 'orders' : 'quotes')}
+                      className="text-xs text-slate-300 hover:text-white flex items-center gap-1 font-medium"
+                    >
+                      <span>Open Queues</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* PANEL C: Catalog Health & Readiness */}
+                <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                          <Activity className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-white">Catalog Health & Readiness</h3>
+                          <p className="text-[11px] text-slate-400">Product data completeness & publication status</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setActiveModule('products')}
+                        className="text-xs text-[#F15A24] hover:text-[#ff7847] font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <span>Manage Catalog</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Overall Health Score Bar */}
+                    <div className="mt-4 p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-200">Catalog Readiness Score</span>
+                        <span className="font-extrabold text-[#F15A24] font-mono text-sm">{catalogReadinessScore}%</span>
+                      </div>
+                      <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-amber-500 to-[#F15A24] h-full rounded-full transition-all duration-500"
+                          style={{ width: `${catalogReadinessScore}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                        <span>{fullyReadyProducts.length} of {products.length} products fully production-ready</span>
+                        <span>Target: 100%</span>
+                      </div>
+                    </div>
+
+                    {/* 4 Health Metrics Breakdown */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3 text-xs">
+                      {/* 1. Publication Status */}
+                      <div
+                        onClick={() => setActiveModule('products')}
+                        className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/80 hover:border-slate-700 cursor-pointer transition-all"
+                      >
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider">Status</span>
+                          <Package className="w-3.5 h-3.5 text-slate-400" />
+                        </div>
+                        <div className="font-bold text-white text-sm">{activeProducts.length} Active</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {draftProducts.length > 0 ? `${draftProducts.length} in draft mode` : 'All items published'}
+                        </div>
+                      </div>
+
+                      {/* 2. Photography */}
+                      <div
+                        onClick={() => setActiveModule('products')}
+                        className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/80 hover:border-slate-700 cursor-pointer transition-all"
+                      >
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider">Photography</span>
+                          <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+                        </div>
+                        <div className={`font-bold text-sm ${missingImages.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {missingImages.length === 0 ? 'All Photos Present' : `${missingImages.length} Need Photos`}
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {productsWithImage.length} products have studio images
+                        </div>
+                      </div>
+
+                      {/* 3. SKU & Model */}
+                      <div
+                        onClick={() => setActiveModule('products')}
+                        className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/80 hover:border-slate-700 cursor-pointer transition-all"
+                      >
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider">Model & SKU</span>
+                          <Tag className="w-3.5 h-3.5 text-slate-400" />
+                        </div>
+                        <div className={`font-bold text-sm ${missingModelOrSku.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {missingModelOrSku.length === 0 ? 'Fully Identified' : `${missingModelOrSku.length} Missing SKU`}
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {products.length - missingModelOrSku.length} products tagged correctly
+                        </div>
+                      </div>
+
+                      {/* 4. Specifications */}
+                      <div
+                        onClick={() => setActiveModule('products')}
+                        className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/80 hover:border-slate-700 cursor-pointer transition-all"
+                      >
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider">Specifications</span>
+                          <Sliders className="w-3.5 h-3.5 text-slate-400" />
+                        </div>
+                        <div className={`font-bold text-sm ${missingSpecs.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {missingSpecs.length === 0 ? 'Specs Complete' : `${missingSpecs.length} Incomplete`}
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {products.length - missingSpecs.length} with tech spec tables
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                    <span>Incomplete Products: <strong className={products.length - fullyReadyProducts.length > 0 ? "text-amber-400" : "text-white"}>{products.length - fullyReadyProducts.length}</strong></span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleOpenProductCreate}
+                        className="text-xs border-slate-800 hover:border-[#F15A24] text-slate-300 py-1 px-2.5"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add Product
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PANEL D: System & Store Activity Feed */}
+                <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-white">System & Store Activity</h3>
+                          <p className="text-[11px] text-slate-400">Audit logs and transaction activity stream</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] text-slate-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Live Events</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      {combinedRecentActivity.length > 0 ? (
+                        <div className="space-y-3">
+                          {combinedRecentActivity.slice(0, 5).map(act => (
+                            <div key={act.id} className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/80 flex items-start justify-between gap-3 hover:bg-slate-900/60 transition-colors">
+                              <div className="flex items-start gap-2.5">
+                                <div className="p-1.5 rounded-lg bg-slate-800 text-slate-300 mt-0.5">
+                                  {act.entity === 'auth' ? <Shield className="w-3.5 h-3.5 text-blue-400" /> :
+                                   act.entity === 'order' ? <ShoppingCart className="w-3.5 h-3.5 text-emerald-400" /> :
+                                   act.entity === 'quote' ? <FileText className="w-3.5 h-3.5 text-purple-400" /> :
+                                   act.entity === 'service' ? <Wrench className="w-3.5 h-3.5 text-[#F15A24]" /> :
+                                   act.entity === 'product' ? <Package className="w-3.5 h-3.5 text-amber-400" /> :
+                                   <Activity className="w-3.5 h-3.5 text-slate-400" />}
+                                </div>
+                                <div className="space-y-0.5">
+                                  <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                                    <span>{act.title}</span>
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 uppercase font-mono">
+                                      {act.action}
+                                    </span>
+                                  </div>
+                                  {act.subtitle && (
+                                    <div className="text-[11px] text-slate-400">{act.subtitle}</div>
+                                  )}
+                                  <div className="text-[10px] text-slate-500">
+                                    By <span className="text-slate-400 font-medium">{act.actor}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-[10px] font-mono text-slate-500 whitespace-nowrap">
+                                {formatRelativeTime(act.timestamp)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-12 text-center">
+                          <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mx-auto mb-3">
+                            <Clock className="w-6 h-6" />
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-300">No activity recorded</h4>
+                          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                            Administrative changes and store interactions will be logged in this operational stream.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                    <span>Recent events: <strong className="text-white">{combinedRecentActivity.length}</strong></span>
+                    {hasStaffAccess && (
+                      <a
+                        href="/staff"
+                        className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
+                      >
+                        <span>View Full Audit Trail</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Operational Quick Shortcuts Bar */}
+              <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5 text-[#F15A24]" />
+                  <span>Operational Command Shortcuts</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                  <button
+                    onClick={handleOpenProductCreate}
+                    className="p-3 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 text-left transition-all group"
+                  >
+                    <Plus className="w-4 h-4 text-[#F15A24] mb-1.5 group-hover:scale-110 transition-transform" />
+                    <div className="text-xs font-bold text-white">Add Product</div>
+                    <div className="text-[10px] text-slate-500">New SKU / Catalog</div>
+                  </button>
+
+                  <button
+                    onClick={handleOpenNewPackage}
+                    className="p-3 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 text-left transition-all group"
+                  >
+                    <Layers className="w-4 h-4 text-emerald-400 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <div className="text-xs font-bold text-white">New Package</div>
+                    <div className="text-[10px] text-slate-500">CCTV Turnkey Bundle</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModule('heroslides')}
+                    className="p-3 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 text-left transition-all group"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-400 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <div className="text-xs font-bold text-white">Hero Slides</div>
+                    <div className="text-[10px] text-slate-500">Homepage Slider</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModule('services')}
+                    className="p-3 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 text-left transition-all group"
+                  >
+                    <Wrench className="w-4 h-4 text-blue-400 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <div className="text-xs font-bold text-white">Services</div>
+                    <div className="text-[10px] text-slate-500">Installation & AMC</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModule('company')}
+                    className="p-3 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 text-left transition-all group"
+                  >
+                    <Building2 className="w-4 h-4 text-purple-400 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <div className="text-xs font-bold text-white">Company Profile</div>
+                    <div className="text-[10px] text-slate-500">Contact & Address</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModule('settings')}
+                    className="p-3 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 text-left transition-all group"
+                  >
+                    <Settings className="w-4 h-4 text-slate-400 mb-1.5 group-hover:scale-110 transition-transform" />
+                    <div className="text-xs font-bold text-white">Site Settings</div>
+                    <div className="text-[10px] text-slate-500">SEO & Identity</div>
+                  </button>
+                </div>
               </div>
             </div>
           )}
