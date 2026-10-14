@@ -3935,6 +3935,356 @@ app.delete('/api/media/:id', requireAdmin, (req, res) => {
 });
 
 // ============================================================================
+// MEDIA ENHANCEMENTS (Alt-text, folders, unused files report)
+// ============================================================================
+app.get('/api/admin/media/unused', requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT * FROM media ORDER BY created_at DESC').all();
+    const unused = rows.filter(row => {
+      const filename = row.filename;
+      const url = row.url || `/uploads/${filename}`;
+      const inProducts = db.prepare(`SELECT count(*) as c FROM products WHERE data_json LIKE ? OR data_json LIKE ?`).get(`%${filename}%`, `%${url}%`).c;
+      const inCategories = db.prepare(`SELECT count(*) as c FROM categories WHERE image LIKE ? OR image LIKE ?`).get(`%${filename}%`, `%${url}%`).c;
+      const inBrands = db.prepare(`SELECT count(*) as c FROM brands WHERE logo LIKE ? OR logo LIKE ?`).get(`%${filename}%`, `%${url}%`).c;
+      let inHero = 0;
+      try { inHero = db.prepare(`SELECT count(*) as c FROM hero_slides WHERE image LIKE ? OR image LIKE ?`).get(`%${filename}%`, `%${url}%`).c; } catch (_) {}
+      let inBlog = 0;
+      try { inBlog = db.prepare(`SELECT count(*) as c FROM blog_posts WHERE image LIKE ? OR image LIKE ?`).get(`%${filename}%`, `%${url}%`).c; } catch (_) {}
+      return (inProducts + inCategories + inBrands + inHero + inBlog) === 0;
+    });
+    res.json({ totalMedia: rows.length, unusedCount: unused.length, unused });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/media/:id', requireAdmin, (req, res) => {
+  try {
+    const { alt_text, folder } = req.body;
+    db.prepare('UPDATE media SET alt_text = COALESCE(?, alt_text), folder = COALESCE(?, folder) WHERE id = ?').run(alt_text || null, folder || null, req.params.id);
+    const updated = db.prepare('SELECT * FROM media WHERE id = ?').get(req.params.id);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
+// OFFERS & COUPONS REST APIs
+// ============================================================================
+app.get('/api/admin/coupons', requireAdmin, (req, res) => {
+  try {
+    const { search = '', is_active } = req.query;
+    let query = 'SELECT * FROM coupons WHERE 1=1';
+    const params = [];
+    if (search) {
+      query += ' AND code LIKE ?';
+      params.push(`%${search.trim().toUpperCase()}%`);
+    }
+    if (is_active !== undefined) {
+      query += ' AND is_active = ?';
+      params.push(is_active === 'true' || is_active === '1' ? 1 : 0);
+    }
+    query += ' ORDER BY created_at DESC';
+    const rows = db.prepare(query).all(...params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/coupons', requireAdmin, (req, res) => {
+  try {
+    const {
+      code,
+      discount_type = 'percent',
+      discount_value,
+      min_order_amount = 0,
+      max_discount_amount = null,
+      scope_type = 'all',
+      scope_id = null,
+      start_date = null,
+      end_date = null,
+      usage_limit = null,
+      is_active = 1
+    } = req.body;
+
+    if (!code || !code.trim()) {
+      return res.status(400).json({ error: 'Coupon code is required.' });
+    }
+    if (discount_value == null || discount_value <= 0) {
+      return res.status(400).json({ error: 'Valid discount value greater than 0 is required.' });
+    }
+
+    const cleanCode = code.trim().toUpperCase();
+    const existing = db.prepare('SELECT id FROM coupons WHERE code = ?').get(cleanCode);
+    if (existing) {
+      return res.status(409).json({ error: `Coupon with code "${cleanCode}" already exists.` });
+    }
+
+    const id = `cpn-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    db.prepare(`
+      INSERT INTO coupons (id, code, discount_type, discount_value, min_order_amount, max_discount_amount, scope_type, scope_id, start_date, end_date, usage_limit, usage_count, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `).run(id, cleanCode, discount_type, discount_value, min_order_amount, max_discount_amount, scope_type, scope_id, start_date, end_date, usage_limit, is_active ? 1 : 0);
+
+    const created = db.prepare('SELECT * FROM coupons WHERE id = ?').get(id);
+
+    logAudit({
+      entity: 'coupon',
+      entityId: id,
+      action: 'create',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      after: created
+    });
+
+    emitDomainEvent('coupon.created', { couponId: id, code: cleanCode });
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/coupons/:id', requireAdmin, (req, res) => {
+  try {
+    const existing = db.prepare('SELECT * FROM coupons WHERE id = ?').get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Coupon not found.' });
+
+    const {
+      code,
+      discount_type,
+      discount_value,
+      min_order_amount,
+      max_discount_amount,
+      scope_type,
+      scope_id,
+      start_date,
+      end_date,
+      usage_limit,
+      is_active
+    } = req.body;
+
+    const cleanCode = code ? code.trim().toUpperCase() : existing.code;
+    db.prepare(`
+      UPDATE coupons SET
+        code = ?,
+        discount_type = COALESCE(?, discount_type),
+        discount_value = COALESCE(?, discount_value),
+        min_order_amount = COALESCE(?, min_order_amount),
+        max_discount_amount = ?,
+        scope_type = COALESCE(?, scope_type),
+        scope_id = ?,
+        start_date = ?,
+        end_date = ?,
+        usage_limit = ?,
+        is_active = COALESCE(?, is_active),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(
+      cleanCode,
+      discount_type,
+      discount_value,
+      min_order_amount,
+      max_discount_amount !== undefined ? max_discount_amount : existing.max_discount_amount,
+      scope_type,
+      scope_id !== undefined ? scope_id : existing.scope_id,
+      start_date !== undefined ? start_date : existing.start_date,
+      end_date !== undefined ? end_date : existing.end_date,
+      usage_limit !== undefined ? usage_limit : existing.usage_limit,
+      is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active,
+      req.params.id
+    );
+
+    const updated = db.prepare('SELECT * FROM coupons WHERE id = ?').get(req.params.id);
+
+    logAudit({
+      entity: 'coupon',
+      entityId: req.params.id,
+      action: 'update',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      before: existing,
+      after: updated
+    });
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/coupons/:id', requireAdmin, (req, res) => {
+  try {
+    const existing = db.prepare('SELECT * FROM coupons WHERE id = ?').get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Coupon not found.' });
+
+    db.prepare('DELETE FROM coupons WHERE id = ?').run(req.params.id);
+
+    logAudit({
+      entity: 'coupon',
+      entityId: req.params.id,
+      action: 'delete',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      before: existing
+    });
+
+    res.json({ success: true, message: `Coupon ${existing.code} deleted.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Public Coupon Validation Endpoint for Cart & Checkout
+app.post('/api/coupons/validate', (req, res) => {
+  try {
+    const { code, subtotal = 0 } = req.body;
+    if (!code || !code.trim()) {
+      return res.status(400).json({ valid: false, message: 'Please enter a coupon code.' });
+    }
+
+    const cleanCode = code.trim().toUpperCase();
+    const coupon = db.prepare('SELECT * FROM coupons WHERE code = ?').get(cleanCode);
+
+    if (!coupon || !coupon.is_active) {
+      return res.status(404).json({ valid: false, message: 'Invalid or expired coupon code.' });
+    }
+
+    const now = new Date();
+    if (coupon.start_date && new Date(coupon.start_date) > now) {
+      return res.status(400).json({ valid: false, message: 'This coupon offer is not active yet.' });
+    }
+    if (coupon.end_date && new Date(coupon.end_date) < now) {
+      return res.status(400).json({ valid: false, message: 'This coupon offer has expired.' });
+    }
+    if (coupon.usage_limit && coupon.usage_count >= coupon.usage_limit) {
+      return res.status(400).json({ valid: false, message: 'Coupon usage limit has been reached.' });
+    }
+    if (coupon.min_order_amount && subtotal < coupon.min_order_amount) {
+      return res.status(400).json({
+        valid: false,
+        message: `Minimum order amount of ৳${coupon.min_order_amount.toLocaleString()} required for this coupon.`
+      });
+    }
+
+    let discountAmount = 0;
+    if (coupon.discount_type === 'percent') {
+      discountAmount = Math.round((subtotal * coupon.discount_value) / 100);
+      if (coupon.max_discount_amount && discountAmount > coupon.max_discount_amount) {
+        discountAmount = coupon.max_discount_amount;
+      }
+    } else {
+      discountAmount = Math.min(subtotal, coupon.discount_value);
+    }
+
+    res.json({
+      valid: true,
+      code: coupon.code,
+      discountType: coupon.discount_type,
+      discountValue: coupon.discount_value,
+      discountAmount,
+      message: `Coupon applied: ৳${discountAmount.toLocaleString()} discount`
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
+// DOCUMENTS LIBRARY REST APIs (Datasheets, Manuals, Catalogs)
+// ============================================================================
+app.get('/api/documents', (req, res) => {
+  try {
+    const { doc_type, product_id, category_id, search = '' } = req.query;
+    let query = 'SELECT * FROM documents WHERE 1=1';
+    const params = [];
+    if (doc_type) { query += ' AND doc_type = ?'; params.push(doc_type); }
+    if (product_id) { query += ' AND product_id = ?'; params.push(product_id); }
+    if (category_id) { query += ' AND category_id = ?'; params.push(category_id); }
+    if (search) { query += ' AND title LIKE ?'; params.push(`%${search.trim()}%`); }
+    query += ' ORDER BY created_at DESC';
+    const rows = db.prepare(query).all(...params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/:id/download', (req, res) => {
+  try {
+    const doc = db.prepare('SELECT * FROM documents WHERE id = ?').get(req.params.id);
+    if (!doc) return res.status(404).json({ error: 'Document not found.' });
+
+    db.prepare('UPDATE documents SET download_count = download_count + 1 WHERE id = ?').run(req.params.id);
+    res.redirect(doc.file_url);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/documents', requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare('SELECT * FROM documents ORDER BY created_at DESC').all();
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/documents', requireAdmin, (req, res) => {
+  try {
+    const { title, doc_type = 'datasheet', category_id, product_id, file_url, file_size, mime_type } = req.body;
+    if (!title || !file_url) {
+      return res.status(400).json({ error: 'Title and file URL are required.' });
+    }
+
+    const id = `doc-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    db.prepare(`
+      INSERT INTO documents (id, title, doc_type, category_id, product_id, file_url, file_size, mime_type, download_count, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `).run(id, title.trim(), doc_type, category_id || null, product_id || null, file_url, file_size || null, mime_type || null);
+
+    const created = db.prepare('SELECT * FROM documents WHERE id = ?').get(id);
+
+    logAudit({
+      entity: 'document',
+      entityId: id,
+      action: 'create',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      after: created
+    });
+
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/documents/:id', requireAdmin, (req, res) => {
+  try {
+    const existing = db.prepare('SELECT * FROM documents WHERE id = ?').get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Document not found.' });
+
+    db.prepare('DELETE FROM documents WHERE id = ?').run(req.params.id);
+
+    logAudit({
+      entity: 'document',
+      entityId: req.params.id,
+      action: 'delete',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      before: existing
+    });
+
+    res.json({ success: true, message: `Document "${existing.title}" deleted.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
 // 12. DB-BACKED BACKGROUND JOB QUEUE (Async Research, Sitemap, Email, Audit)
 // ============================================================================
 

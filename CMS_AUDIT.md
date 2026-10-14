@@ -89,3 +89,22 @@ All 20 existing modules in `src/pages/AdminDashboard.tsx` were systematically ev
 3. **Work Queue & Attention Widgets:** Expand the Dashboard Action Center to surface genuine unverified payments, orders pending review, products missing images/prices, and unanswered callbacks.
 4. **Shared Admin Framework Integration:** Unify inline table implementations (Orders, Quotes, Packages, Categories) using the standard shared `DataTable`, `FormShell`, and `ConfirmDialog` architecture.
 
+---
+
+## 4. MODULE BUILD PROGRESS & COMPLIANCE MATRIX
+
+| Module ID | Scope & Features | Status | Audit Log | Zod / Validation | Storefront Wire |
+|-----------|------------------|--------|-----------|------------------|-----------------|
+| `audit-and-types` | Inventory scan & initial schema preparation | Complete | Yes | Yes | Yes |
+| `admin-framework` | `DataTable`, `FormShell`, `ConfirmDialog`, `EmptyState`, `Breadcrumbs` | Complete | Yes | Yes | Yes |
+| `strings-and-content` | Dual-language `strings.ts`, neutral fallback, `t()` helper | Complete | Yes | Yes | Yes |
+| `maintenance-and-dashboard` | Typed confirm guards, `system.maintenance` permission, action center | Complete | Yes | Yes | Yes |
+| `catalog-products` | 8-tab Product Editor, alpha PNG check, barcode, B2B wholesale | Complete | Yes | Yes | Yes |
+| `catalog-categories-brands` | Category tree reordering, spec binding, Brands manager, delete guards | Complete | Yes | Yes | Yes |
+| `catalog-packages` | CCTV Packages BOM builder, pricing calculations, scaling rules | Complete | Yes | Yes | Yes |
+| `catalog-bulk-and-impexp` | Bulk price adjustment, category reassign, CSV export, JSON import dry-run | Complete | Yes | Yes | Yes |
+| `commerce-orders-crm-quotes` | Printable invoices, courier tracking, CRM notes, 1-click quote-to-order | Complete | Yes | Yes | Yes |
+| `settings-payment-delivery` | 8-tab settings, AES-256-GCM encryption, notification templates, queue | Complete | Yes | Yes | Yes |
+| `content-media-seo` | Unused media detection, alt-text/folders, coupons engine, documents library | Complete | Yes | Yes | Yes |
+
+

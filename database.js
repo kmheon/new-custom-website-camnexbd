@@ -396,6 +396,48 @@ function initDb() {
   `).run();
   try { db.prepare(`ALTER TABLE media ADD COLUMN webp_url TEXT`).run(); } catch (_) {}
   try { db.prepare(`ALTER TABLE media ADD COLUMN thumb_url TEXT`).run(); } catch (_) {}
+  try { db.prepare(`ALTER TABLE media ADD COLUMN alt_text TEXT`).run(); } catch (_) {}
+  try { db.prepare(`ALTER TABLE media ADD COLUMN folder TEXT DEFAULT 'general'`).run(); } catch (_) {}
+
+  // 17b. Offers & Coupons
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS coupons (
+      id TEXT PRIMARY KEY,
+      code TEXT UNIQUE NOT NULL,
+      discount_type TEXT NOT NULL,
+      discount_value REAL NOT NULL,
+      min_order_amount REAL DEFAULT 0,
+      max_discount_amount REAL,
+      scope_type TEXT DEFAULT 'all',
+      scope_id TEXT,
+      start_date DATETIME,
+      end_date DATETIME,
+      usage_limit INTEGER,
+      usage_count INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code)`).run();
+
+  // 17c. Documents (Datasheets, Manuals, Catalogs)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS documents (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      doc_type TEXT NOT NULL,
+      category_id TEXT,
+      product_id TEXT,
+      file_url TEXT NOT NULL,
+      file_size TEXT,
+      mime_type TEXT,
+      download_count INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(doc_type)`).run();
 
   // 18. Users (Admin and Staff)
   db.prepare(`

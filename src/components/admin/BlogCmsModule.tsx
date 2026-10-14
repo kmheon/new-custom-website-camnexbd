@@ -340,6 +340,100 @@ export const BlogCmsModule: React.FC = () => {
               />
             </div>
 
+            {/* SEO & SERP Preview Section */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>SEO & Live Google SERP Preview</span>
+                </span>
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editingPost.enableArticleSchema ?? true}
+                    onChange={e => setEditingPost({ ...editingPost, enableArticleSchema: e.target.checked })}
+                    className="rounded text-[#F15A24] focus:ring-0"
+                  />
+                  <span>Inject Article Schema (JSON-LD)</span>
+                </label>
+              </div>
+
+              {/* Live SERP Snippet */}
+              <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm space-y-1">
+                <div className="text-[11px] text-slate-600 flex items-center gap-1">
+                  <span>https://camnexbd.com</span>
+                  <span className="text-slate-400">&rsaquo;</span>
+                  <span>blog</span>
+                  <span className="text-slate-400">&rsaquo;</span>
+                  <span className="text-slate-800 font-mono">{editingPost.slug || 'url-slug'}</span>
+                </div>
+                <div className="text-sm font-semibold text-blue-700 hover:underline cursor-pointer truncate">
+                  {(editingPost.seoTitle || editingPost.title || 'Untitled Article') + ' | CamneX Security'}
+                </div>
+                <div className="text-xs text-slate-600 line-clamp-2">
+                  {editingPost.seoDescription || editingPost.excerpt || 'Write a compelling excerpt or custom meta description to increase click-through rate from search engines.'}
+                </div>
+              </div>
+
+              {/* SEO Inputs & Checklist */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-bold text-slate-700">Custom SEO Meta Title</label>
+                    <span className={`text-[10px] font-mono ${
+                      (editingPost.seoTitle || editingPost.title || '').length >= 40 && (editingPost.seoTitle || editingPost.title || '').length <= 60
+                        ? 'text-emerald-600 font-bold'
+                        : 'text-amber-600'
+                    }`}>
+                      {(editingPost.seoTitle || editingPost.title || '').length} / 60 chars
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={editingPost.seoTitle || ''}
+                    onChange={e => setEditingPost({ ...editingPost, seoTitle: e.target.value })}
+                    placeholder="Defaults to article title if blank"
+                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-bold text-slate-700">Custom SEO Meta Description</label>
+                    <span className={`text-[10px] font-mono ${
+                      (editingPost.seoDescription || editingPost.excerpt || '').length >= 120 && (editingPost.seoDescription || editingPost.excerpt || '').length <= 160
+                        ? 'text-emerald-600 font-bold'
+                        : 'text-amber-600'
+                    }`}>
+                      {(editingPost.seoDescription || editingPost.excerpt || '').length} / 160 chars
+                    </span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={editingPost.seoDescription || ''}
+                    onChange={e => setEditingPost({ ...editingPost, seoDescription: e.target.value })}
+                    placeholder="Defaults to article excerpt if blank"
+                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                  />
+                </div>
+              </div>
+
+              {/* Checklist */}
+              <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px]">
+                <span className={`flex items-center gap-1 ${editingPost.title ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  <span>{editingPost.title ? '✓' : '○'} Title defined</span>
+                </span>
+                <span className={`flex items-center gap-1 ${editingPost.slug ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  <span>{editingPost.slug ? '✓' : '○'} SEO slug</span>
+                </span>
+                <span className={`flex items-center gap-1 ${editingPost.featuredImage ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  <span>{editingPost.featuredImage ? '✓' : '○'} Cover image</span>
+                </span>
+                <span className={`flex items-center gap-1 ${(editingPost.seoDescription || editingPost.excerpt || '').length >= 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  <span>{(editingPost.seoDescription || editingPost.excerpt || '').length >= 100 ? '✓' : '○'} Description &gt;100 chars</span>
+                </span>
+              </div>
+            </div>
+
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
               <Button
                 type="button"

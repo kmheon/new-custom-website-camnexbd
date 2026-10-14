@@ -15,8 +15,17 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFolder, setActiveFolder] = useState<string>('all');
+  const [showUnusedOnly, setShowUnusedOnly] = useState(false);
+  const [unusedIds, setUnusedIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
+
+  // Metadata editing state
+  const [editingAltText, setEditingAltText] = useState('');
+  const [editingFolder, setEditingFolder] = useState('');
+  const [isSavingMeta, setIsSavingMeta] = useState(false);
+  const [metaSaveMessage, setMetaSaveMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,6 +35,15 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
     try {
       const items = await mediaService.getMedia();
       setMediaList(items);
+      // Fetch unused media IDs
+      try {
+        const unusedRes = await (mediaService as any).getUnusedMedia();
+        if (unusedRes && unusedRes.unusedMedia) {
+          setUnusedIds(new Set(unusedRes.unusedMedia.map((m: any) => m.id)));
+        }
+      } catch (e) {
+        // Non-critical
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load media');
     } finally {
@@ -36,6 +54,33 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
   useEffect(() => {
     fetchMedia();
   }, []);
+
+  const handleSelectPreview = (item: MediaItem) => {
+    setPreviewItem(item);
+    setEditingAltText(item.alt_text || '');
+    setEditingFolder(item.folder || '');
+    setMetaSaveMessage(null);
+  };
+
+  const handleSaveMetadata = async () => {
+    if (!previewItem) return;
+    setIsSavingMeta(true);
+    setMetaSaveMessage(null);
+    try {
+      const updated = await (mediaService as any).updateMedia(previewItem.id, {
+        alt_text: editingAltText.trim(),
+        folder: editingFolder.trim()
+      });
+      setMediaList(prev => prev.map(m => m.id === previewItem.id ? { ...m, ...updated } : m));
+      setPreviewItem(prev => prev ? { ...prev, ...updated } : null);
+      setMetaSaveMessage('Metadata saved successfully!');
+      setTimeout(() => setMetaSaveMessage(null), 2500);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update media metadata');
+    } finally {
+      setIsSavingMeta(false);
+    }
+  };
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -95,10 +140,19 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
+  const availableFolders = Array.from(new Set(mediaList.map(m => m.folder).filter(Boolean))) as string[];
+
   const filteredMedia = mediaList.filter(m => {
+    if (showUnusedOnly && !unusedIds.has(m.id)) return false;
+    if (activeFolder !== 'all' && m.folder !== activeFolder) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
-    return (m.original_name || m.filename).toLowerCase().includes(q) || m.url.toLowerCase().includes(q);
+    return (
+      (m.original_name || m.filename).toLowerCase().includes(q) ||
+      m.url.toLowerCase().includes(q) ||
+      (m.alt_text && m.alt_text.toLowerCase().includes(q)) ||
+      (m.folder && m.folder.toLowerCase().includes(q))
+    );
   });
 
   return (
@@ -108,10 +162,10 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
         <div>
           <h2 className="text-xl font-bold font-heading text-white flex items-center gap-2">
             <ImageIcon className="w-5 h-5 text-[#F15A24]" />
-            <span>Media Library</span>
+            <span>Media Library & Assets</span>
           </h2>
           <p className="text-xs text-slate-400">
-            Upload and manage hardware product photography, category banners, and hero assets (PNG, JPG, WebP, SVG up to 5 MB).
+            Upload and manage hardware product photography, category banners, alt-text for SEO, and folders (PNG, JPG, WebP, SVG up to 5 MB).
           </p>
         </div>
 
@@ -170,21 +224,54 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
         </p>
       </div>
 
-      {/* Search & Stats Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
+      {/* Search, Folder Filter & Unused Report Bar */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+        <div className="relative flex-1 w-full md:max-w-xs">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by filename..."
-            className="w-full bg-slate-950 border border-slate-800 text-xs text-white pl-9 pr-3 py-2 rounded-xl focus:border-[#F15A24] outline-none"
+            placeholder="Search filename, alt text, folder..."
+            className="w-full bg-slate-900 border border-slate-800 text-xs text-white pl-9 pr-3 py-2 rounded-xl focus:border-[#F15A24] outline-none"
           />
         </div>
 
-        <div className="text-xs text-slate-400">
-          Showing <strong className="text-white">{filteredMedia.length}</strong> of {mediaList.length} files
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {availableFolders.length > 0 && (
+            <select
+              value={activeFolder}
+              onChange={(e) => setActiveFolder(e.target.value)}
+              aria-label="Filter media by folder"
+              className="bg-slate-900 border border-slate-800 text-xs text-white px-3 py-2 rounded-xl focus:border-[#F15A24] outline-none"
+            >
+              <option value="all">All Folders</option>
+              {availableFolders.map((f) => (
+                <option key={f} value={f}>Folder: {f}</option>
+              ))}
+            </select>
+          )}
+
+          <button
+            onClick={() => setShowUnusedOnly(prev => !prev)}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+              showUnusedOnly
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+            }`}
+          >
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Unused Media Report</span>
+            {unusedIds.size > 0 && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500 text-slate-950 font-bold">
+                {unusedIds.size}
+              </span>
+            )}
+          </button>
+
+          <span className="text-xs text-slate-400 ml-auto md:ml-2">
+            Showing <strong className="text-white">{filteredMedia.length}</strong> of {mediaList.length}
+          </span>
         </div>
       </div>
 
@@ -208,16 +295,30 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
                   if (isPickerMode && onSelectImage) {
                     onSelectImage(item.url);
                   } else {
-                    setPreviewItem(item);
+                    handleSelectPreview(item);
                   }
                 }}
               >
                 <img
                   src={item.url}
-                  alt={item.original_name || item.filename}
+                  alt={item.alt_text || item.original_name || item.filename}
                   className="max-h-full max-w-full object-contain transition group-hover:scale-105"
                   loading="lazy"
                 />
+
+                {/* Badges Overlay */}
+                <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start">
+                  {item.folder && (
+                    <span className="px-1.5 py-0.5 rounded bg-slate-950/80 text-[9px] font-bold text-sky-300 border border-slate-700">
+                      {item.folder}
+                    </span>
+                  )}
+                  {unusedIds.has(item.id) && (
+                    <span className="px-1.5 py-0.5 rounded bg-amber-500/90 text-[9px] font-bold text-slate-950">
+                      Unused
+                    </span>
+                  )}
+                </div>
 
                 {isPickerMode && (
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
@@ -236,6 +337,11 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
                   <p className="text-[10px] text-slate-500 font-mono">
                     {formatFileSize(item.size)}
                   </p>
+                  {item.alt_text && (
+                    <p className="text-[10px] text-slate-400 italic truncate mt-0.5" title={item.alt_text}>
+                      alt: "{item.alt_text}"
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-800/60">
@@ -274,7 +380,7 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
         </div>
       )}
 
-      {/* Image Preview Modal */}
+      {/* Image Preview & Metadata Modal */}
       {previewItem && (
         <Modal
           isOpen={!!previewItem}
@@ -283,27 +389,91 @@ export const MediaLibraryView: React.FC<MediaLibraryViewProps> = ({ onSelectImag
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-center max-h-[60vh] overflow-hidden">
+            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-center max-h-[40vh] overflow-hidden">
               <img
                 src={previewItem.url}
-                alt=""
-                className="max-h-[50vh] max-w-full object-contain"
+                alt={previewItem.alt_text || ''}
+                className="max-h-[35vh] max-w-full object-contain"
               />
             </div>
 
-            <div className="bg-slate-100 p-3 rounded-xl space-y-1 text-xs text-slate-700">
+            {metaSaveMessage && (
+              <div className="p-2.5 bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300 rounded-xl flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>{metaSaveMessage}</span>
+              </div>
+            )}
+
+            {/* SEO Alt-Text & Folder Inputs */}
+            <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">SEO & Organization Metadata</h4>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                    Folder / Tag (e.g. products, hero, brands)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingFolder}
+                    onChange={(e) => setEditingFolder(e.target.value)}
+                    placeholder="e.g. products"
+                    className="w-full bg-slate-950 border border-slate-800 text-xs text-white p-2 rounded-lg focus:border-[#F15A24] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                    Image Status
+                  </label>
+                  <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+                    {unusedIds.has(previewItem.id) ? (
+                      <span className="text-amber-400 font-bold">Unused (Safe to remove or reassign)</span>
+                    ) : (
+                      <span className="text-emerald-400 font-bold">In Active Use (Protected from delete)</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  Alt-Text for SEO & Accessibility
+                </label>
+                <input
+                  type="text"
+                  value={editingAltText}
+                  onChange={(e) => setEditingAltText(e.target.value)}
+                  placeholder="e.g. Hikvision DS-2CD2043G2-I 4MP Bullet IP Camera outdoor perspective"
+                  className="w-full bg-slate-950 border border-slate-800 text-xs text-white p-2 rounded-lg focus:border-[#F15A24] outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <Button
+                  size="sm"
+                  onClick={handleSaveMetadata}
+                  disabled={isSavingMeta}
+                  className="bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs py-1.5"
+                >
+                  {isSavingMeta ? 'Saving...' : 'Save Image Metadata'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-slate-950/70 p-3 rounded-xl space-y-1 text-xs text-slate-400 border border-slate-800">
               <div className="flex justify-between">
-                <span className="font-bold">File URL:</span>
-                <span className="font-mono text-slate-900 select-all">{previewItem.url}</span>
+                <span className="font-bold text-slate-300">File URL:</span>
+                <span className="font-mono text-white select-all">{previewItem.url}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-bold">Size:</span>
-                <span>{formatFileSize(previewItem.size)}</span>
+                <span className="font-bold text-slate-300">Size:</span>
+                <span className="text-white">{formatFileSize(previewItem.size)}</span>
               </div>
               {previewItem.mime_type && (
                 <div className="flex justify-between">
-                  <span className="font-bold">MIME:</span>
-                  <span className="font-mono">{previewItem.mime_type}</span>
+                  <span className="font-bold text-slate-300">MIME:</span>
+                  <span className="font-mono text-white">{previewItem.mime_type}</span>
                 </div>
               )}
             </div>

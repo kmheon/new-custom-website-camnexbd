@@ -925,5 +925,16 @@ export class RestMediaService {
     });
     return true;
   }
+
+  async getUnusedMedia(): Promise<{ unusedMedia: MediaItem[]; count: number }> {
+    return request<{ unusedMedia: MediaItem[]; count: number }>('/admin/media/unused');
+  }
+
+  async updateMedia(id: string, data: { alt_text?: string; folder?: string }): Promise<MediaItem> {
+    return request<MediaItem>(`/admin/media/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
 }
 

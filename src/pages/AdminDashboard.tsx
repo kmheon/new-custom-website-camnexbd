@@ -4,7 +4,7 @@ import {
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
   Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench, Building2,
-  Clock, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Activity, Zap
+  Clock, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Activity, Zap, Percent, FileCheck
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
@@ -41,6 +41,8 @@ import { ServicesModule } from '../components/admin/ServicesModule';
 import { CompanyProfileModule } from '../components/admin/CompanyProfileModule';
 import { GlossaryModule } from '../components/admin/GlossaryModule';
 import { SettingsModule } from '../components/admin/SettingsModule';
+import { CouponsModule } from '../components/admin/CouponsModule';
+import { DocumentsModule } from '../components/admin/DocumentsModule';
 import { ConfirmDialog } from '../components/admin/framework';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
@@ -1177,9 +1179,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             { id: 'templates', label: 'Spec Templates', icon: <Sliders className="w-4 h-4" />, perm: PERMISSIONS.CATALOG_READ },
             { id: 'packages', label: 'CCTV Packages & Rules', icon: <Layers className="w-4 h-4" />, perm: PERMISSIONS.CATALOG_READ },
             { id: 'orders', label: 'Orders & Timeline', icon: <ShoppingCart className="w-4 h-4" />, perm: PERMISSIONS.ORDERS_READ },
+            { id: 'coupons', label: 'Coupons & Promos', icon: <Percent className="w-4 h-4 text-emerald-400" />, perm: PERMISSIONS.ORDERS_READ },
             { id: 'customers', label: 'Customers & CRM', icon: <Users className="w-4 h-4" />, perm: PERMISSIONS.CUSTOMERS_READ },
             { id: 'quotes', label: 'Quotes & Surveys', icon: <FileText className="w-4 h-4" />, perm: PERMISSIONS.QUOTES_MANAGE },
             { id: 'media', label: 'Media Library', icon: <ImageIcon className="w-4 h-4" />, perm: PERMISSIONS.MEDIA_WRITE },
+            { id: 'documents', label: 'Technical Documents', icon: <FileCheck className="w-4 h-4 text-sky-400" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'heroslides', label: 'Hero Slides (Slider)', icon: <Sparkles className="w-4 h-4 text-[#F15A24]" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'sections', label: 'Homepage Sections', icon: <Layers className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'projects', label: 'Projects & Portfolio', icon: <Briefcase className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
@@ -2908,9 +2912,19 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             </div>
           )}
 
+          {/* COUPONS & PROMOS MODULE */}
+          {activeModule === 'coupons' && (
+            <CouponsModule />
+          )}
+
           {/* MEDIA LIBRARY MODULE */}
           {activeModule === 'media' && (
             <MediaLibraryView />
+          )}
+
+          {/* TECHNICAL DOCUMENTS MODULE */}
+          {activeModule === 'documents' && (
+            <DocumentsModule />
           )}
 
           {/* 8. HOMEPAGE SECTIONS */}

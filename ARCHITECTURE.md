@@ -290,6 +290,33 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Dynamic Token Substitution**: Real-time evaluation of tokens (`{customer_name}`, `{order_number}`, `{total_amount}`, `{courier_name}`, `{tracking_number}`) with live visitor preview.
 - **Transactional Background Queue**: Test dispatches and notification jobs are queued into the SQLite `background_jobs` table (`notification_dispatch` type) processed by the asynchronous queue worker with retry management.
 
+---
+
+## 14. Content, Media Library, SEO, Coupons & Technical Documents Architecture
+
+### Media Library & Asset Governance
+- **Unused Media Detection**: `GET /api/admin/media/unused` computes reference counts across products (images, gallery), categories, brands, hero slides, and blog posts to surface orphaned media files safely for cleanup.
+- **In-Use Deletion Guard**: Attempts to delete media files actively referenced by catalog entities are strictly rejected with HTTP `409 Conflict` (`MEDIA_IN_USE`).
+- **SEO Alt-Text & Folders**: `PUT /api/admin/media/:id` persists descriptive alt-text for accessibility and search crawler image indexing, alongside folder categorization (`products`, `banners`, `brands`, `icons`).
+- **Strict Magic Bytes Validation**: All uploads pass client and server-side magic byte inspection (PNG, JPG, WebP, SVG) preventing polyglot file execution.
+
+### Technical Documents Library (Datasheets & Manuals)
+- **Document Registry**: Dedicated `documents` table managing technical assets (`datasheet`, `user_manual`, `firmware`, `catalog`, `certificate`).
+- **Entity Binding**: Documents bind optionally to specific catalog categories or individual hardware SKUs.
+- **Download Counter Tracking**: Public download proxy `GET /api/documents/:id/download` increments the download counter transactionally before redirecting to the asset URL, providing accurate download analytics.
+
+### Promotional Coupons & Discount Rules
+- **Discount Types**: Supports percentage (`percent`) and flat cash discount (`fixed`) rules.
+- **Spend & Cap Constraints**: Configurable minimum order amount (`min_order_amount`) and maximum discount cap (`max_discount_amount`) preventing over-discounting on high-value orders.
+- **Lifespan & Quotas**: Start/end date scheduling (`start_date`, `end_date`) and total usage limit quotas (`usage_limit`, `usage_count`).
+- **Public Cart Validation**: `POST /api/coupons/validate` evaluates basket eligibility, minimum threshold, active window, and usage cap before computing exact net discount for checkout.
+
+### Technical Blog & SEO Engine
+- **Live Google SERP Snippet Preview**: Real-time search engine result preview showing URL breadcrumbs, blue clickable title, and meta description.
+- **Character Length Checklist**: Real-time counter for title (40–60 chars) and meta description (120–160 chars) with color-coded feedback.
+- **Article Schema Injection**: Toggleable JSON-LD `Article` schema markup structured for Google rich snippets.
+
+
 
 
 

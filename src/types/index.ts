@@ -697,6 +697,37 @@ export interface NotificationTemplate {
   variables: string[];
 }
 
+export interface Coupon {
+  id: string;
+  code: string;
+  discount_type: 'percent' | 'fixed';
+  discount_value: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  scope_type?: 'all' | 'category' | 'product' | 'package';
+  scope_id?: string;
+  start_date?: string;
+  end_date?: string;
+  usage_limit?: number;
+  usage_count: number;
+  is_active: boolean | number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface DocumentItem {
+  id: string;
+  title: string;
+  doc_type: 'datasheet' | 'user_manual' | 'firmware' | 'catalog' | 'certificate';
+  category_id?: string;
+  product_id?: string;
+  file_url: string;
+  file_size?: string;
+  mime_type?: string;
+  download_count: number;
+  created_at: string;
+}
+
 
 export interface ServiceItem {
   id: string;
@@ -754,6 +785,9 @@ export interface BlogPost {
   tags: string[];
   readTime: string;
   isDemo?: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
+  enableArticleSchema?: boolean;
 }
 
 export interface ProjectCaseStudy {
@@ -905,6 +939,8 @@ export interface MediaItem {
   url: string;
   mime_type?: string;
   size?: number;
+  alt_text?: string;
+  folder?: string;
   created_at?: string;
 }
 
