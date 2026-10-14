@@ -134,3 +134,25 @@ All domain mutations persist an event to the `domain_events` table within the sa
 - `order.placed`, `order.status_changed`, `order.paid`
 - `staff.user_created`, `staff.user_disabled`
 
+---
+
+## 6. Shared Admin Framework & Field-Level Translation Readiness
+
+### Shared Admin Framework (`src/components/admin/framework/`)
+All admin modules adhere to a unified framework preventing ad-hoc, inconsistent screens:
+- `DataTable`: Server-side & client-side search, multi-facet filtering, sorting, pagination, column chooser, saved column sets, bulk actions, and CSV export.
+- `FormShell`: Form container enforcing Zod validation, inline error highlighting, unsaved-changes protection with browser `beforeunload` warning, and submit/cancel action bars.
+- `ConfirmDialog`: High-security modal requiring typed confirmation phrases (e.g. `"DELETE"`, `"RESET DATABASE"`, `"CLEAR DEMO DATA"`) before executing destructive actions.
+- `EmptyState`: Clean empty states with action triggers.
+- `ErrorState`: Error boundary display with retry triggers and expandable error trace details.
+- `Skeletons`: Loading row and card animations matching exact container heights to eliminate layout shifts.
+- `Toasts`: Stacked notifications for operational feedback.
+- `Breadcrumbs`: Standardized admin navigation hierarchy.
+
+### Field-Level Translation & Content Overrides
+- Translatable customer-facing strings are stored with `{ en, bn }` mapping in `src/content/strings.ts`.
+- The translation function `t(path, locale, overrides)` looks up text using the path, checks for database-backed admin overrides (`SiteSettings.contentOverrides`), checks requested locale (`bn`), and falls back to plain English.
+- The storefront top bar language switcher is controlled by `SiteSettings.languageSwitcherEnabled` (disabled by default in clean installations).
+- Business text is completely separated from developer code; any user-facing label or banner can be updated dynamically via `SiteSettings.contentOverrides`.
+
+

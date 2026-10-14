@@ -574,6 +574,11 @@ export interface SiteSettings {
   returnPolicyText?: string;
   termsPolicyText?: string;
   privacyPolicyText?: string;
+
+  // Localization & Translation Readiness
+  languageSwitcherEnabled?: boolean;
+  defaultLanguage?: 'en' | 'bn';
+  contentOverrides?: Record<string, string>;
 }
 
 export interface ServiceItem {

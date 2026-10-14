@@ -3957,6 +3957,58 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       </div>
                     </div>
                   </div>
+
+                  {/* Language Switcher & Localization Readiness */}
+                  <div className="pt-4 border-t border-slate-800 space-y-4">
+                    <span className="text-[#F15A24] font-bold block uppercase tracking-wider text-xs">
+                      Localization & Translation Readiness (English & বাংলা)
+                    </span>
+                    <div className="flex items-center justify-between p-3.5 bg-slate-900/80 rounded-xl border border-slate-800">
+                      <div>
+                        <span className="font-bold text-white block text-sm">Customer Language Switcher</span>
+                        <span className="text-xs text-slate-400">
+                          Displays the English / বাংলা language toggle pill in the storefront top bar. (Off by default, falls back cleanly to English).
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(settings.languageSwitcherEnabled)}
+                          onChange={(e) => updateSettings({ languageSwitcherEnabled: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F15A24]"></div>
+                      </label>
+                    </div>
+
+                    <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
+                      <span className="font-bold text-slate-300 block text-xs">
+                        Custom UI Text Overrides (Storefront String Overrides)
+                      </span>
+                      <p className="text-[11px] text-slate-400">
+                        Admin-entered text overrides default hardcoded strings across the storefront. Enter key path (e.g. <code>hero.title</code>, <code>packages.title</code>) and customized text.
+                      </p>
+                      <div className="space-y-2">
+                        {Object.entries(settings.contentOverrides || {}).map(([key, val]) => (
+                          <div key={key} className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                            <span className="text-xs font-mono text-[#F15A24] font-bold w-1/3 truncate">{key}</span>
+                            <span className="text-xs text-slate-300 flex-1 truncate">{val}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = { ...(settings.contentOverrides || {}) };
+                                delete next[key];
+                                updateSettings({ contentOverrides: next });
+                              }}
+                              className="text-xs text-rose-400 hover:text-rose-300 px-1"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             );

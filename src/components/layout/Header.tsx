@@ -183,6 +183,22 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 Track Order
               </span>
             </button>
+
+            {settings?.languageSwitcherEnabled && (
+              <button
+                type="button"
+                onClick={() => {
+                  const current = localStorage.getItem('camnex_lang') || 'en';
+                  const next = current === 'bn' ? 'en' : 'bn';
+                  localStorage.setItem('camnex_lang', next);
+                  window.location.reload();
+                }}
+                className="text-[11px] font-bold px-2 py-0.5 rounded border border-white/25 text-white/90 hover:text-white hover:bg-white/10 transition-colors ml-1"
+                title="Switch Language (English / বাংলা)"
+              >
+                {typeof window !== 'undefined' && localStorage.getItem('camnex_lang') === 'bn' ? 'বাংলা' : 'EN'}
+              </button>
+            )}
           </div>
 
           {/* Right: HIGHLIGHTS area driven by admin list (Never cut mid-word; hidden whole if overflowing) */}
