@@ -22,6 +22,8 @@ logs/
 
 # Scratch scripts & temporary data
 scratch/
+scratch_*
+scratch*
 
 # Compiled production bundles (built on host by npm run build)
 public/dist/
