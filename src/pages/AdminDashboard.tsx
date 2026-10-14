@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Package, FolderTree, Tag, Sliders, Layers, ShoppingCart, Users,
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
@@ -37,6 +37,7 @@ import { ScenariosModule } from '../components/admin/ScenariosModule';
 import { ServicesModule } from '../components/admin/ServicesModule';
 import { CompanyProfileModule } from '../components/admin/CompanyProfileModule';
 import { GlossaryModule } from '../components/admin/GlossaryModule';
+import { ConfirmDialog } from '../components/admin/framework';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
   const { currentUser, isAdminAuthenticated, checkAuth, login, logout, isLoading: authLoading, error: authError } = useAdminAuthStore();
@@ -64,6 +65,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [dashboardAuditLogs, setDashboardAuditLogs] = useState<any[]>([]);
   const [isRefreshingDashboard, setIsRefreshingDashboard] = useState(false);
+  const [hideTestData, setHideTestData] = useState(true);
+  const [clearDemoModalOpen, setClearDemoModalOpen] = useState(false);
+  const [isClearingDemo, setIsClearingDemo] = useState(false);
+  const [resetSeedsModalOpen, setResetSeedsModalOpen] = useState(false);
+  const [isResettingSeeds, setIsResettingSeeds] = useState(false);
   
   // Hero Slide Editor Modal State
   const [slideModalOpen, setSlideModalOpen] = useState(false);
@@ -690,18 +696,30 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   };
 
   const handleClearDemoData = async () => {
-    if (confirm('Remove all sample content? This will delete all sample records and leave only real records.')) {
-      await cmsService.clearDemoData();
+    setIsClearingDemo(true);
+    try {
+      await cmsService.clearDemoData('CLEAR DEMO DATA');
+      setClearDemoModalOpen(false);
       refreshAllData();
       alert('All sample content removed.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to clear sample content.');
+    } finally {
+      setIsClearingDemo(false);
     }
   };
 
   const handleResetSeeds = async () => {
-    if (confirm('Reset store to default sample data seeds?')) {
-      await cmsService.resetToInitialSeeds();
+    setIsResettingSeeds(true);
+    try {
+      await cmsService.resetToInitialSeeds('RESET DATABASE');
+      setResetSeedsModalOpen(false);
       refreshAllData();
       alert('Store reset to initial demonstration state.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to reset seeds.');
+    } finally {
+      setIsResettingSeeds(false);
     }
   };
 
@@ -851,14 +869,49 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     }
   };
 
+  // Test Data Identification & Exclusion
+  const isTestOrder = (o: Order) => {
+    if ((o as any).isTest || (o as any).is_test) return true;
+    const name = (o.customerName || '').toLowerCase();
+    const phone = (o.customerPhone || '').trim();
+    const email = (o.customerEmail || '').toLowerCase();
+    return name.includes('test client') || name.includes('phase 2') || phone === '+8801700000000' || email.includes('test@');
+  };
+
+  const isTestQuote = (q: QuoteRequest) => {
+    if ((q as any).isTest) return true;
+    const name = (q.customerName || '').toLowerCase();
+    return name.includes('test client') || name.includes('phase 2 test');
+  };
+
+  const isTestProduct = (p: Product) => {
+    if ((p as any).isTest) return true;
+    const sku = (p.sku || '').toUpperCase();
+    return sku.startsWith('TEST-') || sku.startsWith('NEG-');
+  };
+
+  const operationalProducts = useMemo(() => {
+    return hideTestData ? products.filter(p => !isTestProduct(p)) : products;
+  }, [products, hideTestData]);
+
+  const operationalOrders = useMemo(() => {
+    return hideTestData ? orders.filter(o => !isTestOrder(o)) : orders;
+  }, [orders, hideTestData]);
+
+  const operationalQuotes = useMemo(() => {
+    return hideTestData ? quotes.filter(q => !isTestQuote(q)) : quotes;
+  }, [quotes, hideTestData]);
+
   // Dashboard Overview: Real Catalog Metrics
-  const activeProducts = products.filter(p => p.status === 'active');
-  const draftProducts = products.filter(p => p.status !== 'active');
-  const productsWithImage = products.filter(p => !isPlaceholderImage(p.primaryImage));
-  const missingImages = products.filter(p => isPlaceholderImage(p.primaryImage));
-  const missingModelOrSku = products.filter(p => !p.modelNumber?.trim() || !p.sku?.trim());
-  const missingSpecs = products.filter(p => !p.specifications || Object.keys(p.specifications).length === 0);
-  const fullyReadyProducts = products.filter(p =>
+  const activeProducts = operationalProducts.filter(p => p.status === 'active');
+  const draftProducts = operationalProducts.filter(p => p.status !== 'active');
+  const productsWithImage = operationalProducts.filter(p => !isPlaceholderImage(p.primaryImage));
+  const missingImages = operationalProducts.filter(p => isPlaceholderImage(p.primaryImage));
+  const missingModelOrSku = operationalProducts.filter(p => !p.modelNumber?.trim() || !p.sku?.trim());
+  const missingSpecs = operationalProducts.filter(p => !p.specifications || Object.keys(p.specifications).length === 0);
+  const missingPrice = operationalProducts.filter(p => !p.pricing?.regularPrice && !p.pricing?.salePrice);
+  const lowStockProducts = operationalProducts.filter(p => (p.inventory?.available ?? 0) <= 3);
+  const fullyReadyProducts = operationalProducts.filter(p =>
     p.status === 'active' &&
     !isPlaceholderImage(p.primaryImage) &&
     p.modelNumber?.trim() &&
@@ -868,8 +921,19 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     (p.pricing?.regularPrice || p.pricing?.salePrice)
   );
   // Catalog Product Total: use official API total if provided (including legitimate 0), fallback to loaded products length
-  const displayedProductTotal = typeof totalProductsCount === 'number' ? totalProductsCount : products.length;
+  const displayedProductTotal = typeof totalProductsCount === 'number' ? totalProductsCount : operationalProducts.length;
   const catalogReadinessScore = displayedProductTotal > 0 ? Math.round((fullyReadyProducts.length / displayedProductTotal) * 100) : 100;
+
+  // Priority items that need attention in catalog
+  const catalogPriorityFixes = useMemo(() => {
+    return operationalProducts.filter(p =>
+      isPlaceholderImage(p.primaryImage) ||
+      !p.modelNumber?.trim() ||
+      !p.sku?.trim() ||
+      !p.specifications ||
+      Object.keys(p.specifications).length === 0
+    ).slice(0, 3);
+  }, [operationalProducts]);
 
   // Multi-facet Filtered Products for Product Management Table
   const filteredProducts = products.filter(p => {
@@ -896,14 +960,18 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const paginatedProducts = filteredProducts.slice((validProductPage - 1) * productPageSize, validProductPage * productPageSize);
 
   // Dashboard Overview: Real Orders & Revenue Metrics
-  const pendingOrders = orders.filter(o => o.status === 'pending');
-  const processingOrders = orders.filter(o => o.status === 'processing' || o.status === 'confirmed');
-  const unverifiedPayments = orders.filter(o => o.paymentStatus === 'unverified');
-  const totalOrderRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const pendingOrders = operationalOrders.filter(o => o.status === 'pending');
+  const processingOrders = operationalOrders.filter(o => o.status === 'processing' || o.status === 'confirmed');
+  const unverifiedPayments = operationalOrders.filter(o => o.paymentStatus === 'unverified');
+  const totalOrderRevenue = operationalOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const ordersWaitingTooLong = pendingOrders.filter(o => {
+    const t = new Date(o.createdAt).getTime();
+    return !isNaN(t) && (Date.now() - t) > 24 * 3600 * 1000;
+  });
 
   // Dashboard Overview: Real Quotes Metrics
-  const pendingQuotes = quotes.filter(q => q.status === 'pending');
-  const quotedQuotes = quotes.filter(q => q.status === 'quoted');
+  const pendingQuotes = operationalQuotes.filter(q => q.status === 'pending');
+  const quotedQuotes = operationalQuotes.filter(q => q.status === 'quoted');
 
   // Dashboard Overview: Real Category Metrics
   const activeCategories = categories.filter(c => c.status !== 'inactive');
@@ -1092,26 +1160,6 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               </a>
             </div>
           )}
-
-          {hasPerm(PERMISSIONS.ROLES_MANAGE) && (
-            <div className="pt-6 border-t border-slate-800 mt-6 px-3 space-y-2">
-              <span className="text-[10px] text-slate-500 font-bold block uppercase">Data Management</span>
-              <button
-                onClick={handleClearDemoData}
-                className="w-full text-left text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2 py-1"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Remove all sample content</span>
-              </button>
-              <button
-                onClick={handleResetSeeds}
-                className="w-full text-left text-xs font-bold text-slate-400 hover:text-white flex items-center gap-2 py-1"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Reset Sample Seeds</span>
-              </button>
-            </div>
-          )}
         </aside>
 
         {/* Module Content */}
@@ -1133,7 +1181,16 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   <p className="text-xs text-slate-400 mt-1">Phase 1 E-Commerce Operations & Queue Summary</p>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs text-slate-300 cursor-pointer hover:border-slate-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={hideTestData}
+                      onChange={(e) => setHideTestData(e.target.checked)}
+                      className="rounded bg-slate-900 border-slate-700 text-[#F15A24] focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                    />
+                    <span>Hide Test Records</span>
+                  </label>
                   <Button
                     size="sm"
                     variant="outline"
@@ -1258,6 +1315,57 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   </div>
                 </div>
               </div>
+
+              {/* Operational Attention Needed Bar */}
+              {(ordersWaitingTooLong.length > 0 || unverifiedPayments.length > 0 || pendingQuotes.length > 0 || missingImages.length > 0) && (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-950 border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                      <AlertCircle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-amber-300 flex items-center gap-2">
+                        <span>Operational Attention Required</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold">
+                          {ordersWaitingTooLong.length + unverifiedPayments.length + pendingQuotes.length + missingImages.length} items
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
+                        {ordersWaitingTooLong.length > 0 && (
+                          <span className="text-rose-400 font-medium">
+                            • {ordersWaitingTooLong.length} {ordersWaitingTooLong.length === 1 ? 'order' : 'orders'} waiting &gt; 24h
+                          </span>
+                        )}
+                        {unverifiedPayments.length > 0 && (
+                          <span className="text-amber-400 font-medium">
+                            • {unverifiedPayments.length} unverified {unverifiedPayments.length === 1 ? 'payment' : 'payments'}
+                          </span>
+                        )}
+                        {pendingQuotes.length > 0 && (
+                          <span className="text-purple-400 font-medium">
+                            • {pendingQuotes.length} pending {pendingQuotes.length === 1 ? 'quote' : 'quotes'}
+                          </span>
+                        )}
+                        {missingImages.length > 0 && (
+                          <span className="text-blue-400 font-medium">
+                            • {missingImages.length} products missing photos
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setActiveModule(unverifiedPayments.length > 0 || ordersWaitingTooLong.length > 0 ? 'orders' : 'quotes')}
+                      className="text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+                    >
+                      Resolve Work Queue
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* 4 Main Operational Panels: 2x2 Grid */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -1590,6 +1698,51 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                           {products.length - missingSpecs.length} with tech spec tables
                         </div>
                       </div>
+                    </div>
+
+                    {/* Priority Catalog Fixes */}
+                    <div className="mt-3.5 pt-3.5 border-t border-slate-900 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Priority Catalog Fixes</span>
+                        <span className="text-[10px] text-slate-500">Quick actions to reach 100% readiness</span>
+                      </div>
+                      {catalogPriorityFixes.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {catalogPriorityFixes.map(p => {
+                            const needsImg = isPlaceholderImage(p.primaryImage);
+                            const needsSku = !p.sku?.trim() || !p.modelNumber?.trim();
+                            const needsSpec = !p.specifications || Object.keys(p.specifications).length === 0;
+                            return (
+                              <div
+                                key={`fix-${p.id}`}
+                                className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 flex items-center justify-between gap-2"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-bold text-white text-xs truncate">{p.name}</div>
+                                  <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                                    <span className="font-mono text-slate-500">{p.sku || 'No SKU'}</span>
+                                    {needsImg && <span className="text-amber-400 font-medium">No Image</span>}
+                                    {needsSku && <span className="text-purple-400 font-medium">Missing SKU/Model</span>}
+                                    {needsSpec && <span className="text-blue-400 font-medium">No Specs</span>}
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleOpenProductEdit(p)}
+                                  className="text-xs text-[#F15A24] hover:text-[#ff7847] py-1 px-2 shrink-0 font-medium"
+                                >
+                                  Fix
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-xs text-emerald-400 text-center">
+                          All active products satisfy image, model, SKU, and specification benchmarks.
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -4009,6 +4162,60 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       </div>
                     </div>
                   </div>
+
+                  {/* System & Database Maintenance */}
+                  <div className="pt-4 border-t border-slate-800 space-y-4">
+                    <div>
+                      <span className="text-rose-400 font-bold block uppercase tracking-wider text-xs">
+                        System & Database Maintenance
+                      </span>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Clean or reset sample store records. Protected by <code>system.maintenance</code> permission, typed phrase confirmation, and blocked when running in production mode.
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-slate-900/60 rounded-xl border border-rose-500/30 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <h4 className="font-bold text-white text-xs">Remove All Sample Demo Content</h4>
+                          <p className="text-[11px] text-slate-400">
+                            Permanently removes all demonstration products, packages, projects, and testimonials while preserving real customer records.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          disabled={!hasPerm(PERMISSIONS.SYSTEM_MAINTENANCE) && !hasPerm(PERMISSIONS.ROLES_MANAGE)}
+                          onClick={() => setClearDemoModalOpen(true)}
+                          className="shrink-0"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          Clear Demo Content
+                        </Button>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <h4 className="font-bold text-white text-xs">Reset Database to Initial Seeds</h4>
+                          <p className="text-[11px] text-slate-400">
+                            Rebuilds clean baseline catalog seeds. Strictly blocked in production environments.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!hasPerm(PERMISSIONS.SYSTEM_MAINTENANCE) && !hasPerm(PERMISSIONS.ROLES_MANAGE)}
+                          onClick={() => setResetSeedsModalOpen(true)}
+                          className="!border-rose-500/40 text-rose-400 hover:bg-rose-500/10 shrink-0"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                          Reset Sample Seeds
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
@@ -5742,6 +5949,32 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           }}
         />
       )}
+
+      {/* CONFIRM DIALOG FOR CLEAR DEMO DATA */}
+      <ConfirmDialog
+        isOpen={clearDemoModalOpen}
+        title="Remove All Sample Demo Content"
+        message="This operation will permanently purge all seeded demo products, packages, projects, and testimonials. Real store data and customer records will be preserved."
+        confirmPhrase="CLEAR DEMO DATA"
+        confirmLabel="Clear Demo Data"
+        variant="danger"
+        isLoading={isClearingDemo}
+        onConfirm={handleClearDemoData}
+        onCancel={() => setClearDemoModalOpen(false)}
+      />
+
+      {/* CONFIRM DIALOG FOR RESET DATABASE */}
+      <ConfirmDialog
+        isOpen={resetSeedsModalOpen}
+        title="Reset Database to Initial Seeds"
+        message="WARNING: This operation will reset all database tables back to default baseline seeds. Any newly created catalog records will be overwritten. This action cannot be undone."
+        confirmPhrase="RESET DATABASE"
+        confirmLabel="Reset Store Seeds"
+        variant="danger"
+        isLoading={isResettingSeeds}
+        onConfirm={handleResetSeeds}
+        onCancel={() => setResetSeedsModalOpen(false)}
+      />
 
     </div>
   );

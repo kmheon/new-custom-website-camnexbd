@@ -798,12 +798,18 @@ export class RestCmsService implements ICmsService {
     };
   }
 
-  async clearDemoData(): Promise<void> {
-    await request<{ success: boolean }>('/admin/clear-demo-data', { method: 'POST' });
+  async clearDemoData(confirmPhrase = 'CLEAR DEMO DATA'): Promise<void> {
+    await request<{ success: boolean }>('/admin/clear-demo-data', {
+      method: 'POST',
+      body: JSON.stringify({ confirmPhrase })
+    });
   }
 
-  async resetToInitialSeeds(): Promise<void> {
-    await request<{ success: boolean }>('/admin/reset-seeds', { method: 'POST' });
+  async resetToInitialSeeds(confirmPhrase = 'RESET DATABASE'): Promise<void> {
+    await request<{ success: boolean }>('/admin/reset-seeds', {
+      method: 'POST',
+      body: JSON.stringify({ confirmPhrase })
+    });
   }
 }
 

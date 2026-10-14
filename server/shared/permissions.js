@@ -42,8 +42,9 @@ const PERMISSIONS = {
   STAFF_MANAGE: 'staff.manage',
   ROLES_MANAGE: 'roles.manage',
 
-  // Audit Logs
+  // Audit & System Maintenance
   AUDIT_READ: 'audit.read',
+  SYSTEM_MAINTENANCE: 'system.maintenance',
 
   // Reserved Phase 2 Keys (Registered, but not enforced until Phase 2)
   POS_SELL: 'pos.sell',

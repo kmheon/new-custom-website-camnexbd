@@ -155,4 +155,24 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - The storefront top bar language switcher is controlled by `SiteSettings.languageSwitcherEnabled` (disabled by default in clean installations).
 - Business text is completely separated from developer code; any user-facing label or banner can be updated dynamically via `SiteSettings.contentOverrides`.
 
+---
+
+## 7. System Maintenance & Dashboard Operations
+
+### Destructive Action Guardrails
+- **Permission Requirement**: `system.maintenance` (`PERMISSIONS.SYSTEM_MAINTENANCE`), accessible only to super admin and explicitly authorized roles.
+- **Production Mode Lockout**: The endpoints `/api/admin/clear-demo-data` and `/api/admin/reset-seeds` strictly check `process.env.NODE_ENV === 'production'`. When running in production, requests are rejected immediately with `403 Forbidden` (`MAINTENANCE_BLOCKED_IN_PRODUCTION`).
+- **Confirmation Phrases**: Destructive operations require exact typed confirmation phrases in `<ConfirmDialog>` modals:
+  - Clear Demo Data requires `"CLEAR DEMO DATA"`.
+  - Reset Seeds requires `"RESET DATABASE"`.
+- **Audit Logging**: Every maintenance execution creates an immutable entry in `audit_logs` with actor details, action name, and timestamp.
+- **Relocation**: Destructive buttons have been removed from the visible sidebar and housed safely under `Settings > System & Database Maintenance`.
+
+### Operational Dashboard Integrity
+- **Test Data Contamination Filtering**: Automated test suites create transient test orders, quotes, and products (e.g. `isTest: true`, phone `+8801700000000`, SKU `TEST-*`). A persistent "Hide Test Records" toggle on the overview header filters these out so operational metrics reflect genuine business volume.
+- **Action Center Deduplication**: An order that is both `pending` (needs confirmation) and `unverified` (needs manual payment check) is deduplicated in the aggregate work queue task counter, preventing double-counting while preserving both actions.
+- **Operational Attention Bar**: Highlights critical operational bottlenecks (orders pending > 24 hours, unverified manual payments, pending quotations, and catalog products lacking studio photography).
+- **Catalog Priority Fixes**: Dynamically ranks products needing immediate metadata completion (missing image, missing SKU/model, or missing technical specifications) with direct 1-click modal editing.
+
+
 

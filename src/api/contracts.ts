@@ -173,8 +173,8 @@ export interface ICmsService {
   saveHeroSlide(slide: HeroSlide): Promise<HeroSlide>;
   deleteHeroSlide(id: string): Promise<void>;
   resolveDisplaySlides(): Promise<HeroSlide[]>;
-  clearDemoData(): Promise<void>;
-  resetToInitialSeeds(): Promise<void>;
+  clearDemoData(confirmPhrase?: string): Promise<void>;
+  resetToInitialSeeds(confirmPhrase?: string): Promise<void>;
 }
 
 export interface IProductResearchService {

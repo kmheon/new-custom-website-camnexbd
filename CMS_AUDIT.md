@@ -43,7 +43,7 @@
 | **Documents Library** | Site & SEO > Documents | `GET/POST /api/admin/documents`, `DELETE /api/admin/documents/:id` | `documents` | `media.write` | Upload, List, Delete, Track downloads | Filter by type (datasheet, manual, catalog), search | PDF/DOCX magic bytes | Writes audit log | Live | Wired to PDP Downloads section | To be built | **MISSING** |
 | **Audit Log Viewer** | System > Audit Logs | `GET /api/audit-logs` | `audit_logs` | `audit.read` | Read-only (append-only table enforced by SQLite trigger) | Filter by entity type, user, action, date range, pagination | Read-only | Self-logging | Live | Admin operational security | `test_rbac_identity.js` | **PARTIAL** (API exists; needs full DataTable viewer in admin UI) |
 | **Background Jobs Viewer**| System > Jobs | `GET /api/admin/jobs`, `POST /api/admin/jobs/:id/retry` | `background_jobs` | `system.jobs.manage` | Read, Retry, Cancel | Queue status filter (pending, failed, completed), payload viewer | Schema validated | Writes audit log | Live | Background worker queue | Unit test | **PARTIAL** (API exists; needs full DataTable viewer in admin UI) |
-| **System Health & Maintenance**| System > Maintenance | `GET /api/admin/health`, `POST /api/admin/maintenance/seed-reset` | SQLite, filesystem, queue | `system.maintenance` | View metrics, toggle maintenance mode, safe database reset | Health status cards, typed confirmation modal | Node environment checks | Writes audit log | Live | Entire site maintenance banner | Unit test | **PARTIAL** (Destructive buttons currently in sidebar; must move to Settings > Maintenance with typed confirmation phrase) |
+| **System Health & Maintenance**| System > Maintenance | `GET /api/admin/health`, `POST /api/admin/clear-demo-data`, `POST /api/admin/reset-seeds` | SQLite, filesystem, queue | `system.maintenance` | View metrics, safe database reset, clear demo data | Typed ConfirmDialog, NODE_ENV=production block, hide test data toggle, priority catalog fixes | Node environment checks + confirmPhrase | Writes audit log | Live | Entire site maintenance banner | Unit test | **DONE** |
 
 ---
 
@@ -88,3 +88,4 @@ All 20 existing modules in `src/pages/AdminDashboard.tsx` were systematically ev
 2. **Newsletter Persistence:** Fix storefront newsletter form in `Footer.tsx` so it sends `POST /api/newsletter/subscribe` instead of a local state fake.
 3. **Work Queue & Attention Widgets:** Expand the Dashboard Action Center to surface genuine unverified payments, orders pending review, products missing images/prices, and unanswered callbacks.
 4. **Shared Admin Framework Integration:** Unify inline table implementations (Orders, Quotes, Packages, Categories) using the standard shared `DataTable`, `FormShell`, and `ConfirmDialog` architecture.
+

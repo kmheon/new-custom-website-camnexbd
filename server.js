@@ -2927,8 +2927,25 @@ app.get('/api/cms/testimonials', (req, res) => {
 });
 
 app.post('/api/admin/clear-demo-data', requireAdmin, (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Database reset actions are strictly blocked in production mode.' });
+  }
+  const { confirmPhrase } = req.body || {};
+  if (confirmPhrase !== 'CLEAR DEMO DATA') {
+    return res.status(400).json({ error: 'Invalid confirmation phrase. Please type "CLEAR DEMO DATA" to confirm.' });
+  }
   try {
     db.clearDemoData();
+    logAudit({
+      entity: 'system',
+      entityId: 'maintenance',
+      action: 'system.maintenance.clear_demo_data',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      actorEmail: req.user?.email,
+      surface: 'admin',
+      diff: { action: 'clear_demo_data' }
+    });
     res.json({ success: true, message: 'Sample demo data cleared successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2936,8 +2953,25 @@ app.post('/api/admin/clear-demo-data', requireAdmin, (req, res) => {
 });
 
 app.post('/api/admin/reset-seeds', requireAdmin, (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Database reset actions are strictly blocked in production mode.' });
+  }
+  const { confirmPhrase } = req.body || {};
+  if (confirmPhrase !== 'RESET DATABASE') {
+    return res.status(400).json({ error: 'Invalid confirmation phrase. Please type "RESET DATABASE" to confirm.' });
+  }
   try {
     db.reseedDatabase();
+    logAudit({
+      entity: 'system',
+      entityId: 'maintenance',
+      action: 'system.maintenance.reset_seeds',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      actorEmail: req.user?.email,
+      surface: 'admin',
+      diff: { action: 'reset_seeds' }
+    });
     res.json({ success: true, message: 'Database reset to initial seeds successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });

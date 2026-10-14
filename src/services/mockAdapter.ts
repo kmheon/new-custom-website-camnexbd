@@ -981,7 +981,7 @@ export class MockCmsService implements ICmsService {
     };
   }
 
-  async clearDemoData(): Promise<void> {
+  async clearDemoData(confirmPhrase?: string): Promise<void> {
     // Only keep real user entered data; clear sample data
     const prods = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS).filter(p => !p.isDemo);
     setStorage(STORAGE_KEYS.PRODUCTS, prods);
@@ -1000,7 +1000,7 @@ export class MockCmsService implements ICmsService {
     setStorage(STORAGE_KEYS.SETTINGS, settings);
   }
 
-  async resetToInitialSeeds(): Promise<void> {
+  async resetToInitialSeeds(confirmPhrase?: string): Promise<void> {
     setStorage(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
     setStorage(STORAGE_KEYS.SECTIONS, INITIAL_HOMEPAGE_SECTIONS);
     setStorage(STORAGE_KEYS.TEMPLATES, INITIAL_SPEC_TEMPLATES);
