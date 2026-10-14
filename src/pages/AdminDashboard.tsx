@@ -120,8 +120,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const isTestQuote = (q: QuoteRequest) => {
     if ((q as any).isTest || (q as any).is_test) return true;
     const name = (q.customerName || '').toLowerCase();
-    const phone = (q.customerPhone || (q as any).phone || '').replace(/\D/g, '');
-    const email = (q.customerEmail || (q as any).email || '').toLowerCase();
+    const phone = ((q.phone || (q as any).customerPhone || '') as string).replace(/\D/g, '');
+    const email = ((q.email || (q as any).customerEmail || '') as string).toLowerCase();
     return (
       name.includes('test client') ||
       name.includes('phase 2') ||
