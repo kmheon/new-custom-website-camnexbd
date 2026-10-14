@@ -2035,7 +2035,12 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     <Plus className="w-4 h-4 mr-1.5" />
                     <span>+ Add Product</span>
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setAssistantModalOpen(true)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAssistantModalOpen(true)}
+                    className="border-slate-700 bg-slate-900/60 text-slate-200 hover:text-white hover:bg-slate-800 shadow-sm"
+                  >
                     <Sparkles className="w-4 h-4 mr-1.5 text-[#F15A24]" />
                     <span>Research Assistant</span>
                   </Button>
@@ -3246,7 +3251,12 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         <Plus className="w-4 h-4 mr-1.5" />
                         <span>Add New Hero Slide</span>
                       </Button>
-                      <Button size="sm" variant="outline" onClick={handleSeedSampleHeroSlides}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleSeedSampleHeroSlides}
+                        className="border-slate-700 bg-slate-900/60 text-slate-200 hover:text-white hover:bg-slate-800 shadow-sm"
+                      >
                         <Sparkles className="w-4 h-4 mr-1.5 text-[#F15A24]" />
                         <span>Seed Sample Slides</span>
                       </Button>
