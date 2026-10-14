@@ -256,6 +256,41 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Dedicated Persistence Table**: `newsletter_subscribers` table captures subscriber emails, sources, and IP metadata with clean double-opt-in state support and CSV export.
 - **Storefront Wire**: The storefront footer subscription form sends requests directly to `POST /api/newsletter/subscribe` with rate-limiting and validation.
 
+---
+
+## 13. Settings Architecture (Payments, Delivery, Couriers, Taxes & Notifications)
+
+### Admin-Entered Payment Methods & MFS Verification
+- **Payment Method Visibility Rule**: Payment methods (Cash on Delivery, bKash, Nagad, Corporate Bank Transfer) remain strictly invisible at checkout until entered and explicitly activated by an administrator.
+- **Cash on Delivery (COD)**: Guarded by a master toggle (`enableCashOnDelivery`), disabled by default in baseline clean databases.
+- **Mobile Financial Services (MFS)**: bKash and Nagad numbers entered in admin dashboard dictate checkout availability. Verification requires customer-submitted TrxID.
+- **Corporate Bank Accounts**: Bank name, corporate account title, account number, branch, and routing number stored structured in site settings for enterprise wire transfers.
+
+### Delivery Zones & Shipping Rules
+- **Regional Delivery Zones**: Multi-zone delivery matrix (`deliveryZones`) supporting inside Dhaka, outside Dhaka, and suburb configurations.
+- **Two-Tier Shipping Tariffs**: Standard and Express delivery fees with independent estimated turnaround timeframes.
+- **Free Shipping Thresholds**: Configurable basket value thresholds (`freeDeliveryThreshold`) triggering zero shipping cost at checkout for high-value orders.
+
+### Encrypted Courier Integration Adapters
+- **Disabled Adapter Slots**: Prepared integration adapters for Steadfast Courier and Pathao Logistics. Adapters remain in disabled sandbox/test mode until activated.
+- **AES-256-GCM Credential Encryption**: Sensitive API keys, client secrets, and passwords are encrypted on the server before SQLite persistence using AES-256-GCM with authentication tags (`enc:iv:tag:cipher`).
+- **Secret Masking Over Wire**: API responses automatically mask credentials (`••••••••`) to prevent accidental credential leakage to browser inspectors or client stores.
+
+### Standardized Installation Rates & Field Engineering
+- **Itemized Service Tariffs**: Base callout and per-device installation tariffs (`installationOptions` / `InstallationRateSetting`) for analog cameras, IP cameras, Cat6 structured cabling, biometric terminals, and server headend racks.
+- **Transparent Customer Billing**: Rates populate quote estimators and order line items with explicit unit pricing.
+
+### Tax (VAT) Compliance & Invoice Sequence
+- **Government VAT Computation**: Configurable tax rules (`taxRules`) supporting VAT enabled/disabled toggles, custom VAT rates (default 5%), and inclusive vs. exclusive pricing display.
+- **BIN & TIN Registry**: Official Business Identification Number (BIN) and Taxpayer Identification Number (TIN) compliance fields rendered on formal invoices.
+- **Sequential Invoicing**: Configurable invoice numbering prefix (`CNX-INV-`) and auto-incrementing sequential invoice counter.
+
+### Transactional Notification Templates & Background Dispatcher
+- **Multi-Channel Templates**: Structured notification templates (`notificationTemplates`) for Email and SMS across order placement, dispatch, quote receipts, and technician callbacks.
+- **Dynamic Token Substitution**: Real-time evaluation of tokens (`{customer_name}`, `{order_number}`, `{total_amount}`, `{courier_name}`, `{tracking_number}`) with live visitor preview.
+- **Transactional Background Queue**: Test dispatches and notification jobs are queued into the SQLite `background_jobs` table (`notification_dispatch` type) processed by the asynchronous queue worker with retry management.
+
+
 
 
 

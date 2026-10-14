@@ -610,11 +610,93 @@ export interface SiteSettings {
   termsPolicyText?: string;
   privacyPolicyText?: string;
 
+  // Delivery & Courier Configuration
+  deliveryZones?: DeliveryZone[];
+  courierIntegrations?: {
+    steadfast?: CourierAdapterConfig;
+    pathao?: CourierAdapterConfig;
+  };
+
+  // Installation Rates
+  installationOptions?: InstallationRateSetting[];
+
+  // Tax & Invoice Numbering
+  taxRules?: TaxRuleConfig;
+
+  // Localization
+  localization?: LocalizationConfig;
+
+  // Notification Templates
+  notificationTemplates?: NotificationTemplate[];
+
   // Localization & Translation Readiness
   languageSwitcherEnabled?: boolean;
   defaultLanguage?: 'en' | 'bn';
   contentOverrides?: Record<string, string>;
 }
+
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  code: string;
+  standardFee: number;
+  expressFee?: number;
+  estimatedDelivery: string;
+  freeDeliveryThreshold?: number;
+  enabled: boolean;
+}
+
+export interface CourierAdapterConfig {
+  provider: 'steadfast' | 'pathao';
+  enabled: boolean;
+  testMode?: boolean;
+  apiKey?: string;
+  secretKey?: string;
+  clientId?: string;
+  clientSecret?: string;
+  username?: string;
+  password?: string;
+  storeId?: string;
+  webhookSecret?: string;
+}
+
+export interface InstallationRateSetting {
+  id: string;
+  name: string;
+  description: string;
+  fee: number;
+  unit: string;
+  enabled: boolean;
+}
+
+export interface TaxRuleConfig {
+  vatEnabled: boolean;
+  defaultVatRate: number;
+  pricesIncludeVat: boolean;
+  binNumber?: string;
+  tinNumber?: string;
+  invoicePrefix: string;
+  nextInvoiceNumber: number;
+}
+
+export interface LocalizationConfig {
+  currencyCode: string;
+  currencySymbol: string;
+  timezone: string;
+  businessHours: string;
+}
+
+export interface NotificationTemplate {
+  id: string;
+  name: string;
+  trigger: 'order_placed' | 'order_confirmed' | 'order_dispatched' | 'quote_received' | 'callback_requested';
+  channel: 'email' | 'sms';
+  subject?: string;
+  body: string;
+  enabled: boolean;
+  variables: string[];
+}
+
 
 export interface ServiceItem {
   id: string;

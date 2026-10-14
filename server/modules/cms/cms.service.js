@@ -1,21 +1,62 @@
 const db = require('../../../database');
 const { logAudit } = require('../../middleware/auditLogger');
 const { emitDomainEvent } = require('../../middleware/events');
+const { encrypt, decrypt, maskSecret } = require('../../shared/cryptoHelper');
+
+function maskSettingsSecrets(settings) {
+  if (!settings) return {};
+  const copy = JSON.parse(JSON.stringify(settings));
+  if (copy.courierIntegrations) {
+    if (copy.courierIntegrations.steadfast) {
+      if (copy.courierIntegrations.steadfast.apiKey) copy.courierIntegrations.steadfast.apiKey = maskSecret(copy.courierIntegrations.steadfast.apiKey);
+      if (copy.courierIntegrations.steadfast.secretKey) copy.courierIntegrations.steadfast.secretKey = maskSecret(copy.courierIntegrations.steadfast.secretKey);
+    }
+    if (copy.courierIntegrations.pathao) {
+      if (copy.courierIntegrations.pathao.clientSecret) copy.courierIntegrations.pathao.clientSecret = maskSecret(copy.courierIntegrations.pathao.clientSecret);
+      if (copy.courierIntegrations.pathao.password) copy.courierIntegrations.pathao.password = maskSecret(copy.courierIntegrations.pathao.password);
+    }
+  }
+  return copy;
+}
 
 class CmsService {
   // SETTINGS
   getSettings() {
     const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
-    return row ? JSON.parse(row.value) : {};
+    if (!row) return {};
+    return maskSettingsSecrets(JSON.parse(row.value));
   }
 
   updateSettings(data, actor = null) {
-    const current = this.getSettings();
-    const updated = { ...current, ...data };
+    const rawRow = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const existing = rawRow ? JSON.parse(rawRow.value) : {};
+    const payload = { ...data };
+
+    if (payload.courierIntegrations) {
+      payload.courierIntegrations = { ...existing.courierIntegrations, ...payload.courierIntegrations };
+      if (payload.courierIntegrations.steadfast) {
+        const sf = payload.courierIntegrations.steadfast;
+        const exSf = existing.courierIntegrations?.steadfast || {};
+        if (sf.apiKey && sf.apiKey.startsWith('••••')) sf.apiKey = exSf.apiKey;
+        else if (sf.apiKey) sf.apiKey = encrypt(sf.apiKey);
+        if (sf.secretKey && sf.secretKey.startsWith('••••')) sf.secretKey = exSf.secretKey;
+        else if (sf.secretKey) sf.secretKey = encrypt(sf.secretKey);
+      }
+      if (payload.courierIntegrations.pathao) {
+        const pt = payload.courierIntegrations.pathao;
+        const exPt = existing.courierIntegrations?.pathao || {};
+        if (pt.clientSecret && pt.clientSecret.startsWith('••••')) pt.clientSecret = exPt.clientSecret;
+        else if (pt.clientSecret) pt.clientSecret = encrypt(pt.clientSecret);
+        if (pt.password && pt.password.startsWith('••••')) pt.password = exPt.password;
+        else if (pt.password) pt.password = encrypt(pt.password);
+      }
+    }
+
+    const updated = { ...existing, ...payload };
     db.prepare(`
-      INSERT INTO settings (key, value, updated_at)
-      VALUES ('site_settings', ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+      INSERT INTO settings (key, value)
+      VALUES ('site_settings', ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
     `).run(JSON.stringify(updated));
 
     logAudit({
@@ -24,12 +65,12 @@ class CmsService {
       action: 'update',
       actorId: actor?.id,
       actorName: actor?.name,
-      before: current,
-      after: updated
+      before: maskSettingsSecrets(existing),
+      after: maskSettingsSecrets(updated)
     });
 
     emitDomainEvent('settings.updated', { updatedKeys: Object.keys(data) });
-    return updated;
+    return maskSettingsSecrets(updated);
   }
 
   // HERO SLIDES

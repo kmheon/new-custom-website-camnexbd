@@ -31,7 +31,8 @@ const { authenticate: rbacAuthenticate } = require('./server/middleware/auth');
 const { enforcePolicy } = require('./server/middleware/policy');
 const { createSession: createStaffSession, costFieldFilter } = require('./server/middleware/auth');
 const staffService = require('./server/modules/staff/staff.service');
-const { startDomainEventWorker } = require('./server/middleware/events');
+const { startDomainEventWorker, emitDomainEvent } = require('./server/middleware/events');
+const { encrypt, decrypt, maskSecret } = require('./server/shared/cryptoHelper');
 const apiV1Router = require('./server/routes/api.v1');
 const { logAudit } = require('./server/middleware/auditLogger');
 const { hasPermission, PERMISSIONS } = require('./server/shared/permissions');
@@ -3112,20 +3113,37 @@ app.delete('/api/admin/glossary/:id', requireAdmin, (req, res) => {
 // 9. CMS & SETTINGS REST APIs
 // ============================================================================
 
+function maskSettingsSecrets(settings) {
+  if (!settings) return {};
+  const copy = JSON.parse(JSON.stringify(settings));
+  if (copy.courierIntegrations) {
+    if (copy.courierIntegrations.steadfast) {
+      if (copy.courierIntegrations.steadfast.apiKey) copy.courierIntegrations.steadfast.apiKey = maskSecret(copy.courierIntegrations.steadfast.apiKey);
+      if (copy.courierIntegrations.steadfast.secretKey) copy.courierIntegrations.steadfast.secretKey = maskSecret(copy.courierIntegrations.steadfast.secretKey);
+    }
+    if (copy.courierIntegrations.pathao) {
+      if (copy.courierIntegrations.pathao.clientSecret) copy.courierIntegrations.pathao.clientSecret = maskSecret(copy.courierIntegrations.pathao.clientSecret);
+      if (copy.courierIntegrations.pathao.password) copy.courierIntegrations.pathao.password = maskSecret(copy.courierIntegrations.pathao.password);
+    }
+  }
+  return copy;
+}
+
 app.get('/api/settings', (req, res) => {
   try {
     const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
     if (!row) return res.json({});
-    res.json(JSON.parse(row.value));
+    res.json(maskSettingsSecrets(JSON.parse(row.value)));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 app.get('/api/cms/settings', (req, res) => {
   try {
     const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
     if (!row) return res.json({});
-    res.json(JSON.parse(row.value));
+    res.json(maskSettingsSecrets(JSON.parse(row.value)));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3135,10 +3153,108 @@ app.put('/api/settings', requireAdmin, validateBody(schemas.settings), (req, res
   try {
     const current = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
     const existing = current ? JSON.parse(current.value) : {};
-    const updated = { ...existing, ...req.body };
+    const payload = { ...req.body };
+
+    // Safely encrypt courier credentials while preserving existing values if masked
+    if (payload.courierIntegrations) {
+      payload.courierIntegrations = { ...existing.courierIntegrations, ...payload.courierIntegrations };
+      if (payload.courierIntegrations.steadfast) {
+        const sf = payload.courierIntegrations.steadfast;
+        const exSf = existing.courierIntegrations?.steadfast || {};
+        if (sf.apiKey && sf.apiKey.startsWith('••••')) sf.apiKey = exSf.apiKey;
+        else if (sf.apiKey) sf.apiKey = encrypt(sf.apiKey);
+        if (sf.secretKey && sf.secretKey.startsWith('••••')) sf.secretKey = exSf.secretKey;
+        else if (sf.secretKey) sf.secretKey = encrypt(sf.secretKey);
+      }
+      if (payload.courierIntegrations.pathao) {
+        const pt = payload.courierIntegrations.pathao;
+        const exPt = existing.courierIntegrations?.pathao || {};
+        if (pt.clientSecret && pt.clientSecret.startsWith('••••')) pt.clientSecret = exPt.clientSecret;
+        else if (pt.clientSecret) pt.clientSecret = encrypt(pt.clientSecret);
+        if (pt.password && pt.password.startsWith('••••')) pt.password = exPt.password;
+        else if (pt.password) pt.password = encrypt(pt.password);
+      }
+    }
+
+    const updated = { ...existing, ...payload };
 
     db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('site_settings', ?)").run(JSON.stringify(updated));
-    res.json(updated);
+
+    logAudit({
+      entity: 'settings',
+      entityId: 'site_settings',
+      action: 'update',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      before: maskSettingsSecrets(existing),
+      after: maskSettingsSecrets(updated)
+    });
+
+    emitDomainEvent('settings.updated', { updatedKeys: Object.keys(req.body) });
+
+    res.json(maskSettingsSecrets(updated));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Notification Test Queue Endpoint
+app.post('/api/admin/notifications/test', requireAdmin, (req, res) => {
+  try {
+    const { channel = 'email', trigger = 'test_notification', recipient, templateSubject, templateBody, sampleData = {} } = req.body;
+    if (!recipient) {
+      return res.status(400).json({ error: 'Recipient email or phone number is required.' });
+    }
+
+    let renderedBody = templateBody || 'This is a test notification from CamneX Bangladesh.';
+    let renderedSubject = templateSubject || 'CamneX Test Notification';
+    const vars = {
+      customer_name: 'Tanvir Hossain',
+      order_number: 'CNX-ORD-9021',
+      total_amount: '৳48,500',
+      quote_id: 'QT-2026-081',
+      courier_name: 'Steadfast Courier',
+      tracking_number: 'STDF-8839210',
+      company_name: 'CamneX Bangladesh',
+      ...sampleData
+    };
+
+    Object.entries(vars).forEach(([k, v]) => {
+      renderedBody = renderedBody.split(`{${k}}`).join(String(v));
+      renderedSubject = renderedSubject.split(`{${k}}`).join(String(v));
+    });
+
+    const jobId = `job-notif-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    db.prepare(`
+      INSERT INTO background_jobs (id, type, payload_json, status)
+      VALUES (?, 'notification_dispatch', ?, 'pending')
+    `).run(jobId, JSON.stringify({
+      channel,
+      trigger,
+      recipient,
+      subject: renderedSubject,
+      body: renderedBody,
+      queuedAt: new Date().toISOString()
+    }));
+
+    logAudit({
+      entity: 'notification',
+      entityId: jobId,
+      action: 'test_dispatch',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      after: { channel, recipient, trigger, jobId }
+    });
+
+    res.json({
+      success: true,
+      jobId,
+      channel,
+      recipient,
+      renderedSubject,
+      renderedBody,
+      message: `Test ${channel.toUpperCase()} notification queued into background jobs worker.`
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3974,13 +4090,16 @@ async function handleSitemapJob(payload) {
 }
 
 async function handleEmailNotificationJob(payload) {
-  const { type = 'order_confirmation', recipient, referenceNumber } = payload;
+  const { channel = 'smtp_transactional', type = 'order_confirmation', recipient, referenceNumber, trigger, subject, body } = payload;
   return {
     delivered: true,
     dispatchedAt: new Date().toISOString(),
-    channel: 'smtp_transactional',
+    channel,
     recipient: recipient || 'system@camnexbd.com',
-    reference: referenceNumber || 'N/A'
+    trigger: trigger || type || 'general',
+    reference: referenceNumber || 'N/A',
+    subject: subject || null,
+    preview: (body || '').substring(0, 120)
   };
 }
 
@@ -4031,7 +4150,7 @@ async function processNextBackgroundJob() {
       result = await handleProductResearchJob(payload);
     } else if (job.type === 'sitemap_generation') {
       result = await handleSitemapJob(payload);
-    } else if (job.type === 'email_notification') {
+    } else if (job.type === 'email_notification' || job.type === 'notification_dispatch') {
       result = await handleEmailNotificationJob(payload);
     } else if (job.type === 'catalog_audit') {
       result = await handleCatalogAuditJob(payload);
