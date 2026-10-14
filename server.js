@@ -27,7 +27,7 @@ const {
   validateBody
 } = require('./auth');
 const { configureCors } = require('./server/middleware/cors');
-const { authenticate: rbacAuthenticate } = require('./server/middleware/auth');
+const { authenticate: rbacAuthenticate, requirePermission } = require('./server/middleware/auth');
 const { enforcePolicy } = require('./server/middleware/policy');
 const { createSession: createStaffSession, costFieldFilter } = require('./server/middleware/auth');
 const staffService = require('./server/modules/staff/staff.service');
@@ -3770,7 +3770,7 @@ app.get('/api/cms/testimonials', (req, res) => {
   }
 });
 
-app.post('/api/admin/clear-demo-data', requireAdmin, (req, res) => {
+app.post('/api/admin/clear-demo-data', requireAdmin, requirePermission('system.maintenance'), (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ error: 'Database reset actions are strictly blocked in production mode.' });
   }
@@ -3796,7 +3796,7 @@ app.post('/api/admin/clear-demo-data', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/reset-seeds', requireAdmin, (req, res) => {
+app.post('/api/admin/reset-seeds', requireAdmin, requirePermission('system.maintenance'), (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ error: 'Database reset actions are strictly blocked in production mode.' });
   }

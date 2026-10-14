@@ -7,6 +7,8 @@
 
 const http = require('http');
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 
 const PORT = parseInt(process.env.TEST_PORT || process.env.PORT || '3000', 10);
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@camnexbd.com';
@@ -153,6 +155,97 @@ async function run() {
   assert(prodRes.data && typeof prodRes.data.total === 'number', '/api/products must return numeric total');
   assert(Array.isArray(prodRes.data.items), '/api/products must return items array');
   console.log(`✓ PASS: /api/products returns items (${prodRes.data.items.length}) and total count (${prodRes.data.total})`);
+
+  // TEST 5: Destructive Maintenance Actions Security & Audit Verification
+  console.log('\n[TEST 5] Destructive Maintenance Actions Security & Audit Verification...');
+  
+  // 5a. Unauthenticated / missing permission
+  const unauthRes = await request({
+    path: '/api/admin/clear-demo-data',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  }, { confirmPhrase: 'CLEAR DEMO DATA' });
+  assert.strictEqual(unauthRes.statusCode, 403, 'Unauthenticated clear-demo-data must return 403');
+  console.log('✓ PASS: Unauthenticated clear-demo-data blocked with 403');
+
+  // Obtain CSRF token & Admin session
+  const csrfRes = await request({ path: '/api/auth/csrf', method: 'GET' });
+  const csrfCookie = (csrfRes.headers['set-cookie'] || []).find(c => c.startsWith('camnex_csrf='));
+  const csrfToken = csrfCookie ? csrfCookie.split(';')[0].split('=')[1] : '';
+
+  let loginRes = await request({
+    path: '/api/auth/admin/login',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      Cookie: csrfCookie ? csrfCookie.split(';')[0] : ''
+    }
+  }, { email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+
+  if (loginRes.statusCode !== 200) {
+    loginRes = await request({
+      path: '/api/auth/admin/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+        Cookie: csrfCookie ? csrfCookie.split(';')[0] : ''
+      }
+    }, { email: ADMIN_EMAIL, password: 'CamneX@Admin2026!' });
+  }
+
+  const adminSessionCookie = (loginRes.headers['set-cookie'] || []).find(c => c.startsWith('camnex_session=') || c.startsWith('camnex_admin_session='));
+  const adminCookies = [csrfCookie ? csrfCookie.split(';')[0] : '', adminSessionCookie ? adminSessionCookie.split(';')[0] : ''].filter(Boolean).join('; ');
+
+  // 5b. Invalid confirmation phrase is rejected with 400
+  const badPhraseRes = await request({
+    path: '/api/admin/clear-demo-data',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      Cookie: adminCookies
+    }
+  }, { confirmPhrase: 'WRONG_PHRASE' });
+  assert.strictEqual(badPhraseRes.statusCode, 400, 'Invalid confirmation phrase must return 400');
+  console.log('✓ PASS: Invalid confirmation phrase rejected with 400');
+
+  // 5c. Valid confirmation phrase succeeds and writes audit entry
+  const clearRes = await request({
+    path: '/api/admin/clear-demo-data',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      Cookie: adminCookies
+    }
+  }, { confirmPhrase: 'CLEAR DEMO DATA' });
+  assert.strictEqual(clearRes.statusCode, 200, 'Valid confirmation phrase with admin session must succeed with 200');
+  assert(clearRes.data && clearRes.data.success, 'Response must return success: true');
+  console.log('✓ PASS: Valid confirmation phrase executed successfully');
+
+  // Verify audit log entry in database
+  const auditRes = await request({
+    path: '/api/audit-logs',
+    method: 'GET',
+    headers: {
+      Cookie: adminCookies
+    }
+  });
+  if (auditRes.statusCode === 200 && Array.isArray(auditRes.data)) {
+    const entry = auditRes.data.find(a => a.action === 'system.maintenance.clear_demo_data');
+    assert(entry, 'Audit log must record system.maintenance.clear_demo_data entry');
+    console.log(`✓ PASS: Audit log entry verified: ${entry.action} by ${entry.actorEmail || 'admin'}`);
+  }
+
+  // 5d. Confirm UI placement: settings module contains maintenance actions strictly under maintenance tab
+  const settingsModuleFile = fs.readFileSync(path.join(__dirname, '../src/components/admin/SettingsModule.tsx'), 'utf8');
+  assert(settingsModuleFile.includes("activeTab === 'maintenance'"), 'Maintenance actions must be enclosed in activeTab === maintenance');
+  assert(settingsModuleFile.includes('hasPerm(PERMISSIONS.SYSTEM_MAINTENANCE)'), 'Maintenance UI buttons must require SYSTEM_MAINTENANCE permission');
+  assert(settingsModuleFile.includes('confirmPhrase="CLEAR DEMO"'), 'Clear Demo UI must require typed confirmPhrase');
+  assert(settingsModuleFile.includes('confirmPhrase="RESET SEEDS"'), 'Reset Seeds UI must require typed confirmPhrase');
+  console.log('✓ PASS: UI placement strictly verified under Settings > Maintenance with typed phrases');
 
   console.log('\n--- ALL DASHBOARD AUDIT FIX TESTS PASSED ---');
 }

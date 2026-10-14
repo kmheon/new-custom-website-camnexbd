@@ -9,7 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const db = require('../../database');
-const { issueCsrfCookie, requireAdmin } = require('../middleware/auth');
+const { issueCsrfCookie, requireAdmin, requirePermission } = require('../middleware/auth');
 
 // Mount Domain Modules
 const catalogRouter = require('../modules/catalog/catalog.router');
@@ -240,7 +240,7 @@ router.post('/admin/jobs/:id/retry', requireAdmin, (req, res) => {
 });
 
 // 5. Database Reset and Clear Demo Data
-router.post('/admin/clear-demo-data', requireAdmin, (req, res) => {
+router.post('/admin/clear-demo-data', requireAdmin, requirePermission('system.maintenance'), (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ error: 'Database reset actions are strictly blocked in production mode.' });
   }
@@ -267,7 +267,7 @@ router.post('/admin/clear-demo-data', requireAdmin, (req, res) => {
   }
 });
 
-router.post('/admin/reset-seeds', requireAdmin, (req, res) => {
+router.post('/admin/reset-seeds', requireAdmin, requirePermission('system.maintenance'), (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ error: 'Database reset actions are strictly blocked in production mode.' });
   }
