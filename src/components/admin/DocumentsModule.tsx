@@ -20,6 +20,7 @@ import { apiFetch } from '../../services/apiClient';
 import { DataTable } from './framework/DataTable';
 import { ConfirmDialog } from './framework/ConfirmDialog';
 import { Badge, Button } from '../common/UI';
+import { MediaPickerModal } from './MediaLibraryModal';
 
 export const DocumentsModule: React.FC = () => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
@@ -32,6 +33,7 @@ export const DocumentsModule: React.FC = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -411,14 +413,25 @@ export const DocumentsModule: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-300 mb-1">
                   File URL or Path *
                 </label>
-                <input
-                  type="text"
-                  value={fileUrl}
-                  onChange={(e) => setFileUrl(e.target.value)}
-                  placeholder="https://... or /uploads/... or /documents/spec.pdf"
-                  className="w-full bg-slate-950 border border-slate-800 text-xs text-white p-2.5 rounded-xl font-mono focus:border-[#F15A24] outline-none"
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={fileUrl}
+                    onChange={(e) => setFileUrl(e.target.value)}
+                    placeholder="https://... or /uploads/... or /documents/spec.pdf"
+                    className="flex-1 bg-slate-950 border border-slate-800 text-xs text-white p-2.5 rounded-xl font-mono focus:border-[#F15A24] outline-none"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsMediaModalOpen(true)}
+                    className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                  >
+                    Browse Library
+                  </Button>
+                </div>
                 <p className="text-[11px] text-slate-500 mt-1">
                   Can be a direct static link, uploaded file in Media Library, or vendor PDF URL.
                 </p>
@@ -492,6 +505,17 @@ export const DocumentsModule: React.FC = () => {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
+
+      {/* Media Library Picker Modal */}
+      <MediaPickerModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        onSelect={(url) => {
+          setFileUrl(url);
+          setIsMediaModalOpen(false);
+        }}
+        title="Select Document or Datasheet from Media Library"
+      />
     </div>
   );
 };

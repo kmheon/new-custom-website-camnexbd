@@ -22,6 +22,7 @@ import {
   Clock,
   Globe
 } from 'lucide-react';
+import { ImagePickerField } from './ImagePickerField';
 import { useSettingsStore, useAdminAuthStore } from '../../store';
 import {
   SiteSettings,
@@ -1409,16 +1410,15 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                     className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs"
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] text-slate-400 block mb-1">Open Graph Social Image (OG URL)</label>
-                  <input
-                    type="text"
-                    value={formData.seoOgImage || ''}
-                    onChange={(e) => updateField('seoOgImage', e.target.value)}
-                    placeholder="/images/og-share.png"
-                    className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs font-mono"
-                  />
-                </div>
+                <ImagePickerField
+                  label="Open Graph Social Image (OG URL)"
+                  value={formData.seoOgImage || ''}
+                  onChange={(url) => updateField('seoOgImage', url)}
+                  placeholder="/images/og-share.png"
+                  helperText="Default 1200x630 share preview banner for Facebook, LinkedIn, Twitter, and WhatsApp previews."
+                  theme="dark"
+                  modalTitle="Select Open Graph Social Image"
+                />
                 <div className="md:col-span-2">
                   <label className="text-[11px] text-slate-400 block mb-1">Default Meta Description</label>
                   <textarea

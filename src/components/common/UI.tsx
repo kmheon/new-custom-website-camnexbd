@@ -174,16 +174,35 @@ export const Modal: React.FC<{
   children: React.ReactNode;
   maxWidth?: string;
 }> = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl' }) => {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className={`bg-white w-full ${maxWidth} rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h3 className="text-lg font-bold text-[#111827]">{title}</h3>
           <button
             onClick={onClose}
             className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>

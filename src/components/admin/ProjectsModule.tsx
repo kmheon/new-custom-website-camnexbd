@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Eye, ExternalLink } from 'lucide-react';
 import { apiFetch } from '../../services/apiClient';
+import { ImagePickerField } from './ImagePickerField';
 
 interface ProjectItem {
   id: string;
@@ -276,16 +277,15 @@ export const ProjectsModule: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <span className="font-semibold text-slate-400 block mb-1">Featured Image URL</span>
-                <input
-                  type="text"
-                  value={editingProject.featuredImage || ''}
-                  onChange={(e) => setEditingProject({ ...editingProject, featuredImage: e.target.value })}
-                  placeholder="/images/hero/hikvision-bullet.jpg or /uploads/..."
-                  className="w-full bg-slate-900 border border-slate-700 text-white p-2 rounded-xl font-mono focus:border-[#F15A24] focus:outline-none"
-                />
-              </div>
+              <ImagePickerField
+                label="Featured Image URL"
+                value={editingProject.featuredImage || ''}
+                onChange={(url) => setEditingProject({ ...editingProject, featuredImage: url })}
+                placeholder="/images/hero/hikvision-bullet.jpg or /uploads/..."
+                helperText="Project cover image displayed in the Case Studies showcase catalog."
+                theme="dark"
+                modalTitle="Select Project Featured Image"
+              />
 
               <div>
                 <span className="font-semibold text-slate-400 block mb-1">Executive Summary</span>

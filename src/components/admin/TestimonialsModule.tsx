@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Quote } from 'lucide-react';
 import { apiFetch } from '../../services/apiClient';
+import { ImagePickerField } from './ImagePickerField';
 
 interface TestimonialItem {
   id: string;
@@ -9,6 +10,7 @@ interface TestimonialItem {
   role?: string;
   rating?: number;
   content: string;
+  image?: string;
   verified?: boolean;
   display_order?: number;
 }
@@ -272,6 +274,16 @@ export const TestimonialsModule: React.FC = () => {
                   />
                 </div>
               </div>
+
+              <ImagePickerField
+                label="Client Avatar or Installation Photo (Optional)"
+                value={editingItem.image || ''}
+                onChange={(url) => setEditingItem({ ...editingItem, image: url })}
+                placeholder="/images/testimonials/... or /uploads/..."
+                helperText="Client photo or on-site installation snapshot displayed alongside the review quote."
+                theme="dark"
+                modalTitle="Select Testimonial Photo from Media Library"
+              />
 
               <div>
                 <div className="flex items-center justify-between mb-1">

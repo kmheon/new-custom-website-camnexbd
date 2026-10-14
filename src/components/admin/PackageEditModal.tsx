@@ -5,7 +5,7 @@ import {
   FileText, ArrowRight, DollarSign, Camera, Server, HardDrive, Cpu
 } from 'lucide-react';
 import { Button, Modal, Badge } from '../common/UI';
-import { MediaPickerModal } from './MediaLibraryModal';
+import { ImagePickerField } from './ImagePickerField';
 import { packageService } from '../../services';
 import {
   SecurityPackage, PackageSeries, PackageSystemType,
@@ -444,26 +444,15 @@ export const PackageEditModal: React.FC<PackageEditModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Hero Image URL</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={formData.image || ''}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    placeholder="https://... or /images/packages/..."
-                    className="flex-1 bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono text-slate-800"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setMediaPickerOpen(true)}
-                  >
-                    Select Media
-                  </Button>
-                </div>
-              </div>
+              <ImagePickerField
+                label="Package Hero Image URL"
+                value={formData.image || ''}
+                onChange={(url) => setFormData({ ...formData, image: url })}
+                placeholder="https://... or /images/packages/..."
+                helperText="Package showcase cover image displayed in turnkey security packages catalog."
+                theme="light"
+                modalTitle="Select Package Hero Image"
+              />
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Package Narrative Description</label>
@@ -908,16 +897,6 @@ export const PackageEditModal: React.FC<PackageEditModalProps> = ({
         </form>
       </div>
 
-      {mediaPickerOpen && (
-        <MediaPickerModal
-          isOpen={mediaPickerOpen}
-          onClose={() => setMediaPickerOpen(false)}
-          onSelect={(url) => {
-            setFormData({ ...formData, image: url });
-            setMediaPickerOpen(false);
-          }}
-        />
-      )}
     </Modal>
   );
 };

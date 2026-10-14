@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Check, X, Plus, Trash2, Image as ImageIcon, Sliders, Shield, Tag, HelpCircle,
   Globe, QrCode, Barcode, Calendar, ArrowUp, ArrowDown, FileText, CheckCircle2,
-  AlertTriangle, Eye, Layers, Wrench, ChevronRight, Sparkles, RefreshCw
+  AlertTriangle, Eye, Layers, Wrench, ChevronRight, Sparkles, RefreshCw, Star, UploadCloud
 } from 'lucide-react';
 import { Button, Modal, Badge } from '../common/UI';
 import { MediaPickerModal } from './MediaLibraryModal';
-import { productService } from '../../services';
+import { ImagePickerField } from './ImagePickerField';
+import { productService, mediaService } from '../../services';
 import { useAdminAuthStore } from '../../store';
 import { hasPermission, PERMISSIONS } from '../../shared/permissions';
 import {
@@ -62,6 +63,11 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   // Media Picker state
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [pickerTarget, setPickerTarget] = useState<'primary' | 'gallery'>('primary');
+  const [galleryUrlInput, setGalleryUrlInput] = useState('');
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [galleryUploadError, setGalleryUploadError] = useState<string | null>(null);
+  const galleryFileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   // Active section tab for clean organizing
   const [activeTab, setActiveTab] = useState<'basics' | 'pricing' | 'inventory' | 'media' | 'specs' | 'descriptions' | 'seo' | 'relations'>('basics');
@@ -231,6 +237,40 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       next[targetIdx] = temp;
       return next;
     });
+  };
+
+  const handleUploadGalleryFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      setGalleryUploadError('Invalid format: PNG, JPG, WebP, or SVG accepted.');
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setGalleryUploadError('File exceeds 5 MB limit.');
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+      return;
+    }
+    setIsUploadingGallery(true);
+    setGalleryUploadError(null);
+    try {
+      const uploaded = await mediaService.uploadMedia(file);
+      if (uploaded && uploaded.url) {
+        handleAddGalleryImage(uploaded.url);
+      }
+    } catch (err: any) {
+      setGalleryUploadError(err.message || 'Image upload failed');
+    } finally {
+      setIsUploadingGallery(false);
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+    }
+  };
+
+  const handleSetPrimaryFromGallery = (url: string) => {
+    setFormData(prev => ({ ...prev, primaryImage: url }));
   };
 
   const handleAddDocument = () => {
@@ -1092,129 +1132,113 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             {/* TAB 4: MEDIA & TRANSPARENT PNG */}
             {activeTab === 'media' && (
               <div className="space-y-4">
-                {/* Primary Image with Alpha Checker */}
+                {/* Primary Image with Alpha Checker & ImagePickerField */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Primary Product Photography</h3>
+                    <p className="text-[11px] text-slate-400">Used across storefront catalog rows, search suggestions, and hero presentations</p>
+                  </div>
+                  <ImagePickerField
+                    value={formData.primaryImage || ''}
+                    onChange={url => setFormData(prev => ({ ...prev, primaryImage: url }))}
+                    placeholder="/uploads/filename.png or /images/hero/..."
+                    helperText="Transparent PNG or WebP with no background is recommended for clean card floating."
+                    theme="light"
+                    required
+                    modalTitle="Select Primary Product Photography"
+                  />
+                </div>
+
+                {/* Gallery Manager */}
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Primary Product Photography</h3>
-                      <p className="text-[11px] text-slate-400">Used across storefront catalog rows and hero presentations</p>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Product Gallery (Multi-angle Views)</h3>
+                      <p className="text-[11px] text-slate-400">Reorder views, assign captions, upload new photos, or designate primary</p>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPickerTarget('gallery');
+                          setMediaPickerOpen(true);
+                        }}
+                      >
+                        <ImageIcon className="w-3.5 h-3.5 mr-1 text-[#F15A24]" />
+                        <span>Add from Library</span>
+                      </Button>
+
+                      <input
+                        ref={galleryFileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                        onChange={handleUploadGalleryFile}
+                        className="hidden"
+                        disabled={isUploadingGallery}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isUploadingGallery}
+                        onClick={() => galleryFileInputRef.current?.click()}
+                      >
+                        {isUploadingGallery ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 mr-1 animate-spin text-[#F15A24]" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud className="w-3.5 h-3.5 mr-1 text-[#F15A24]" />
+                            <span>Upload Image</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {galleryUploadError && (
+                    <div className="p-2 bg-rose-50 border border-rose-300 rounded-lg text-rose-700 text-xs flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{galleryUploadError}</span>
+                    </div>
+                  )}
+
+                  {/* Quick URL Input for Gallery */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={galleryUrlInput}
+                      onChange={e => setGalleryUrlInput(e.target.value)}
+                      placeholder="Paste image URL to append to gallery..."
+                      className="flex-1 bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (galleryUrlInput.trim()) {
+                            handleAddGalleryImage(galleryUrlInput);
+                            setGalleryUrlInput('');
+                          }
+                        }
+                      }}
+                    />
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setPickerTarget('primary');
-                        setMediaPickerOpen(true);
+                        if (galleryUrlInput.trim()) {
+                          handleAddGalleryImage(galleryUrlInput);
+                          setGalleryUrlInput('');
+                        }
                       }}
-                    >
-                      <ImageIcon className="w-3.5 h-3.5 mr-1" />
-                      <span>Choose From Media Library</span>
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                    <div className="md:col-span-2 space-y-3">
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 block mb-1">Primary Image Path / URL *</label>
-                        <input
-                          type="text"
-                          value={formData.primaryImage || ''}
-                          onChange={e => setFormData({ ...formData, primaryImage: e.target.value })}
-                          placeholder="/uploads/filename.png or /images/hero/..."
-                          className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
-                        />
-                      </div>
-
-                      {/* Alpha Channel Check Preview Controls */}
-                      <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">PNG Alpha Channel Preview Mode</span>
-                          <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-[11px]">
-                            <button
-                              type="button"
-                              onClick={() => setAlphaBgMode('checker')}
-                              className={`px-2 py-0.5 rounded ${alphaBgMode === 'checker' ? 'bg-white font-bold shadow-xs' : 'text-slate-500'}`}
-                            >
-                              Checkerboard
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setAlphaBgMode('white')}
-                              className={`px-2 py-0.5 rounded ${alphaBgMode === 'white' ? 'bg-white font-bold shadow-xs' : 'text-slate-500'}`}
-                            >
-                              Light
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setAlphaBgMode('dark')}
-                              className={`px-2 py-0.5 rounded ${alphaBgMode === 'dark' ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-500'}`}
-                            >
-                              Dark
-                            </button>
-                          </div>
-                        </div>
-
-                        {formData.primaryImage ? (
-                          isTransparentCandidate(formData.primaryImage) ? (
-                            <div className="text-[11px] text-emerald-600 flex items-center gap-1.5 font-medium">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Transparent PNG/WebP format verified. Seamless card floating ensured.</span>
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-amber-600 flex items-center gap-1.5 font-medium">
-                              <AlertTriangle className="w-3.5 h-3.5" />
-                              <span>Notice: Solid background image. Transparent PNG is recommended for hero presentation.</span>
-                            </div>
-                          )
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Preview Box */}
-                    <div className="flex flex-col items-center justify-center p-3 border border-slate-200 rounded-xl bg-slate-100">
-                      <div
-                        className={`w-40 h-40 rounded-lg border border-slate-300 flex items-center justify-center overflow-hidden transition-colors ${
-                          alphaBgMode === 'checker'
-                            ? 'bg-[linear-gradient(45deg,#cbd5e1_25%,transparent_25%),linear-gradient(-45deg,#cbd5e1_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#cbd5e1_75%),linear-gradient(-45deg,transparent_75%,#cbd5e1_75%)] bg-[size:16px_16px] bg-[position:0_0,0_8px,8px_-8px,-8px_0] bg-white'
-                            : alphaBgMode === 'dark'
-                            ? 'bg-slate-950'
-                            : 'bg-white'
-                        }`}
-                      >
-                        {formData.primaryImage ? (
-                          <img
-                            src={formData.primaryImage}
-                            alt="Alpha Preview"
-                            className="w-full h-full object-contain p-2"
-                          />
-                        ) : (
-                          <span className="text-xs text-slate-400">No Image</span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-slate-500 mt-2 font-mono">Alpha Preview Canvas</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gallery Manager */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Product Gallery (Multi-angle Views)</h3>
-                      <p className="text-[11px] text-slate-400">Reorder views and assign captions for PDP carousel</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setPickerTarget('gallery');
-                        setMediaPickerOpen(true);
-                      }}
+                      disabled={!galleryUrlInput.trim()}
                     >
                       <Plus className="w-3.5 h-3.5 mr-1" />
-                      <span>Add from Media Library</span>
+                      <span>Add URL</span>
                     </Button>
                   </div>
 
@@ -1247,7 +1271,20 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                               className="bg-slate-50 border border-slate-200 text-xs p-1.5 rounded"
                             />
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleSetPrimaryFromGallery(img.url)}
+                              className={`px-2 py-1 text-[10px] font-bold rounded flex items-center gap-1 transition-colors ${
+                                formData.primaryImage === img.url
+                                  ? 'bg-amber-500 text-white'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                              }`}
+                              title={formData.primaryImage === img.url ? 'Current Primary Image' : 'Set as Primary Image'}
+                            >
+                              <Star className={`w-3 h-3 ${formData.primaryImage === img.url ? 'fill-current' : ''}`} />
+                              <span>{formData.primaryImage === img.url ? 'Primary' : 'Make Primary'}</span>
+                            </button>
                             <button
                               type="button"
                               disabled={idx === 0}

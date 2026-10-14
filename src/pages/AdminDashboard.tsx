@@ -46,6 +46,7 @@ import { CouponsModule } from '../components/admin/CouponsModule';
 import { DocumentsModule } from '../components/admin/DocumentsModule';
 import { SystemLogsAndHealthModule } from '../components/admin/SystemLogsAndHealthModule';
 import { ConfirmDialog } from '../components/admin/framework';
+import { ImagePickerField } from '../components/admin/ImagePickerField';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
   const { currentUser, isAdminAuthenticated, checkAuth, login, logout, isLoading: authLoading, error: authError } = useAdminAuthStore();
@@ -3932,55 +3933,21 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   />
                 </div>
 
-                {/* Product Image URL with Transparency Check Notice */}
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Floating Transparent Product Image URL *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingSlide.image || ''}
-                    onChange={(e) => setEditingSlide({ ...editingSlide, image: e.target.value })}
-                    placeholder="/images/hero/hikvision-bullet.jpg or transparent PNG/WebP URL"
-                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
-                  />
-
-                  {/* Sample presets shortcut */}
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <span className="text-[10px] text-slate-500 font-semibold">Presets:</span>
-                    <button
-                      type="button"
-                      onClick={() => setEditingSlide({ ...editingSlide, image: '/images/hero/hikvision-bullet.jpg' })}
-                      className="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded font-mono"
-                    >
-                      Bullet Camera
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingSlide({ ...editingSlide, image: '/images/hero/ruijie-wifi6.jpg' })}
-                      className="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded font-mono"
-                    >
-                      Wi-Fi 6 AP
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingSlide({ ...editingSlide, image: '/images/hero/zkteco-biometric.jpg' })}
-                      className="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded font-mono"
-                    >
-                      Biometric Terminal
-                    </button>
-                  </div>
-
-                  {/* Transparency Warning */}
-                  {editingSlide.image && (editingSlide.image.toLowerCase().endsWith('.jpg') || editingSlide.image.toLowerCase().endsWith('.jpeg')) && (
-                    <div className="mt-2 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800 flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <strong>Notice:</strong> JPEG format files lack transparent alpha channels. The Hero Slider uses multiply blend mode to float light backgrounds, but for best visual quality, transparent <strong>.png</strong> or <strong>.webp</strong> is recommended.
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <ImagePickerField
+                  label="Floating Transparent Product Image URL"
+                  value={editingSlide.image || ''}
+                  onChange={(url) => setEditingSlide({ ...editingSlide, image: url })}
+                  placeholder="/images/hero/hikvision-bullet.jpg or transparent PNG/WebP URL"
+                  helperText="Transparent PNG or WebP with no background is strongly recommended for seamless floating presentation."
+                  theme="light"
+                  required
+                  modalTitle="Select Hero Slide Image"
+                  presets={[
+                    { label: 'Bullet Camera', url: '/images/hero/hikvision-bullet.jpg' },
+                    { label: 'Wi-Fi 6 AP', url: '/images/hero/ruijie-wifi6.jpg' },
+                    { label: 'Biometric Terminal', url: '/images/hero/zkteco-biometric.jpg' }
+                  ]}
+                />
 
                 {/* CTAs */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -4335,19 +4302,17 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         />
                       </div>
 
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Override Image URL (Transparent PNG/WebP)</label>
-                        <input
-                          type="text"
-                          value={editingSlide.overrides.image || ''}
-                          onChange={(e) => setEditingSlide({
-                            ...editingSlide,
-                            overrides: { ...editingSlide.overrides, image: e.target.value }
-                          })}
-                          placeholder="Custom transparent image URL"
-                          className="w-full bg-slate-50 border border-slate-300 p-2 rounded font-mono"
-                        />
-                      </div>
+                      <ImagePickerField
+                        label="Override Image URL (Transparent PNG/WebP)"
+                        value={editingSlide.overrides.image || ''}
+                        onChange={(url) => setEditingSlide({
+                          ...editingSlide,
+                          overrides: { ...editingSlide.overrides, image: url }
+                        })}
+                        placeholder="Custom transparent image URL"
+                        theme="light"
+                        modalTitle="Select Override Slide Image from Media Library"
+                      />
                     </div>
                   )}
                 </div>
@@ -4851,19 +4816,16 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               )}
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Category Image URL (Transparent PNG or SVG)</label>
-              <input
-                type="text"
-                value={editingCategory.image || ''}
-                onChange={(e) => setEditingCategory({ ...editingCategory, image: e.target.value })}
-                placeholder="e.g. /images/products/hikvision-bullet.svg"
-                className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
-              />
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                Leave empty to use automatic consistent SVG hardware illustration fallback. Never use unrelated stock photos.
-              </p>
-            </div>
+            <ImagePickerField
+              label="Category Image URL (Transparent PNG or SVG)"
+              value={editingCategory.image || ''}
+              onChange={(url) => setEditingCategory({ ...editingCategory, image: url })}
+              placeholder="e.g. /images/products/hikvision-bullet.svg"
+              helperText="Leave empty to use automatic consistent SVG hardware illustration fallback. Never use unrelated stock photos."
+              theme="light"
+              modalTitle="Select Category Image from Media Library"
+            />
+
 
             <div>
               <div className="flex items-center justify-between mb-1">

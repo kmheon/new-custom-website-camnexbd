@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Plus, Edit3, Trash2, Check, X, Image as ImageIcon, Calendar, Tag, RefreshCw } from 'lucide-react';
 import { Button, Modal, Badge, Alert } from '../common/UI';
-import { MediaPickerModal } from './MediaLibraryModal';
+import { ImagePickerField } from './ImagePickerField';
 import { cmsService } from '../../services';
 import { BlogPost } from '../../types';
 
@@ -12,7 +12,6 @@ export const BlogCmsModule: React.FC = () => {
   const [editingPost, setEditingPost] = useState<Partial<BlogPost> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
   const fetchPosts = async () => {
     setIsLoading(true);
@@ -281,28 +280,15 @@ export const BlogCmsModule: React.FC = () => {
               </div>
             </div>
 
-            {/* Featured Image with Media Picker */}
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Featured Cover Image</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={editingPost.featuredImage || ''}
-                  onChange={e => setEditingPost({ ...editingPost, featuredImage: e.target.value })}
-                  placeholder="/images/hero/... or /uploads/..."
-                  className="flex-1 bg-white border border-slate-300 text-xs p-2 rounded font-mono"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMediaPickerOpen(true)}
-                >
-                  <ImageIcon className="w-3.5 h-3.5 mr-1" />
-                  <span>Media Library</span>
-                </Button>
-              </div>
-            </div>
+            <ImagePickerField
+              label="Featured Cover Image"
+              value={editingPost.featuredImage || ''}
+              onChange={url => setEditingPost(prev => prev ? ({ ...prev, featuredImage: url }) : null)}
+              placeholder="/images/hero/... or /uploads/..."
+              helperText="Cover banner displayed on article card and post header."
+              theme="light"
+              modalTitle="Select Article Featured Cover Image"
+            />
 
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Excerpt / Summary</label>
@@ -454,13 +440,6 @@ export const BlogCmsModule: React.FC = () => {
           </form>
         </Modal>
       )}
-
-      {/* Media Picker Sub-modal */}
-      <MediaPickerModal
-        isOpen={mediaPickerOpen}
-        onClose={() => setMediaPickerOpen(false)}
-        onSelect={url => setEditingPost(prev => prev ? ({ ...prev, featuredImage: url }) : null)}
-      />
     </div>
   );
 };

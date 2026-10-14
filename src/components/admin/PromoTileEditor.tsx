@@ -1,6 +1,7 @@
 import React from 'react';
 import { PromoTileConfig } from '../../types';
 import { PromoTile } from '../common/PromoTile';
+import { ImagePickerField } from './ImagePickerField';
 
 interface PromoTileEditorProps {
   value?: PromoTileConfig;
@@ -164,22 +165,15 @@ export const PromoTileEditor: React.FC<PromoTileEditorProps> = ({
             </div>
           </div>
 
-          {/* Image Upload / URL with Warning */}
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">
-              Image URL (Transparent PNG required)
-            </label>
-            <input
-              type="text"
-              value={config.image || ''}
-              onChange={(e) => update('image', e.target.value)}
-              placeholder="e.g. /images/hero/hikvision-bullet.png"
-              className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
-            />
-            <p className="text-[10px] text-amber-700 font-medium mt-1">
-              ⚠️ <strong>Warning:</strong> Use a transparent PNG with no white box or border. The image will bleed past the bottom-right corner. If left blank, category SVG illustration will be used.
-            </p>
-          </div>
+          <ImagePickerField
+            label="Image URL (Transparent PNG required)"
+            value={config.image || ''}
+            onChange={(url) => update('image', url)}
+            placeholder="e.g. /images/hero/hikvision-bullet.png"
+            helperText="Use a transparent PNG with no background or border. The image will bleed past the bottom-right corner. If left blank, category SVG illustration will be used."
+            theme="light"
+            modalTitle="Select Promo Tile Image from Media Library"
+          />
 
           {/* Live Preview (Desktop and Mobile) */}
           <div className="pt-3 border-t border-orange-200/70 space-y-2">

@@ -5,7 +5,8 @@ import {
   Building2, Check, Edit2, ExternalLink, Image as ImageIcon, ShieldCheck,
   Plus, Trash2, Globe, ArrowUp, ArrowDown
 } from 'lucide-react';
-import { MediaPickerModal } from './MediaLibraryModal';
+import { ImagePickerField } from './ImagePickerField';
+
 
 export const BrandsModule: React.FC = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -268,39 +269,21 @@ export const BrandsModule: React.FC = () => {
                 />
               </div>
 
-              {/* Logo Field with Media Library / URL support */}
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Logo URL or Path (SVG/PNG)</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={editingBrand.logo || ''}
-                    onChange={e => {
-                      const newLogo = e.target.value;
-                      setEditingBrand({
-                        ...editingBrand,
-                        logo: newLogo,
-                        showInBrandStrip: newLogo ? true : (editingBrand.showInBrandStrip ?? true)
-                      });
-                    }}
-                    placeholder="/images/brands/hikvision.svg"
-                    className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#F15A24]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowMediaModal(true)}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Browse</span>
-                  </button>
-                </div>
-                {editingBrand.logo && (
-                  <div className="mt-2 p-2 bg-white/5 border border-white/10 rounded-xl inline-block">
-                    <img src={editingBrand.logo} alt="Preview" className="h-6 object-contain" />
-                  </div>
-                )}
-              </div>
+              <ImagePickerField
+                label="Brand Logo (SVG or PNG)"
+                value={editingBrand.logo || ''}
+                onChange={(url) => {
+                  setEditingBrand({
+                    ...editingBrand,
+                    logo: url,
+                    showInBrandStrip: url ? true : (editingBrand.showInBrandStrip ?? true)
+                  });
+                }}
+                placeholder="/images/brands/hikvision.svg"
+                helperText="Transparent SVG or PNG logo displayed in brand strip and product specs."
+                theme="dark"
+                modalTitle="Select Brand Logo from Media Library"
+              />
 
               {/* Show in Brand Strip Checkbox */}
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-1">
@@ -415,20 +398,6 @@ export const BrandsModule: React.FC = () => {
             </form>
           </div>
         </div>
-      )}
-
-      {/* Media Library Modal for Logo Selection */}
-      {showMediaModal && (
-        <MediaPickerModal
-          isOpen={showMediaModal}
-          onClose={() => setShowMediaModal(false)}
-          onSelect={(url) => {
-            if (editingBrand) {
-              setEditingBrand({ ...editingBrand, logo: url, showInBrandStrip: true });
-            }
-            setShowMediaModal(false);
-          }}
-        />
       )}
     </div>
   );
