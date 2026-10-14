@@ -1062,5 +1062,64 @@ export interface CallbackRequest {
   createdAt: string;
 }
 
+export interface AuditLogItem {
+  id: string;
+  entity: string;
+  entityId: string;
+  action: string;
+  actorId?: string;
+  actorName?: string;
+  actorEmail?: string;
+  surface?: string;
+  ip?: string;
+  createdAt: string;
+  before?: any;
+  after?: any;
+  diff?: any;
+}
+
+export interface BackgroundJobItem {
+  id: string;
+  type: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  payload?: any;
+  result?: any;
+  attempts: number;
+  max_attempts: number;
+  last_error?: string;
+  run_at?: string;
+  created_at: string;
+  updated_at?: string;
+  completed_at?: string;
+}
+
+export interface SystemHealthData {
+  status: string;
+  nodeVersion: string;
+  platform: string;
+  arch: string;
+  uptimeSeconds: number;
+  uptimeFormatted: string;
+  memory: {
+    rssBytes: number;
+    rssFormatted: string;
+    heapTotalBytes: number;
+    heapTotalFormatted: string;
+    heapUsedBytes: number;
+    heapUsedFormatted: string;
+  };
+  database: {
+    path: string;
+    sizeBytes: number;
+    sizeFormatted: string;
+    journalMode: string;
+    tableCounts: Record<string, number>;
+  };
+  workers: {
+    backgroundQueue: string;
+    domainEventsOutbox: string;
+  };
+}
+
 
 

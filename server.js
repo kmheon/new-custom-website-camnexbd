@@ -4589,6 +4589,217 @@ app.post('/api/admin/jobs/:id/retry', requireAdmin, (req, res) => {
   }
 });
 
+app.post('/api/admin/jobs/:id/cancel', requireAdmin, (req, res) => {
+  try {
+    const job = db.prepare('SELECT * FROM background_jobs WHERE id = ?').get(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (job.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot cancel an already completed job' });
+    }
+    db.prepare(`
+      UPDATE background_jobs
+      SET status = 'cancelled', last_error = 'Cancelled by administrator', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(req.params.id);
+
+    logAudit({
+      entity: 'job',
+      entityId: req.params.id,
+      action: 'cancel',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      surface: 'admin'
+    });
+
+    res.json({ success: true, message: 'Job cancelled successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
+// SYSTEM HEALTH, BACKUP & RESTORE APIS
+// ============================================================================
+app.get('/api/admin/system/health', requireAdmin, (req, res) => {
+  try {
+    const mem = process.memoryUsage();
+    let dbSizeBytes = 0;
+    try {
+      if (db.dbPath && fs.existsSync(db.dbPath)) {
+        dbSizeBytes = fs.statSync(db.dbPath).size;
+      }
+    } catch (_) {}
+
+    const tableNames = [
+      'products', 'categories', 'brands', 'orders', 'quotes',
+      'customers', 'media', 'background_jobs', 'audit_logs',
+      'coupons', 'documents', 'service_requests', 'blog_posts',
+      'projects', 'testimonials', 'cms_pages', 'redirects', 'users'
+    ];
+
+    const tableCounts = {};
+    for (const tbl of tableNames) {
+      try {
+        const countRow = db.prepare(`SELECT COUNT(*) as c FROM ${tbl}`).get();
+        tableCounts[tbl] = countRow ? countRow.c : 0;
+      } catch (_) {
+        tableCounts[tbl] = 0;
+      }
+    }
+
+    const uptimeSecs = Math.floor(process.uptime());
+    const hours = Math.floor(uptimeSecs / 3600);
+    const minutes = Math.floor((uptimeSecs % 3600) / 60);
+    const seconds = uptimeSecs % 60;
+    const uptimeFormatted = `${hours}h ${minutes}m ${seconds}s`;
+
+    res.json({
+      status: 'healthy',
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      uptimeSeconds: uptimeSecs,
+      uptimeFormatted,
+      memory: {
+        rssBytes: mem.rss,
+        rssFormatted: `${(mem.rss / (1024 * 1024)).toFixed(1)} MB`,
+        heapTotalBytes: mem.heapTotal,
+        heapTotalFormatted: `${(mem.heapTotal / (1024 * 1024)).toFixed(1)} MB`,
+        heapUsedBytes: mem.heapUsed,
+        heapUsedFormatted: `${(mem.heapUsed / (1024 * 1024)).toFixed(1)} MB`,
+      },
+      database: {
+        path: db.dbPath ? path.basename(db.dbPath) : 'camnex.db',
+        sizeBytes: dbSizeBytes,
+        sizeFormatted: `${(dbSizeBytes / (1024 * 1024)).toFixed(2)} MB`,
+        journalMode: 'WAL',
+        tableCounts
+      },
+      workers: {
+        backgroundQueue: 'active',
+        domainEventsOutbox: 'active'
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/system/backup', requireAdmin, (req, res) => {
+  try {
+    const backupTables = [
+      'categories', 'brands', 'spec_templates', 'products', 'packages',
+      'orders', 'quotes', 'service_requests', 'cms_pages', 'blog_posts',
+      'projects', 'testimonials', 'settings', 'hero_slides', 'homepage_sections',
+      'customers', 'media', 'faqs', 'redirects', 'coupons', 'documents',
+      'services', 'package_series', 'package_system_types', 'glossary_terms'
+    ];
+
+    const data = {};
+    const counts = {};
+    for (const t of backupTables) {
+      try {
+        const rows = db.prepare(`SELECT * FROM ${t}`).all();
+        data[t] = rows;
+        counts[t] = rows.length;
+      } catch (_) {
+        data[t] = [];
+        counts[t] = 0;
+      }
+    }
+
+    const backupPayload = {
+      meta: {
+        system: 'CamneX Security CMS & Commerce Platform',
+        version: '1.0.0',
+        exportedAt: new Date().toISOString(),
+        exportedBy: req.user?.name || req.session?.name || 'Administrator',
+        totalTables: backupTables.length,
+        recordCounts: counts
+      },
+      data
+    };
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `camnex-backup-${dateStr}.json`;
+
+    logAudit({
+      entity: 'system',
+      entityId: 'backup',
+      action: 'database_backup_export',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      surface: 'admin',
+      diff: { counts }
+    });
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(JSON.stringify(backupPayload, null, 2));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/system/restore', requireAdmin, (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Database restore is strictly blocked in production environment.' });
+  }
+
+  const { confirmPhrase, backupData } = req.body || {};
+  if (confirmPhrase !== 'RESTORE DATABASE') {
+    return res.status(400).json({ error: 'Invalid confirmation phrase. Please type "RESTORE DATABASE" to confirm.' });
+  }
+
+  if (!backupData || !backupData.data || typeof backupData.data !== 'object') {
+    return res.status(400).json({ error: 'Invalid backup file format. Expected structured JSON backup.' });
+  }
+
+  try {
+    const restoreTx = db.transaction((tablesData) => {
+      const restoredCounts = {};
+      for (const [table, rows] of Object.entries(tablesData)) {
+        if (!Array.isArray(rows) || rows.length === 0) continue;
+        const check = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table);
+        if (!check) continue;
+
+        db.prepare(`DELETE FROM ${table}`).run();
+
+        const cols = Object.keys(rows[0]);
+        const placeholders = cols.map(() => '?').join(', ');
+        const insertStmt = db.prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`);
+
+        for (const row of rows) {
+          const values = cols.map(c => row[c]);
+          insertStmt.run(...values);
+        }
+        restoredCounts[table] = rows.length;
+      }
+      return restoredCounts;
+    });
+
+    const restoredCounts = restoreTx(backupData.data);
+
+    logAudit({
+      entity: 'system',
+      entityId: 'restore',
+      action: 'database_restore',
+      actorId: req.user?.id || req.session?.user_id,
+      actorName: req.user?.name || req.session?.name || 'Administrator',
+      surface: 'admin',
+      diff: { restoredCounts }
+    });
+
+    res.json({
+      success: true,
+      message: 'Database restored successfully from backup.',
+      restoredCounts
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================================
 // 13. UNIFIED SERVER-SIDE SEARCH API
 // ============================================================================

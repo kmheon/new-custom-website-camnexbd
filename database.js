@@ -1008,3 +1008,4 @@ initDb();
 module.exports = db;
 module.exports.reseedDatabase = reseedDatabase;
 module.exports.clearDemoData = clearDemoData;
+module.exports.dbPath = dbPath;

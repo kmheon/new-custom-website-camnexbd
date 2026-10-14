@@ -316,6 +316,31 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Character Length Checklist**: Real-time counter for title (40–60 chars) and meta description (120–160 chars) with color-coded feedback.
 - **Article Schema Injection**: Toggleable JSON-LD `Article` schema markup structured for Google rich snippets.
 
+---
+
+## 15. System Logs, Background Job Queue, Health & Disaster Recovery Architecture
+
+### Immutable Audit Trail & Diff Inspector
+- **Append-Only Integrity**: The `audit_logs` table records every administrative mutation (`create`, `update`, `delete`, `archive`, `restore`, `convert_to_order`) with actor ID, actor name, IP address, timestamp, and surface identifier.
+- **SQLite Trigger Protection**: Database triggers strictly reject SQL `UPDATE` and `DELETE` queries on the `audit_logs` table, ensuring non-repudiation.
+- **Computed Field Differences**: Deep object differences (`diff`) are computed automatically before persistence, enabling real-time side-by-side visualization of modified attributes in the admin UI without reconstructing past states manually.
+
+### Background Asynchronous Job Queue
+- **Queue Engine**: Database-backed asynchronous queue (`background_jobs`) with automatic periodic polling worker (2500ms intervals).
+- **Supported Job Types**: Handles `sitemap_generation`, `catalog_audit`, `product_research`, and `notification_dispatch`.
+- **Fault Tolerance & Retry Policy**: Configurable max attempts (`max_attempts = 3`) with backoff, tracking `last_error` and execution timestamps.
+- **Operational Controls**: Administrators can inspect raw payloads and outputs, retry failed jobs with a single click, or cancel stuck jobs safely.
+
+### Live System Health & Runtime Metrics
+- **Runtime Diagnostics**: `GET /api/admin/system/health` computes real-time Node.js process RSS, heap allocation, CPU arch, platform, and server uptime.
+- **SQLite Database Metrics**: Returns database file size, journal mode (`WAL`), and table inventory record counts across all 18 primary tables.
+
+### Database Backup & Disaster Recovery
+- **All-Inclusive Export**: `GET /api/admin/system/backup` dumps structured JSON snapshots across all system collections with metadata headers (`exportedAt`, `version`, `recordCounts`) streamed directly as a downloadable archive.
+- **Transactional Restoration**: `POST /api/admin/system/restore` restores database entities within an isolated SQLite transaction (`db.transaction`).
+- **Safety Guards**: Restoration requires typing the exact confirmation phrase `"RESTORE DATABASE"`, admin session credentials, and is permanently blocked when `NODE_ENV === 'production'`.
+
+
 
 
 

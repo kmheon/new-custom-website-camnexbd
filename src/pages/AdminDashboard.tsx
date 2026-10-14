@@ -43,6 +43,7 @@ import { GlossaryModule } from '../components/admin/GlossaryModule';
 import { SettingsModule } from '../components/admin/SettingsModule';
 import { CouponsModule } from '../components/admin/CouponsModule';
 import { DocumentsModule } from '../components/admin/DocumentsModule';
+import { SystemLogsAndHealthModule } from '../components/admin/SystemLogsAndHealthModule';
 import { ConfirmDialog } from '../components/admin/framework';
 
 export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: string) => void }> = ({ onNavigate }) => {
@@ -1197,6 +1198,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             { id: 'blog', label: 'Blog & Articles', icon: <BookOpen className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'faqs', label: 'FAQ Knowledgebase', icon: <HelpCircle className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'glossary', label: 'Technical Glossary', icon: <HelpCircle className="w-4 h-4 text-amber-400" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
+            { id: 'systemlogs', label: 'System Logs & Health', icon: <Activity className="w-4 h-4 text-emerald-400" />, perm: PERMISSIONS.AUDIT_READ },
             { id: 'settings', label: 'Site Settings & SEO', icon: <Settings className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_SETTINGS_WRITE }
           ].filter((m) => !m.perm || hasPerm(m.perm)).map((m) => (
             <button
@@ -3431,6 +3433,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           {/* GLOSSARY CMS MODULE */}
           {activeModule === 'glossary' && (
             <GlossaryModule />
+          )}
+
+          {/* SYSTEM LOGS, HEALTH & BACKUPS MODULE */}
+          {activeModule === 'systemlogs' && (
+            <SystemLogsAndHealthModule />
           )}
 
           {/* 6. SITE SETTINGS & PLATFORM CONFIGURATION */}
