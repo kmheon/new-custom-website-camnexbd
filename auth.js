@@ -24,6 +24,7 @@ const apiLimiter = rateLimit({
 const loginLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => `${req.ip}_${(req.body?.email || '').trim().toLowerCase()}`,

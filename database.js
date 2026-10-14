@@ -816,8 +816,8 @@ function ensureAdminUser() {
   `).run(adminId, 'CamneX Administrator', adminEmail, hash, 'admin');
 }
 
-function seedDatabaseIfEmpty() {
-  if (process.env.SKIP_SEED === '1' || process.env.SKIP_SEED === 'true') return;
+function seedDatabaseIfEmpty(force = false) {
+  if (!force && (process.env.SKIP_SEED === '1' || process.env.SKIP_SEED === 'true')) return;
   const catCount = db.prepare('SELECT COUNT(*) as c FROM categories').get().c;
   if (catCount > 0) return; // Already seeded
 
@@ -984,7 +984,7 @@ function reseedDatabase() {
   for (const t of dropTables) {
     try { db.prepare(`DELETE FROM ${t}`).run(); } catch(err) {}
   }
-  seedDatabaseIfEmpty();
+  seedDatabaseIfEmpty(true);
 }
 
 function clearDemoData() {

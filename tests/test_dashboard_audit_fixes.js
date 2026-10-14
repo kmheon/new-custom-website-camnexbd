@@ -239,7 +239,32 @@ async function run() {
     console.log(`✓ PASS: Audit log entry verified: ${entry.action} by ${entry.actorEmail || 'admin'}`);
   }
 
-  // 5d. Confirm UI placement: settings module contains maintenance actions strictly under maintenance tab
+  // 5d. Reset baseline seeds with confirm phrase and verify audit log
+  const resetRes = await request({
+    path: '/api/admin/reset-seeds',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+      Cookie: adminCookies
+    }
+  }, { confirmPhrase: 'RESET DATABASE' });
+  assert.strictEqual(resetRes.statusCode, 200, 'Valid reset phrase with admin session must succeed with 200');
+  assert(resetRes.data && resetRes.data.success, 'Response must return success: true');
+  console.log('✓ PASS: Reset seeds executed successfully and re-initialized baseline data');
+
+  const auditResetRes = await request({
+    path: '/api/audit-logs',
+    method: 'GET',
+    headers: { Cookie: adminCookies }
+  });
+  if (auditResetRes.statusCode === 200 && Array.isArray(auditResetRes.data)) {
+    const entry = auditResetRes.data.find(a => a.action === 'system.maintenance.reset_seeds');
+    assert(entry, 'Audit log must record system.maintenance.reset_seeds entry');
+    console.log(`✓ PASS: Audit log entry verified: ${entry.action} by ${entry.actorEmail || 'admin'}`);
+  }
+
+  // 5e. Confirm UI placement: settings module contains maintenance actions strictly under maintenance tab
   const settingsModuleFile = fs.readFileSync(path.join(__dirname, '../src/components/admin/SettingsModule.tsx'), 'utf8');
   assert(settingsModuleFile.includes("activeTab === 'maintenance'"), 'Maintenance actions must be enclosed in activeTab === maintenance');
   assert(settingsModuleFile.includes('hasPerm(PERMISSIONS.SYSTEM_MAINTENANCE)'), 'Maintenance UI buttons must require SYSTEM_MAINTENANCE permission');
