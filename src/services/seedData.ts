@@ -5258,9 +5258,25 @@ export const DEFAULT_SCENARIOS: ScenarioItem[] = [
     title: 'Home & Residential',
     description: 'Discreet indoor and outdoor surveillance with smartphone live view and perimeter tripwire alerts.',
     iconName: 'Home',
-    recommendedCategories: ['cctv-cameras', 'biometrics-access-control'],
-    recommendedPackages: ['night-vision-cctv-package'],
-    recommendedProducts: ['prod-hik-irpf-2mp'],
+    scale: '1–4 Rooms / Duplex Residences',
+    cablingStandard: 'Concealed Rigid PVC Conduit with Weatherproof Boxes',
+    networkType: 'Hik-Connect Cloud P2P Streaming with Multi-Device Access',
+    highlights: ['2–4 Cameras', 'Night Vision & Audio', 'Mobile Live View', 'Concealed PVC Wiring'],
+    requirements: [
+      'Perimeter Entryway Coverage: High-definition weather-sealed cameras monitoring the main entrance door, driveway gate, and boundary walls.',
+      'Night Vision & Low-Light Clarity: 24/7 night vision (Smart Hybrid or ColorVu) ensuring clear facial identification in low residential illumination.',
+      'Smartphone Remote Streaming: Encrypted mobile viewing on iOS and Android via Hik-Connect with push alerts upon boundary tripwire detection.',
+      'Privacy Masking & Family Sharing: Digital privacy masking over neighbor balconies and interior bedrooms with individual login permissions for household members.'
+    ],
+    engineeringStandards: [
+      'Wiring Concealment: Cables routed inside heavy-gauge surface PVC casing channels matching wall finishes to maintain interior decor aesthetics.',
+      'Weatherproof Enclosures: All exterior camera cable joints housed in IP66 sealed terminal base boxes to prevent moisture seepage during monsoon rain.',
+      'Power Regulation: Central switching power adapter equipped with transient surge protection against Dhaka electrical grid fluctuations.',
+      'End-User Onboarding: Full on-site assistance configuring the mobile app on all family smartphones and setting up video playback retrieval.'
+    ],
+    recommendedCategories: ['cctv-cameras', 'wifi-smart-devices', 'recorders'],
+    recommendedPackages: ['2-camera-night-vision-package', '4-camera-night-vision-package', '2-camera-wireless-package'],
+    recommendedProducts: ['prod-hik-irpf-2mp', 'prod-hik-dome-2mp', 'prod-wifi-db2', 'prod-wd-purple-1tb'],
     enabled: true,
     order: 1
   },
@@ -5270,9 +5286,25 @@ export const DEFAULT_SCENARIOS: ScenarioItem[] = [
     title: 'Corporate Office',
     description: 'Time attendance biometrics, seamless Wi-Fi 6 roaming, and central server rack networking.',
     iconName: 'Building2',
+    scale: '20–150 Workstations / Multi-Room Floor',
+    cablingStandard: 'Cat6 100% Solid Copper Structured Trunking in False Ceiling',
+    networkType: 'VLAN Segregated Corporate & Guest Wi-Fi 6 with Cloud Management',
+    highlights: ['Biometric Attendance', 'Wi-Fi 6 Roaming', 'Smart Cloud PoE', 'VLAN Isolation'],
+    requirements: [
+      'Biometric Time Attendance: Fingerprint and visible-light facial recognition terminals with automated monthly attendance logs exportable to payroll systems.',
+      'Enterprise Wi-Fi 6 Roaming: Ceiling-mount dual-band access points supporting 802.11k/v/r fast roaming to eliminate dropped Zoom and VoIP calls across cubicles.',
+      'Reception Access Control: Fail-safe 280kg magnetic locks, push-to-exit buttons, and emergency break-glass integration for main glass doors.',
+      'Discreet Conference Coverage: High-definition indoor audio turret dome cameras positioned in reception and common conference zones.'
+    ],
+    engineeringStandards: [
+      'Structured Cabling: 100% solid copper 23AWG Cat6 cables neatly dressed inside flexible conduit above acoustic ceiling tiles.',
+      'Network Rack Integration: 19" wall-mount or floor server rack termination with numbered patch panels and standardized cable management fingers.',
+      'Network Segmentation: Managed switches configured with dedicated VLANs isolating employee workstations, surveillance cameras, and guest Wi-Fi.',
+      'Power Redundancy: Online UPS sizing calculation ensuring access control and networking equipment remain energized during local outages.'
+    ],
     recommendedCategories: ['biometrics-access-control', 'access-points-wifi', 'network-switches'],
-    recommendedPackages: ['night-vision-cctv-package'],
-    recommendedProducts: ['prod-zkteco-mb20', 'prod-ruijie-rap2260g'],
+    recommendedPackages: ['4-camera-night-vision-package', '8-camera-night-vision-package'],
+    recommendedProducts: ['prod-zkteco-mb20', 'prod-zkteco-em-lock', 'prod-ruijie-rap2260g', 'prod-ruijie-es209gc-p'],
     enabled: true,
     order: 2
   },
@@ -5282,9 +5314,25 @@ export const DEFAULT_SCENARIOS: ScenarioItem[] = [
     title: 'Shop & Retail Store',
     description: 'Cash counter dome zoom, customer footfall monitoring, and concealed PVC channel wiring.',
     iconName: 'ShoppingBag',
-    recommendedCategories: ['cctv-cameras', 'dvr-nvr-recorders'],
-    recommendedPackages: ['night-vision-cctv-package'],
-    recommendedProducts: ['prod-hik-dome-2mp'],
+    scale: 'Single Store / Boutique / Supermarket Aisle',
+    cablingStandard: 'Surface Channel PVC Casing with Lockable Equipment Enclosure',
+    networkType: 'Local HD DVR Output to Cashier Monitor + Smartphone Remote Sync',
+    highlights: ['Cash Counter Zoom', 'Audio Recording', 'Loss Prevention', 'Local Deterrence Monitor'],
+    requirements: [
+      'Point-of-Sale Register Zoom: Turret cameras mounted directly over cash registers and POS counters with built-in microphone for customer interaction clarity.',
+      'Aisle Loss Prevention: 2.8mm wide-angle lenses covering retail aisles to prevent stock shrinkage, blind spots, and customer disputes.',
+      'Entrance Footfall Monitoring: ColorVu full-color bullet camera capturing crisp entrance facial features under changing outdoor lighting.',
+      'In-Store Deterrence Display: Direct HDMI connection to a public-view monitor mounted near checkout to visibly deter theft.'
+    ],
+    engineeringStandards: [
+      'Glare Avoidance: Camera positioning calibrated to avoid harsh reflections from overhead store spotlights, display glass, and POS terminal screens.',
+      'Physical Security: DVR and power supplies mounted inside a locked, ventilated security box to prevent physical tampering or theft of recordings.',
+      'Audio Calibration: Microphone sensitivity adjusted to capture transaction dialogue while filtering ambient shopping mall or street noise.',
+      'Business Owner Remote Sync: Remote viewing app configured with low-bandwidth sub-stream mode for smooth live inspection on 4G mobile networks.'
+    ],
+    recommendedCategories: ['cctv-cameras', 'recorders', 'cables-accessories'],
+    recommendedPackages: ['4-camera-color-ready-made-package', '4-camera-night-vision-package'],
+    recommendedProducts: ['prod-hik-dome-2mp', 'prod-hik-color-2mp', 'prod-hik-dvr-4ch', 'prod-wd-purple-2tb'],
     enabled: true,
     order: 3
   },
@@ -5294,9 +5342,25 @@ export const DEFAULT_SCENARIOS: ScenarioItem[] = [
     title: 'Factory & Warehouse',
     description: 'High-mount 4K optical zoom, weatherproof IP67 enclosures, and long-range fiber / PoE switches.',
     iconName: 'Factory',
-    recommendedCategories: ['cctv-cameras', 'network-switches', 'cctv-accessories'],
-    recommendedPackages: ['night-vision-cctv-package'],
-    recommendedProducts: ['prod-ruijie-es205gc-p'],
+    scale: '10,000+ sq ft Production Floor & Perimeter',
+    cablingStandard: 'Galvanized Iron (GI) Conduit & Heavy-Gauge Industrial Ducting',
+    networkType: 'Gigabit PoE Network with Extended 250m Transmission & Surge Suppression',
+    highlights: ['4K Ultra HD', '250m Long-Range PoE', 'IP67 Weatherproof', 'Multi-TB Storage'],
+    requirements: [
+      'High-Elevation 4K Surveillance: 8MP Ultra HD cameras with 80m infrared illumination and optical zoom mounted on warehouse ceiling trusses.',
+      'Loading Bay & Perimeter Security: Heavy-duty IP67 bullet cameras guarding truck loading docks, container yards, and facility perimeter fences.',
+      'Long-Distance Network Uplinks: Cloud-managed PoE switches operating in extended transmission mode up to 250m or fiber-optic backbone runs.',
+      'High-Throughput Recording: 16-channel or 32-channel network video recorders with Western Digital Purple / Seagate SkyHawk multi-drive RAID storage.'
+    ],
+    engineeringStandards: [
+      'Industrial Physical Protection: Cables enclosed in heavy-duty galvanized iron (GI) piping to withstand forklift impact, mechanical vibration, and rodents.',
+      'Electrical Noise Immunity: Data lines routed with minimum 300mm clearance from high-voltage manufacturing power cables to eliminate electromagnetic interference.',
+      'Surge & Lightning Protection: Dedicated DIN-rail grounding and surge arrestors installed at main electrical distribution boards.',
+      'Scissor-Lift Elevated Mounting: Rigid steel beam mounting clamps and IP66 heavy-duty junction boxes sealed against manufacturing dust and moisture.'
+    ],
+    recommendedCategories: ['cctv-cameras', 'network-switches', 'surveillance-storage'],
+    recommendedPackages: ['8-camera-night-vision-package', '16-camera-night-vision-package'],
+    recommendedProducts: ['prod-hik-4k-bullet', 'prod-hik-ptz-2mp', 'prod-ruijie-es224gc-p', 'prod-st-skyhawk-4tb'],
     enabled: true,
     order: 4
   },
@@ -5306,23 +5370,27 @@ export const DEFAULT_SCENARIOS: ScenarioItem[] = [
     title: 'School & Institute',
     description: 'Corridor surveillance, staff biometric check-in, and campus Wi-Fi infrastructure.',
     iconName: 'GraduationCap',
+    scale: 'Multi-Floor Campus / Academic Building',
+    cablingStandard: 'Tamper-Proof Heavy Conduit across Hallways & Courtyard Bridges',
+    networkType: 'Central Security Console with NVR Multi-Screen Split & Staff Wi-Fi',
+    highlights: ['Corridor & Gate Safety', 'Fast Face Attendance', 'Campus Wi-Fi', 'Central Guard Console'],
+    requirements: [
+      'Campus Gate & Perimeter Safety: High-visibility deterrent cameras with active siren / strobe light warning capabilities along exterior boundary walls.',
+      'Vandal-Resistant Corridor Coverage: IK10 impact-rated dome cameras positioned in hallways, stairwells, cafeteria, and sports grounds.',
+      'Contactless Faculty Attendance: ZKTeco visible-light facial recognition terminals enabling fast, hygienic morning check-in for teachers and administrative staff.',
+      'Central Security Station: Multi-screen NVR command console situated in the guard room for real-time monitoring and rapid incident timestamping.'
+    ],
+    engineeringStandards: [
+      'Tamper-Proof Hardware: High-tensile security screws and flush-mount vandal dome housings positioned above student reach.',
+      'Student Privacy Masking: Digital camera blackout zones configured to strictly prohibit lens visibility into restrooms, locker rooms, or counseling offices.',
+      'Inter-Building Network Links: UV-stabilized outdoor Cat6 cable or armored fiber cabling bridging academic wings, administration buildings, and main gates.',
+      'Administrative Staff Training: Hands-on guidance for administrative personnel on clip bookmarking, password rotation, and evidence export.'
+    ],
     recommendedCategories: ['cctv-cameras', 'biometrics-access-control', 'access-points-wifi'],
-    recommendedPackages: ['night-vision-cctv-package'],
-    recommendedProducts: ['prod-zkteco-mb20'],
+    recommendedPackages: ['8-camera-night-vision-package', '16-camera-night-vision-package'],
+    recommendedProducts: ['prod-zkteco-speedface-v5l', 'prod-hik-dome-2mp', 'prod-hik-nvr-8ch-poe', 'prod-ruijie-rap2200e'],
     enabled: true,
     order: 5
-  },
-  {
-    id: 'scen-building',
-    slug: 'apartment-building',
-    title: 'Apartment & Society',
-    description: 'Gate access barriers, lift surveillance, and central monitoring station connectivity.',
-    iconName: 'Building2',
-    recommendedCategories: ['cctv-cameras', 'biometrics-access-control'],
-    recommendedPackages: ['night-vision-cctv-package'],
-    recommendedProducts: ['prod-hik-irpf-2mp'],
-    enabled: true,
-    order: 6
   }
 ];
 

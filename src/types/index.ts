@@ -96,6 +96,12 @@ export interface ScenarioItem {
   recommendedCategories?: string[];
   recommendedPackages?: string[];
   recommendedProducts?: string[];
+  highlights?: string[];
+  requirements?: string[];
+  engineeringStandards?: string[];
+  scale?: string;
+  cablingStandard?: string;
+  networkType?: string;
   enabled: boolean;
   order: number;
 }
