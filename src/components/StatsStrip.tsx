@@ -76,7 +76,7 @@ export const StatsStrip: React.FC = () => {
             <div className="flex items-center justify-center p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-orange-300 transition-all">
               <div className="text-center">
                 <span className="text-lg font-black tracking-wider text-blue-600 font-sans block">DAHUA</span>
-                <span className="text-[11px] font-semibold text-slate-600">Certified Surveillance Partner</span>
+                <span className="text-[11px] font-semibold text-slate-600">Surveillance & Network Partner</span>
               </div>
             </div>
 

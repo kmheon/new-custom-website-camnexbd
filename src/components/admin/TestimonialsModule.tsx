@@ -110,7 +110,7 @@ export const TestimonialsModule: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold font-heading text-white flex items-center gap-2">
-            <span>Verified Customer Testimonials</span>
+            <span>Customer Testimonials</span>
             <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-mono">
               Authentic Reviews Only
             </span>

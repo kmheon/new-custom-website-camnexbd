@@ -20,7 +20,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
             Enterprise-Grade Security & Infrastructure Solutions
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed">
-            Every solution is engineered with authentic hardware, concealed wiring standards, and dedicated after-sales SLA support.
+            Every solution is engineered with authentic hardware, professional wiring standards, and dedicated after-sales support.
           </p>
         </div>
 
@@ -51,7 +51,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ onSelectSolution }) => {
               </h3>
 
               <p className="text-slate-300 text-base leading-relaxed mb-6">
-                Turnkey high-definition analog and IP surveillance engineered to eliminate blind spots. Features ColorVu 24/7 full-color night recording, AI human/vehicle detection, and encrypted cloud streaming on your smartphone.
+                Turnkey high-definition analog and IP surveillance engineered to eliminate blind spots. Features ColorVu full-color night recording, AI human/vehicle detection, and encrypted cloud streaming on your smartphone.
               </p>
 
               {/* Image Preview with Fallback */}

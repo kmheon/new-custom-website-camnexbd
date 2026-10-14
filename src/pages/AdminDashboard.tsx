@@ -420,7 +420,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       showBadge: true,
       badge: 'New',
       modelNumber: 'DS-2CE10DF0T-F',
-      eyebrow: '24/7 COLORFUL SURVEILLANCE',
+      eyebrow: 'DAY & NIGHT FULL-COLOR SURVEILLANCE',
       tabLabel: 'ColorVu Camera',
       headline: 'Hikvision ColorVu 2MP Bullet Camera',
       description: 'Intelligent 2MP security with F1.0 large aperture lens and AcuSense AI.',
@@ -453,10 +453,10 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
         showBadge: true,
         badge: 'New',
         modelNumber: 'DS-2CE10DF0T-F',
-        eyebrow: '24/7 COLORFUL SURVEILLANCE',
+        eyebrow: 'DAY & NIGHT FULL-COLOR SURVEILLANCE',
         tabLabel: 'ColorVu Camera',
         headline: 'Hikvision ColorVu 2MP Bullet Camera',
-        description: 'F1.0 super-aperture lens captures vivid 24/7 full-color video even in pitch-black darkness with AcuSense intelligence.',
+        description: 'F1.0 super-aperture lens captures vivid full-color video day and night even in pitch-black darkness with AcuSense intelligence.',
         image: '/images/hero/hikvision-bullet.png',
         priceText: '৳2,450',
         buttonText: 'View Product',
@@ -3798,7 +3798,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   type="text"
                   value={editingSlide.eyebrow || ''}
                   onChange={(e) => setEditingSlide({ ...editingSlide, eyebrow: e.target.value })}
-                  placeholder="e.g. 24/7 COLORFUL SURVEILLANCE"
+                  placeholder="e.g. FULL-COLOR SURVEILLANCE"
                   className="w-full bg-white border border-slate-300 text-xs text-slate-800 p-2 rounded-lg uppercase"
                 />
               </div>

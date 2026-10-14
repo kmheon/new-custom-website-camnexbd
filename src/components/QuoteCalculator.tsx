@@ -123,7 +123,7 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({
             Interactive Quote Calculator
           </h2>
           <p className="mt-3 text-base text-slate-300">
-            Tell us about your property to get an accurate estimate and book a certified engineer visit in Dhaka.
+            Tell us about your property to get an accurate estimate and schedule an engineering site survey visit in Dhaka.
           </p>
         </div>
 
@@ -496,7 +496,7 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({
                       </span>
                     </div>
                     <div className="text-xs text-slate-400 text-right">
-                      Includes hardware, cables, connectors & 1-year service SLA
+                      Includes hardware, cables, connectors & 1-year service support
                     </div>
                   </div>
 

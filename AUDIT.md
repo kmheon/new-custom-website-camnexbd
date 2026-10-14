@@ -240,7 +240,7 @@ The following table outlines the endpoint groupings, the owning client applicati
   - Accessibility & Hover: interactive button focus ring, `role="button"`, `tabIndex={0}`, keyboard navigation (Enter/Space), and hover lift with 1.04x image scale (disabled on `prefers-reduced-motion`).
 - **Responsive & Equal Height Flex Architecture (`src/style.css`, `ProductRow.tsx`)**:
   - Desktop & Tablet (>=768px): Renders as the first item inside `CardRow` with width `var(--card-w)`. Uses flexbox `align-self: stretch` with `height: auto` to match adjacent product card heights within 1px.
-  - Mobile (<768px): Transforms into a full-width banner strip (~120px tall) placed directly above the scroll row. The first item in the mobile horizontal scroll row is guaranteed to be a product card.
+  - Mobile (<768px): Transforms into a full-width banner strip (~120px tall) placed directly above the scroll row. The first item in the mobile horizontal scroll row is verified to be a product card.
 - **Admin Configuration & Sample Seeding (`src/pages/AdminDashboard.tsx`, `seedData.ts`, `serverSeeds.json`)**:
   - Dedicated `PromoTileEditor` in Homepage Section Editor and Category modal with live dual preview (desktop card + mobile strip), character counters, and transparent PNG warning.
   - Clean database defaults to 0 promo tiles across all rows.

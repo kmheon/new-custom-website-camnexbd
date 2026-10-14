@@ -13,7 +13,7 @@ seeds.INITIAL_SPEC_TEMPLATES = [
     fields: [
       { id: 'f-res', name: 'Resolution', key: 'resolution', type: 'enum', options: ['2MP (1080p)', '4MP (2K)', '5MP Super HD', '8MP (4K)'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Resolution', order: 1 },
       { id: 'f-form', name: 'Form Factor', key: 'form_factor', type: 'enum', options: ['Bullet', 'Dome', 'Turret', 'PTZ'], filterable: true, comparable: true, shortLabel: 'Form Factor', order: 2 },
-      { id: 'f-nv', name: 'Night Vision', key: 'night_vision', type: 'enum', options: ['IR Night Vision (up to 20m)', 'IR Night Vision (up to 40m)', 'ColorVu 24/7 Full Color', 'Smart Hybrid Light'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Night Vision', order: 3 },
+      { id: 'f-nv', name: 'Night Vision', key: 'night_vision', type: 'enum', options: ['IR Night Vision (up to 20m)', 'IR Night Vision (up to 40m)', 'ColorVu Full Color', 'Smart Hybrid Light'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Night Vision', order: 3 },
       { id: 'f-lens', name: 'Lens', key: 'lens', type: 'enum', options: ['2.8mm (Wide Angle)', '3.6mm (Standard)', '6mm (Long Range)', 'Motorized Varifocal'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Lens', order: 4 },
       { id: 'f-ip', name: 'Ingress Protection', key: 'ip_rating', type: 'enum', options: ['IP66 Weatherproof', 'IP67 Weatherproof', 'Indoor Use'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'IP Rating', order: 5 },
       { id: 'f-aud', name: 'Audio Support', key: 'audio_support', type: 'boolean', filterable: true, comparable: true, shortLabel: 'Audio Support', order: 6 }
@@ -220,13 +220,13 @@ const sampleProducts = [
     posAvailable: true,
     images: ['/images/products/hikvision-bullet.svg'],
     primaryImage: '/images/products/hikvision-bullet.svg',
-    shortDescription: '24/7 full color imaging with F1.0 super aperture and warm white supplementary light.',
-    description: 'ColorVu technology delivers vivid 24/7 color video in total darkness with 20m warm white LED lighting.',
-    keyFeatures: ['24/7 Full Color video', 'F1.0 Super Aperture', '20m Warm White LED Light', 'IP67 Weatherproof'],
-    specifications: { resolution: '2MP (1080p)', form_factor: 'Bullet', night_vision: 'ColorVu 24/7 Full Color', lens: '2.8mm (Wide Angle)', ip_rating: 'IP67 Weatherproof', audio_support: false },
+    shortDescription: 'Full-color imaging with F1.0 super aperture and warm white supplementary light.',
+    description: 'ColorVu technology delivers vivid full-color video in total darkness with 20m warm white LED lighting.',
+    keyFeatures: ['Full-Color video', 'F1.0 Super Aperture', '20m Warm White LED Light', 'IP67 Weatherproof'],
+    specifications: { resolution: '2MP (1080p)', form_factor: 'Bullet', night_vision: 'ColorVu Full Color', lens: '2.8mm (Wide Angle)', ip_rating: 'IP67 Weatherproof', audio_support: false },
     specs: {
       resolution: { label: 'Resolution', value: '2MP (1080p)', highlightValue: '2 MP', showInHighlights: true },
-      night_vision: { label: 'Night Vision', value: 'ColorVu 24/7 Full Color', highlightValue: '24/7 Color', showInHighlights: true },
+      night_vision: { label: 'Night Vision', value: 'ColorVu Full Color', highlightValue: 'Full Color', showInHighlights: true },
       ip_rating: { label: 'IP Rating', value: 'IP67 Weatherproof', highlightValue: 'IP67', showInHighlights: true }
     },
     pricing: { regularPrice: 3400, salePrice: 2990, currency: 'BDT' },
@@ -828,9 +828,9 @@ const sampleProducts = [
     posAvailable: true,
     images: ['/images/products/surveillance-hdd.svg'],
     primaryImage: '/images/products/surveillance-hdd.svg',
-    shortDescription: 'Surveillance-grade 3.5-inch hard drive engineered for 24/7 continuous video recording.',
+    shortDescription: 'Surveillance-grade 3.5-inch hard drive engineered for continuous video recording.',
     description: 'WD Purple hard disk drive featuring AllFrame technology to reduce video frame loss and improve playback reliability in 2 to 4 camera systems.',
-    keyFeatures: ['500GB continuous write storage', 'AllFrame technology for reduced frame loss', 'Engineered for 24/7 reliability', '3-Year manufacturer warranty'],
+    keyFeatures: ['500GB continuous write storage', 'AllFrame technology for reduced frame loss', 'Engineered for continuous operation reliability', '3-Year manufacturer warranty'],
     specifications: { capacity: '500GB', form_factor: '3.5 inch', interface: 'SATA 6Gb/s' },
     specs: {
       capacity: { label: 'Capacity', value: '500GB', highlightValue: '500 GB', showInHighlights: true }
@@ -860,7 +860,7 @@ const sampleProducts = [
     images: ['/images/products/surveillance-hdd.svg'],
     primaryImage: '/images/products/surveillance-hdd.svg',
     shortDescription: 'Surveillance-grade 1TB continuous write hard drive supporting up to 64 HD cameras.',
-    description: 'WD Purple 1TB internal hard drive engineered for 24/7 high-temperature surveillance environments.',
+    description: 'WD Purple 1TB internal hard drive engineered for high-temperature surveillance environments.',
     keyFeatures: ['1TB capacity', 'AllFrame 4K technology', 'Workload rating up to 180 TB/year', 'SATA 6 Gb/s interface'],
     specifications: { capacity: '1TB', form_factor: '3.5 inch', interface: 'SATA 6Gb/s' },
     specs: {
@@ -924,7 +924,7 @@ const sampleProducts = [
     images: ['/images/products/hardware-accessory.svg'],
     primaryImage: '/images/products/hardware-accessory.svg',
     shortDescription: 'High-grade 23 AWG solid bare copper Cat6 network cable with low signal attenuation.',
-    description: 'Certified 23AWG unshielded twisted pair copper cable engineered for high-bandwidth IP surveillance, Gigabit PoE, and Turbo HD video signals.',
+    description: 'Premium 23AWG unshielded twisted pair copper cable engineered for high-bandwidth IP surveillance, Gigabit PoE, and Turbo HD video signals.',
     keyFeatures: ['23 AWG solid bare copper conductor', 'Gigabit speed up to 250 MHz', 'PVC flame retardant outer jacket', 'Meter marking on outer jacket'],
     specifications: { conductor: 'Solid Bare Copper', gauge: '23 AWG', bandwidth: '250 MHz' },
     specs: {

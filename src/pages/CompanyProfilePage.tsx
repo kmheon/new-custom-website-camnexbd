@@ -229,7 +229,7 @@ export const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ initialT
                   <div className="h-px bg-[#EDE8E1]" />
                   <div>
                     <div className="text-2xl font-black text-[#111827] font-heading">{profile.team_size_band || '20+'}</div>
-                    <div className="text-xs text-[#5B6472] font-medium">Certified Engineers & Technicians</div>
+                    <div className="text-xs text-[#5B6472] font-medium">Qualified Engineers & Technicians</div>
                   </div>
                 </div>
               </div>
@@ -300,7 +300,7 @@ export const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ initialT
             <div className="p-5 rounded-2xl bg-orange-50/60 border border-orange-200 text-xs text-[#5B6472] space-y-1">
               <strong className="text-[#111827] block font-bold">Official Document Submissions:</strong>
               <span>
-                To request certified physical copies of trade licenses, TIN, BIN, or bank solvency certificates for corporate RFP bids, please email <a href={`mailto:${profile.sales_email || 'sales@camnexbd.com'}`} className="text-[#F15A24] underline">{profile.sales_email || 'sales@camnexbd.com'}</a>.
+                To request official physical copies of trade licenses, TIN, BIN, or bank solvency certificates for corporate RFP bids, please email <a href={`mailto:${profile.sales_email || 'sales@camnexbd.com'}`} className="text-[#F15A24] underline">{profile.sales_email || 'sales@camnexbd.com'}</a>.
               </span>
             </div>
           </div>
@@ -399,7 +399,7 @@ export const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ initialT
                   </div>
                   <h3 className="font-bold text-sm text-[#111827]">{c.title}</h3>
                   <div className="text-xs text-[#5B6472]">Issuer: <strong>{c.issuer}</strong></div>
-                  {c.year && <div className="text-xs text-[#5B6472]">Certified: <strong>{c.year}</strong></div>}
+                  {c.year && <div className="text-xs text-[#5B6472]">Year: <strong>{c.year}</strong></div>}
                 </div>
               ))}
             </div>

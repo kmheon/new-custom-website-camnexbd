@@ -566,7 +566,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       setCallbackStatus('success');
       setCallbackMessage(
         settings?.quickServiceSettings?.successMessage ||
-        'Thank you! Our team will call you back within 15 minutes.'
+        'Thank you! Our engineering team will review your request and call you back promptly during business hours.'
       );
       setCallbackName('');
       setCallbackPhone('');

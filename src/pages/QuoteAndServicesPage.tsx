@@ -309,7 +309,7 @@ export const QuoteAndServicesPage: React.FC<QuoteAndServicesPageProps> = ({
                   <Badge variant="orange">Direct Engineering Desk</Badge>
                   <h3 className="text-lg font-bold font-heading">Need Urgent Assistance?</h3>
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    Speak directly with a certified surveillance engineer to discuss layout feasibility or emergency camera replacement.
+                    Speak directly with a surveillance systems engineer to discuss layout feasibility or camera replacement.
                   </p>
 
                   <div className="pt-2 space-y-2">

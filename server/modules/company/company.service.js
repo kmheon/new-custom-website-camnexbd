@@ -40,9 +40,9 @@ class CompanyService {
       bank_branch: null,
       routing_number: null,
       certifications: [
-        { title: 'Hikvision Certified Security Associate (HCSA)', issuer: 'Hikvision', year: 2022 },
+        { title: 'Hikvision Security Associate (HCSA)', issuer: 'Hikvision', year: 2022 },
         { title: 'ZKTeco Authorized Enterprise Solution Partner', issuer: 'ZKTeco', year: 2023 },
-        { title: 'Ruijie Certified Network Professional (RCNP)', issuer: 'Ruijie Networks', year: 2024 }
+        { title: 'Ruijie Network Professional (RCNP)', issuer: 'Ruijie Networks', year: 2024 }
       ],
       brands_distributed: ['Hikvision', 'Dahua', 'ZKTeco', 'Ruijie Reyee', 'Western Digital Purple', 'Seagate SkyHawk', 'Cisco'],
       industry_memberships: ['BASIS Associate Member Network', 'Dhaka Security Hardware Association'],

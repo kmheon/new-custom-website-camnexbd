@@ -91,13 +91,13 @@ const products = [
     posAvailable: true,
     images: ['/images/hero/hikvision-bullet.png'],
     primaryImage: '/images/hero/hikvision-bullet.png',
-    shortDescription: '24/7 full-color surveillance camera with F1.0 super aperture and warm supplemental lighting.',
+    shortDescription: 'Full-color surveillance camera with F1.0 super aperture and warm supplemental lighting.',
     description: 'Vivid color imagery in complete darkness. Features high fidelity audio over coax and rugged weatherproof build.',
-    keyFeatures: ['24/7 Full Color imaging with F1.0 aperture', '2.8mm wide angle fixed lens', 'Up to 20m warm light distance', 'Water and dust resistant (IP67)'],
-    specifications: { resolution: '2MP (1080p)', night_vision: 'ColorVu 24/7 Full Color', lens: '2.8mm (Wide Angle)', ip_rating: 'IP67 Weatherproof', form_factor: 'Bullet', audio_support: true },
+    keyFeatures: ['Full-Color imaging with F1.0 aperture', '2.8mm wide angle fixed lens', 'Up to 20m warm light distance', 'Water and dust resistant (IP67)'],
+    specifications: { resolution: '2MP (1080p)', night_vision: 'ColorVu Full Color', lens: '2.8mm (Wide Angle)', ip_rating: 'IP67 Weatherproof', form_factor: 'Bullet', audio_support: true },
     specs: {
       resolution: { label: 'Resolution', value: '2MP (1080p)', highlightValue: '2 MP', showInHighlights: true },
-      night_vision: { label: 'Night Vision', value: 'ColorVu 24/7 Full Color', highlightValue: 'ColorVu', showInHighlights: true },
+      night_vision: { label: 'Night Vision', value: 'ColorVu Full Color', highlightValue: 'ColorVu', showInHighlights: true },
       ip_rating: { label: 'IP Rating', value: 'IP67 Weatherproof', highlightValue: 'IP67', showInHighlights: true }
     },
     pricing: { regularPrice: 3800, salePrice: 3450, currency: 'BDT' }, // SPECIAL OFFER 2
@@ -192,12 +192,12 @@ const products = [
     images: ['/images/products/hikvision-dome.svg'],
     primaryImage: '/images/products/hikvision-dome.svg',
     shortDescription: 'Compact full-color turret eyeball camera with warm white LED up to 20m distance.',
-    description: 'Provides 24/7 vivid color images with high aperture lens and starlight sensor.',
+    description: 'Provides vivid full-color images with high aperture lens and starlight sensor.',
     keyFeatures: ['2MP full-color starlight HDCVI', '20m LED distance', 'Built-in mic', 'IP67 weather resistant'],
-    specifications: { resolution: '2MP (1080p)', night_vision: 'ColorVu 24/7 Full Color', lens: '2.8mm (Wide Angle)', ip_rating: 'IP67 Weatherproof', form_factor: 'Turret', audio_support: true },
+    specifications: { resolution: '2MP (1080p)', night_vision: 'ColorVu Full Color', lens: '2.8mm (Wide Angle)', ip_rating: 'IP67 Weatherproof', form_factor: 'Turret', audio_support: true },
     specs: {
       resolution: { label: 'Resolution', value: '2MP (1080p)', highlightValue: '2 MP', showInHighlights: true },
-      night_vision: { label: 'Night Vision', value: 'ColorVu 24/7 Full Color', highlightValue: 'Full-Color', showInHighlights: true },
+      night_vision: { label: 'Night Vision', value: 'ColorVu Full Color', highlightValue: 'Full-Color', showInHighlights: true },
       ip_rating: { label: 'IP Rating', value: 'IP67 Weatherproof', highlightValue: 'IP67', showInHighlights: true }
     },
     pricing: { regularPrice: 2950, currency: 'BDT' },
@@ -564,7 +564,7 @@ const products = [
     images: ['/images/products/ruijie-switch.svg'],
     primaryImage: '/images/products/ruijie-switch.svg',
     shortDescription: 'Cloud-managed 5-port gigabit switch with 4 PoE+ ports and 54W power budget.',
-    description: 'Compact steel desktop casing engineered for small CCTV setups and office IP phones. Free lifetime Ruijie Cloud management.',
+    description: 'Compact steel desktop casing engineered for small CCTV setups and office IP phones. Ruijie Cloud platform management included.',
     keyFeatures: ['5 x 10/100/1000 Mbps RJ45 ports', '4 ports 802.3af/at PoE+ with 54W total budget', 'Ruijie Cloud app remote management and reboot', 'IP camera recognition and CCTV loop prevention'],
     specifications: { ports: '5 Ports', poe_budget: '54 W', poe_support: true, switching_capacity: '10 Gbps', managed: true },
     specs: {
@@ -865,7 +865,7 @@ const products = [
     posAvailable: true,
     images: ['/images/products/surveillance-hdd.svg'],
     primaryImage: '/images/products/surveillance-hdd.svg',
-    shortDescription: 'Engineered specifically for 24/7 continuous high-definition surveillance recording.',
+    shortDescription: 'Engineered specifically for continuous high-definition surveillance recording.',
     description: 'AllFrame technology reduces frame loss and improves video playback quality in security systems.',
     keyFeatures: ['Engineered specifically for surveillance security systems', 'Supports up to 64 HD surveillance cameras', 'Reduced video frame loss with AllFrame technology', '1 million hours MTBF reliability rating'],
     specifications: { capacity: '500 GB', form_factor: '3.5-inch', interface: 'SATA 6 Gb/s' },
@@ -897,7 +897,7 @@ const products = [
     posAvailable: true,
     images: ['/images/products/surveillance-hdd.svg'],
     primaryImage: '/images/products/surveillance-hdd.svg',
-    shortDescription: '1TB 24/7 surveillance hard disk with AllFrame caching and 64MB cache buffer.',
+    shortDescription: '1TB surveillance hard disk with AllFrame caching and 64MB cache buffer.',
     description: 'Handles write-heavy surveillance workloads up to 180 TB/year in home and retail security installations.',
     keyFeatures: ['1TB capacity optimized for surveillance', 'Workload rating up to 180 TB/year', 'AllFrame 4K firmware technology', '3-year manufacturer hardware warranty'],
     specifications: { capacity: '1 TB', form_factor: '3.5-inch', interface: 'SATA 6 Gb/s' },
@@ -999,7 +999,7 @@ const products = [
     primaryImage: '/images/products/hardware-accessory.svg',
     shortDescription: 'Premium 23 AWG 100% solid electrolytic copper conductor cable for Gigabit Ethernet & PoE.',
     description: 'Delivers full Gigabit data rates and heavy PoE power without voltage drops up to 100 meters standard.',
-    keyFeatures: ['100% Bare Electrolytic Solid Copper Conductor', 'Tested up to 250 MHz frequency bandwidth', 'Flame-retardant PVC jacket', 'Certified for 802.3af/at PoE+ transmission'],
+    keyFeatures: ['100% Bare Electrolytic Solid Copper Conductor', 'Tested up to 250 MHz frequency bandwidth', 'Flame-retardant PVC jacket', 'Compliant with 802.3af/at PoE+ transmission'],
     specifications: { cable_type: 'CAT6 UTP', length: '305m Box', conductor: '100% Solid Copper 23 AWG' },
     specs: {
       cable_type: { label: 'Standard', value: 'CAT6 UTP', highlightValue: 'CAT6 UTP', showInHighlights: true },
@@ -1605,7 +1605,7 @@ seeds.INITIAL_SPEC_TEMPLATES = [
     fields: [
       { id: 'f-res', name: 'Resolution', key: 'resolution', type: 'enum', options: ['2MP (1080p)', '4MP (2K)', '5MP Super HD', '8MP (4K)'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Resolution', order: 1 },
       { id: 'f-form', name: 'Form Factor', key: 'form_factor', type: 'enum', options: ['Bullet', 'Dome', 'Turret', 'PTZ'], filterable: true, comparable: true, shortLabel: 'Form Factor', order: 2 },
-      { id: 'f-nv', name: 'Night Vision', key: 'night_vision', type: 'enum', options: ['IR Night Vision (up to 20m)', 'IR Night Vision (up to 40m)', 'ColorVu 24/7 Full Color', 'Smart Hybrid Light'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Night Vision', order: 3 },
+      { id: 'f-nv', name: 'Night Vision', key: 'night_vision', type: 'enum', options: ['IR Night Vision (up to 20m)', 'IR Night Vision (up to 40m)', 'ColorVu Full Color', 'Smart Hybrid Light'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Night Vision', order: 3 },
       { id: 'f-lens', name: 'Lens', key: 'lens', type: 'enum', options: ['2.8mm (Wide Angle)', '3.6mm (Standard)', '6mm (Long Range)', 'Motorized Varifocal'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Lens', order: 4 },
       { id: 'f-ip', name: 'Ingress Protection', key: 'ip_rating', type: 'enum', options: ['IP66 Weatherproof', 'IP67 Weatherproof', 'Indoor Use'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'IP Rating', order: 5 },
       { id: 'f-aud', name: 'Audio Support', key: 'audio_support', type: 'boolean', filterable: true, comparable: true, shortLabel: 'Audio Support', order: 6 }

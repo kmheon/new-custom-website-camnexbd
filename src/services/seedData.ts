@@ -186,7 +186,7 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
     phonePlaceholder: '017XXXXXXXX',
     areaLabel: 'Dhaka Area / Location',
     areaPlaceholder: 'e.g. Uttara Sector 3, Dhanmondi, Mirpur',
-    successMessage: 'Thank you! Our engineer will call you back within 15 minutes.',
+    successMessage: 'Thank you! Our engineer will call you back promptly during business hours.',
     enableOtherOption: true
   },
   specialOfferSlider: {
@@ -260,7 +260,7 @@ export const INITIAL_CTA_DATA = {
       type: 'call' as const,
       title: 'Call Now',
       phoneDisplay: '+880 1540-535150',
-      description: 'Speak directly with a certified security consultant',
+      description: 'Speak directly with a qualified security consultant',
       actionUrl: 'tel:+8801540535150'
     },
     {
@@ -433,7 +433,7 @@ export const INITIAL_PACKAGE_SERIES: PackageSeries[] = [
     id: 'series-ir',
     name: 'Night Vision (IR)',
     slug: 'night-vision-ir',
-    description: '24/7 infrared surveillance using IRPF series cameras with smart EXIR night vision up to 20m. No artificial white lighting.',
+    description: 'Infrared surveillance using IRPF series cameras with smart EXIR night vision up to 20m. No artificial white lighting.',
     order: 1,
     enabled: true,
     illustration: 'night-vision',
@@ -471,7 +471,7 @@ export const INITIAL_PACKAGE_SERIES: PackageSeries[] = [
     id: 'series-color',
     name: 'Full-Color',
     slug: 'full-color',
-    description: 'Continuous 24/7 full-color video capture with F1.0 super-aperture lenses and warm illumination in zero ambient light.',
+    description: 'Continuous full-color video capture with F1.0 super-aperture lenses and warm illumination in zero ambient light.',
     order: 3,
     enabled: true,
     illustration: 'full-color',
@@ -515,7 +515,7 @@ export const INITIAL_SPEC_TEMPLATES: SpecTemplate[] = [
     fields: [
       { id: 'f-res', name: 'Resolution', key: 'resolution', type: 'enum', options: ['2MP (1080p)', '4MP (2K)', '5MP Super HD', '8MP (4K)'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Resolution', order: 1 },
       { id: 'f-form', name: 'Form Factor', key: 'form_factor', type: 'enum', options: ['Bullet', 'Dome', 'Turret', 'PTZ'], filterable: true, comparable: true, shortLabel: 'Form Factor', order: 2 },
-      { id: 'f-nv', name: 'Night Vision', key: 'night_vision', type: 'enum', options: ['IR Night Vision (up to 20m)', 'IR Night Vision (up to 40m)', 'ColorVu 24/7 Full Color', 'Smart Hybrid Light'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Night Vision', order: 3 },
+      { id: 'f-nv', name: 'Night Vision', key: 'night_vision', type: 'enum', options: ['IR Night Vision (up to 20m)', 'IR Night Vision (up to 40m)', 'ColorVu Full Color', 'Smart Hybrid Light'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Night Vision', order: 3 },
       { id: 'f-lens', name: 'Lens', key: 'lens', type: 'enum', options: ['2.8mm (Wide Angle)', '3.6mm (Standard)', '6mm (Long Range)', 'Motorized Varifocal'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'Lens', order: 4 },
       { id: 'f-ip', name: 'Ingress Protection', key: 'ip_rating', type: 'enum', options: ['IP66 Weatherproof', 'IP67 Weatherproof', 'Indoor Use'], filterable: true, comparable: true, showInHighlights: true, shortLabel: 'IP Rating', order: 5 },
       { id: 'f-aud', name: 'Audio Support', key: 'audio_support', type: 'boolean', filterable: true, comparable: true, shortLabel: 'Audio Support', order: 6 }
@@ -815,7 +815,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     id: 'cat-storage',
     name: 'Surveillance Storage',
     slug: 'surveillance-storage',
-    description: 'Western Digital Purple and Seagate SkyHawk 24/7 surveillance hard drives.',
+    description: 'Western Digital Purple and Seagate SkyHawk continuous recording surveillance hard drives.',
     image: '/images/products/surveillance-hdd.svg',
     specTemplateId: 'tpl-generic',
     featured: true,
@@ -1019,17 +1019,17 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
       "/images/hero/hikvision-bullet.png"
     ],
     "primaryImage": "/images/hero/hikvision-bullet.png",
-    "shortDescription": "24/7 full-color surveillance camera with F1.0 super aperture and warm supplemental lighting.",
+    "shortDescription": "Full-color surveillance camera with F1.0 super aperture and warm supplemental lighting.",
     "description": "Vivid color imagery in complete darkness. Features high fidelity audio over coax and rugged weatherproof build.",
     "keyFeatures": [
-      "24/7 Full Color imaging with F1.0 aperture",
+      "Full-Color imaging with F1.0 aperture",
       "2.8mm wide angle fixed lens",
       "Up to 20m warm light distance",
       "Water and dust resistant (IP67)"
     ],
     "specifications": {
       "resolution": "2MP (1080p)",
-      "night_vision": "ColorVu 24/7 Full Color",
+      "night_vision": "ColorVu Full Color",
       "lens": "2.8mm (Wide Angle)",
       "ip_rating": "IP67 Weatherproof",
       "form_factor": "Bullet",
@@ -1044,7 +1044,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
       },
       "night_vision": {
         "label": "Night Vision",
-        "value": "ColorVu 24/7 Full Color",
+        "value": "ColorVu Full Color",
         "highlightValue": "ColorVu",
         "showInHighlights": true
       },
@@ -1226,7 +1226,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
     ],
     "primaryImage": "/images/products/hikvision-dome.svg",
     "shortDescription": "Compact full-color turret eyeball camera with warm white LED up to 20m distance.",
-    "description": "Provides 24/7 vivid color images with high aperture lens and starlight sensor.",
+    "description": "Provides vivid full-color images with high aperture lens and starlight sensor.",
     "keyFeatures": [
       "2MP full-color starlight HDCVI",
       "20m LED distance",
@@ -1235,7 +1235,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
     ],
     "specifications": {
       "resolution": "2MP (1080p)",
-      "night_vision": "ColorVu 24/7 Full Color",
+      "night_vision": "ColorVu Full Color",
       "lens": "2.8mm (Wide Angle)",
       "ip_rating": "IP67 Weatherproof",
       "form_factor": "Turret",
@@ -1250,7 +1250,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
       },
       "night_vision": {
         "label": "Night Vision",
-        "value": "ColorVu 24/7 Full Color",
+        "value": "ColorVu Full Color",
         "highlightValue": "Full-Color",
         "showInHighlights": true
       },
@@ -1918,7 +1918,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
     ],
     "primaryImage": "/images/products/ruijie-switch.svg",
     "shortDescription": "Cloud-managed 5-port gigabit switch with 4 PoE+ ports and 54W power budget.",
-    "description": "Compact steel desktop casing Designed for small CCTV setups and office IP phones. Free lifetime Ruijie Cloud management.",
+    "description": "Compact steel desktop casing Designed for small CCTV setups and office IP phones. Ruijie Cloud platform management included.",
     "keyFeatures": [
       "5 x 10/100/1000 Mbps RJ45 ports",
       "4 ports 802.3af/at PoE+ with 54W total budget",
@@ -2487,7 +2487,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
       "/images/products/surveillance-hdd.svg"
     ],
     "primaryImage": "/images/products/surveillance-hdd.svg",
-    "shortDescription": "Built specifically for 24/7 continuous high-definition surveillance recording.",
+    "shortDescription": "Built specifically for continuous high-definition surveillance recording.",
     "description": "AllFrame technology reduces frame loss and improves video playback quality in security systems.",
     "keyFeatures": [
       "Built specifically for surveillance security systems",
@@ -2546,7 +2546,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
       "/images/products/surveillance-hdd.svg"
     ],
     "primaryImage": "/images/products/surveillance-hdd.svg",
-    "shortDescription": "1TB 24/7 surveillance hard disk with AllFrame caching and 64MB cache buffer.",
+    "shortDescription": "1TB surveillance hard disk with AllFrame caching and 64MB cache buffer.",
     "description": "Handles write-heavy surveillance workloads up to 180 TB/year in home and retail security installations.",
     "keyFeatures": [
       "1TB capacity optimized for surveillance",
@@ -2729,7 +2729,7 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
       "100% Bare Electrolytic Solid Copper Conductor",
       "Tested up to 250 MHz frequency bandwidth",
       "Flame-retardant PVC jacket",
-      "Certified for 802.3af/at PoE+ transmission"
+      "Compliant with 802.3af/at PoE+ transmission"
     ],
     "specifications": {
       "cable_type": "CAT6 UTP",

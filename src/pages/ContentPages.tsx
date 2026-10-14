@@ -115,7 +115,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
                   Recommended Hardware Categories
                 </h3>
                 <p className="text-xs text-[#5B6472]">
-                  Certified equipment tailored for {currentScenario.title.toLowerCase()} deployments:
+                  Equipment tailored for {currentScenario.title.toLowerCase()} deployments:
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {currentScenario.recommendedCategories?.map((catSlug) => (
@@ -207,7 +207,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
               Deployment Solutions by Scenario
             </h1>
             <p className="text-sm sm:text-base text-[#5B6472] leading-relaxed max-w-3xl">
-              CamneX delivers certified turnkey hardware and structured installation across Dhaka. Every scenario is engineered with exact hardware specifications, power budgets, and cabling and installation standards.
+              CamneX delivers turnkey hardware and structured installation across Dhaka. Every scenario is engineered with exact hardware specifications, power budgets, and cabling and installation standards.
             </p>
           </div>
 

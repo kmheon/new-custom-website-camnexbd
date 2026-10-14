@@ -1248,7 +1248,7 @@ export class MockProductResearchService implements IProductResearchService {
         status: 'pending'
       },
       suggestedKeyFeatures: {
-        value: ['Standard enterprise connectivity', 'Certified Bangladesh distribution'],
+        value: ['Standard enterprise connectivity', 'Official Bangladesh distribution'],
         confidence: 'low',
         status: 'pending'
       },

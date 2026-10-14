@@ -419,7 +419,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                       </div>
                       <div>
                         <div className="text-xs font-bold text-[#111827]">Direct Service Desk</div>
-                        <div className="text-[10px] text-[#5B6472]">Certified Security Engineers</div>
+                        <div className="text-[10px] text-[#5B6472]">Security & Network Engineers</div>
                       </div>
                     </div>
                     <button

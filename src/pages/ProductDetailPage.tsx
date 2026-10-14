@@ -229,8 +229,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
                   className="w-4 h-4 text-[#F15A24] rounded mt-0.5 focus:ring-[#F15A24]"
                 />
                 <label htmlFor="install-opt" className="text-xs cursor-pointer">
-                  <strong className="text-[#111827] block">Add Certified On-Site Installation (+৳500 / unit)</strong>
-                  <span className="text-slate-500">Concealed casing wiring, angle tuning, and DVR/NVR configuration in Dhaka.</span>
+                  <strong className="text-[#111827] block">Add Professional On-Site Installation (+৳500 / unit)</strong>
+                  <span className="text-slate-500">Casing installation, angle tuning, and DVR/NVR configuration in Dhaka.</span>
                 </label>
               </div>
 

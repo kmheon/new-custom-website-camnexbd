@@ -161,7 +161,7 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                 trigger: 'quote_received',
                 channel: 'email',
                 subject: 'CamneX Project Quote Request #{quote_id}',
-                body: 'Dear {customer_name},\n\nThank you for requesting an engineering quotation from CamneX Bangladesh. Reference: #{quote_id}.\n\nA certified surveillance systems specialist has been assigned to prepare your technical bill of materials.\n\nRegards,\nCamneX Sales Engineering',
+                body: 'Dear {customer_name},\n\nThank you for requesting an engineering quotation from CamneX Bangladesh. Reference: #{quote_id}.\n\nA surveillance systems specialist has been assigned to prepare your technical bill of materials.\n\nRegards,\nCamneX Sales Engineering',
                 enabled: true,
                 variables: ['{customer_name}', '{quote_id}', '{company_name}']
               }

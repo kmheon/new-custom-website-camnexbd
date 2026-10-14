@@ -68,8 +68,17 @@ async function run() {
   }
   console.log('[PASS] Storefront HTML served with dynamic metadata and cache headers');
 
-  // 6. Assert none of the 15 banned phrases appear in rendered HTML on clean DB
+  // 6. Assert none of the banned phrases appear in rendered HTML, emails or templates on clean DB
   const BANNED_PHRASES = [
+    'sub-15-minute response SLA',
+    'within 15 minutes',
+    '24/7',
+    'guaranteed',
+    'lifetime',
+    'free consultation',
+    'certified',
+    'verified customer',
+    'response SLA',
     'Genuine Warranty with Serial Tracking',
     'Concealed Trunking & Neat Cabling',
     'Free Mobile Viewing Setup',
@@ -102,7 +111,7 @@ async function run() {
     'architecture'
   ];
 
-  const routesToCheck = ['/', '/product/prod-hik-irpf-2mp', '/checkout'];
+  const routesToCheck = ['/', '/product/prod-hik-irpf-2mp', '/checkout', '/company-profile', '/warranty', '/solutions', '/services'];
   for (const route of routesToCheck) {
     const res = await fetch(`${BASE_URL}${route}`);
     const html = await res.text();
@@ -112,7 +121,16 @@ async function run() {
       }
     }
   }
-  console.log('[PASS] Rendered HTML of /, /product/:id, and /checkout contains 0 banned claims');
+  console.log('[PASS] Rendered HTML of storefront routes contains 0 banned claims');
+
+  // 7. Assert notification templates, email templates, and default settings contain 0 banned phrases
+  const settingsJson = JSON.stringify(settRes);
+  for (const phrase of BANNED_PHRASES) {
+    if (settingsJson.toLowerCase().includes(phrase.toLowerCase())) {
+      throw new Error(`Banned phrase "${phrase}" found in settings/notification templates!`);
+    }
+  }
+  console.log('[PASS] Settings, notification templates, and email configurations contain 0 banned claims');
 
   console.log('\nALL CLEAN DATABASE STOREFRONT TESTS PASSED SUCCESSFULLY!');
 }

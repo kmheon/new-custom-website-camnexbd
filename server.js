@@ -5049,7 +5049,7 @@ function resolveRouteMetadata(reqPath) {
     '/testimonials': { title: 'Client Feedback | CamneX Bangladesh', description: 'Authentic testimonials and feedback from corporate and residential clients in Dhaka.' },
     '/blog': { title: 'Technical Security & IT Blog | CamneX Bangladesh', description: 'Articles on surveillance design, Wi-Fi standards, and access control engineering.' },
     '/faq': { title: 'Frequently Asked Questions | CamneX Bangladesh', description: 'Frequently asked questions regarding genuine serials, mobile viewing, and warranty.' },
-    '/warranty': { title: 'Warranty & Service SLA Policy | CamneX Bangladesh', description: 'Official manufacturer warranty and service policy.' },
+    '/warranty': { title: 'Warranty & Service Policy | CamneX Bangladesh', description: 'Official manufacturer warranty and service policy.' },
     '/terms': { title: 'Terms & Conditions | CamneX Bangladesh', description: 'Commercial and service terms for hardware orders and engineering installations.' },
     '/privacy': { title: 'Privacy Policy | CamneX Bangladesh', description: 'Customer information protection and privacy terms.' },
     '/refund': { title: 'Return & Refund Policy | CamneX Bangladesh', description: 'Hardware replacement and refund standards.' },
