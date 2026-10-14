@@ -31,48 +31,88 @@ export const PackageEditModal: React.FC<PackageEditModalProps> = ({
   allProducts,
   onSaveSuccess
 }) => {
-  if (!isOpen || !pkg) return null;
-
   const [activeTab, setActiveTab] = useState<'basics' | 'components' | 'rules' | 'pricing'>('basics');
   const [formData, setFormData] = useState<Partial<SecurityPackage>>({
-    id: pkg.id || `pkg-${Date.now()}`,
-    name: pkg.name || '',
-    slug: pkg.slug || '',
-    badge: pkg.badge || '',
-    featuredOnHomepage: Boolean(pkg.featuredOnHomepage),
-    description: pkg.description || '',
-    image: pkg.image || '',
-    systemTypeId: pkg.systemTypeId || '',
-    systemTypeSlug: pkg.systemTypeSlug || '',
-    systemTypeName: pkg.systemTypeName || '',
-    seriesId: pkg.seriesId || '',
-    seriesName: pkg.seriesName || '',
-    nightViewId: pkg.nightViewId || pkg.seriesId || '',
-    nightViewName: pkg.nightViewName || pkg.seriesName || '',
-    technologyLabel: pkg.technologyLabel || '',
-    cameraResolution: pkg.cameraResolution || '2MP Full HD',
-    cameraModel: pkg.cameraModel || '',
-    dvrModel: pkg.dvrModel || '',
-    storageDescription: pkg.storageDescription || '1TB Surveillance HDD',
-    inclusions: pkg.inclusions ? [...pkg.inclusions] : [],
-    cameraCountsSupported: pkg.cameraCountsSupported ? [...pkg.cameraCountsSupported] : [2, 4, 8, 16],
-    cameraCount: pkg.cameraCount || 4,
-    isQuoteOnly: Boolean(pkg.isQuoteOnly),
-    components: pkg.components ? JSON.parse(JSON.stringify(pkg.components)) : [],
-    rules: pkg.rules ? JSON.parse(JSON.stringify(pkg.rules)) : [],
-    pricingRules: pkg.pricingRules ? { ...pkg.pricingRules } : {
+    id: pkg?.id || '',
+    name: pkg?.name || '',
+    slug: pkg?.slug || '',
+    badge: pkg?.badge || '',
+    featuredOnHomepage: Boolean(pkg?.featuredOnHomepage),
+    description: pkg?.description || '',
+    image: pkg?.image || '',
+    systemTypeId: pkg?.systemTypeId || '',
+    systemTypeSlug: pkg?.systemTypeSlug || '',
+    systemTypeName: pkg?.systemTypeName || '',
+    seriesId: pkg?.seriesId || '',
+    seriesName: pkg?.seriesName || '',
+    nightViewId: pkg?.nightViewId || pkg?.seriesId || '',
+    nightViewName: pkg?.nightViewName || pkg?.seriesName || '',
+    technologyLabel: pkg?.technologyLabel || '',
+    cameraResolution: pkg?.cameraResolution || '2MP Full HD',
+    cameraModel: pkg?.cameraModel || '',
+    dvrModel: pkg?.dvrModel || '',
+    storageDescription: pkg?.storageDescription || '1TB Surveillance HDD',
+    inclusions: pkg?.inclusions ? [...pkg.inclusions] : [],
+    cameraCountsSupported: pkg?.cameraCountsSupported ? [...pkg.cameraCountsSupported] : [2, 4, 8, 16],
+    cameraCount: pkg?.cameraCount || 4,
+    isQuoteOnly: Boolean(pkg?.isQuoteOnly),
+    components: pkg?.components ? JSON.parse(JSON.stringify(pkg.components)) : [],
+    rules: pkg?.rules ? JSON.parse(JSON.stringify(pkg.rules)) : [],
+    pricingRules: pkg?.pricingRules ? { ...pkg.pricingRules } : {
       twoCamPrice: 11500,
       fourCamPrice: 16500,
       eightCamPrice: 28500,
       sixteenCamPrice: 52000
     },
-    basePrice: pkg.basePrice ?? 16500,
-    isActive: pkg.isActive ?? true
+    basePrice: pkg?.basePrice ?? 16500,
+    isActive: pkg?.isActive ?? true
   });
 
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (pkg) {
+      setFormData({
+        id: pkg.id || `pkg-${Date.now()}`,
+        name: pkg.name || '',
+        slug: pkg.slug || '',
+        badge: pkg.badge || '',
+        featuredOnHomepage: Boolean(pkg.featuredOnHomepage),
+        description: pkg.description || '',
+        image: pkg.image || '',
+        systemTypeId: pkg.systemTypeId || '',
+        systemTypeSlug: pkg.systemTypeSlug || '',
+        systemTypeName: pkg.systemTypeName || '',
+        seriesId: pkg.seriesId || '',
+        seriesName: pkg.seriesName || '',
+        nightViewId: pkg.nightViewId || pkg.seriesId || '',
+        nightViewName: pkg.nightViewName || pkg.seriesName || '',
+        technologyLabel: pkg.technologyLabel || '',
+        cameraResolution: pkg.cameraResolution || '2MP Full HD',
+        cameraModel: pkg.cameraModel || '',
+        dvrModel: pkg.dvrModel || '',
+        storageDescription: pkg.storageDescription || '1TB Surveillance HDD',
+        inclusions: pkg.inclusions ? [...pkg.inclusions] : [],
+        cameraCountsSupported: pkg.cameraCountsSupported ? [...pkg.cameraCountsSupported] : [2, 4, 8, 16],
+        cameraCount: pkg.cameraCount || 4,
+        isQuoteOnly: Boolean(pkg.isQuoteOnly),
+        components: pkg.components ? JSON.parse(JSON.stringify(pkg.components)) : [],
+        rules: pkg.rules ? JSON.parse(JSON.stringify(pkg.rules)) : [],
+        pricingRules: pkg.pricingRules ? { ...pkg.pricingRules } : {
+          twoCamPrice: 11500,
+          fourCamPrice: 16500,
+          eightCamPrice: 28500,
+          sixteenCamPrice: 52000
+        },
+        basePrice: pkg.basePrice ?? 16500,
+        isActive: pkg.isActive ?? true
+      });
+    }
+  }, [pkg]);
+
+  if (!isOpen || !pkg) return null;
 
   // Filter package-eligible products
   const eligibleProducts = allProducts.filter(p => p.packageEligible !== false);

@@ -22,11 +22,6 @@ export const SpecialOfferSlider: React.FC<SpecialOfferSliderProps> = ({
   onAddToCart,
   sliderConfig
 }) => {
-  // If no offers, handle zero offers gracefully by not rendering the section
-  if (!offers || offers.length === 0) {
-    return null;
-  }
-
   const isAutoSlideEnabled = sliderConfig?.enabled !== false;
   const intervalSeconds = Math.max(1, sliderConfig?.interval ?? 5);
   const intervalMs = intervalSeconds * 1000;
@@ -129,6 +124,10 @@ export const SpecialOfferSlider: React.FC<SpecialOfferSliderProps> = ({
       goToPrev();
     }
   };
+
+  if (!offers || offers.length === 0) {
+    return null;
+  }
 
   const currentProduct = offers[currentIndex] || offers[0];
   const regularPrice = currentProduct.pricing?.regularPrice || 0;

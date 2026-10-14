@@ -9,11 +9,15 @@ const db = require('./database');
 // ============================================================================
 // 1. RATE LIMITERS
 // ============================================================================
+const isProd = process.env.NODE_ENV === 'production';
+const skipInTest = () => process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
+
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: parseInt(process.env.API_RATE_LIMIT || '600', 10),
+  max: parseInt(process.env.API_RATE_LIMIT || (isProd ? '600' : '50000'), 10),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipInTest,
   message: { error: 'Too many requests, please slow down.' }
 });
 
@@ -22,14 +26,16 @@ const loginLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => `${req.ip}_${(req.body?.email || '').trim().toLowerCase()}`,
   message: { error: 'Too many login attempts. Please wait 1 minute before trying again.' }
 });
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: parseInt(process.env.REGISTER_RATE_LIMIT || (isProd ? '10' : '1000'), 10),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipInTest,
   message: { error: 'Too many registration attempts. Please wait 1 minute before trying again.' }
 });
 
@@ -37,9 +43,10 @@ const authLimiter = loginLimiter;
 
 const submissionLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 20,
+  max: parseInt(process.env.SUBMISSION_RATE_LIMIT || (isProd ? '20' : '1000'), 10),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipInTest,
   message: { error: 'Submission limit reached. Please wait a moment.' }
 });
 

@@ -156,7 +156,7 @@ export default function App() {
     const handlePopState = () => parseUrl();
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [loadCart, loadSettings]);
 
   const navigate = (route: string, param?: string) => {
     setCurrentRoute(route);

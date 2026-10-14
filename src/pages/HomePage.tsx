@@ -44,6 +44,7 @@ import { PackageCard } from '../components/cards/PackageCard';
 import { PackageFilterBar } from '../components/packages/PackageFilterBar';
 import { WifiSubcategoryChips, normalizeWifiSlug, toWifiUrlParam } from '../components/common/WifiSubcategoryChips';
 import { Term } from '../components/common/Term';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import {
   cmsService,
   productService,
@@ -966,9 +967,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       />
 
       {/* 1. HERO SLIDER & BRAND STRIP (Definitive Full-Width Band) */}
-      <HeroSlider onNavigate={onNavigate} />
+      <ErrorBoundary sectionName="Hero Slider">
+        <HeroSlider onNavigate={onNavigate} />
+      </ErrorBoundary>
 
       {/* 2. SHOP BY CATEGORY (Definitive Section: Reference b cards, 4 cols desktop, 3 tablet, 2 mobile, 8 tiles total) */}
+      <ErrorBoundary sectionName="Category Navigation">
       <section className="w-full bg-[#FAF7F2] py-12 md:py-[72px]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
@@ -984,9 +988,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <CategoryGrid categories={categories} onNavigate={onNavigate} />
         </div>
       </section>
+      </ErrorBoundary>
 
       {/* 3. POPULAR PRODUCTS (Definitive Deduplicated Row: show if >= 2 cards, hide only if < 2) */}
       {dedupPopular.length >= 2 && (
+        <ErrorBoundary sectionName="Popular Products">
         <ProductRow
           eyebrow="Popular"
           title="Popular Products"
@@ -997,15 +1003,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           onNavigate={onNavigate}
           variant="canvas"
         />
+        </ErrorBoundary>
       )}
 
       {/* 4. SPECIAL OFFERS (Auto-sliding single card with smooth transition & admin controls) */}
+      <ErrorBoundary sectionName="Special Offers">
       <SpecialOfferSlider
         offers={dedupSpecialOffers}
         onNavigate={onNavigate}
         onAddToCart={(p) => addItem(p, 1)}
         sliderConfig={settings?.specialOfferSlider}
       />
+      </ErrorBoundary>
 
       {/* 4.5. WI-FI SERIES ROW (replaces Wi-Fi cameras row; lead-in promo tile + product cards, soft tinted background #FAF7F2) */}
       {wifiProducts.length >= 2 && wifiSectionConfig?.enabled !== false && (

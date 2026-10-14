@@ -16,15 +16,20 @@ const postcss = require('postcss');
 const tailwindcss = require('tailwindcss');
 const autoprefixer = require('autoprefixer');
 
+const isDev = process.argv.includes('--dev');
+
 async function compileBundle(entryPath, bundleName, distDir, fallbackPath) {
-  console.log(`[BUILD] Bundling ${bundleName} (${entryPath}) with esbuild...`);
+  console.log(`[BUILD] Bundling ${bundleName} (${entryPath}) with esbuild (mode: ${isDev ? 'development' : 'production'})...`);
   const result = await esbuild.build({
     entryPoints: [entryPath],
     bundle: true,
-    minify: true,
+    minify: !isDev,
     target: 'es2020',
     write: false,
-    sourcemap: false
+    sourcemap: isDev ? 'inline' : false,
+    define: {
+      'process.env.NODE_ENV': isDev ? '"development"' : '"production"'
+    }
   });
 
   if (!result.outputFiles || result.outputFiles.length === 0) {

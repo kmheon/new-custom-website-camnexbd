@@ -25,8 +25,6 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   categories,
   onSuccess
 }) => {
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<'prices' | 'category' | 'visibility' | 'tags' | 'impexp'>('prices');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -53,6 +51,8 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   // Import / Export state
   const [importJsonText, setImportJsonText] = useState('');
   const [importPreview, setImportPreview] = useState<any>(null);
+
+  if (!isOpen) return null;
 
   const selectedProducts = products.filter(p => selectedProductIds.includes(p.id));
 

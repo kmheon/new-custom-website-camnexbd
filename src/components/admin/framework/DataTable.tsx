@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown,
   Download, SlidersHorizontal, CheckSquare, Square, RefreshCw, X, Filter
@@ -88,10 +88,10 @@ export function DataTable<T extends Record<string, any>>({
   const [columnChooserOpen, setColumnChooserOpen] = useState(false);
   const [internalSearch, setInternalSearch] = useState(searchQuery || '');
 
-  const getId = (row: T): string => {
+  const getId = useCallback((row: T): string => {
     if (typeof idField === 'function') return idField(row);
     return String(row[idField] ?? '');
-  };
+  }, [idField]);
 
   const handleSelectAll = () => {
     if (selectedIds.size === data.length) {
@@ -110,7 +110,7 @@ export function DataTable<T extends Record<string, any>>({
 
   const selectedRows = useMemo(() => {
     return data.filter(row => selectedIds.has(getId(row)));
-  }, [data, selectedIds]);
+  }, [data, selectedIds, getId]);
 
   const total = totalCount ?? data.length;
   const totalPages = Math.ceil(total / pageSize);

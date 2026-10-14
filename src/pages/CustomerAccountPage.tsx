@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User, Package, Clock, ShieldCheck, MapPin, FileText, LogOut, ArrowRight, CheckCircle2, Lock, Phone as PhoneIcon, Mail } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge } from '../components/common/UI';
@@ -38,17 +38,7 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  useEffect(() => {
-    checkCustomerAuth().finally(() => setAuthChecked(true));
-  }, []);
-
-  useEffect(() => {
-    if (isCustomerAuthenticated) {
-      loadOrders();
-    }
-  }, [isCustomerAuthenticated]);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setLoadingOrders(true);
     try {
       const myOrders = await fetchMyOrders();
@@ -58,7 +48,17 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
     } finally {
       setLoadingOrders(false);
     }
-  };
+  }, [fetchMyOrders]);
+
+  useEffect(() => {
+    checkCustomerAuth().finally(() => setAuthChecked(true));
+  }, [checkCustomerAuth]);
+
+  useEffect(() => {
+    if (isCustomerAuthenticated) {
+      loadOrders();
+    }
+  }, [isCustomerAuthenticated, loadOrders]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

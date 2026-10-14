@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   LayoutDashboard, Package, FolderTree, Tag, Sliders, Layers, ShoppingCart, Users,
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
@@ -38,6 +38,7 @@ import { RedirectsModule } from '../components/admin/RedirectsModule';
 import { BrandsModule } from '../components/admin/BrandsModule';
 import { ScenariosModule } from '../components/admin/ScenariosModule';
 import { ServicesModule } from '../components/admin/ServicesModule';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { CompanyProfileModule } from '../components/admin/CompanyProfileModule';
 import { GlossaryModule } from '../components/admin/GlossaryModule';
 import { SettingsModule } from '../components/admin/SettingsModule';
@@ -55,7 +56,14 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [passwordInput, setPasswordInput] = useState('');
   const [submittingLogin, setSubmittingLogin] = useState(false);
 
-  const [activeModule, setActiveModule] = useState<string>('dashboard');
+  const [activeModule, setActiveModule] = useState<string>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('module') || 'dashboard';
+    } catch {
+      return 'dashboard';
+    }
+  });
   
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
@@ -89,6 +97,49 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     if (imgUrl.includes('placeholder')) return true;
     return false;
   };
+
+  // Test Data Identification & Exclusion
+  const isTestOrder = (o: Order) => {
+    if ((o as any).isTest || (o as any).is_test) return true;
+    const name = (o.customerName || '').toLowerCase();
+    const phone = (o.customerPhone || '').trim();
+    const email = (o.customerEmail || '').toLowerCase();
+    return name.includes('test client') || name.includes('phase 2') || phone === '+8801700000000' || email.includes('test@');
+  };
+
+  const isTestQuote = (q: QuoteRequest) => {
+    if ((q as any).isTest) return true;
+    const name = (q.customerName || '').toLowerCase();
+    return name.includes('test client') || name.includes('phase 2 test');
+  };
+
+  const isTestProduct = (p: Product) => {
+    if ((p as any).isTest) return true;
+    const sku = (p.sku || '').toUpperCase();
+    return sku.startsWith('TEST-') || sku.startsWith('NEG-');
+  };
+
+  const operationalProducts = useMemo(() => {
+    return hideTestData ? products.filter(p => !isTestProduct(p)) : products;
+  }, [products, hideTestData]);
+
+  const operationalOrders = useMemo(() => {
+    return hideTestData ? orders.filter(o => !isTestOrder(o)) : orders;
+  }, [orders, hideTestData]);
+
+  const operationalQuotes = useMemo(() => {
+    return hideTestData ? quotes.filter(q => !isTestQuote(q)) : quotes;
+  }, [quotes, hideTestData]);
+
+  const catalogPriorityFixes = useMemo(() => {
+    return operationalProducts.filter(p =>
+      isPlaceholderImage(p.primaryImage) ||
+      !p.modelNumber?.trim() ||
+      !p.sku?.trim() ||
+      !p.specifications ||
+      Object.keys(p.specifications).length === 0
+    ).slice(0, 3);
+  }, [operationalProducts]);
 
   // Category Editor Modal State
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -265,32 +316,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [reviewFields, setReviewFields] = useState<Record<string, { value: any; status: string }>>({});
   const [manualReviewConfirmed, setManualReviewConfirmed] = useState(false);
 
-  useEffect(() => {
-    checkAuth().finally(() => setAuthChecked(true));
-  }, []);
-
-  useEffect(() => {
-    if (isAdminAuthenticated) {
-      loadSettings();
-      refreshAllData();
-    }
-  }, [isAdminAuthenticated]);
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!emailInput || !passwordInput) return;
-    setSubmittingLogin(true);
-    try {
-      const ok = await login(emailInput, passwordInput);
-      if (ok) {
-        setPasswordInput('');
-      }
-    } finally {
-      setSubmittingLogin(false);
-    }
-  };
-
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     try {
       const res = await apiFetch<any>('/audit-logs?limit=8');
       if (res && Array.isArray(res.items)) {
@@ -299,9 +325,9 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     } catch (_) {
       // Handled gracefully when audit table is empty or permission restricted
     }
-  };
+  }, []);
 
-  const refreshAllData = async () => {
+  const refreshAllData = useCallback(async () => {
     try {
       await Promise.allSettled([
         productService.getProducts({ limit: 100 }).then(r => {
@@ -347,6 +373,31 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       ]);
     } catch (err) {
       console.warn('Dashboard data refresh partial error', err);
+    }
+  }, [loadAuditLogs]);
+
+  useEffect(() => {
+    checkAuth().finally(() => setAuthChecked(true));
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      loadSettings();
+      refreshAllData();
+    }
+  }, [isAdminAuthenticated, loadSettings, refreshAllData]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput || !passwordInput) return;
+    setSubmittingLogin(true);
+    try {
+      const ok = await login(emailInput, passwordInput);
+      if (ok) {
+        setPasswordInput('');
+      }
+    } finally {
+      setSubmittingLogin(false);
     }
   };
 
@@ -932,39 +983,6 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     }
   };
 
-  // Test Data Identification & Exclusion
-  const isTestOrder = (o: Order) => {
-    if ((o as any).isTest || (o as any).is_test) return true;
-    const name = (o.customerName || '').toLowerCase();
-    const phone = (o.customerPhone || '').trim();
-    const email = (o.customerEmail || '').toLowerCase();
-    return name.includes('test client') || name.includes('phase 2') || phone === '+8801700000000' || email.includes('test@');
-  };
-
-  const isTestQuote = (q: QuoteRequest) => {
-    if ((q as any).isTest) return true;
-    const name = (q.customerName || '').toLowerCase();
-    return name.includes('test client') || name.includes('phase 2 test');
-  };
-
-  const isTestProduct = (p: Product) => {
-    if ((p as any).isTest) return true;
-    const sku = (p.sku || '').toUpperCase();
-    return sku.startsWith('TEST-') || sku.startsWith('NEG-');
-  };
-
-  const operationalProducts = useMemo(() => {
-    return hideTestData ? products.filter(p => !isTestProduct(p)) : products;
-  }, [products, hideTestData]);
-
-  const operationalOrders = useMemo(() => {
-    return hideTestData ? orders.filter(o => !isTestOrder(o)) : orders;
-  }, [orders, hideTestData]);
-
-  const operationalQuotes = useMemo(() => {
-    return hideTestData ? quotes.filter(q => !isTestQuote(q)) : quotes;
-  }, [quotes, hideTestData]);
-
   // Dashboard Overview: Real Catalog Metrics
   const activeProducts = operationalProducts.filter(p => p.status === 'active');
   const draftProducts = operationalProducts.filter(p => p.status !== 'active');
@@ -986,17 +1004,6 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   // Catalog Product Total: use official API total if provided (including legitimate 0), fallback to loaded products length
   const displayedProductTotal = typeof totalProductsCount === 'number' ? totalProductsCount : operationalProducts.length;
   const catalogReadinessScore = displayedProductTotal > 0 ? Math.round((fullyReadyProducts.length / displayedProductTotal) * 100) : 100;
-
-  // Priority items that need attention in catalog
-  const catalogPriorityFixes = useMemo(() => {
-    return operationalProducts.filter(p =>
-      isPlaceholderImage(p.primaryImage) ||
-      !p.modelNumber?.trim() ||
-      !p.sku?.trim() ||
-      !p.specifications ||
-      Object.keys(p.specifications).length === 0
-    ).slice(0, 3);
-  }, [operationalProducts]);
 
   // Multi-facet Filtered Products for Product Management Table
   const filteredProducts = products.filter(p => {
@@ -1203,6 +1210,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           ].filter((m) => !m.perm || hasPerm(m.perm)).map((m) => (
             <button
               key={m.id}
+              data-module={m.id}
               onClick={() => setActiveModule(m.id)}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
                 activeModule === m.id ? 'bg-[#F15A24] text-white' : 'text-slate-400 hover:bg-slate-900 hover:text-white'
@@ -1230,7 +1238,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
         {/* Module Content */}
         <main className="flex-1 p-6 lg:p-8 overflow-y-auto bg-slate-900">
-          
+          <ErrorBoundary key={activeModule} sectionName={`Admin Module: ${activeModule}`}>
           {/* 1. DASHBOARD OVERVIEW */}
           {activeModule === 'dashboard' && (
             <div className="space-y-6">
@@ -2815,7 +2823,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   </p>
                 </div>
                 <div className="text-xs text-slate-400 font-bold bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
-                  Total Inquiries: <span className="text-[#F15A24]">{quotes.length}</span>
+                  Total Inquiries: <span className="text-[#F15A24]">{operationalQuotes.length}</span>
                 </div>
               </div>
 
@@ -2832,24 +2840,24 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800 text-slate-300">
-                    {quotes.length === 0 ? (
+                    {operationalQuotes.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="p-8 text-center text-slate-500">
                           No quotation requests received yet.
                         </td>
                       </tr>
                     ) : (
-                      quotes.map(q => (
+                      operationalQuotes.map(q => (
                         <tr key={q.id} className="hover:bg-slate-900/40">
-                          <td className="p-3.5 font-bold text-white font-mono">{q.quoteNumber}</td>
+                          <td className="p-3.5 font-bold text-white font-mono">{q.quoteNumber || q.id}</td>
                           <td className="p-3.5">
-                            <div className="font-bold text-white">{q.customerName}</div>
-                            <div className="text-slate-400 font-mono text-[11px]">{q.phone}</div>
+                            <div className="font-bold text-white">{q.customerName || 'Customer'}</div>
+                            <div className="text-slate-400 font-mono text-[11px]">{q.phone || 'N/A'}</div>
                             {q.email && <div className="text-slate-500 text-[11px]">{q.email}</div>}
                           </td>
                           <td className="p-3.5">
-                            <div className="font-bold text-[#F15A24] capitalize">{q.serviceType.replace(/_/g, ' ')}</div>
-                            <div className="text-slate-400 capitalize">{q.propertyType} Premises</div>
+                            <div className="font-bold text-[#F15A24] capitalize">{(q.serviceType || 'cctv_installation').replace(/_/g, ' ')}</div>
+                            <div className="text-slate-400 capitalize">{q.propertyType || 'standard'} Premises</div>
                           </td>
                           <td className="p-3.5">
                             <div className="line-clamp-1 text-slate-300">{q.siteAddress}</div>
@@ -3450,7 +3458,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               onResetSeeds={() => setResetSeedsModalOpen(true)}
             />
           )}
-
+          </ErrorBoundary>
         </main>
 
       </div>

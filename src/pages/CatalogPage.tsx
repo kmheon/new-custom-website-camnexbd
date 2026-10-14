@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Filter, SlidersHorizontal, ShoppingBag, X, ChevronDown, Check, ArrowRight, Layers } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge } from '../components/common/UI';
@@ -68,11 +68,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     }
   }, [categorySlug, brandSlug]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [categorySlug, brandSlug, selectedSpecs, sortBy, priceRange]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     try {
       const cleanCategorySlug = (categorySlug || '').split('?')[0];
@@ -104,7 +100,11 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [categorySlug, brandSlug, selectedSpecs, sortBy, priceRange]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleSpecSelect = (key: string, val: string) => {
     const updated = { ...selectedSpecs };

@@ -136,11 +136,6 @@ export const Term: React.FC<TermProps> = ({
   const meaning = description || entry?.short || '';
   const detailed = entry?.long;
 
-  // If no term or no meaning available, simply render children
-  if (!lookupKey || !meaning) {
-    return <>{children || rawTerm}</>;
-  }
-
   // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
@@ -156,6 +151,11 @@ export const Term: React.FC<TermProps> = ({
       document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [isOpen]);
+
+  // If no term or no meaning available, simply render children
+  if (!lookupKey || !meaning) {
+    return <>{children || rawTerm}</>;
+  }
 
   const termId = `term-${lookupKey.replace(/[^a-z0-9]+/g, '-')}`;
 

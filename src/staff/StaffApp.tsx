@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Shield, Users, Key, FileText, ShoppingCart, Wrench, FileQuestion,
   AlertTriangle, Lock, LogOut, ExternalLink, ChevronRight, Check, X,
@@ -7,6 +7,7 @@ import {
 import { Button, Input, Card, Badge, Modal } from '../shared/components';
 import { apiClient } from '../shared/apiClient';
 import { PERMISSIONS } from '../shared/permissions';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 
 interface StaffUser {
   id: string;
@@ -96,12 +97,26 @@ export const StaffApp: React.FC = () => {
   const [auditFilterEntity, setAuditFilterEntity] = useState('');
   const [selectedAuditLog, setSelectedAuditLog] = useState<AuditLog | null>(null);
 
-  // Load session
-  useEffect(() => {
-    checkStaffSession();
+  const loadDashboardData = useCallback(async () => {
+    try {
+      const [ordersRes, svcsRes, quotesRes, prodsRes] = await Promise.all([
+        apiClient.get<any[]>('/orders').catch(() => []),
+        apiClient.get<any[]>('/service-requests').catch(() => []),
+        apiClient.get<any[]>('/quotes').catch(() => []),
+        apiClient.get<any>('/products?limit=100').catch(() => ({ items: [] }))
+      ]);
+
+      const pendingOrders = Array.isArray(ordersRes) ? ordersRes.filter(o => o.status === 'pending').length : 0;
+      const openServices = Array.isArray(svcsRes) ? svcsRes.filter(s => s.status === 'pending').length : 0;
+      const pendingQuotes = Array.isArray(quotesRes) ? quotesRes.filter(q => q.status === 'pending').length : 0;
+      const prodsList = prodsRes.items || [];
+      const lowStockCount = prodsList.filter((p: any) => (p.inventory?.available || p.stock_quantity || 0) < 5).length;
+
+      setMetrics({ pendingOrders, openServices, pendingQuotes, lowStockCount });
+    } catch (_) {}
   }, []);
 
-  const checkStaffSession = async () => {
+  const checkStaffSession = useCallback(async () => {
     setLoadingUser(true);
     try {
       const res = await apiClient.get<any>('/auth/me');
@@ -125,7 +140,12 @@ export const StaffApp: React.FC = () => {
     } finally {
       setLoadingUser(false);
     }
-  };
+  }, [loadDashboardData]);
+
+  // Load session
+  useEffect(() => {
+    checkStaffSession();
+  }, [checkStaffSession]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,26 +204,7 @@ export const StaffApp: React.FC = () => {
     }
   };
 
-  const loadDashboardData = async () => {
-    try {
-      const [ordersRes, svcsRes, quotesRes, prodsRes] = await Promise.all([
-        apiClient.get<any[]>('/orders').catch(() => []),
-        apiClient.get<any[]>('/service-requests').catch(() => []),
-        apiClient.get<any[]>('/quotes').catch(() => []),
-        apiClient.get<any>('/products?limit=100').catch(() => ({ items: [] }))
-      ]);
-
-      const pendingOrders = Array.isArray(ordersRes) ? ordersRes.filter(o => o.status === 'pending').length : 0;
-      const openServices = Array.isArray(svcsRes) ? svcsRes.filter(s => s.status === 'pending').length : 0;
-      const pendingQuotes = Array.isArray(quotesRes) ? quotesRes.filter(q => q.status === 'pending').length : 0;
-      const prodsList = prodsRes.items || [];
-      const lowStockCount = prodsList.filter((p: any) => (p.inventory?.available || p.stock_quantity || 0) < 5).length;
-
-      setMetrics({ pendingOrders, openServices, pendingQuotes, lowStockCount });
-    } catch (_) {}
-  };
-
-  const loadStaffData = async () => {
+  const loadStaffData = useCallback(async () => {
     try {
       const [usersRes, rolesRes, permsRes] = await Promise.all([
         apiClient.get<StaffUser[]>('/staff/users').catch(() => []),
@@ -214,20 +215,20 @@ export const StaffApp: React.FC = () => {
       setRoles(rolesRes || []);
       setAvailablePermissions(permsRes || []);
     } catch (_) {}
-  };
+  }, []);
 
-  const loadAuditData = async () => {
+  const loadAuditData = useCallback(async () => {
     try {
       const q = auditFilterEntity ? `?entity=${encodeURIComponent(auditFilterEntity)}` : '';
       const res = await apiClient.get<any>(`/audit-logs${q}`);
       setAuditLogs(res?.items || []);
     } catch (_) {}
-  };
+  }, [auditFilterEntity]);
 
   useEffect(() => {
     if (activeTab === 'staff') loadStaffData();
     if (activeTab === 'audit') loadAuditData();
-  }, [activeTab, auditFilterEntity]);
+  }, [activeTab, loadStaffData, loadAuditData]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -460,6 +461,7 @@ export const StaffApp: React.FC = () => {
 
         {/* Content View */}
         <main className="flex-1 p-8">
+          <ErrorBoundary key={activeTab} sectionName={`Staff Tab: ${activeTab}`}>
           {activeTab === 'dashboard' && (
             <div className="space-y-6 max-w-6xl">
               <div>
@@ -734,6 +736,7 @@ export const StaffApp: React.FC = () => {
               </Card>
             </div>
           )}
+          </ErrorBoundary>
         </main>
       </div>
 

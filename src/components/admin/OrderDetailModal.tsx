@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText, Printer, Check, X, Truck, Calendar, User, Phone, MapPin,
   CreditCard, Shield, Package, Save, ExternalLink
@@ -20,15 +20,24 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   order,
   onOrderUpdated
 }) => {
-  if (!isOpen || !order) return null;
-
-  const [internalNotes, setInternalNotes] = useState(order.internalStaffNotes || '');
-  const [courierName, setCourierName] = useState(order.courierName || 'Steadfast Courier');
-  const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber || '');
-  const [estimatedDelivery, setEstimatedDelivery] = useState(order.estimatedDeliveryDate || '');
+  const [internalNotes, setInternalNotes] = useState(order?.internalStaffNotes || '');
+  const [courierName, setCourierName] = useState(order?.courierName || 'Steadfast Courier');
+  const [trackingNumber, setTrackingNumber] = useState(order?.trackingNumber || '');
+  const [estimatedDelivery, setEstimatedDelivery] = useState(order?.estimatedDeliveryDate || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [printMode, setPrintMode] = useState(false);
+
+  useEffect(() => {
+    if (order) {
+      setInternalNotes(order.internalStaffNotes || '');
+      setCourierName(order.courierName || 'Steadfast Courier');
+      setTrackingNumber(order.trackingNumber || '');
+      setEstimatedDelivery(order.estimatedDeliveryDate || '');
+    }
+  }, [order]);
+
+  if (!isOpen || !order) return null;
 
   const handleSaveDetails = async () => {
     setIsSaving(true);

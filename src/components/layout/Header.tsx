@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
     loadWishlist(isCustomerAuthenticated);
     categoryService.getCategories().then(setCategories);
     brandService.getBrands().then(setBrands);
-  }, [loadSettings, isCustomerAuthenticated]);
+  }, [loadSettings, isCustomerAuthenticated, checkCustomerAuth, checkAdminAuth, loadWishlist]);
 
   // Click outside and escape key handling
   useEffect(() => {

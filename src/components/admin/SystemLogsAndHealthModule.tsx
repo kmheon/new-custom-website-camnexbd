@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity,
   ShieldAlert,
@@ -80,7 +80,7 @@ export const SystemLogsAndHealthModule: React.FC = () => {
   // ============================================================================
   // AUDIT LOGS FETCHING
   // ============================================================================
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = useCallback(async () => {
     setAuditLoading(true);
     setAuditError(null);
     try {
@@ -100,12 +100,12 @@ export const SystemLogsAndHealthModule: React.FC = () => {
     } finally {
       setAuditLoading(false);
     }
-  };
+  }, [auditPage, auditEntityFilter, auditActionFilter]);
 
   // ============================================================================
   // BACKGROUND JOBS FETCHING
   // ============================================================================
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setJobsLoading(true);
     setJobsError(null);
     try {
@@ -116,7 +116,7 @@ export const SystemLogsAndHealthModule: React.FC = () => {
     } finally {
       setJobsLoading(false);
     }
-  };
+  }, []);
 
   const handleRetryJob = async (id: string) => {
     try {
@@ -163,7 +163,7 @@ export const SystemLogsAndHealthModule: React.FC = () => {
   // ============================================================================
   // SYSTEM HEALTH FETCHING
   // ============================================================================
-  const fetchHealth = async () => {
+  const fetchHealth = useCallback(async () => {
     setHealthLoading(true);
     setHealthError(null);
     try {
@@ -174,7 +174,7 @@ export const SystemLogsAndHealthModule: React.FC = () => {
     } finally {
       setHealthLoading(false);
     }
-  };
+  }, []);
 
   const handleRestoreFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -229,7 +229,7 @@ export const SystemLogsAndHealthModule: React.FC = () => {
     if (activeTab === 'audit') fetchAuditLogs();
     if (activeTab === 'jobs') fetchJobs();
     if (activeTab === 'health') fetchHealth();
-  }, [activeTab, auditPage, auditEntityFilter, auditActionFilter]);
+  }, [activeTab, fetchAuditLogs, fetchJobs, fetchHealth]);
 
   // Filtered lists
   const filteredAuditLogs = auditLogs.filter(log => {

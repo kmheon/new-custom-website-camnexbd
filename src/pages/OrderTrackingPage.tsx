@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Package, Clock, CheckCircle2, Phone, MapPin, Truck } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Input, Badge, Alert } from '../components/common/UI';
@@ -17,13 +17,7 @@ export const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ initialOrd
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (initialOrderNumber) {
-      handleSearch(initialOrderNumber, '');
-    }
-  }, [initialOrderNumber]);
-
-  const handleSearch = async (num = orderNumber, ph = phone) => {
+  const handleSearch = useCallback(async (num = orderNumber, ph = phone) => {
     if (!num.trim()) {
       setError('Please provide your order reference number.');
       return;
@@ -41,7 +35,13 @@ export const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ initialOrd
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [orderNumber, phone]);
+
+  useEffect(() => {
+    if (initialOrderNumber) {
+      handleSearch(initialOrderNumber, '');
+    }
+  }, [initialOrderNumber, handleSearch]);
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen py-6 sm:py-10">

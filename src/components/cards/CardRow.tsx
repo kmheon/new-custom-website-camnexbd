@@ -47,7 +47,7 @@ export const CardRow = forwardRef<HTMLDivElement, CardRowProps>(({
         clearTimeout(timer);
       };
     }
-  }, [checkScroll, children, itemCount]);
+  }, [checkScroll, children, itemCount, targetRef]);
 
   const scroll = (direction: 'left' | 'right') => {
     const el = targetRef && 'current' in targetRef ? targetRef.current : null;
