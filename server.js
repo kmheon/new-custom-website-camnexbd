@@ -280,6 +280,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Dynamic sitemap served directly (never shadowed by static files)
+app.get('/sitemap.xml', (req, res) => {
+  try {
+    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.send(generateSitemapXml());
+  } catch (err) {
+    res.status(500).send('Error generating dynamic sitemap');
+  }
+});
+
 // Static assets with performance-tuned Cache-Control, immutable hashing, and ETags
 app.use(express.static(path.join(__dirname, 'public'), {
   index: false,
@@ -4316,8 +4327,8 @@ function generateSitemapXml() {
     <priority>${p.priority}</priority>
   </url>`).join('\n');
 
-  // Products (active only)
-  const products = db.prepare("SELECT id, updated_at FROM products WHERE status = 'active'").all();
+  // Products (active and unarchived only)
+  const products = db.prepare("SELECT id, updated_at FROM products WHERE status = 'active' AND (is_archived IS NULL OR is_archived = 0)").all();
   for (const prod of products) {
     const lastmod = prod.updated_at ? prod.updated_at.split('T')[0] : now;
     urlsXml += `\n  <url>
@@ -4328,8 +4339,8 @@ function generateSitemapXml() {
   </url>`;
   }
 
-  // Categories
-  const categories = db.prepare("SELECT slug FROM categories").all();
+  // Categories (unarchived only)
+  const categories = db.prepare("SELECT slug FROM categories WHERE (is_archived IS NULL OR is_archived = 0)").all();
   for (const cat of categories) {
     urlsXml += `\n  <url>
     <loc>${baseUrl}/category/${encodeURIComponent(cat.slug)}</loc>
@@ -4339,8 +4350,8 @@ function generateSitemapXml() {
   </url>`;
   }
 
-  // Brands
-  const brands = db.prepare("SELECT slug FROM brands").all();
+  // Brands (unarchived only)
+  const brands = db.prepare("SELECT slug FROM brands WHERE (is_archived IS NULL OR is_archived = 0)").all();
   for (const brand of brands) {
     urlsXml += `\n  <url>
     <loc>${baseUrl}/brand/${encodeURIComponent(brand.slug)}</loc>
@@ -4428,10 +4439,7 @@ async function handleProductResearchJob(payload) {
 async function handleSitemapJob(payload) {
   const sitemapXml = generateSitemapXml();
   const urlsCount = (sitemapXml.match(/<url>/g) || []).length;
-  try {
-    fs.writeFileSync(path.join(__dirname, 'public/sitemap.xml'), sitemapXml, 'utf8');
-  } catch (_) {}
-
+  // Dynamic sitemap served dynamically via /sitemap.xml with no static file shadowing
   return {
     success: true,
     generatedAt: new Date().toISOString(),
@@ -4859,15 +4867,6 @@ Disallow: /checkout
 
 Sitemap: https://camnexbd.com/sitemap.xml
 `);
-});
-
-app.get('/sitemap.xml', (req, res) => {
-  try {
-    res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.send(generateSitemapXml());
-  } catch (err) {
-    res.status(500).send('Error generating dynamic sitemap');
-  }
 });
 
 // ============================================================================

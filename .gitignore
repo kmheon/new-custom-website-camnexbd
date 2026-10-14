@@ -26,6 +26,10 @@ scratch/
 # Compiled production bundles (built on host by npm run build)
 public/dist/
 
+# Generated sitemap
+public/sitemap.xml
+
 # OS metadata
 .DS_Store
 Thumbs.db
+*.db-journal
