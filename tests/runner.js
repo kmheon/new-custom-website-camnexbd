@@ -306,6 +306,7 @@ async function main() {
     results.push(await runTestSuite('Domain Events & Outbox Suite', path.join(__dirname, 'test_domain_events_outbox.js'), testEnv));
     results.push(await runTestSuite('Security Attacks & CSRF Suite', path.join(__dirname, 'test_security_attacks.js'), testEnv));
     results.push(await runTestSuite('Data-Driven Managed Entity Lifecycle Suite', path.join(__dirname, 'test_managed_lifecycle.js'), testEnv));
+    results.push(await runTestSuite('Production Login Rate Limiter Suite', path.join(__dirname, 'test_production_login_limiter.js'), testEnv));
     results.push(await runTestSuite('Headless Smoke Test Suite (Admin, Storefront & Staff)', path.join(__dirname, 'test_smoke_routes.js'), testEnv));
 
   } finally {

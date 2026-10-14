@@ -28,6 +28,7 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false, keyGeneratorIpFallback: false },
   keyGenerator: (req) => `${req.ip}_${(req.body?.email || '').trim().toLowerCase()}`,
   message: { error: 'Too many login attempts. Please wait 1 minute before trying again.' }
 });
