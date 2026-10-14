@@ -510,6 +510,12 @@ function initDb() {
   seedDatabaseIfEmpty();
   ensureComponentProducts();
   ensurePackageSystemTypes();
+  try {
+    const { runMigrations } = require('./server/database/migrations/runner');
+    runMigrations(db);
+  } catch (mErr) {
+    console.error('Migration execution failed:', mErr.message);
+  }
 }
 
 function migratePlatformTables(targetDb) {

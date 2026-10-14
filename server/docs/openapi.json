@@ -1,0 +1,288 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CamneX Security - Business Platform API v1",
+    "version": "1.0.0",
+    "description": "Unified REST API for CamneX Security surveillance e-commerce, engineering quotations, turnkey CCTV package configuration, and Phase 2 ERP/POS integration.",
+    "contact": {
+      "name": "CamneX Engineering Team",
+      "email": "engineering@camnexbd.com",
+      "url": "https://camnexbd.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "API v1 Endpoint Base"
+    },
+    {
+      "url": "/api",
+      "description": "Direct Storefront & Admin API Base"
+    }
+  ],
+  "tags": [
+    { "name": "Authentication & CSRF", "description": "Session tokens and CSRF protection" },
+    { "name": "Catalog & Products", "description": "Products, variants, spec templates, categories, and brands" },
+    { "name": "Packages & Bundles", "description": "Turnkey configurable CCTV surveillance packages" },
+    { "name": "Orders & Checkout", "description": "Customer orders, payment verification, and timeline tracking" },
+    { "name": "Quotes & Surveys", "description": "On-site engineering assessment and quotation management" },
+    { "name": "Customers & CRM", "description": "Customer profiles, address book, and communication history" },
+    { "name": "Inventory & Warehouses", "description": "Multi-location inventory tracking, stock movements, serials, and reservations" },
+    { "name": "Webhooks & Events", "description": "HMAC-SHA256 signed event streams for ERP/POS synchronization" },
+    { "name": "System & Diagnostics", "description": "Runtime health, queue monitors, backups, and disaster recovery" }
+  ],
+  "paths": {
+    "/auth/csrf": {
+      "get": {
+        "tags": ["Authentication & CSRF"],
+        "summary": "Retrieve anti-CSRF token",
+        "description": "Issues an anti-CSRF token in HTTP-only cookie and JSON response for state-changing mutations.",
+        "responses": {
+          "200": {
+            "description": "CSRF token issued successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "csrfToken": { "type": "string", "example": "c8a4f09d8e7b..." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["Catalog & Products"],
+        "summary": "Unified server-side catalog search",
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Search query" }
+        ],
+        "responses": {
+          "200": { "description": "Search results matching products, categories, brands, and packages" }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": ["Catalog & Products"],
+        "summary": "List catalog products",
+        "parameters": [
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "brand", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated list of products" }
+        }
+      },
+      "post": {
+        "tags": ["Catalog & Products"],
+        "summary": "Create or update product",
+        "security": [{ "CookieAuth": [] }, { "CsrfToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Product created successfully" }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "tags": ["Orders & Checkout"],
+        "summary": "List customer orders",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "List of customer orders" }
+        }
+      },
+      "post": {
+        "tags": ["Orders & Checkout"],
+        "summary": "Create customer order",
+        "security": [{ "CsrfToken": [] }],
+        "responses": {
+          "201": { "description": "Order placed successfully" }
+        }
+      }
+    },
+    "/quotes": {
+      "get": {
+        "tags": ["Quotes & Surveys"],
+        "summary": "List engineering consultation quote requests",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "List of quotes" }
+        }
+      },
+      "post": {
+        "tags": ["Quotes & Surveys"],
+        "summary": "Submit consultation quote inquiry",
+        "responses": {
+          "201": { "description": "Quote inquiry submitted" }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "tags": ["Customers & CRM"],
+        "summary": "List customer CRM records",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "List of customers" }
+        }
+      }
+    },
+    "/webhooks/subscriptions": {
+      "get": {
+        "tags": ["Webhooks & Events"],
+        "summary": "List registered outbound webhook subscriptions",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "List of active subscriptions" }
+        }
+      },
+      "post": {
+        "tags": ["Webhooks & Events"],
+        "summary": "Register new outbound webhook subscriber",
+        "security": [{ "CookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "target_url"],
+                "properties": {
+                  "name": { "type": "string", "example": "Odoo ERP Webhook Sync" },
+                  "target_url": { "type": "string", "example": "https://erp.camnexbd.com/webhooks/orders" },
+                  "secret": { "type": "string", "description": "HMAC secret key (auto-generated if omitted)" },
+                  "events": { "type": "array", "items": { "type": "string" }, "example": ["order.created", "inventory.adjusted"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Subscription registered" }
+        }
+      }
+    },
+    "/webhooks/deliveries": {
+      "get": {
+        "tags": ["Webhooks & Events"],
+        "summary": "List recent webhook delivery attempts",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "List of deliveries with status and response codes" }
+        }
+      }
+    },
+    "/webhooks/test": {
+      "post": {
+        "tags": ["Webhooks & Events"],
+        "summary": "Trigger synthetic test webhook dispatch",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "Test ping dispatched" }
+        }
+      }
+    },
+    "/admin/system/health": {
+      "get": {
+        "tags": ["System & Diagnostics"],
+        "summary": "Retrieve real-time server health and database diagnostics",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "Server health status and database statistics" }
+        }
+      }
+    },
+    "/admin/system/backup": {
+      "get": {
+        "tags": ["System & Diagnostics"],
+        "summary": "Download all-inclusive JSON database backup snapshot",
+        "security": [{ "CookieAuth": [] }],
+        "responses": {
+          "200": { "description": "Full database JSON backup stream" }
+        }
+      }
+    },
+    "/admin/system/restore": {
+      "post": {
+        "tags": ["System & Diagnostics"],
+        "summary": "Restore database from JSON snapshot (Guarded)",
+        "security": [{ "CookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["confirmPhrase", "backupData"],
+                "properties": {
+                  "confirmPhrase": { "type": "string", "example": "RESTORE DATABASE" },
+                  "backupData": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Database restored successfully" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "camnex_admin_session"
+      },
+      "CsrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ProductInput": {
+        "type": "object",
+        "required": ["name", "categoryId", "pricing"],
+        "properties": {
+          "name": { "type": "string" },
+          "sku": { "type": "string" },
+          "modelNumber": { "type": "string" },
+          "categoryId": { "type": "string" },
+          "brandId": { "type": "string" },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "regularPrice": { "type": "number" },
+              "salePrice": { "type": "number" },
+              "costPrice": { "type": "number" },
+              "currency": { "type": "string", "default": "BDT" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

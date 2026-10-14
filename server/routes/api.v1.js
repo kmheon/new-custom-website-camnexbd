@@ -5,6 +5,8 @@
 
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const db = require('../../database');
 const { issueCsrfCookie, requireAdmin } = require('../middleware/auth');
@@ -22,6 +24,51 @@ const mediaRouter = require('../modules/media/media.router');
 const companyRouter = require('../modules/company/company.router');
 const staffRouter = require('../modules/staff/staff.router');
 const auditRouter = require('../modules/audit/audit.router');
+const webhookRouter = require('../modules/webhooks/webhook.router');
+
+// 0. OpenAPI 3.0 Documentation Endpoints
+router.get('/docs/openapi.json', (req, res) => {
+  const specPath = path.join(__dirname, '../docs/openapi.json');
+  if (fs.existsSync(specPath)) {
+    res.setHeader('Content-Type', 'application/json');
+    res.sendFile(specPath);
+  } else {
+    res.status(404).json({ error: 'OpenAPI specification not found' });
+  }
+});
+
+router.get('/docs', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CamneX Security Platform API v1 Documentation</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    body { margin: 0; background: #0f172a; }
+    .swagger-ui .topbar { display: none; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        url: '/api/v1/docs/openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis
+        ],
+        layout: "BaseLayout"
+      });
+    };
+  </script>
+</body>
+</html>`);
+});
 
 // 1. CSRF Token Endpoint
 router.get('/auth/csrf', (req, res) => {
@@ -260,5 +307,6 @@ router.use('/', cmsRouter);
 router.use('/', mediaRouter);
 router.use('/', companyRouter);
 router.use('/', auditRouter);
+router.use('/', webhookRouter);
 
 module.exports = router;

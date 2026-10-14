@@ -340,6 +340,40 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Transactional Restoration**: `POST /api/admin/system/restore` restores database entities within an isolated SQLite transaction (`db.transaction`).
 - **Safety Guards**: Restoration requires typing the exact confirmation phrase `"RESTORE DATABASE"`, admin session credentials, and is permanently blocked when `NODE_ENV === 'production'`.
 
+---
+
+## 16. Phase 2 POS/ERP Architecture & Migration Preparedness
+
+### Strict Phase Boundary
+- **Zero Premature POS/Purchasing Screens**: In accordance with system requirements, no POS checkout counter, cash drawer, or vendor purchasing screens are exposed in the storefront or website manager.
+- **Backend Data Model Readiness**: All normalization, multi-warehouse tables, inventory tracking fields, and API endpoints are fully implemented and verified.
+
+### Versioned Schema Migrations (`server/database/migrations/`)
+- **Migration Runner**: `server/database/migrations/runner.js` executes unapplied `.sql` migrations in alphabetical sequence within SQLite transactions and records applied batches in `schema_migrations`.
+- **001: Variants & Price Lists (`001_phase2_variants_pricing.sql`)**:
+  - `product_variants`: SKU, barcode, attributes JSON, regular/sale/cost prices, weight.
+  - `price_lists` & `price_list_items`: Tiered pricing matrix with volume break thresholds (`min_quantity`).
+  - `customer_groups`: Wholesale, Dealer, Retail with percentage discounts and price list bindings.
+  - `tax_classes`: Configurable tax categorization.
+- **002: Inventory & Warehouses (`002_phase2_inventory_tracking.sql`)**:
+  - `warehouses`: Multi-location storage hubs with default central warehouse.
+  - `inventory_items`: Location-specific stock with SQLite virtual column `quantity_available` computed dynamically as `(quantity_on_hand - quantity_reserved)`.
+  - `inventory_batches`: FIFO/LIFO batch tracking with supplier invoice references and expiration dates.
+  - `inventory_serials`: Serial number lifecycle tracking (`in_stock`, `reserved`, `sold`, `rma_repair`, `scrapped`).
+  - `stock_reservations`: Cart and checkout holds with auto-expiration.
+- **003: Outbound Webhooks (`003_phase2_webhooks.sql`)**:
+  - `webhook_subscriptions` & `webhook_deliveries`: Full tracking of external webhook subscribers and event dispatch outcomes.
+
+### OpenAPI 3.0 Interactive Documentation
+- **Specification**: Complete OpenAPI 3.0.3 specification in `server/docs/openapi.json` detailing all `/api/v1` routes, schemas, and security requirements.
+- **Swagger UI Interactive Portal**: Rendered directly at `/api/v1/docs` for third-party ERP and integration developers.
+
+### HMAC-SHA256 Signed Outbound Webhooks
+- **Security & Non-Repudiation**: Every outbound payload is signed with an HMAC-SHA256 signature generated over `${timestamp}.${payload}` using the subscriber's secret.
+- **Replay Protection**: Standard HTTP headers (`X-Camnex-Timestamp`, `X-Camnex-Signature: sha256=<hex>`) prevent replay attacks by verifying freshness within acceptable clock skew.
+- **Operational Delivery Log**: Every dispatch attempt records HTTP response codes, response bodies, and error logs in `webhook_deliveries`.
+
+
 
 
 

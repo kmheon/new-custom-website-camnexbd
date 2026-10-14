@@ -107,6 +107,8 @@ All 20 existing modules in `src/pages/AdminDashboard.tsx` were systematically ev
 | `settings-payment-delivery` | 8-tab settings, AES-256-GCM encryption, notification templates, queue | Complete | Yes | Yes | Yes |
 | `content-media-seo` | Unused media detection, alt-text/folders, coupons engine, documents library | Complete | Yes | Yes | Yes |
 | `system-logs-health-backup` | Immutable audit explorer, background queue control, system diagnostics & backup/restore | Complete | Yes | Yes | Yes |
+| `phase2-readiness` | Schema migrations (variants, inventory, warehouses), OpenAPI 3.0, HMAC webhooks | Complete | Yes | Yes | Yes |
+
 
 
 
