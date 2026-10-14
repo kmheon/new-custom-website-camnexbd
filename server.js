@@ -231,9 +231,9 @@ app.use('/api', rbacAuthenticate);
 app.use('/api', enforcePolicy);
 app.use('/api', costFieldFilter);
 
-// New platform endpoints (staff, audit, inventory) are served by the domain modules;
+// New platform endpoints (staff, audit, inventory, docs, webhooks) are served by the domain modules;
 // all other routes are handled by the existing handlers below.
-const PLATFORM_PREFIXES = ['/staff', '/auth/staff', '/audit-logs', '/inventory'];
+const PLATFORM_PREFIXES = ['/staff', '/auth/staff', '/audit-logs', '/inventory', '/docs', '/webhooks'];
 app.use('/api', (req, res, next) => {
   if (PLATFORM_PREFIXES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
     return apiV1Router(req, res, next);
