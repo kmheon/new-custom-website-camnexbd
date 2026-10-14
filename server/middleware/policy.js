@@ -57,6 +57,14 @@ const RULES = [
   [['POST', 'DELETE'], /^\/media(\/|$)/, P.MEDIA_WRITE],
   [['GET'], /^\/admin\/media/, P.MEDIA_WRITE],
 
+  // Managed Entities Lifecycle
+  [ANY, /^\/managed\/(packages|spec-templates)/, P.CATALOG_WRITE],
+  [ANY, /^\/managed\/quotes/, P.QUOTES_MANAGE],
+  [ANY, /^\/managed\/redirects/, P.WEBSITE_REDIRECTS_WRITE],
+  [ANY, /^\/managed\/coupons/, P.PRICING_WRITE],
+  [ANY, /^\/managed\/documents/, P.MEDIA_WRITE],
+  [ANY, /^\/managed\//, P.WEBSITE_CONTENT_WRITE],
+
   // Anything else under /admin requires website access
   [ANY, /^\/admin(\/|$)/, P.WEBSITE_ACCESS],
 ];

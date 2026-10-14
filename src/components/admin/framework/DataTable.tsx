@@ -53,6 +53,10 @@ export interface DataTableProps<T> {
   title?: string;
   subtitle?: string;
   headerActions?: React.ReactNode;
+  showArchivedFilter?: boolean;
+  isShowingArchived?: boolean;
+  onToggleShowArchived?: (show: boolean) => void;
+  onRestoreRow?: (row: T) => void | Promise<void>;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -81,7 +85,11 @@ export function DataTable<T extends Record<string, any>>({
   emptyState,
   title,
   subtitle,
-  headerActions
+  headerActions,
+  showArchivedFilter = false,
+  isShowingArchived = false,
+  onToggleShowArchived,
+  onRestoreRow
 }: DataTableProps<T>) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(columns.map(c => c.key)));
@@ -211,6 +219,22 @@ export function DataTable<T extends Record<string, any>>({
               ))}
             </select>
           ))}
+
+          {/* Archived Records Filter Tab */}
+          {showArchivedFilter && onToggleShowArchived && (
+            <button
+              type="button"
+              onClick={() => onToggleShowArchived(!isShowingArchived)}
+              className={`px-3 py-1.5 text-xs rounded-xl font-bold transition-all flex items-center gap-1.5 border ${
+                isShowingArchived
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title={isShowingArchived ? 'Currently showing archived records' : 'Show archived records'}
+            >
+              <span>{isShowingArchived ? 'Showing Archived' : 'Archived'}</span>
+            </button>
+          )}
 
           {/* Column Chooser */}
           <div className="relative">
@@ -366,6 +390,11 @@ export function DataTable<T extends Record<string, any>>({
                     </div>
                   </th>
                 ))}
+                {onRestoreRow && (
+                  <th className="p-3 text-right" style={{ width: '100px' }}>
+                    <span>Lifecycle</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -397,6 +426,22 @@ export function DataTable<T extends Record<string, any>>({
                         {col.render ? col.render(row) : String(row[col.key] ?? '—')}
                       </td>
                     ))}
+                    {onRestoreRow && (
+                      <td className="p-3 text-right align-middle">
+                        {Boolean(row.is_archived || row.isArchived) ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onRestoreRow(row)}
+                            className="!py-1 !px-2 text-xs !border-emerald-300 !text-emerald-700 hover:!bg-emerald-50"
+                          >
+                            Restore
+                          </Button>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-mono">v{row.version || 1}</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

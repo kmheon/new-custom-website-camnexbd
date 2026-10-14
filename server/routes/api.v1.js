@@ -25,6 +25,7 @@ const companyRouter = require('../modules/company/company.router');
 const staffRouter = require('../modules/staff/staff.router');
 const auditRouter = require('../modules/audit/audit.router');
 const webhookRouter = require('../modules/webhooks/webhook.router');
+const { router: managedRouter } = require('../modules/managed/managed.router');
 
 // 0. OpenAPI 3.0 Documentation Endpoints
 router.get('/docs/openapi.json', (req, res) => {
@@ -308,5 +309,6 @@ router.use('/', mediaRouter);
 router.use('/', companyRouter);
 router.use('/', auditRouter);
 router.use('/', webhookRouter);
+router.use('/', managedRouter);
 
 module.exports = router;
