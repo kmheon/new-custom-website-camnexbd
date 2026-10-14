@@ -27,6 +27,10 @@ scratch*
 
 # Compiled production bundles (built on host by npm run build)
 public/dist/
+public/bundle.js
+public/bundle.admin.js
+public/bundle.staff.js
+public/style.css
 
 # Generated sitemap
 public/sitemap.xml
