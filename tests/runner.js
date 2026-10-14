@@ -282,14 +282,14 @@ async function main() {
 
     // 5. Run test suites
     results.push(await runTestSuite('Real Visual Computed Styles Suite (CDP)', path.join(__dirname, 'test_visual_rendering.js'), testEnv));
-    results.push(await runTestSuite('Homepage Revision 2 Layout Suite (CDP)', path.join(__dirname, 'test_homepage_revision2.js'), testEnv));
-    results.push(await runTestSuite('Homepage Fixes Suite (CDP)', path.join(__dirname, 'test_homepage_fixes.js'), testEnv));
-    results.push(await runTestSuite('Homepage Revision 3 Suite (CDP)', path.join(__dirname, 'test_homepage_revision3.js'), testEnv));
-    results.push(await runTestSuite('Homepage Revision 4 Suite (CDP)', path.join(__dirname, 'test_homepage_revision4.js'), testEnv));
-    results.push(await runTestSuite('Homepage Sanity Limits & Equal-Height Suite (CDP)', path.join(__dirname, 'test_sanity_limits.js'), testEnv));
-    results.push(await runTestSuite('Final Homepage Tweaks Suite (CDP)', path.join(__dirname, 'test_final_tweaks.js'), testEnv));
+    results.push(await runTestSuite('Homepage Viewport & Footer Layout Suite (CDP)', path.join(__dirname, 'test_homepage_revision2.js'), testEnv));
+    results.push(await runTestSuite('Homepage Brand Strip & Layout Bounds Suite (CDP)', path.join(__dirname, 'test_homepage_fixes.js'), testEnv));
+    results.push(await runTestSuite('Homepage Component Hierarchy & Tiles Suite (CDP)', path.join(__dirname, 'test_homepage_revision3.js'), testEnv));
+    results.push(await runTestSuite('Homepage Services & Package Logic Suite (CDP)', path.join(__dirname, 'test_homepage_revision4.js'), testEnv));
+    results.push(await runTestSuite('Homepage Sanity Bounds & Shadow Clearance Suite (CDP)', path.join(__dirname, 'test_sanity_limits.js'), testEnv));
+    results.push(await runTestSuite('Homepage Package System Types & Polish Suite (CDP)', path.join(__dirname, 'test_final_tweaks.js'), testEnv));
     results.push(await runTestSuite('Package Component Item Lines Suite', path.join(__dirname, 'test_item_lines.js'), testEnv));
-    results.push(await runTestSuite('Equal-Height Cards & CSS Subgrid Suite (CDP)', path.join(__dirname, 'test_equal_heights_subgrid.js'), testEnv));
+    results.push(await runTestSuite('Product Card Equal Height Flex Suite (CDP)', path.join(__dirname, 'test_equal_heights_subgrid.js'), testEnv));
     results.push(await runTestSuite('Platform Hardening Suite', path.join(__dirname, 'test_platform.js'), testEnv));
     results.push(await runTestSuite('Dynamic Packages Suite', path.join(__dirname, 'test_packages_dynamic.js'), testEnv));
     results.push(await runTestSuite('Package Pure Filters Suite', path.join(__dirname, 'test_package_filters.js'), testEnv));
