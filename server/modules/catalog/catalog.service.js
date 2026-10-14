@@ -717,9 +717,18 @@ class CatalogService {
   }
 
   // SPEC TEMPLATES
-  listSpecTemplates() {
-    const rows = db.prepare('SELECT data_json FROM spec_templates').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listSpecTemplates(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM spec_templates WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   getSpecTemplate(idOrCategory) {
@@ -759,9 +768,18 @@ class CatalogService {
   }
 
   // PACKAGES
-  listPackages() {
-    const rows = db.prepare('SELECT data_json FROM packages').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listPackages(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM packages WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   getPackageBySlug(slug) {

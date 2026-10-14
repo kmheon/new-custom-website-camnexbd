@@ -1930,8 +1930,18 @@ app.post('/api/brands/:id/restore', requireAdmin, (req, res) => {
 
 app.get('/api/spec-templates', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM spec_templates').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const includeArchived = req.query.includeArchived === 'true';
+    let sql = 'SELECT data_json, is_archived, version FROM spec_templates WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    const rows = db.prepare(sql).all();
+    res.json(rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -2081,7 +2091,12 @@ function calculateDynamicPackagePrice(packageId, cameraCount = null, formFactor 
 
 app.get('/api/packages', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM packages WHERE is_active = 1').all();
+    const includeArchived = req.query.includeArchived === 'true';
+    let sql = 'SELECT data_json, is_archived, version FROM packages WHERE is_active = 1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    const rows = db.prepare(sql).all();
     const pkgs = rows.map(r => {
       const pkg = JSON.parse(r.data_json);
       const dynamic = calculateDynamicPackagePrice(pkg.id);
@@ -2089,7 +2104,9 @@ app.get('/api/packages', (req, res) => {
         ...pkg,
         basePrice: dynamic.totalPrice,
         quotationRequired: dynamic.quotationRequired,
-        components: dynamic.components && dynamic.components.length > 0 ? dynamic.components : pkg.components
+        components: dynamic.components && dynamic.components.length > 0 ? dynamic.components : pkg.components,
+        is_archived: Boolean(r.is_archived),
+        version: r.version || 1
       };
     });
     res.json(pkgs);
@@ -2517,8 +2534,19 @@ app.post(['/api/customers/:id/restore', '/api/admin/customers/:id/restore'], req
 
 app.get('/api/quotes', requireAdmin, (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM quotes ORDER BY created_at DESC').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const includeArchived = req.query.includeArchived === 'true';
+    let sql = 'SELECT data_json, is_archived, version FROM quotes WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY created_at DESC';
+    const rows = db.prepare(sql).all();
+    res.json(rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3129,8 +3157,13 @@ app.delete('/api/admin/package-system-types/:id', requireAdmin, (req, res) => {
 // ============================================================================
 app.get('/api/glossary', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM glossary_terms WHERE is_active = 1 ORDER BY display_order ASC, term ASC').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const rows = db.prepare('SELECT data_json, is_archived, version FROM glossary_terms WHERE is_active = 1 AND (is_archived IS NULL OR is_archived = 0) ORDER BY display_order ASC, term ASC').all();
+    res.json(rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3138,8 +3171,13 @@ app.get('/api/glossary', (req, res) => {
 
 app.get('/api/admin/glossary', requireAdmin, (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM glossary_terms ORDER BY display_order ASC, term ASC').all();
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const rows = db.prepare('SELECT data_json, is_archived, version FROM glossary_terms ORDER BY display_order ASC, term ASC').all();
+    res.json(rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3339,7 +3377,7 @@ app.post('/api/admin/notifications/test', requireAdmin, (req, res) => {
 
 app.get('/api/cms/hero-slides', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM hero_slides ORDER BY display_order ASC').all();
+    const rows = db.prepare('SELECT data_json FROM hero_slides WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY display_order ASC').all();
     res.json(rows.map(r => JSON.parse(r.data_json)));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -3421,7 +3459,7 @@ app.put('/api/cms/sections', requireAdmin, (req, res) => {
 
 app.get('/api/cms/blog', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM blog_posts').all();
+    const rows = db.prepare('SELECT data_json FROM blog_posts WHERE (is_archived IS NULL OR is_archived = 0)').all();
     res.json(rows.map(r => JSON.parse(r.data_json)));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -3480,7 +3518,7 @@ app.delete('/api/cms/blog/:id', requireAdmin, (req, res) => {
 // ============================================================================
 app.get(['/api/projects', '/api/cms/projects'], (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM projects ORDER BY rowid DESC').all();
+    const rows = db.prepare('SELECT data_json FROM projects WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY rowid DESC').all();
     res.json(rows.map(r => JSON.parse(r.data_json)));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -3490,7 +3528,7 @@ app.get(['/api/projects', '/api/cms/projects'], (req, res) => {
 app.get(['/api/projects/:id', '/api/cms/projects/:id'], (req, res) => {
   try {
     const id = req.params.id;
-    const row = db.prepare('SELECT data_json FROM projects WHERE id = ? OR slug = ?').get(id, id);
+    const row = db.prepare('SELECT data_json FROM projects WHERE (id = ? OR slug = ?) AND (is_archived IS NULL OR is_archived = 0)').get(id, id);
     if (!row) return res.status(404).json({ error: 'Project not found' });
     res.json(JSON.parse(row.data_json));
   } catch (err) {
@@ -3541,7 +3579,7 @@ app.delete(['/api/projects/:id', '/api/cms/projects/:id', '/api/admin/projects/:
 // ============================================================================
 app.get(['/api/pages', '/api/cms/pages'], (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM cms_pages ORDER BY rowid DESC').all();
+    const rows = db.prepare('SELECT data_json FROM cms_pages WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY rowid DESC').all();
     res.json(rows.map(r => JSON.parse(r.data_json)));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -3551,7 +3589,7 @@ app.get(['/api/pages', '/api/cms/pages'], (req, res) => {
 app.get(['/api/pages/:slug', '/api/cms/pages/:slug'], (req, res) => {
   try {
     const slug = req.params.slug;
-    const row = db.prepare('SELECT data_json FROM cms_pages WHERE slug = ? OR id = ?').get(slug, slug);
+    const row = db.prepare('SELECT data_json FROM cms_pages WHERE (slug = ? OR id = ?) AND (is_archived IS NULL OR is_archived = 0)').get(slug, slug);
     if (!row) return res.status(404).json({ error: 'Page not found' });
     res.json(JSON.parse(row.data_json));
   } catch (err) {
@@ -3602,7 +3640,7 @@ app.delete(['/api/pages/:id', '/api/cms/pages/:id', '/api/admin/pages/:id'], req
 // ============================================================================
 app.get(['/api/testimonials', '/api/cms/testimonials', '/api/admin/testimonials'], (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM testimonials ORDER BY display_order ASC, created_at DESC').all();
+    const rows = db.prepare('SELECT data_json FROM testimonials WHERE (is_archived IS NULL OR is_archived = 0) ORDER BY display_order ASC, created_at DESC').all();
     res.json(rows.map(r => JSON.parse(r.data_json)));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -3712,7 +3750,7 @@ app.delete('/api/admin/redirects/:id', requireAdmin, (req, res) => {
 
 app.get('/api/cms/faqs', (req, res) => {
   try {
-    const rows = db.prepare('SELECT data_json FROM faqs').all();
+    const rows = db.prepare('SELECT data_json FROM faqs WHERE (is_archived IS NULL OR is_archived = 0)').all();
     res.json(rows.map(r => JSON.parse(r.data_json)));
   } catch (err) {
     res.status(500).json({ error: err.message });

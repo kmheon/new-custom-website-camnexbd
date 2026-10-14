@@ -12,9 +12,19 @@ function generateNumber(prefix = 'CNX-QTE') {
 }
 
 class QuotesService {
-  listQuotes() {
-    const rows = db.prepare('SELECT data_json FROM quotes ORDER BY created_at DESC').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listQuotes(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM quotes WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY created_at DESC';
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   createQuote(data, actor = null) {

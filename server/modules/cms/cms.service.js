@@ -74,9 +74,19 @@ class CmsService {
   }
 
   // HERO SLIDES
-  listHeroSlides() {
-    const rows = db.prepare('SELECT data_json FROM hero_slides ORDER BY sort_order ASC, created_at ASC').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listHeroSlides(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM hero_slides WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY sort_order ASC, created_at ASC';
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   createHeroSlide(data, actor = null) {
@@ -131,9 +141,19 @@ class CmsService {
   }
 
   // BLOG POSTS
-  listBlogPosts() {
-    const rows = db.prepare('SELECT data_json FROM blog_posts ORDER BY created_at DESC').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listBlogPosts(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM blog_posts WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY created_at DESC';
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   getBlogPost(slug) {
@@ -188,9 +208,19 @@ class CmsService {
   }
 
   // PROJECTS
-  listProjects() {
-    const rows = db.prepare('SELECT data_json FROM projects ORDER BY created_at DESC').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listProjects(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM projects WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY created_at DESC';
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   getProject(idOrSlug) {
@@ -245,9 +275,19 @@ class CmsService {
   }
 
   // PAGES
-  listPages() {
-    const rows = db.prepare('SELECT data_json FROM pages ORDER BY title ASC').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listPages(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM pages WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY title ASC';
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   getPage(slug) {
@@ -293,9 +333,19 @@ class CmsService {
   }
 
   // TESTIMONIALS
-  listTestimonials() {
-    const rows = db.prepare('SELECT data_json FROM testimonials ORDER BY created_at DESC').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listTestimonials(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM testimonials WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY created_at DESC';
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   createTestimonial(data, actor = null) {
@@ -337,9 +387,19 @@ class CmsService {
   }
 
   // FAQS
-  listFaqs() {
-    const rows = db.prepare('SELECT data_json FROM faqs ORDER BY sort_order ASC, created_at ASC').all();
-    return rows.map(r => JSON.parse(r.data_json));
+  listFaqs(includeArchived = false) {
+    let sql = 'SELECT data_json, is_archived, version FROM faqs WHERE 1=1';
+    if (!includeArchived) {
+      sql += ' AND (is_archived IS NULL OR is_archived = 0)';
+    }
+    sql += ' ORDER BY sort_order ASC, created_at ASC';
+    const rows = db.prepare(sql).all();
+    return rows.map(r => {
+      const parsed = JSON.parse(r.data_json);
+      parsed.is_archived = Boolean(r.is_archived);
+      parsed.version = r.version || 1;
+      return parsed;
+    });
   }
 
   createFaq(data, actor = null) {
