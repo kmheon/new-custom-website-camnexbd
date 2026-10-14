@@ -82,6 +82,7 @@ export interface Brand {
   showBadge?: boolean;
   showInBrandStrip?: boolean;
   order?: number;
+  seo?: ProductSeo;
 }
 
 export interface ScenarioItem {
@@ -133,6 +134,8 @@ export interface Category {
   displayOrder?: number;
   status?: 'active' | 'inactive' | string;
   subcategories?: Subcategory[];
+  seo?: ProductSeo;
+  filterFieldKeys?: string[];
 }
 
 export interface ProductPrice {

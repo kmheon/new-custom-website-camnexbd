@@ -193,5 +193,26 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
   - CCTV Turnkey package eligibility rules: `packageEligible` and role assignments (`camera`, `recorder`, `storage`, `cable`, `power`, `connectors`, `accessory`).
   - Referential integrity guard: 409 Conflict rejection if products are in stock or referenced by historical orders, quotes, or turnkey packages.
 
+---
+
+## 9. Categories Taxonomy & Brand Partners Architecture
+
+### Category Taxonomy & Faceted Navigation
+- **Hierarchy & Ordering**: Multi-level taxonomy supporting top-level parent groups, nested subcategories with drag/order priority, and status toggles.
+- **Spec Template Linkage**: Direct association between categories and `spec_templates`, enabling dynamic faceted filters on catalog listing pages.
+- **Storefront Display Flags**:
+  - `showOnHomepage`: Controls inclusion in the homepage "Shop by Category" grid (capped at 8 items).
+  - `showAsHomepageRow`: Dedicated horizontal showcase row on the storefront homepage.
+  - `isAccessoryCategory`: Feeds into the "Accessories & Add-ons" catalog band.
+- **Promo Tile Configuration**: Inline configurable promotional lead-in cards with custom headline, subtext, CTA button, target route, and background styling (orange, dark, soft tint).
+- **SEO & Canonical Routing**: Dedicated `seo` metadata per category (`metaTitle`, `metaDescription`, `canonicalUrl`) resolving at `/category/:slug`.
+
+### Brand Partners & Badges
+- **Logo Presentation**: Managed SVG/PNG brand assets with media picker support and high-contrast dark strip container rendering.
+- **Brand Strip Controls**: Dedicated toggle (`showInBrandStrip`) and sequence order (`order`) driving the storefront marquee banner.
+- **Authorized Partner Verification**: Configurable warranty partner badges (`showBadge`, `badgeText`) rendered alongside hardware model cards.
+- **Brand SEO**: Per-brand metadata resolving at `/brand/:slug`.
+
+
 
 

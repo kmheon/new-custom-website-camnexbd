@@ -335,6 +335,13 @@ export class MockBrandService implements IBrandService {
     setStorage(STORAGE_KEYS.BRANDS, list);
     return list[idx];
   }
+
+  async deleteBrand(id: string): Promise<boolean> {
+    let list = getStorage<Brand[]>(STORAGE_KEYS.BRANDS, INITIAL_BRANDS);
+    list = list.filter(b => b.id !== id);
+    setStorage(STORAGE_KEYS.BRANDS, list);
+    return true;
+  }
 }
 
 // ----------------------------------------------------------------------------

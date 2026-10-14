@@ -548,6 +548,25 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     }
   };
 
+  const handleReorderCategory = async (catId: string, direction: 'up' | 'down') => {
+    const idx = categories.findIndex(c => c.id === catId);
+    if (idx === -1) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= categories.length) return;
+    const current = categories[idx];
+    const target = categories[targetIdx];
+    try {
+      const currentOrder = current.displayOrder || current.order || (idx + 1);
+      const targetOrder = target.displayOrder || target.order || (targetIdx + 1);
+      await categoryService.updateCategory(current.id, { displayOrder: targetOrder, order: targetOrder });
+      await categoryService.updateCategory(target.id, { displayOrder: currentOrder, order: currentOrder });
+      const updated = await categoryService.getCategories();
+      setCategories(updated);
+    } catch (err: any) {
+      alert('Error reordering category: ' + err.message);
+    }
+  };
+
   // Package Management Handlers
   const handleOpenNewPackage = () => {
     setEditingPackage({
@@ -2342,7 +2361,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800 text-slate-300">
-                    {categories.map(c => {
+                    {categories.map((c, cIdx) => {
                       const tpl = templates.find(t => t.id === c.specTemplateId);
                       return (
                         <tr key={c.id} className="hover:bg-slate-900/40">
@@ -2352,6 +2371,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                                 <img src={c.image} alt={c.name} className="w-6 h-6 object-contain rounded bg-slate-800 p-0.5" />
                               )}
                               <span>{c.name}</span>
+                              {c.subcategories && c.subcategories.length > 0 && (
+                                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
+                                  {c.subcategories.length} subcats
+                                </span>
+                              )}
                               {isPlaceholderImage(c.image) && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
                                   Placeholder image
@@ -2384,7 +2408,31 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                               </span>
                             )}
                           </td>
-                          <td className="p-3.5 text-slate-400 font-medium">#{c.displayOrder || c.order || 1}</td>
+                          <td className="p-3.5 text-slate-400 font-medium">
+                            <div className="flex items-center gap-1.5">
+                              <span>#{c.displayOrder || c.order || 1}</span>
+                              <div className="flex flex-col text-[9px] text-slate-500 leading-none">
+                                <button
+                                  type="button"
+                                  disabled={cIdx === 0}
+                                  onClick={() => handleReorderCategory(c.id, 'up')}
+                                  className="hover:text-white disabled:opacity-20 cursor-pointer"
+                                  title="Move Up"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={cIdx === categories.length - 1}
+                                  onClick={() => handleReorderCategory(c.id, 'down')}
+                                  className="hover:text-white disabled:opacity-20 cursor-pointer"
+                                  title="Move Down"
+                                >
+                                  ▼
+                                </button>
+                              </div>
+                            </div>
+                          </td>
                           <td className="p-3.5">
                             <Badge variant={c.status === 'active' ? 'success' : 'gray'}>{c.status || 'active'}</Badge>
                           </td>
@@ -2402,7 +2450,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                             </Button>
                             <button
                               onClick={() => handleDeleteCategory(c.id)}
-                              className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                               title="Delete Category"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -5704,6 +5752,45 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               <p className="text-[10px] text-slate-500 ml-6 mt-0.5">
                 When enabled, products from this category get a dedicated horizontal showcase row on the storefront homepage (requires at least 2 items).
               </p>
+            </div>
+
+            {/* Category SEO & Search Engine Preview */}
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-[#F15A24]" />
+                  <span>Category SEO Metadata</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">/category/{editingCategory.slug || 'slug'}</span>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Meta Title</label>
+                  <input
+                    type="text"
+                    value={editingCategory.seo?.metaTitle || ''}
+                    onChange={e => setEditingCategory({
+                      ...editingCategory,
+                      seo: { ...(editingCategory.seo || {}), metaTitle: e.target.value }
+                    })}
+                    placeholder={editingCategory.name ? `${editingCategory.name} - CamneX BD` : ''}
+                    className="w-full bg-white border border-slate-300 text-xs p-1.5 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Meta Description</label>
+                  <textarea
+                    rows={2}
+                    value={editingCategory.seo?.metaDescription || ''}
+                    onChange={e => setEditingCategory({
+                      ...editingCategory,
+                      seo: { ...(editingCategory.seo || {}), metaDescription: e.target.value }
+                    })}
+                    placeholder="Search engine summary for this hardware category..."
+                    className="w-full bg-white border border-slate-300 text-xs p-1.5 rounded"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between">

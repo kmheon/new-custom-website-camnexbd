@@ -217,6 +217,13 @@ export class RestBrandService implements IBrandService {
       body: JSON.stringify(updates)
     });
   }
+
+  async deleteBrand(id: string): Promise<boolean> {
+    await request<{ success: boolean }>(`/brands/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    return true;
+  }
 }
 
 // ============================================================================

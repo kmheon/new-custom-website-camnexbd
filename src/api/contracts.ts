@@ -78,6 +78,7 @@ export interface IBrandService {
   getBrandBySlug(slug: string): Promise<Brand | null>;
   createBrand(brand: Omit<Brand, 'id'>): Promise<Brand>;
   updateBrand(id: string, updates: Partial<Brand>): Promise<Brand>;
+  deleteBrand(id: string): Promise<boolean>;
 }
 
 export interface ISpecTemplateService {
