@@ -147,6 +147,8 @@ export interface ProductInventory {
   reserved?: number;
   status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'pre_order' | 'request_quote';
   warehouseId?: string;
+  trackQuantity?: boolean;
+  lowStockThreshold?: number;
 }
 
 export interface ProductDocument {
@@ -174,10 +176,13 @@ export interface Product {
   modelNumber: string;
   model?: string;
   sku: string;
+  barcode?: string;
   category: string;
   categoryId: string;
+  categorySlug?: string;
   subcategory?: string;
   subcategoryId?: string;
+  subcategorySlug?: string;
   productType: 'physical' | 'service' | 'package_bundle';
   status: 'active' | 'draft' | 'archived';
   websiteVisible: boolean;

@@ -175,6 +175,32 @@ class CatalogService {
         throw err;
       }
     }
+
+    const regPrice = data.pricing?.regularPrice !== undefined && data.pricing?.regularPrice !== '' ? Number(data.pricing.regularPrice) : undefined;
+    const salePrice = data.pricing?.salePrice !== undefined && data.pricing?.salePrice !== '' ? Number(data.pricing.salePrice) : undefined;
+    const stockQty = data.inventory?.available !== undefined && data.inventory?.available !== '' ? Number(data.inventory.available) : undefined;
+
+    if (regPrice !== undefined && (isNaN(regPrice) || regPrice < 0)) {
+      const err = new Error('Regular price cannot be negative');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (salePrice !== undefined && (isNaN(salePrice) || salePrice < 0)) {
+      const err = new Error('Sale price cannot be negative');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (salePrice !== undefined && regPrice !== undefined && salePrice >= regPrice) {
+      const err = new Error('Sale price must be lower than regular price');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (stockQty !== undefined && (isNaN(stockQty) || stockQty < 0)) {
+      const err = new Error('Available stock quantity cannot be negative');
+      err.statusCode = 400;
+      throw err;
+    }
+
     const id = data.id || `prod-${Date.now()}`;
     const productData = {
       ...data,
@@ -243,10 +269,37 @@ class CatalogService {
       ...(data.pricing || {})
     } : undefined;
 
+    if (mergedPricing) {
+      const regPrice = mergedPricing.regularPrice !== undefined && mergedPricing.regularPrice !== '' ? Number(mergedPricing.regularPrice) : undefined;
+      const salePrice = mergedPricing.salePrice !== undefined && mergedPricing.salePrice !== '' ? Number(mergedPricing.salePrice) : undefined;
+
+      if (regPrice !== undefined && (isNaN(regPrice) || regPrice < 0)) {
+        const err = new Error('Regular price cannot be negative');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (salePrice !== undefined && (isNaN(salePrice) || salePrice < 0)) {
+        const err = new Error('Sale price cannot be negative');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (salePrice !== undefined && regPrice !== undefined && salePrice >= regPrice) {
+        const err = new Error('Sale price must be lower than regular price');
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
     const mergedInventory = (current.inventory || data.inventory) ? {
       ...(current.inventory || {}),
       ...(data.inventory || {})
     } : undefined;
+
+    if (mergedInventory?.available !== undefined && (isNaN(Number(mergedInventory.available)) || Number(mergedInventory.available) < 0)) {
+      const err = new Error('Available stock quantity cannot be negative');
+      err.statusCode = 400;
+      throw err;
+    }
 
     const mergedSeo = (current.seo || data.seo) ? {
       ...(current.seo || {}),

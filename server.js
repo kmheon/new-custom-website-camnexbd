@@ -738,6 +738,24 @@ app.post('/api/products', requireAdmin, validateBody(schemas.product), (req, res
         return res.status(400).json({ error: `SKU '${p.sku}' already exists for product ID ${conflict.id}` });
       }
     }
+
+    const regPrice = p.pricing?.regularPrice !== undefined && p.pricing?.regularPrice !== '' ? Number(p.pricing.regularPrice) : undefined;
+    const salePrice = p.pricing?.salePrice !== undefined && p.pricing?.salePrice !== '' ? Number(p.pricing.salePrice) : undefined;
+    const stockQty = p.inventory?.available !== undefined && p.inventory?.available !== '' ? Number(p.inventory.available) : undefined;
+
+    if (regPrice !== undefined && (isNaN(regPrice) || regPrice < 0)) {
+      return res.status(400).json({ error: 'Regular price cannot be negative' });
+    }
+    if (salePrice !== undefined && (isNaN(salePrice) || salePrice < 0)) {
+      return res.status(400).json({ error: 'Sale price cannot be negative' });
+    }
+    if (salePrice !== undefined && regPrice !== undefined && salePrice >= regPrice) {
+      return res.status(400).json({ error: 'Sale price must be lower than regular price' });
+    }
+    if (stockQty !== undefined && (isNaN(stockQty) || stockQty < 0)) {
+      return res.status(400).json({ error: 'Available stock quantity cannot be negative' });
+    }
+
     const id = p.id || `prod-${Date.now()}`;
     const productData = {
       ...p,
@@ -832,6 +850,25 @@ app.put('/api/products/:id', requireAdmin, validateBody(schemas.product), (req, 
       ...(current.pricing || {}),
       ...(req.body.pricing || {})
     } : undefined;
+
+    if (mergedPricing) {
+      const regPrice = mergedPricing.regularPrice !== undefined && mergedPricing.regularPrice !== '' ? Number(mergedPricing.regularPrice) : undefined;
+      const salePrice = mergedPricing.salePrice !== undefined && mergedPricing.salePrice !== '' ? Number(mergedPricing.salePrice) : undefined;
+
+      if (regPrice !== undefined && (isNaN(regPrice) || regPrice < 0)) {
+        return res.status(400).json({ error: 'Regular price cannot be negative' });
+      }
+      if (salePrice !== undefined && (isNaN(salePrice) || salePrice < 0)) {
+        return res.status(400).json({ error: 'Sale price cannot be negative' });
+      }
+      if (salePrice !== undefined && regPrice !== undefined && salePrice >= regPrice) {
+        return res.status(400).json({ error: 'Sale price must be lower than regular price' });
+      }
+    }
+
+    if (targetQty !== undefined && (isNaN(targetQty) || targetQty < 0)) {
+      return res.status(400).json({ error: 'Available stock quantity cannot be negative' });
+    }
 
     const mergedInventory = {
       ...(current.inventory || {}),

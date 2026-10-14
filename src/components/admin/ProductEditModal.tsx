@@ -188,6 +188,30 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       return;
     }
 
+    const rawRegPrice = formData.pricing?.regularPrice;
+    const rawSalePrice = formData.pricing?.salePrice;
+    const regPrice = rawRegPrice !== undefined && rawRegPrice !== ('' as any) ? Number(rawRegPrice) : undefined;
+    const salePrice = rawSalePrice !== undefined && rawSalePrice !== ('' as any) ? Number(rawSalePrice) : undefined;
+    const rawStock = formData.inventory?.available;
+    const stockQty = rawStock !== undefined && rawStock !== ('' as any) ? Number(rawStock) : undefined;
+
+    if (regPrice !== undefined && (isNaN(regPrice) || regPrice < 0)) {
+      setError('Regular price cannot be negative.');
+      return;
+    }
+    if (salePrice !== undefined && (isNaN(salePrice) || salePrice < 0)) {
+      setError('Sale price cannot be negative.');
+      return;
+    }
+    if (salePrice !== undefined && regPrice !== undefined && salePrice >= regPrice) {
+      setError('Sale promotional price must be strictly lower than regular price.');
+      return;
+    }
+    if (stockQty !== undefined && (isNaN(stockQty) || stockQty < 0)) {
+      setError('Available stock quantity cannot be negative.');
+      return;
+    }
+
     // Combine template specs and custom specs
     const combinedSpecs: Record<string, any> = { ...specs };
     customSpecs.forEach(({ key, value }) => {
@@ -216,8 +240,8 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       pricing: {
         ...(product.pricing || {}),
         ...(formData.pricing || {}),
-        regularPrice: formData.pricing?.regularPrice !== undefined && formData.pricing?.regularPrice !== '' ? Number(formData.pricing.regularPrice) : undefined,
-        salePrice: formData.pricing?.salePrice !== undefined && formData.pricing?.salePrice !== '' ? Number(formData.pricing.salePrice) : undefined,
+        regularPrice: regPrice,
+        salePrice: salePrice,
         currency: 'BDT'
       },
       inventory: {

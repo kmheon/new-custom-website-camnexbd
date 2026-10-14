@@ -129,6 +129,12 @@ export class RestProductService implements IProductService {
     return true;
   }
 
+  async archiveProduct(id: string): Promise<any> {
+    return request<any>(`/products/${encodeURIComponent(id)}/archive`, {
+      method: 'POST'
+    });
+  }
+
   async getAvailableSpecFiltersForCategory(categorySlug: string): Promise<Record<string, string[]>> {
     try {
       return await request<Record<string, string[]>>(`/products/spec-filters/${encodeURIComponent(categorySlug)}`);

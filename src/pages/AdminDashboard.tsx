@@ -4,7 +4,7 @@ import {
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
   Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench, Building2,
-  Clock, AlertTriangle, CheckCircle2, ChevronRight, Activity, Zap
+  Clock, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Activity, Zap
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
@@ -90,6 +90,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState('');
+  const [productBrandFilter, setProductBrandFilter] = useState('');
+  const [productStatusFilter, setProductStatusFilter] = useState('');
+  const [productStockFilter, setProductStockFilter] = useState('');
+  const [productPage, setProductPage] = useState(1);
+  const [productPageSize, setProductPageSize] = useState(15);
 
   const handleOpenProductEdit = (p: Product) => {
     setEditingProduct(p);
@@ -115,7 +120,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   };
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${name}"? This will check for any historical order/quote references.`)) {
       return;
     }
     try {
@@ -124,7 +129,28 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       setProducts(res.items);
       if (typeof res?.total === 'number') setTotalProductsCount(res.total);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete product');
+      if (err.statusCode === 409 || err.message?.includes('archive instead') || err.message?.includes('Referenced') || err.message?.includes('CANNOT_DELETE_REFERENCED')) {
+        const shouldArchive = confirm(
+          `Cannot permanently delete "${name}" because it is referenced in active orders, quotations, stock records, or packages.\n\nWould you like to safely ARCHIVE this product instead? (It will be hidden from the storefront while keeping all historical records intact)`
+        );
+        if (shouldArchive) {
+          try {
+            if (productService.archiveProduct) {
+              await productService.archiveProduct(id);
+            } else {
+              await productService.updateProduct(id, { status: 'archived', websiteVisible: false });
+            }
+            const res = await productService.getProducts({ limit: 100 });
+            setProducts(res.items);
+            if (typeof res?.total === 'number') setTotalProductsCount(res.total);
+            alert(`"${name}" has been safely archived.`);
+          } catch (archiveErr: any) {
+            alert(archiveErr.message || 'Failed to archive product');
+          }
+        }
+      } else {
+        alert(err.message || 'Failed to delete product');
+      }
     }
   };
 
@@ -578,7 +604,49 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     }
   };
 
-  // Commit Approved Product from Review Screen
+  // Open Research Result directly in ProductEditModal as Draft for thorough review & editing
+  const handleOpenInEditorFromResearch = () => {
+    if (!researchResult) return;
+
+    const matchedCat = categories.find(c => c.name.toLowerCase() === (reviewFields.category?.value || '').toLowerCase()) || categories[0];
+    const matchedBrand = brands.find(b => b.name.toLowerCase() === researchResult.brand.toLowerCase()) || brands[0];
+
+    const specs: Record<string, any> = {};
+    Object.entries(researchResult.suggestedSpecs).forEach(([k]) => {
+      if (reviewFields[k] && reviewFields[k].status !== 'rejected') {
+        specs[k] = reviewFields[k].value;
+      }
+    });
+
+    setEditingProduct({
+      id: '',
+      name: reviewFields.name?.value || `${researchResult.brand} ${researchResult.modelQuery}`,
+      brand: researchResult.brand,
+      brandId: matchedBrand?.id || 'b-hikvision',
+      modelNumber: researchResult.modelQuery,
+      sku: `${researchResult.brand.slice(0, 3).toUpperCase()}-${researchResult.modelQuery.replace(/\s+/g, '')}`,
+      category: matchedCat?.name || 'CCTV Cameras',
+      categoryId: matchedCat?.id || 'cctv-cameras',
+      productType: 'physical',
+      status: 'draft', // DRAFT - never auto-published!
+      websiteVisible: false,
+      posAvailable: true,
+      images: ['/images/hero/hikvision-bullet.png'],
+      primaryImage: '/images/hero/hikvision-bullet.png',
+      shortDescription: reviewFields.shortDesc?.value || '',
+      description: reviewFields.shortDesc?.value || '',
+      keyFeatures: researchResult.suggestedKeyFeatures?.value || [],
+      specifications: specs,
+      pricing: { currency: 'BDT' },
+      inventory: { available: 10, status: 'in_stock' },
+      unit: 'Piece'
+    });
+
+    setAssistantModalOpen(false);
+    setProductEditModalOpen(true);
+  };
+
+  // Commit Approved Product from Review Screen as Draft
   const handleSaveReviewedProduct = async () => {
     if (!researchResult) return;
 
@@ -601,11 +669,11 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       category: matchedCat.name,
       categoryId: matchedCat.id,
       productType: 'physical',
-      status: 'active',
-      websiteVisible: true,
+      status: 'draft', // Saved as Draft - requires admin approval to publish
+      websiteVisible: false,
       posAvailable: true,
-      images: ['/images/products/hikvision-bullet.svg'],
-      primaryImage: '/images/products/hikvision-bullet.svg',
+      images: ['/images/hero/hikvision-bullet.png'],
+      primaryImage: '/images/hero/hikvision-bullet.png',
       shortDescription: reviewFields.shortDesc?.value || '',
       description: reviewFields.shortDesc?.value || '',
       keyFeatures: researchResult.suggestedKeyFeatures.value || [],
@@ -803,16 +871,29 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const displayedProductTotal = typeof totalProductsCount === 'number' ? totalProductsCount : products.length;
   const catalogReadinessScore = displayedProductTotal > 0 ? Math.round((fullyReadyProducts.length / displayedProductTotal) * 100) : 100;
 
-  // Filtered Products for Product Management Table
+  // Multi-facet Filtered Products for Product Management Table
   const filteredProducts = products.filter(p => {
     const q = productSearchQuery.trim().toLowerCase();
     const matchesSearch = !q ||
       (p.name && p.name.toLowerCase().includes(q)) ||
       (p.sku && p.sku.toLowerCase().includes(q)) ||
-      (p.modelNumber && p.modelNumber.toLowerCase().includes(q));
-    const matchesCat = !productCategoryFilter || p.categoryId === productCategoryFilter || p.category === productCategoryFilter;
-    return matchesSearch && matchesCat;
+      (p.modelNumber && p.modelNumber.toLowerCase().includes(q)) ||
+      (p.brand && p.brand.toLowerCase().includes(q));
+    const matchesCat = !productCategoryFilter || p.categoryId === productCategoryFilter || p.category === productCategoryFilter || p.categorySlug === productCategoryFilter;
+    const matchesBrand = !productBrandFilter || p.brandId === productBrandFilter || p.brand === productBrandFilter;
+    const matchesStatus = !productStatusFilter || p.status === productStatusFilter;
+    const matchesStock = !productStockFilter ||
+      (productStockFilter === 'in_stock' && (p.inventory?.available ?? 0) > 5) ||
+      (productStockFilter === 'low_stock' && (p.inventory?.available ?? 0) > 0 && (p.inventory?.available ?? 0) <= 5) ||
+      (productStockFilter === 'out_of_stock' && (p.inventory?.available ?? 0) <= 0);
+
+    return matchesSearch && matchesCat && matchesBrand && matchesStatus && matchesStock;
   });
+
+  const totalFilteredProducts = filteredProducts.length;
+  const totalProductPages = Math.max(1, Math.ceil(totalFilteredProducts / productPageSize));
+  const validProductPage = Math.min(Math.max(1, productPage), totalProductPages);
+  const paginatedProducts = filteredProducts.slice((validProductPage - 1) * productPageSize, validProductPage * productPageSize);
 
   // Dashboard Overview: Real Orders & Revenue Metrics
   const pendingOrders = orders.filter(o => o.status === 'pending');
@@ -1704,116 +1785,323 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 </div>
               </div>
 
-              {/* Product Search & Category Filter Toolbar */}
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <div className="relative flex-1 w-full">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    type="text"
-                    value={productSearchQuery}
-                    onChange={e => setProductSearchQuery(e.target.value)}
-                    placeholder="Search catalog by product name, SKU, or model number..."
-                    className="w-full bg-slate-950 border border-slate-800 text-xs pl-9 pr-8 py-2 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#F15A24]"
-                  />
-                  {productSearchQuery && (
+              {/* Multi-Facet Filter Toolbar */}
+              <div className="space-y-3">
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                  <div className="relative flex-1 w-full">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                      type="text"
+                      value={productSearchQuery}
+                      onChange={e => {
+                        setProductSearchQuery(e.target.value);
+                        setProductPage(1);
+                      }}
+                      placeholder="Search catalog by product name, SKU, model number, or brand..."
+                      className="w-full bg-slate-950 border border-slate-800 text-xs pl-9 pr-8 py-2 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#F15A24]"
+                    />
+                    {productSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProductSearchQuery('');
+                          setProductPage(1);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full md:w-auto">
+                    <select
+                      value={productCategoryFilter}
+                      onChange={e => {
+                        setProductCategoryFilter(e.target.value);
+                        setProductPage(1);
+                      }}
+                      className="bg-slate-950 border border-slate-800 text-xs px-2.5 py-2 rounded-xl text-slate-300 focus:outline-none focus:border-[#F15A24]"
+                    >
+                      <option value="">All Categories ({categories.length})</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={productBrandFilter}
+                      onChange={e => {
+                        setProductBrandFilter(e.target.value);
+                        setProductPage(1);
+                      }}
+                      className="bg-slate-950 border border-slate-800 text-xs px-2.5 py-2 rounded-xl text-slate-300 focus:outline-none focus:border-[#F15A24]"
+                    >
+                      <option value="">All Brands ({brands.length})</option>
+                      {brands.map(b => (
+                        <option key={b.id} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={productStatusFilter}
+                      onChange={e => {
+                        setProductStatusFilter(e.target.value);
+                        setProductPage(1);
+                      }}
+                      className="bg-slate-950 border border-slate-800 text-xs px-2.5 py-2 rounded-xl text-slate-300 focus:outline-none focus:border-[#F15A24]"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="active">Active (Published)</option>
+                      <option value="draft">Draft</option>
+                      <option value="archived">Archived</option>
+                    </select>
+
+                    <select
+                      value={productStockFilter}
+                      onChange={e => {
+                        setProductStockFilter(e.target.value);
+                        setProductPage(1);
+                      }}
+                      className="bg-slate-950 border border-slate-800 text-xs px-2.5 py-2 rounded-xl text-slate-300 focus:outline-none focus:border-[#F15A24]"
+                    >
+                      <option value="">All Stock</option>
+                      <option value="in_stock">In Stock (&gt;5)</option>
+                      <option value="low_stock">Low Stock (1–5)</option>
+                      <option value="out_of_stock">Out of Stock (0)</option>
+                    </select>
+                  </div>
+
+                  {(productSearchQuery || productCategoryFilter || productBrandFilter || productStatusFilter || productStockFilter) && (
                     <button
                       type="button"
-                      onClick={() => setProductSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                      onClick={() => {
+                        setProductSearchQuery('');
+                        setProductCategoryFilter('');
+                        setProductBrandFilter('');
+                        setProductStatusFilter('');
+                        setProductStockFilter('');
+                        setProductPage(1);
+                      }}
+                      className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 rounded hover:bg-rose-500/10 flex items-center gap-1 shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />
+                      <span>Clear Filters</span>
                     </button>
                   )}
                 </div>
-
-                <div className="w-full sm:w-64">
-                  <select
-                    value={productCategoryFilter}
-                    onChange={e => setProductCategoryFilter(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-xs px-3 py-2 rounded-xl text-slate-300 focus:outline-none focus:border-[#F15A24]"
-                  >
-                    <option value="">All Categories ({products.length})</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
-              <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-900/60 text-slate-400 font-bold uppercase">
-                    <tr>
-                      <th className="p-3.5">Product</th>
-                      <th className="p-3.5">Model / SKU</th>
-                      <th className="p-3.5">Category</th>
-                      <th className="p-3.5">Selling Price</th>
-                      <th className="p-3.5">Status</th>
-                      <th className="p-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800 text-slate-300">
-                    {filteredProducts.length === 0 ? (
+              {/* Complete Products Table */}
+              <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-slate-900/70 text-slate-400 font-bold uppercase tracking-wider">
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-slate-500">
-                          <Package className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
-                          <p className="text-sm font-semibold text-slate-400">No matching products found</p>
-                          <p className="text-xs text-slate-500 mt-1">Try adjusting your search query or category filter.</p>
-                        </td>
+                        <th className="p-3.5">Product</th>
+                        <th className="p-3.5">Model / SKU</th>
+                        <th className="p-3.5">Category</th>
+                        <th className="p-3.5">Pricing</th>
+                        <th className="p-3.5">Stock</th>
+                        <th className="p-3.5">Status & Updated</th>
+                        <th className="p-3.5 text-right">Actions</th>
                       </tr>
-                    ) : (
-                      filteredProducts.map(p => (
-                      <tr key={p.id} className="hover:bg-slate-900/40">
-                        <td className="p-3.5 font-bold text-white flex items-center gap-2">
-                          <img src={p.primaryImage} alt="" className="w-7 h-7 object-cover rounded bg-slate-800" />
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span>{p.name}</span>
-                            {isPlaceholderImage(p.primaryImage) && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-normal bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                Placeholder image
-                              </span>
-                            )}
-                            {(!p.specs || Object.keys(p.specs).length === 0) &&
-                             (!p.specifications || Object.keys(p.specifications).length === 0) &&
-                             (!p.keyFeatures || p.keyFeatures.length === 0) && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-normal bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                                No highlights
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3.5 font-mono text-slate-400">{p.modelNumber}</td>
-                        <td className="p-3.5">{p.category}</td>
-                        <td className="p-3.5 font-bold text-[#F15A24]">
-                          {p.pricing?.regularPrice ? `৳${p.pricing.regularPrice.toLocaleString()}` : 'Quote Request'}
-                        </td>
-                        <td className="p-3.5">
-                          <Badge variant={p.status === 'active' ? 'success' : 'gray'}>{p.status}</Badge>
-                        </td>
-                        <td className="p-3.5 text-right space-x-2">
-                          <button
-                            onClick={() => onNavigate('product', p.id)}
-                            className="text-xs text-slate-400 hover:text-white"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleOpenProductEdit(p)}
-                            className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(p.id, p.name)}
-                            className="text-xs text-rose-400 hover:text-rose-300"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    )))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800 text-slate-300">
+                      {paginatedProducts.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-10 text-center text-slate-500">
+                            <Package className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+                            <p className="text-sm font-semibold text-slate-400">No matching products found</p>
+                            <p className="text-xs text-slate-500 mt-1">Try adjusting your search query or filter criteria.</p>
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedProducts.map(p => {
+                          const stockQty = p.inventory?.available ?? 0;
+                          const hasSale = p.pricing?.salePrice && p.pricing.salePrice > 0;
+                          return (
+                            <tr key={p.id} className="hover:bg-slate-900/40 transition-colors">
+                              {/* 1. Product Name, Thumbnail, Brand & Badges */}
+                              <td className="p-3.5 text-white max-w-[280px]">
+                                <div className="flex items-start gap-2.5">
+                                  <img
+                                    src={p.primaryImage || '/images/hero/hikvision-bullet.png'}
+                                    alt=""
+                                    className="w-9 h-9 object-cover rounded-lg bg-slate-900 border border-slate-800 shrink-0 mt-0.5"
+                                  />
+                                  <div className="min-w-0">
+                                    <div className="font-bold text-white leading-tight line-clamp-1">{p.name}</div>
+                                    <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                      {p.brand && (
+                                        <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                                          {p.brand}
+                                        </span>
+                                      )}
+                                      {isPlaceholderImage(p.primaryImage) && (
+                                        <span className="px-1.5 py-0.2 rounded text-[10px] font-normal bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                          Placeholder
+                                        </span>
+                                      )}
+                                      {(!p.specs || Object.keys(p.specs).length === 0) &&
+                                       (!p.specifications || Object.keys(p.specifications).length === 0) &&
+                                       (!p.keyFeatures || p.keyFeatures.length === 0) && (
+                                        <span className="px-1.5 py-0.2 rounded text-[10px] font-normal bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                          No specs
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* 2. Model, SKU & Barcode */}
+                              <td className="p-3.5">
+                                <div className="font-mono text-white text-xs font-semibold">{p.modelNumber}</div>
+                                <div className="font-mono text-slate-400 text-[11px] mt-0.5">SKU: {p.sku || '—'}</div>
+                                {p.barcode && (
+                                  <div className="font-mono text-slate-500 text-[10px]">UPC: {p.barcode}</div>
+                                )}
+                              </td>
+
+                              {/* 3. Category & Subcategory */}
+                              <td className="p-3.5">
+                                <div className="text-slate-300 font-medium">{p.category || '—'}</div>
+                                {(p.subcategory || p.subcategoryId) && (
+                                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] bg-slate-900 border border-slate-800 text-slate-400">
+                                    {p.subcategory || p.subcategoryId}
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* 4. Pricing (Regular Price & Highlighted Sale Price) */}
+                              <td className="p-3.5">
+                                {hasSale ? (
+                                  <div>
+                                    <div className="font-bold text-emerald-400 text-xs">
+                                      ৳{p.pricing?.salePrice?.toLocaleString()}
+                                    </div>
+                                    {p.pricing?.regularPrice && (
+                                      <div className="text-[11px] text-slate-500 line-through">
+                                        ৳{p.pricing.regularPrice.toLocaleString()}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : p.pricing?.regularPrice ? (
+                                  <div className="font-bold text-[#F15A24] text-xs">
+                                    ৳{p.pricing.regularPrice.toLocaleString()}
+                                  </div>
+                                ) : (
+                                  <div className="text-slate-400 italic text-[11px]">Quote Request</div>
+                                )}
+                              </td>
+
+                              {/* 5. Stock / Availability Badge */}
+                              <td className="p-3.5">
+                                {stockQty <= 0 || p.inventory?.status === 'out_of_stock' ? (
+                                  <Badge variant="danger">Out of stock (0)</Badge>
+                                ) : stockQty <= 5 || p.inventory?.status === 'low_stock' ? (
+                                  <Badge variant="warning">Low stock ({stockQty})</Badge>
+                                ) : (
+                                  <Badge variant="success">In stock ({stockQty})</Badge>
+                                )}
+                              </td>
+
+                              {/* 6. Publication Status & Timestamp */}
+                              <td className="p-3.5">
+                                <Badge variant={p.status === 'active' ? 'success' : p.status === 'draft' ? 'warning' : 'gray'}>
+                                  {p.status || 'active'}
+                                </Badge>
+                                {p.websiteVisible === false && (
+                                  <div className="text-[10px] text-amber-400/90 font-medium mt-0.5">Hidden on Web</div>
+                                )}
+                                <div className="text-[10px] text-slate-500 mt-1 font-mono">
+                                  {p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : (p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—')}
+                                </div>
+                              </td>
+
+                              {/* 7. Action Controls */}
+                              <td className="p-3.5 text-right space-x-2">
+                                <button
+                                  onClick={() => onNavigate('product', p.id)}
+                                  className="text-xs text-slate-400 hover:text-white transition-colors"
+                                  title="View on Storefront"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  onClick={() => handleOpenProductEdit(p)}
+                                  className="text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+                                  title="Edit Product Details"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProduct(p.id, p.name)}
+                                  className="text-xs text-rose-400 hover:text-rose-300 transition-colors"
+                                  title="Delete or Archive Product"
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="bg-slate-900/60 px-4 py-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Showing {totalFilteredProducts === 0 ? 0 : (validProductPage - 1) * productPageSize + 1}–{Math.min(validProductPage * productPageSize, totalFilteredProducts)} of {totalFilteredProducts} products
+                      {totalFilteredProducts !== displayedProductTotal && (
+                        <span className="text-slate-500 ml-1">({displayedProductTotal} total in database)</span>
+                      )}
+                    </span>
+                    <span className="text-slate-600">|</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-500">Per page:</span>
+                      <select
+                        value={productPageSize}
+                        onChange={e => {
+                          setProductPageSize(Number(e.target.value));
+                          setProductPage(1);
+                        }}
+                        className="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-xs text-slate-300 focus:outline-none"
+                      >
+                        <option value={10}>10</option>
+                        <option value={15}>15</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setProductPage(prev => Math.max(1, prev - 1))}
+                      disabled={validProductPage <= 1}
+                      className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span>Previous</span>
+                    </button>
+                    <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-white font-semibold">
+                      {validProductPage} / {totalProductPages}
+                    </span>
+                    <button
+                      onClick={() => setProductPage(prev => Math.min(totalProductPages, prev + 1))}
+                      disabled={validProductPage >= totalProductPages}
+                      className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <span>Next</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -3845,19 +4133,30 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   </label>
                 </div>
 
-                <div className="pt-4 border-t border-slate-200 flex justify-between">
+                <div className="pt-4 border-t border-slate-200 flex flex-wrap gap-2 justify-between items-center">
                   <Button variant="ghost" size="sm" onClick={() => { setResearchResult(null); setManualReviewConfirmed(false); }}>
                     Discard Research
                   </Button>
-                  <Button
-                    size="md"
-                    onClick={handleSaveReviewedProduct}
-                    disabled={!manualReviewConfirmed}
-                    className={!manualReviewConfirmed ? 'opacity-50 cursor-not-allowed' : ''}
-                  >
-                    <Check className="w-4 h-4 mr-1.5" />
-                    <span>Approve & Save to Catalog</span>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleOpenInEditorFromResearch}
+                      className="border-slate-300 text-slate-700 hover:bg-slate-100"
+                    >
+                      <Edit3 className="w-4 h-4 mr-1.5 text-amber-500" />
+                      <span>Review in Product Editor (Draft)</span>
+                    </Button>
+                    <Button
+                      size="md"
+                      onClick={handleSaveReviewedProduct}
+                      disabled={!manualReviewConfirmed}
+                      className={!manualReviewConfirmed ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
+                      <Check className="w-4 h-4 mr-1.5" />
+                      <span>Approve & Save as Draft</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
