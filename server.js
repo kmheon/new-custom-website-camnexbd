@@ -1295,6 +1295,11 @@ app.get('/api/admin/products/export', requireAdmin, (req, res) => {
       const p = JSON.parse(r.data_json);
       p.isArchived = Boolean(r.is_archived);
       return p;
+    }).filter(p => {
+      if (p.isTest || p.is_test || p.is_demo) return false;
+      const sku = (p.sku || '').toUpperCase();
+      if (sku.startsWith('TEST-') || sku.startsWith('NEG-') || (p.name || '').toLowerCase().includes('test product')) return false;
+      return true;
     });
 
     if (format === 'csv') {
@@ -1330,6 +1335,67 @@ app.get('/api/admin/products/export', requireAdmin, (req, res) => {
     }
 
     res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CSV / JSON Orders Export (with strict test data exclusion)
+app.get('/api/admin/orders/export', requireAdmin, (req, res) => {
+  try {
+    const format = (req.query.format || 'json').toLowerCase();
+    const rows = db.prepare('SELECT data_json FROM orders ORDER BY created_at DESC').all();
+    const orders = rows.map(r => JSON.parse(r.data_json)).filter(o => {
+      if (o.isTest || o.is_test) return false;
+      const name = (o.customerName || '').toLowerCase();
+      const phone = (o.customerPhone || '').replace(/\D/g, '');
+      const email = (o.customerEmail || '').toLowerCase();
+      if (
+        name.includes('test client') ||
+        name.includes('phase 2') ||
+        name.includes('test buyer') ||
+        name.includes('victim') ||
+        phone.endsWith('1700000000') ||
+        phone.endsWith('1711122233') ||
+        email.includes('test@') ||
+        email.includes('testbuyer') ||
+        email.includes('victim@')
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    if (format === 'csv') {
+      const headers = ['Order Number', 'Date', 'Customer Name', 'Phone', 'Email', 'Total (BDT)', 'Payment Method', 'Payment Status', 'Order Status'];
+      const csvRows = [headers.join(',')];
+
+      for (const o of orders) {
+        const escape = (val) => {
+          if (val == null) return '""';
+          const str = String(val).replace(/"/g, '""');
+          return `"${str}"`;
+        };
+
+        csvRows.push([
+          escape(o.orderNumber),
+          escape(o.createdAt),
+          escape(o.customerName),
+          escape(o.customerPhone),
+          escape(o.customerEmail),
+          escape(o.total),
+          escape(o.paymentMethod),
+          escape(o.paymentStatus),
+          escape(o.status)
+        ].join(','));
+      }
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="camnex_orders_${Date.now()}.csv"`);
+      return res.send(csvRows.join('\r\n'));
+    }
+
+    res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -102,21 +102,42 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const isTestOrder = (o: Order) => {
     if ((o as any).isTest || (o as any).is_test) return true;
     const name = (o.customerName || '').toLowerCase();
-    const phone = (o.customerPhone || '').trim();
+    const phone = (o.customerPhone || '').replace(/\D/g, '');
     const email = (o.customerEmail || '').toLowerCase();
-    return name.includes('test client') || name.includes('phase 2') || phone === '+8801700000000' || email.includes('test@');
+    return (
+      name.includes('test client') ||
+      name.includes('phase 2') ||
+      name.includes('test buyer') ||
+      name.includes('victim') ||
+      phone.endsWith('1700000000') ||
+      phone.endsWith('1711122233') ||
+      email.includes('test@') ||
+      email.includes('testbuyer') ||
+      email.includes('victim@')
+    );
   };
 
   const isTestQuote = (q: QuoteRequest) => {
-    if ((q as any).isTest) return true;
+    if ((q as any).isTest || (q as any).is_test) return true;
     const name = (q.customerName || '').toLowerCase();
-    return name.includes('test client') || name.includes('phase 2 test');
+    const phone = (q.customerPhone || (q as any).phone || '').replace(/\D/g, '');
+    const email = (q.customerEmail || (q as any).email || '').toLowerCase();
+    return (
+      name.includes('test client') ||
+      name.includes('phase 2') ||
+      phone.endsWith('1700000000') ||
+      email.includes('test@')
+    );
   };
 
   const isTestProduct = (p: Product) => {
-    if ((p as any).isTest) return true;
+    if ((p as any).isTest || (p as any).is_test || (p as any).isDemo || (p as any).is_demo) return true;
     const sku = (p.sku || '').toUpperCase();
-    return sku.startsWith('TEST-') || sku.startsWith('NEG-');
+    return (
+      sku.startsWith('TEST-') ||
+      sku.startsWith('NEG-') ||
+      (p.name || '').toLowerCase().includes('test product')
+    );
   };
 
   const operationalProducts = useMemo(() => {
@@ -1006,7 +1027,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const catalogReadinessScore = displayedProductTotal > 0 ? Math.round((fullyReadyProducts.length / displayedProductTotal) * 100) : 100;
 
   // Multi-facet Filtered Products for Product Management Table
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = operationalProducts.filter(p => {
     const q = productSearchQuery.trim().toLowerCase();
     const matchesSearch = !q ||
       (p.name && p.name.toLowerCase().includes(q)) ||
@@ -2686,9 +2707,19 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           {/* 6. ORDERS MODULE */}
           {activeModule === 'orders' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-bold font-heading text-white">Customer Orders & Timeline Control</h2>
-                <p className="text-xs text-slate-400">Manage dispatch and update status timeline visible to clients.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-bold font-heading text-white">Customer Orders & Timeline Control</h2>
+                  <p className="text-xs text-slate-400">Manage dispatch and update status timeline visible to clients.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.open('/api/admin/orders/export?format=csv', '_blank')}
+                  className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors self-start sm:self-auto cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5 text-primary-400" />
+                  <span>Export CSV</span>
+                </button>
               </div>
 
               <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
@@ -2705,7 +2736,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800 text-slate-300">
-                    {orders.map(o => (
+                    {operationalOrders.map(o => (
                       <tr key={o.id} className="hover:bg-slate-900/40">
                         <td className="p-3.5 font-bold text-white font-mono">{o.orderNumber}</td>
                         <td className="p-3.5">
