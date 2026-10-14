@@ -22,6 +22,7 @@ import {
   HeroSlide, HeroFeatureHighlight
 } from '../types';
 import { ProductEditModal } from '../components/admin/ProductEditModal';
+import { PackageEditModal } from '../components/admin/PackageEditModal';
 import { PromoTileEditor } from '../components/admin/PromoTileEditor';
 import { CustomersModule } from '../components/admin/CustomersModule';
 import { SpecTemplatesModule } from '../components/admin/SpecTemplatesModule';
@@ -2564,21 +2565,26 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       <div className="pt-2 border-t border-slate-800 space-y-1 text-xs text-slate-300">
                         <div className="flex justify-between">
                           <span className="text-slate-500">Camera Model:</span>
-                          <span className="font-mono text-slate-200">{p.cameraModel}</span>
+                          <span className="font-mono text-slate-200">{p.cameraModel || '—'}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">DVR Unit:</span>
-                          <span className="font-mono text-slate-200">{p.dvrModel}</span>
+                          <span className="font-mono text-slate-200">{p.dvrModel || '—'}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">Base Price:</span>
-                          <span className="font-bold text-[#F15A24]">৳{p.basePrice?.toLocaleString ? p.basePrice.toLocaleString() : (p.basePrice ?? 'Quote')}</span>
+                          <span className="font-bold text-[#F15A24]">
+                            {p.isQuoteOnly ? 'Quotation Required' : (p.basePrice != null ? `৳${p.basePrice.toLocaleString()}` : 'Quote')}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Inclusions count */}
-                      <div className="pt-2 text-[11px] text-slate-400">
-                        Includes: <strong className="text-slate-200">{p.inclusions?.length || 0} turnkey hardware components</strong>
+                      {/* Inclusions and BOM counts */}
+                      <div className="pt-2 text-[11px] text-slate-400 flex items-center justify-between">
+                        <span>Includes: <strong className="text-slate-200">{p.inclusions?.length || 0} hardware items</strong></span>
+                        <span className="font-mono text-[10px] text-orange-400 bg-orange-950/40 px-1.5 py-0.5 rounded border border-orange-900/50">
+                          {p.components?.length || 0} BOM items
+                        </span>
                       </div>
                     </div>
 
@@ -5815,251 +5821,20 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
       {/* CCTV PACKAGE EDITOR MODAL */}
       {packageModalOpen && editingPackage && (
-        <Modal
+        <PackageEditModal
           isOpen={packageModalOpen}
           onClose={() => {
             setPackageModalOpen(false);
             setEditingPackage(null);
           }}
-          title={editingPackage.id ? 'Edit Turnkey CCTV Package' : 'Create CCTV Package'}
-          maxWidth="max-w-2xl"
-        >
-          <div className="space-y-4 text-slate-900 max-h-[80vh] overflow-y-auto pr-1">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Package Name *</label>
-              <input
-                type="text"
-                value={editingPackage.name || ''}
-                onChange={(e) => setEditingPackage({
-                  ...editingPackage,
-                  name: e.target.value,
-                  slug: editingPackage.id ? editingPackage.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                })}
-                placeholder="e.g. 2MP Turbo HD Full Turnkey Package"
-                className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg font-bold"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">System Type *</label>
-                <select
-                  value={editingPackage.systemTypeId || ''}
-                  onChange={(e) => {
-                    const stId = e.target.value;
-                    const matched = packageSystemTypes.find(st => st.id === stId);
-                    setEditingPackage({
-                      ...editingPackage,
-                      systemTypeId: stId,
-                      systemTypeSlug: matched?.slug || editingPackage.systemTypeSlug,
-                      systemTypeName: matched?.name || editingPackage.systemTypeName
-                    });
-                  }}
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold text-slate-800"
-                >
-                  <option value="">-- Choose System Type --</option>
-                  {packageSystemTypes.map(st => (
-                    <option key={st.id} value={st.id}>{st.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Night View (Series)</label>
-                <select
-                  value={editingPackage.seriesId || editingPackage.nightViewId || ''}
-                  onChange={(e) => {
-                    const sid = e.target.value;
-                    const matched = packageSeries.find(s => s.id === sid);
-                    setEditingPackage({
-                      ...editingPackage,
-                      seriesId: sid,
-                      seriesName: matched?.name || editingPackage.seriesName,
-                      nightViewId: sid,
-                      nightViewName: matched?.name || editingPackage.nightViewName
-                    });
-                  }}
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
-                >
-                  <option value="">-- Choose Night View --</option>
-                  {packageSeries.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Technology Label (shown under the title)</label>
-              <input
-                type="text"
-                value={editingPackage.technologyLabel || ''}
-                onChange={(e) => setEditingPackage({ ...editingPackage, technologyLabel: e.target.value })}
-                placeholder="e.g. Hikvision ColorVu, Smart Dual Light"
-                className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Tag ribbon (optional, manual only)</label>
-              <input
-                type="text"
-                list="package-tag-suggestions"
-                value={editingPackage.badge || ''}
-                onChange={(e) => setEditingPackage({ ...editingPackage, badge: e.target.value })}
-                placeholder="Leave empty for no ribbon"
-                className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
-              />
-              <datalist id="package-tag-suggestions">
-                <option value="Most Popular" />
-                <option value="Affordable" />
-                <option value="Top Tier" />
-                <option value="Best Value" />
-              </datalist>
-              <p className="text-[10px] text-slate-500 mt-1">Shown as a small ribbon on the top-left of the package image. Never set automatically.</p>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!editingPackage.featuredOnHomepage}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, featuredOnHomepage: e.target.checked })}
-                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4 cursor-pointer"
-                />
-                <span className="text-xs font-bold text-slate-800">Featured on homepage</span>
-              </label>
-              <p className="text-[10px] text-slate-500 ml-6 mt-0.5">
-                Takes top priority in the homepage default "All" package mix.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Base Camera Count</label>
-                <select
-                  value={editingPackage.cameraCount || 4}
-                  onChange={(e) => {
-                    const c = parseInt(e.target.value) || 4;
-                    setEditingPackage({
-                      ...editingPackage,
-                      cameraCount: c,
-                      cameraCountsSupported: [c],
-                      isQuoteOnly: c >= 32 ? true : editingPackage.isQuoteOnly
-                    });
-                  }}
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold"
-                >
-                  {[2, 4, 8, 16, 32, 64].map(num => (
-                    <option key={num} value={num}>{num} Cameras</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2 pt-5">
-                <input
-                  type="checkbox"
-                  id="pkgQuoteOnly"
-                  checked={!!editingPackage.isQuoteOnly}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, isQuoteOnly: e.target.checked })}
-                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4 cursor-pointer"
-                />
-                <label htmlFor="pkgQuoteOnly" className="text-xs font-bold text-slate-800 cursor-pointer">
-                  Quote Only (Request Quotation)
-                </label>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Camera Resolution *</label>
-                <input
-                  type="text"
-                  value={editingPackage.cameraResolution || ''}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, cameraResolution: e.target.value })}
-                  placeholder="e.g. 2MP (1080p)"
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Base Price (BDT) *</label>
-                <input
-                  type="number"
-                  value={editingPackage.basePrice || 15000}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, basePrice: parseInt(e.target.value) || 0 })}
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold text-[#F15A24]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Default Camera Model</label>
-                <input
-                  type="text"
-                  value={editingPackage.cameraModel || ''}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, cameraModel: e.target.value })}
-                  placeholder="e.g. Hikvision DS-2CE16D0T-IRPF"
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Default DVR Unit</label>
-                <input
-                  type="text"
-                  value={editingPackage.dvrModel || ''}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, dvrModel: e.target.value })}
-                  placeholder="e.g. Hikvision DS-7104HQHI-K1"
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Package Description</label>
-              <textarea
-                rows={2}
-                value={editingPackage.description || ''}
-                onChange={(e) => setEditingPackage({ ...editingPackage, description: e.target.value })}
-                placeholder="Turnkey description explaining target home / office use..."
-                className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Turnkey Inclusions (one per line)</label>
-              <textarea
-                rows={4}
-                value={(editingPackage.inclusions || []).join('\n')}
-                onChange={(e) => setEditingPackage({
-                  ...editingPackage,
-                  inclusions: e.target.value.split('\n').filter(Boolean)
-                })}
-                placeholder="Hikvision Cameras&#10;Turbo HD DVR&#10;1TB Surveillance HDD&#10;Cat6 Cable..."
-                className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono"
-              />
-            </div>
-
-            <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setPackageModalOpen(false);
-                  setEditingPackage(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button size="md" onClick={handleSavePackage}>
-                <Check className="w-4 h-4 mr-1.5" />
-                <span>Save Package</span>
-              </Button>
-            </div>
-          </div>
-        </Modal>
+          pkg={editingPackage}
+          packageSystemTypes={packageSystemTypes}
+          packageSeries={packageSeries}
+          allProducts={products}
+          onSaveSuccess={() => {
+            packageService.getPackages().then(setPackages);
+          }}
+        />
       )}
 
       {/* PRODUCT CREATE & EDIT MODAL */}

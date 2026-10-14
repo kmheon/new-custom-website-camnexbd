@@ -213,6 +213,18 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Authorized Partner Verification**: Configurable warranty partner badges (`showBadge`, `badgeText`) rendered alongside hardware model cards.
 - **Brand SEO**: Per-brand metadata resolving at `/brand/:slug`.
 
+---
+
+## 10. Turnkey CCTV Packages & Estimator Rules Architecture
+
+### Bill of Materials (BOM) Dynamic Pricing Engine
+- **Hardware Component Mapping**: Each turnkey package (`SecurityPackage`) links individual catalog items (`components`) with specific role requirements (`camera`, `recorder`, `storage`, `cable`, `power`, `connectors`).
+- **Real-Time Catalog Price Propagation**: The server calculates dynamic package totals from catalog unit prices. When individual component prices are updated in the product catalog, package pricing updates automatically.
+- **Form Factor Dynamic Substitution**: Storefront bullet vs. dome customer selections automatically swap SKU lines (`prod-hik-irpf-2mp` vs `prod-hik-dome-2mp`) with zero data duplication.
+- **Quotation Mode Guard (`isQuoteOnly`)**: Large capacity installations (32 and 64 cameras) or setups with unpriced engineering components cleanly toggle checkout into "Request Quotation" mode to prevent unpriced transactions while capturing structured leads.
+- **Scaling Formulas (`PackageComponentRule`)**: Configurable scaling rules define multiplier formulas (`per_camera`, `fixed`, `lookup_camera_count`) for cabling, storage HDD tiering, and power supply units.
+
+
 
 
 
