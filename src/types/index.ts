@@ -65,7 +65,7 @@ export interface SpecTemplate {
   fields: SpecFieldDefinition[];
 }
 
-export type ProductSpecValues = Record<string, string | number | boolean>;
+export type ProductSpecValues = Record<string, any>;
 
 // ----------------------------------------------------------------------------
 // Product & Catalog Models
@@ -136,16 +136,16 @@ export interface Category {
 }
 
 export interface ProductPrice {
-  regularPrice?: number;   // In BDT (৳) - if undefined, "Request quotation"
-  salePrice?: number;      // Optional promotional price
-  wholesalePrice?: number; // Phase 2 B2B
-  currency: 'BDT';
+  regularPrice?: number | null;   // In BDT (৳) - if undefined, "Request quotation"
+  salePrice?: number | null;      // Optional promotional price
+  wholesalePrice?: number | null; // Phase 2 B2B
+  currency?: 'BDT' | string;
 }
 
 export interface ProductInventory {
   available: number;
   reserved?: number;
-  status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'pre_order' | 'request_quote';
+  status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'pre_order' | 'request_quote';
   warehouseId?: string;
   trackQuantity?: boolean;
   lowStockThreshold?: number;
@@ -187,6 +187,7 @@ export interface Product {
   status: 'active' | 'draft' | 'archived';
   websiteVisible: boolean;
   posAvailable: boolean;
+  slug?: string;
   images: string[];
   gallery?: string[];
   primaryImage: string;
@@ -282,8 +283,10 @@ export interface SecurityPackage {
   description: string;
   image?: string;
   systemTypeId?: string;
+  systemType?: string;
   systemTypeSlug?: string; // 'ip' | 'analogue' | 'wireless'
   systemTypeName?: string;
+  order?: number;
   seriesId?: string; // Night view series id (e.g. 'series-ir', 'series-hybrid', 'series-color', 'series-enterprise')
   seriesName?: string;
   nightViewId?: string;
@@ -311,7 +314,7 @@ export interface SecurityPackage {
   quotationRequired?: boolean;
   rules?: PackageComponentRule[];
   pricingRules?: Record<string, any>;
-  basePrice?: number;
+  basePrice?: number | null;
   isActive?: boolean;
   isFeatured?: boolean;
   isDemo?: boolean;
@@ -497,6 +500,7 @@ export interface SiteSettings {
   sampleDataBanner: boolean;
   showSampleContent?: boolean;
   showDemoTags?: boolean; // Toggle "Show demo tags" on sample cards (default true)
+  allSystemTypeDescription?: string;
   announcementBar?: {
     enabled: boolean;
     text: string;

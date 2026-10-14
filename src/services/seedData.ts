@@ -864,7 +864,7 @@ export const INITIAL_CATEGORIES: Category[] = [
   }
 ];
 
-export const INITIAL_PRODUCTS: Product[] = [
+export const INITIAL_PRODUCTS: Array<Product | any> = [
   {
     "id": "prod-hik-irpf-2mp",
     "name": "Hikvision 2MP Audio Fixed Mini Bullet Camera",

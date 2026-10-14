@@ -61,7 +61,9 @@ export function generatePackageSummary(pkg: SecurityPackage): string {
     const cableMatch = (pkg.inclusions || []).find(i => /\b\d+\s*m\b/i.test(i));
     if (cableMatch) {
       const match = cableMatch.match(/\b\d+\s*m\b/i);
-      parts.push(`${match[0].toLowerCase()} cable`);
+      if (match) {
+        parts.push(`${match[0].toLowerCase()} cable`);
+      }
     } else if (pkg.cameraCount) {
       parts.push(`${pkg.cameraCount * 10} m cable`);
     }

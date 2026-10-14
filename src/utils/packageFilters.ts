@@ -529,7 +529,7 @@ export function availableOptions(
 
   // 3. Night views (clean series names, no brand jargon)
   const nightViews: AvailableOptions['nightViews'] = [
-    { value: 'all', slug: 'all', label: 'All', count: badgeCounts.nightViews['all'] || packages.length, disabled: false }
+    { slug: 'all', label: 'All', count: badgeCounts.nightViews['all'] || packages.length, disabled: false }
   ];
   seriesList.forEach(series => {
     const count = badgeCounts.nightViews[series.slug] || 0;
