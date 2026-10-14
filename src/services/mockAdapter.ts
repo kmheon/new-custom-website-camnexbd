@@ -242,6 +242,97 @@ export class MockProductService implements IProductService {
     return this.updateProduct(id, { status: 'active', websiteVisible: true });
   }
 
+  async bulkAdjustPrices(payload: import('../types').BulkPriceAdjustmentPayload): Promise<import('../types').BulkOperationResult> {
+    const list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    let count = 0;
+    list.forEach(p => {
+      if (payload.productIds.includes(p.id)) {
+        const field = payload.targetField || 'regularPrice';
+        const cur = p.pricing[field] ?? p.pricing.regularPrice ?? 0;
+        let next = cur;
+        if (payload.mode === 'percent_increase') next = cur * (1 + payload.amount / 100);
+        else if (payload.mode === 'percent_decrease') next = cur * (1 - payload.amount / 100);
+        else if (payload.mode === 'fixed_increase') next = cur + payload.amount;
+        else if (payload.mode === 'fixed_decrease') next = Math.max(0, cur - payload.amount);
+        else if (payload.mode === 'set_fixed') next = payload.amount;
+        if (payload.roundToNearest && payload.roundToNearest > 0) {
+          next = Math.round(next / payload.roundToNearest) * payload.roundToNearest;
+        }
+        p.pricing[field] = next;
+        count++;
+      }
+    });
+    setStorage(STORAGE_KEYS.PRODUCTS, list);
+    return { success: true, affectedCount: count, operationId: `mock-op-${Date.now()}` };
+  }
+
+  async bulkMoveCategory(payload: import('../types').BulkCategoryMovePayload): Promise<import('../types').BulkOperationResult> {
+    const list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    let count = 0;
+    list.forEach(p => {
+      if (payload.productIds.includes(p.id)) {
+        p.categoryId = payload.categoryId;
+        if (payload.categoryName) p.category = payload.categoryName;
+        if (payload.subcategoryId) p.subcategoryId = payload.subcategoryId;
+        if (payload.subcategoryName) p.subcategory = payload.subcategoryName;
+        count++;
+      }
+    });
+    setStorage(STORAGE_KEYS.PRODUCTS, list);
+    return { success: true, affectedCount: count, operationId: `mock-op-${Date.now()}` };
+  }
+
+  async bulkUpdateVisibility(payload: import('../types').BulkVisibilityPayload): Promise<import('../types').BulkOperationResult> {
+    const list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    let count = 0;
+    list.forEach(p => {
+      if (payload.productIds.includes(p.id)) {
+        if (payload.websiteVisible !== undefined) p.websiteVisible = payload.websiteVisible;
+        if (payload.posAvailable !== undefined) p.posAvailable = payload.posAvailable;
+        if (payload.status) p.status = payload.status;
+        count++;
+      }
+    });
+    setStorage(STORAGE_KEYS.PRODUCTS, list);
+    return { success: true, affectedCount: count, operationId: `mock-op-${Date.now()}` };
+  }
+
+  async bulkUpdateTags(payload: import('../types').BulkTagPayload): Promise<import('../types').BulkOperationResult> {
+    const list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    let count = 0;
+    list.forEach(p => {
+      if (payload.productIds.includes(p.id)) {
+        Object.assign(p, payload.tags);
+        count++;
+      }
+    });
+    setStorage(STORAGE_KEYS.PRODUCTS, list);
+    return { success: true, affectedCount: count, operationId: `mock-op-${Date.now()}` };
+  }
+
+  async bulkDeleteProducts(productIds: string[]): Promise<import('../types').BulkOperationResult> {
+    let list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    const initialLen = list.length;
+    list = list.filter(p => !productIds.includes(p.id));
+    setStorage(STORAGE_KEYS.PRODUCTS, list);
+    return { success: true, affectedCount: initialLen - list.length, operationId: `mock-op-${Date.now()}` };
+  }
+
+  async bulkArchiveProducts(productIds: string[], reason?: string): Promise<import('../types').BulkOperationResult> {
+    const list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    let count = 0;
+    list.forEach(p => {
+      if (productIds.includes(p.id)) {
+        p.status = 'archived';
+        p.websiteVisible = false;
+        if (reason) p.archiveReason = reason;
+        count++;
+      }
+    });
+    setStorage(STORAGE_KEYS.PRODUCTS, list);
+    return { success: true, affectedCount: count, operationId: `mock-op-${Date.now()}` };
+  }
+
   async getAvailableSpecFiltersForCategory(categorySlug: string): Promise<Record<string, string[]>> {
     const categories = getStorage<Category[]>(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
     const cat = categories.find(c => c.slug === categorySlug || c.id === categorySlug);

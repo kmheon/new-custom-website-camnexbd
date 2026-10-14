@@ -23,6 +23,7 @@ import {
 } from '../types';
 import { ProductEditModal } from '../components/admin/ProductEditModal';
 import { PackageEditModal } from '../components/admin/PackageEditModal';
+import { BulkToolsModal } from '../components/admin/BulkToolsModal';
 import { PromoTileEditor } from '../components/admin/PromoTileEditor';
 import { CustomersModule } from '../components/admin/CustomersModule';
 import { SpecTemplatesModule } from '../components/admin/SpecTemplatesModule';
@@ -102,6 +103,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [productStockFilter, setProductStockFilter] = useState('');
   const [productPage, setProductPage] = useState(1);
   const [productPageSize, setProductPageSize] = useState(15);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [bulkToolsModalOpen, setBulkToolsModalOpen] = useState(false);
 
   const handleOpenProductEdit = (p: Product) => {
     setEditingProduct(p);
@@ -1980,6 +1983,15 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   <p className="text-xs text-slate-400">Total {displayedProductTotal} products published or in draft</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setBulkToolsModalOpen(true)}
+                    className="border-slate-700 text-slate-300 hover:text-white"
+                  >
+                    <SlidersHorizontal className="w-4 h-4 mr-1.5 text-orange-400" />
+                    <span>Bulk Tools {selectedProductIds.length > 0 ? `(${selectedProductIds.length})` : ''}</span>
+                  </Button>
                   <Button size="sm" onClick={handleOpenProductCreate} className="bg-[#F15A24] text-white hover:bg-[#D94D1C]">
                     <Plus className="w-4 h-4 mr-1.5" />
                     <span>+ Add Product</span>
@@ -2104,6 +2116,22 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-slate-900/70 text-slate-400 font-bold uppercase tracking-wider">
                       <tr>
+                        <th className="p-3.5 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.includes(p.id))}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                const newIds = Array.from(new Set([...selectedProductIds, ...paginatedProducts.map(p => p.id)]));
+                                setSelectedProductIds(newIds);
+                              } else {
+                                const pageIds = new Set(paginatedProducts.map(p => p.id));
+                                setSelectedProductIds(selectedProductIds.filter(id => !pageIds.has(id)));
+                              }
+                            }}
+                            className="rounded border-slate-700 bg-slate-900 text-[#F15A24] focus:ring-[#F15A24] cursor-pointer"
+                          />
+                        </th>
                         <th className="p-3.5">Product</th>
                         <th className="p-3.5">Model / SKU</th>
                         <th className="p-3.5">Category</th>
@@ -2116,7 +2144,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     <tbody className="divide-y divide-slate-800 text-slate-300">
                       {paginatedProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="p-10 text-center text-slate-500">
+                          <td colSpan={8} className="p-10 text-center text-slate-500">
                             <Package className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
                             <p className="text-sm font-semibold text-slate-400">No matching products found</p>
                             <p className="text-xs text-slate-500 mt-1">Try adjusting your search query or filter criteria.</p>
@@ -2124,10 +2152,25 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         </tr>
                       ) : (
                         paginatedProducts.map(p => {
+                          const isSelected = selectedProductIds.includes(p.id);
                           const stockQty = p.inventory?.available ?? 0;
                           const hasSale = p.pricing?.salePrice && p.pricing.salePrice > 0;
                           return (
-                            <tr key={p.id} className="hover:bg-slate-900/40 transition-colors">
+                            <tr key={p.id} className={`hover:bg-slate-900/40 transition-colors ${isSelected ? 'bg-orange-950/20' : ''}`}>
+                              <td className="p-3.5 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={e => {
+                                    if (e.target.checked) {
+                                      setSelectedProductIds([...selectedProductIds, p.id]);
+                                    } else {
+                                      setSelectedProductIds(selectedProductIds.filter(id => id !== p.id));
+                                    }
+                                  }}
+                                  className="rounded border-slate-700 bg-slate-900 text-[#F15A24] focus:ring-[#F15A24] cursor-pointer"
+                                />
+                              </td>
                               {/* 1. Product Name, Thumbnail, Brand & Badges */}
                               <td className="p-3.5 text-white max-w-[280px]">
                                 <div className="flex items-start gap-2.5">
@@ -5833,6 +5876,28 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           allProducts={products}
           onSaveSuccess={() => {
             packageService.getPackages().then(setPackages);
+          }}
+        />
+      )}
+
+      {/* BULK TOOLS MODAL */}
+      {bulkToolsModalOpen && (
+        <BulkToolsModal
+          isOpen={bulkToolsModalOpen}
+          onClose={() => setBulkToolsModalOpen(false)}
+          selectedProductIds={selectedProductIds}
+          products={products}
+          categories={categories}
+          onSuccess={() => {
+            productService.getProducts({ limit: 100 }).then(res => {
+              if (res) {
+                setProducts(Array.isArray(res.items) ? res.items : (Array.isArray(res) ? res : []));
+                if (typeof res.total === 'number') {
+                  setTotalProductsCount(res.total);
+                }
+              }
+            });
+            setSelectedProductIds([]);
           }}
         />
       )}

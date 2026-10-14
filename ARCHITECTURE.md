@@ -224,6 +224,22 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Quotation Mode Guard (`isQuoteOnly`)**: Large capacity installations (32 and 64 cameras) or setups with unpriced engineering components cleanly toggle checkout into "Request Quotation" mode to prevent unpriced transactions while capturing structured leads.
 - **Scaling Formulas (`PackageComponentRule`)**: Configurable scaling rules define multiplier formulas (`per_camera`, `fixed`, `lookup_camera_count`) for cabling, storage HDD tiering, and power supply units.
 
+---
+
+## 11. Catalog Bulk Operations & CSV Importer/Exporter Architecture
+
+### Transactional Bulk Mutations
+- **Bulk Price Adjustments**: Supports percentage increases/decreases (`percent_increase`, `percent_decrease`), fixed BDT adjustments (`fixed_increase`, `fixed_decrease`), and absolute price resets (`set_fixed`) on regular, sale, or wholesale prices. Executed inside an atomic SQLite transaction with automatic commercial rounding (e.g. nearest ৳50 / ৳100).
+- **Bulk Category & Taxonomy Reassignment**: Reassigns products and synchronizes category slugs and breadcrumbs transactionally.
+- **Bulk Visibility & Status Controls**: Toggles storefront visibility (`websiteVisible`), draft/active states, and POS/ERP counter availability without corrupting nested inventory or specification fields.
+- **Audit Logging**: Every bulk batch logs an immutable audit event (`bulk_price_adjustment`, `bulk_category_move`, `bulk_archive`, `catalog_import`) recording user ID, affected row count, and parameter payloads.
+
+### Catalog CSV / JSON Import & Export
+- **CSV Catalog Stream**: Dedicated streaming export at `/api/admin/products/export?format=csv` providing escaped RFC-4180 CSV columns for external ERP/POS sync or spreadsheet editing.
+- **Dry-Run Import Validation**: Validation engine parses and checks required fields (`name`, `sku`, positive `regularPrice`) reporting exact row error diagnostics prior to any database mutation.
+- **Idempotent Upsert**: Imports upsert products by unique `sku` (`ON CONFLICT(sku) DO UPDATE`) to avoid duplicate records.
+
+
 
 
 

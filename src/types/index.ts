@@ -843,3 +843,74 @@ export interface SearchResult {
   services: Array<{ name: string; category: string; description: string; url: string }>;
 }
 
+// ----------------------------------------------------------------------------
+// Bulk Operations & Catalog Import/Export
+// ----------------------------------------------------------------------------
+export type BulkPriceMode = 'percent_increase' | 'percent_decrease' | 'fixed_increase' | 'fixed_decrease' | 'set_fixed';
+
+export interface BulkPriceAdjustmentPayload {
+  productIds: string[];
+  mode: BulkPriceMode;
+  amount: number; // percentage (e.g. 10 for 10%) or fixed BDT (e.g. 500)
+  targetField?: 'regularPrice' | 'salePrice' | 'wholesalePrice';
+  roundToNearest?: number; // e.g. 50, 100 or 1
+}
+
+export interface BulkCategoryMovePayload {
+  productIds: string[];
+  categoryId: string;
+  categoryName?: string;
+  subcategoryId?: string;
+  subcategoryName?: string;
+}
+
+export interface BulkVisibilityPayload {
+  productIds: string[];
+  websiteVisible?: boolean;
+  posAvailable?: boolean;
+  status?: 'active' | 'draft' | 'archived';
+}
+
+export interface BulkTagPayload {
+  productIds: string[];
+  tags: {
+    isFeatured?: boolean;
+    isPopular?: boolean;
+    isNewArrival?: boolean;
+    isHot?: boolean;
+    isAccessory?: boolean;
+  };
+}
+
+export interface BulkOperationResult {
+  success: boolean;
+  affectedCount: number;
+  operationId: string;
+  details?: Array<{ id: string; oldVal?: any; newVal?: any }>;
+}
+
+export interface CatalogImportRow {
+  name: string;
+  sku: string;
+  brand: string;
+  category: string;
+  subcategory?: string;
+  modelNumber?: string;
+  regularPrice: number;
+  salePrice?: number;
+  costPrice?: number;
+  availableStock?: number;
+  shortDescription?: string;
+  unit?: string;
+  barcode?: string;
+}
+
+export interface CatalogImportPreview {
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  errors: Array<{ row: number; error: string; field?: string }>;
+  rows: CatalogImportRow[];
+}
+
+

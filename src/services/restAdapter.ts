@@ -141,6 +141,48 @@ export class RestProductService implements IProductService {
     });
   }
 
+  async bulkAdjustPrices(payload: import('../types').BulkPriceAdjustmentPayload): Promise<import('../types').BulkOperationResult> {
+    return request<import('../types').BulkOperationResult>('/admin/products/bulk/prices', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async bulkMoveCategory(payload: import('../types').BulkCategoryMovePayload): Promise<import('../types').BulkOperationResult> {
+    return request<import('../types').BulkOperationResult>('/admin/products/bulk/category', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async bulkUpdateVisibility(payload: import('../types').BulkVisibilityPayload): Promise<import('../types').BulkOperationResult> {
+    return request<import('../types').BulkOperationResult>('/admin/products/bulk/visibility', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async bulkUpdateTags(payload: import('../types').BulkTagPayload): Promise<import('../types').BulkOperationResult> {
+    return request<import('../types').BulkOperationResult>('/admin/products/bulk/tags', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async bulkDeleteProducts(productIds: string[]): Promise<import('../types').BulkOperationResult> {
+    return request<import('../types').BulkOperationResult>('/admin/products/bulk/delete', {
+      method: 'POST',
+      body: JSON.stringify({ productIds })
+    });
+  }
+
+  async bulkArchiveProducts(productIds: string[], reason?: string): Promise<import('../types').BulkOperationResult> {
+    return request<import('../types').BulkOperationResult>('/admin/products/bulk/archive', {
+      method: 'POST',
+      body: JSON.stringify({ productIds, reason })
+    });
+  }
+
   async getAvailableSpecFiltersForCategory(categorySlug: string): Promise<Record<string, string[]>> {
     try {
       return await request<Record<string, string[]>>(`/products/spec-filters/${encodeURIComponent(categorySlug)}`);

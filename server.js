@@ -1042,6 +1042,422 @@ app.post('/api/products/:id/restore', requireAdmin, (req, res) => {
   }
 });
 
+// ----------------------------------------------------------------------------
+// Bulk Product Operations & Catalog CSV Import / Export
+// ----------------------------------------------------------------------------
+app.post('/api/admin/products/bulk/prices', requireAdmin, (req, res) => {
+  try {
+    const { productIds, mode, amount, targetField = 'regularPrice', roundToNearest = 1 } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ error: 'No product IDs provided' });
+    }
+    const amt = parseFloat(amount);
+    if (isNaN(amt)) {
+      return res.status(400).json({ error: 'Invalid adjustment amount' });
+    }
+
+    const opId = `bulk-price-${Date.now()}`;
+    let affected = 0;
+    const updateStmt = db.prepare('UPDATE products SET price = ?, data_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+
+    const tx = db.transaction(() => {
+      for (const id of productIds) {
+        const row = db.prepare('SELECT price, data_json FROM products WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data_json);
+        if (!data.pricing) data.pricing = {};
+
+        const curVal = data.pricing[targetField] ?? row.price ?? 0;
+        let nextVal = curVal;
+
+        if (mode === 'percent_increase') nextVal = curVal * (1 + amt / 100);
+        else if (mode === 'percent_decrease') nextVal = curVal * (1 - amt / 100);
+        else if (mode === 'fixed_increase') nextVal = curVal + amt;
+        else if (mode === 'fixed_decrease') nextVal = Math.max(0, curVal - amt);
+        else if (mode === 'set_fixed') nextVal = amt;
+
+        if (roundToNearest && roundToNearest > 0) {
+          nextVal = Math.round(nextVal / roundToNearest) * roundToNearest;
+        }
+
+        data.pricing[targetField] = nextVal;
+        const mainPrice = targetField === 'regularPrice' ? nextVal : (data.pricing.regularPrice ?? nextVal);
+
+        updateStmt.run(mainPrice, JSON.stringify(data), id);
+        affected++;
+      }
+    });
+
+    tx();
+
+    logAudit({
+      entity: 'product',
+      entityId: opId,
+      action: 'bulk_price_adjustment',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: { affectedCount: affected, mode, amount: amt, targetField }
+    });
+
+    res.json({ success: true, affectedCount: affected, operationId: opId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/products/bulk/category', requireAdmin, (req, res) => {
+  try {
+    const { productIds, categoryId, categoryName, subcategoryId, subcategoryName } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0 || !categoryId) {
+      return res.status(400).json({ error: 'productIds and categoryId are required' });
+    }
+
+    const catRow = db.prepare('SELECT name, slug FROM categories WHERE id = ?').get(categoryId);
+    const catFinalName = categoryName || (catRow ? catRow.name : '');
+    const catFinalSlug = catRow ? catRow.slug : '';
+
+    let affected = 0;
+    const updateStmt = db.prepare('UPDATE products SET category_id = ?, data_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+
+    const tx = db.transaction(() => {
+      for (const id of productIds) {
+        const row = db.prepare('SELECT data_json FROM products WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data_json);
+        data.categoryId = categoryId;
+        data.category = catFinalName;
+        data.categorySlug = catFinalSlug;
+        if (subcategoryId) {
+          data.subcategoryId = subcategoryId;
+          data.subcategory = subcategoryName || '';
+        }
+        updateStmt.run(categoryId, JSON.stringify(data), id);
+        affected++;
+      }
+    });
+
+    tx();
+
+    logAudit({
+      entity: 'product',
+      entityId: `bulk-cat-${Date.now()}`,
+      action: 'bulk_category_move',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: { affectedCount: affected, categoryId, categoryName: catFinalName }
+    });
+
+    res.json({ success: true, affectedCount: affected, operationId: `bulk-cat-${Date.now()}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/products/bulk/visibility', requireAdmin, (req, res) => {
+  try {
+    const { productIds, websiteVisible, posAvailable, status } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ error: 'No product IDs provided' });
+    }
+
+    let affected = 0;
+    const updateStmt = db.prepare('UPDATE products SET status = ?, is_active = ?, data_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+
+    const tx = db.transaction(() => {
+      for (const id of productIds) {
+        const row = db.prepare('SELECT data_json, status FROM products WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data_json);
+        if (websiteVisible !== undefined) data.websiteVisible = Boolean(websiteVisible);
+        if (posAvailable !== undefined) data.posAvailable = Boolean(posAvailable);
+        if (status) data.status = status;
+
+        const finalStatus = status || data.status || 'active';
+        const isActive = finalStatus === 'active' && data.websiteVisible !== false ? 1 : 0;
+
+        updateStmt.run(finalStatus, isActive, JSON.stringify(data), id);
+        affected++;
+      }
+    });
+
+    tx();
+
+    res.json({ success: true, affectedCount: affected, operationId: `bulk-vis-${Date.now()}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/products/bulk/tags', requireAdmin, (req, res) => {
+  try {
+    const { productIds, tags } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0 || !tags) {
+      return res.status(400).json({ error: 'productIds and tags are required' });
+    }
+
+    let affected = 0;
+    const updateStmt = db.prepare(`
+      UPDATE products SET 
+        is_featured = ?, is_popular = ?, data_json = ?, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ?
+    `);
+
+    const tx = db.transaction(() => {
+      for (const id of productIds) {
+        const row = db.prepare('SELECT data_json FROM products WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data_json);
+        Object.assign(data, tags);
+
+        const isFeatured = data.isFeatured ? 1 : 0;
+        const isPopular = data.isPopular ? 1 : 0;
+
+        updateStmt.run(isFeatured, isPopular, JSON.stringify(data), id);
+        affected++;
+      }
+    });
+
+    tx();
+
+    res.json({ success: true, affectedCount: affected, operationId: `bulk-tags-${Date.now()}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/products/bulk/archive', requireAdmin, (req, res) => {
+  try {
+    const { productIds, reason = 'Bulk archived via admin panel' } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ error: 'productIds required' });
+    }
+
+    let affected = 0;
+    const updateStmt = db.prepare(`
+      UPDATE products SET 
+        is_archived = 1, is_active = 0, status = 'archived', 
+        archived_at = CURRENT_TIMESTAMP, data_json = ?, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ?
+    `);
+
+    const tx = db.transaction(() => {
+      for (const id of productIds) {
+        const row = db.prepare('SELECT data_json FROM products WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data_json);
+        data.status = 'archived';
+        data.websiteVisible = false;
+        data.archiveReason = reason;
+
+        updateStmt.run(JSON.stringify(data), id);
+        affected++;
+      }
+    });
+
+    tx();
+
+    logAudit({
+      entity: 'product',
+      entityId: `bulk-archive-${Date.now()}`,
+      action: 'bulk_archive',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: { affectedCount: affected, reason }
+    });
+
+    res.json({ success: true, affectedCount: affected, operationId: `bulk-archive-${Date.now()}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CSV / JSON Catalog Export
+app.get('/api/admin/products/export', requireAdmin, (req, res) => {
+  try {
+    const format = (req.query.format || 'json').toLowerCase();
+    const rows = db.prepare('SELECT data_json, is_archived FROM products ORDER BY name ASC').all();
+    const products = rows.map(r => {
+      const p = JSON.parse(r.data_json);
+      p.isArchived = Boolean(r.is_archived);
+      return p;
+    });
+
+    if (format === 'csv') {
+      const headers = ['ID', 'Name', 'SKU', 'Model', 'Brand', 'Category', 'Regular Price (BDT)', 'Sale Price (BDT)', 'Cost Price', 'Stock', 'Status', 'Barcode'];
+      const csvRows = [headers.join(',')];
+
+      for (const p of products) {
+        const escape = (val) => {
+          if (val == null) return '""';
+          const str = String(val).replace(/"/g, '""');
+          return `"${str}"`;
+        };
+
+        csvRows.push([
+          escape(p.id),
+          escape(p.name),
+          escape(p.sku),
+          escape(p.modelNumber || p.model || ''),
+          escape(p.brand),
+          escape(p.category),
+          escape(p.pricing?.regularPrice ?? ''),
+          escape(p.pricing?.salePrice ?? ''),
+          escape(p.costPrice ?? p.pricing?.costPrice ?? ''),
+          escape(p.inventory?.available ?? 0),
+          escape(p.status || 'active'),
+          escape(p.barcode || '')
+        ].join(','));
+      }
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="camnex_catalog_${Date.now()}.csv"`);
+      return res.send(csvRows.join('\r\n'));
+    }
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Catalog Import Dry-run & Execute
+app.post('/api/admin/products/import', requireAdmin, (req, res) => {
+  try {
+    const { rows, dryRun = true } = req.body;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ error: 'No rows provided for import' });
+    }
+
+    const errors = [];
+    const validRows = [];
+
+    rows.forEach((row, idx) => {
+      const rowNum = idx + 1;
+      if (!row.name || !String(row.name).trim()) {
+        errors.push({ row: rowNum, error: 'Product name is required', field: 'name' });
+        return;
+      }
+      if (!row.sku || !String(row.sku).trim()) {
+        errors.push({ row: rowNum, error: 'SKU is required', field: 'sku' });
+        return;
+      }
+      const price = parseFloat(row.regularPrice);
+      if (isNaN(price) || price <= 0) {
+        errors.push({ row: rowNum, error: 'Valid regular price is required', field: 'regularPrice' });
+        return;
+      }
+      validRows.push({
+        name: String(row.name).trim(),
+        sku: String(row.sku).trim(),
+        brand: String(row.brand || 'CamneX').trim(),
+        category: String(row.category || 'Surveillance').trim(),
+        modelNumber: String(row.modelNumber || row.sku).trim(),
+        regularPrice: price,
+        salePrice: row.salePrice ? parseFloat(row.salePrice) : null,
+        costPrice: row.costPrice ? parseFloat(row.costPrice) : null,
+        availableStock: row.availableStock ? parseInt(row.availableStock, 10) : 10,
+        unit: row.unit || 'Piece',
+        barcode: row.barcode || null
+      });
+    });
+
+    if (dryRun) {
+      return res.json({
+        dryRun: true,
+        totalRows: rows.length,
+        validRows: validRows.length,
+        invalidRows: errors.length,
+        errors,
+        preview: validRows.slice(0, 10)
+      });
+    }
+
+    // Execute actual import
+    let imported = 0;
+    const insertStmt = db.prepare(`
+      INSERT INTO products (
+        id, sku, name, brand_id, category_id, price, status, 
+        is_active, data_json, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT(sku) DO UPDATE SET
+        price = excluded.price,
+        data_json = excluded.data_json,
+        updated_at = CURRENT_TIMESTAMP
+    `);
+
+    const tx = db.transaction(() => {
+      for (const item of validRows) {
+        const id = `prod-imp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const prodData = {
+          id,
+          sku: item.sku,
+          name: item.name,
+          slug,
+          brand: item.brand,
+          brandId: `brand-${item.brand.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          category: item.category,
+          categoryId: `cat-${item.category.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          modelNumber: item.modelNumber,
+          model: item.modelNumber,
+          pricing: {
+            regularPrice: item.regularPrice,
+            salePrice: item.salePrice,
+            costPrice: item.costPrice,
+            currency: 'BDT'
+          },
+          inventory: {
+            available: item.availableStock,
+            status: item.availableStock > 0 ? 'in_stock' : 'out_of_stock'
+          },
+          websiteVisible: true,
+          posAvailable: true,
+          status: 'active',
+          productType: 'physical',
+          unit: item.unit,
+          barcode: item.barcode,
+          primaryImage: '/images/products/placeholder.webp',
+          images: ['/images/products/placeholder.webp'],
+          shortDescription: `${item.name} - Official warranty product.`,
+          description: `<p>${item.name} high performance hardware with CamneX official support.</p>`,
+          keyFeatures: ['Genuine Brand Hardware', '1 Year Official Warranty'],
+          specifications: {}
+        };
+
+        insertStmt.run(
+          id, item.sku, item.name, prodData.brandId, prodData.categoryId,
+          item.regularPrice, 'active', 1, JSON.stringify(prodData)
+        );
+        imported++;
+      }
+    });
+
+    tx();
+
+    logAudit({
+      entity: 'product',
+      entityId: `import-${Date.now()}`,
+      action: 'catalog_import',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: { importedCount: imported, totalProvided: rows.length }
+    });
+
+    res.json({
+      success: true,
+      importedCount: imported,
+      errorCount: errors.length,
+      errors
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================================
 // 2. CATEGORIES REST APIs
 // ============================================================================
