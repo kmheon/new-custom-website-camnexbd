@@ -86,6 +86,8 @@ ADMIN_INITIAL_PASSWORD=YourStrongUniqueAdminPasswordHere!
 
 # Security & Sessions
 SESSION_SECRET=generate_a_random_64_character_hex_string_here
+ENCRYPTION_KEY=generate_a_random_64_character_hex_string_for_aes_256_gcm
+
 ```
 
 ### Multi-Surface Architecture & Deployment Modes
@@ -428,3 +430,8 @@ done
 - [ ] Rate limit test returns `429` on 6th failed login attempt
 - [ ] `robots.txt` and `sitemap.xml` resolve properly with correct canonical URLs
 - [ ] Storefront checkout displays "Payments Not Configured" until admin enables COD or MFS in settings
+- [ ] Interactive OpenAPI 3.0 documentation resolves at `https://camnexbd.com/api/v1/docs`
+- [ ] Schema migrations applied cleanly via `server/database/migrations/runner.js`
+- [ ] Outbox domain events and background job polling workers active (`GET /api/admin/system/health`)
+- [ ] Webhook engine ready for external ERP/POS synchronizers with HMAC-SHA256 signature verification
+
