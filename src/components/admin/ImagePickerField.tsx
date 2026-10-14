@@ -25,6 +25,34 @@ export interface ImagePickerFieldProps {
   presets?: Array<{ label: string; url: string }>;
 }
 
+/**
+ * Validates whether an image URL is safe for external link navigation.
+ * Permits valid HTTP/HTTPS URLs and approved local absolute paths beginning with single '/'.
+ * Rejects unsafe schemes like javascript:, data:, vbscript:, and protocol-relative '//'.
+ */
+export const isSafeLinkUrl = (url?: string): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  // Local absolute path starting with '/' but not protocol-relative '//' or '/\'
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\')) {
+    return true;
+  }
+
+  // HTTP or HTTPS URL
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+};
+
 export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
   label,
   value,
@@ -69,9 +97,9 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
     if (!files || files.length === 0) return;
     const file = files[0];
 
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setUploadError('Invalid format: Only PNG, JPG, WebP, or SVG are accepted.');
+      setUploadError('Invalid format: Only PNG, JPG, or WebP images are accepted.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -193,7 +221,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={disabled || isUploading}
@@ -330,7 +358,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
               </button>
             )}
 
-            {!imageLoadError && (
+            {!imageLoadError && isSafeLinkUrl(value) && (
               <a
                 href={value}
                 target="_blank"

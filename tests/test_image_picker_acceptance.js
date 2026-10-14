@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 function request(options, postData = null) {
@@ -221,6 +221,56 @@ async function run() {
     assert.ok(res.body.id, 'Must return media record ID');
     uploadedMediaUrl = res.body.url;
     uploadedMediaId = res.body.id;
+  });
+
+  await test('Client-side ImagePickerField aligns upload types with backend (PNG, JPG, WebP only, no SVG)', async () => {
+    const pickerSource = fs.readFileSync(path.join(__dirname, '../src/components/admin/ImagePickerField.tsx'), 'utf8');
+    assert.ok(pickerSource.includes("['image/png', 'image/jpeg', 'image/jpg', 'image/webp']"), 'Client allowedTypes must not include SVG');
+    assert.ok(!pickerSource.includes("'image/svg+xml'"), 'Client must not permit SVG MIME type');
+    assert.ok(pickerSource.includes('accept="image/png,image/jpeg,image/jpg,image/webp"'), 'File input accept attribute must not include SVG');
+  });
+
+  await test('Client-side ImagePickerField prevents unsafe preview-link navigation (isSafeLinkUrl)', async () => {
+    const pickerSource = fs.readFileSync(path.join(__dirname, '../src/components/admin/ImagePickerField.tsx'), 'utf8');
+    assert.ok(pickerSource.includes('isSafeLinkUrl(value)'), 'Preview link <a> tag must be guarded by isSafeLinkUrl(value)');
+
+    // Replicate / test the validator logic
+    const isSafeLinkUrl = (url) => {
+      if (!url || typeof url !== 'string') return false;
+      const trimmed = url.trim();
+      if (!trimmed) return false;
+      if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\')) {
+        return true;
+      }
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        try {
+          const parsed = new URL(trimmed);
+          return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    };
+
+    // Safe protocols & local absolute paths
+    assert.strictEqual(isSafeLinkUrl('https://example.com/image.jpg'), true);
+    assert.strictEqual(isSafeLinkUrl('http://camnexbd.com/logo.webp'), true);
+    assert.strictEqual(isSafeLinkUrl('/uploads/test.png'), true);
+    assert.strictEqual(isSafeLinkUrl('/images/hero/banner.jpg'), true);
+
+    // Unsafe schemes must be rejected
+    assert.strictEqual(isSafeLinkUrl('javascript:alert(document.cookie)'), false);
+    assert.strictEqual(isSafeLinkUrl('javascript:void(0)'), false);
+    assert.strictEqual(isSafeLinkUrl('data:text/html,<script>alert(1)</script>'), false);
+    assert.strictEqual(isSafeLinkUrl('data:image/svg+xml;base64,PHN2Zy...'), false);
+    assert.strictEqual(isSafeLinkUrl('vbscript:msgbox(1)'), false);
+    assert.strictEqual(isSafeLinkUrl('//evil.com/phish.png'), false);
+    assert.strictEqual(isSafeLinkUrl('/\\malicious.com'), false);
+    assert.strictEqual(isSafeLinkUrl('ftp://ftp.camnexbd.com/img.jpg'), false);
+    assert.strictEqual(isSafeLinkUrl('file:///C:/Windows/win.ini'), false);
+    assert.strictEqual(isSafeLinkUrl('blob:http://localhost:3000/123'), false);
+    assert.strictEqual(isSafeLinkUrl(''), false);
   });
 
   // --------------------------------------------------------------------------

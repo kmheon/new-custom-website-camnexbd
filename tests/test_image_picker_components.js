@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 // Helper: Make HTTP request with cookies
@@ -81,6 +81,69 @@ async function run() {
     assert.ok(pickerContent.includes('mediaService.uploadMedia'), 'Must call mediaService.uploadMedia');
     assert.ok(pickerContent.includes('5 * 1024 * 1024'), 'Must enforce 5 MB size limit');
     assert.ok(pickerContent.includes('image/png') && pickerContent.includes('image/webp'), 'Must validate image MIME types');
+  });
+
+  test('ImagePickerField client upload types strictly aligned with backend (PNG, JPG, WebP only, no SVG)', () => {
+    // Verify allowedTypes array excludes SVG
+    assert.ok(pickerContent.includes("['image/png', 'image/jpeg', 'image/jpg', 'image/webp']"), 'allowedTypes must be restricted to PNG, JPEG, JPG, WebP');
+    assert.ok(!pickerContent.includes("'image/svg+xml'"), 'allowedTypes must NOT include image/svg+xml');
+    
+    // Verify file input accept attribute excludes SVG
+    assert.ok(pickerContent.includes('accept="image/png,image/jpeg,image/jpg,image/webp"'), 'accept attribute must be restricted to PNG, JPEG, JPG, WebP');
+    assert.ok(!pickerContent.includes('accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"'), 'accept attribute must NOT include SVG');
+    
+    // Verify user-facing rejection message
+    assert.ok(pickerContent.includes('Only PNG, JPG, or WebP images are accepted'), 'Error message must reflect allowed formats');
+  });
+
+  test('ImagePickerField enforces safe preview-link navigation (isSafeLinkUrl)', () => {
+    assert.ok(pickerContent.includes('isSafeLinkUrl'), 'isSafeLinkUrl validator helper must be defined');
+    assert.ok(pickerContent.includes('isSafeLinkUrl(value)'), 'Preview link <a> tag must be guarded by isSafeLinkUrl(value)');
+
+    // Replicate / test the exact isSafeLinkUrl logic
+    const isSafeLinkUrl = (url) => {
+      if (!url || typeof url !== 'string') return false;
+      const trimmed = url.trim();
+      if (!trimmed) return false;
+      if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\')) {
+        return true;
+      }
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        try {
+          const parsed = new URL(trimmed);
+          return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    };
+
+    // Safe external URLs
+    assert.strictEqual(isSafeLinkUrl('https://images.unsplash.com/photo-123'), true, 'HTTPS URL should be safe');
+    assert.strictEqual(isSafeLinkUrl('http://cdn.camnexbd.com/asset.png'), true, 'HTTP URL should be safe');
+    assert.strictEqual(isSafeLinkUrl('   https://camnexbd.com/logo.webp  '), true, 'Whitespace-trimmed HTTPS URL should be safe');
+
+    // Safe internal paths
+    assert.strictEqual(isSafeLinkUrl('/uploads/media-abc.png'), true, 'Internal /uploads path should be safe');
+    assert.strictEqual(isSafeLinkUrl('/images/hero/hikvision.png'), true, 'Internal /images path should be safe');
+    assert.strictEqual(isSafeLinkUrl('/brand-logos/ruijie.png'), true, 'Internal /brand-logos path should be safe');
+
+    // Rejected unsafe schemes & malicious protocols
+    assert.strictEqual(isSafeLinkUrl('javascript:alert(1)'), false, 'javascript: scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl('javascript:void(0)'), false, 'javascript: scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl('data:text/html,<script>alert(1)</script>'), false, 'data: HTML scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl('data:image/svg+xml;base64,PHN2Z...'), false, 'data: image scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl('vbscript:msgbox(1)'), false, 'vbscript: scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl('//attacker.com/evil.png'), false, 'Protocol-relative URL // must be rejected');
+    assert.strictEqual(isSafeLinkUrl('/\\evil.com'), false, 'Path with backslash /\\ must be rejected');
+    assert.strictEqual(isSafeLinkUrl('ftp://ftp.camnexbd.com/test.jpg'), false, 'ftp: scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl('file:///etc/passwd'), false, 'file: scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl('blob:http://localhost/abc'), false, 'blob: scheme must be rejected');
+    assert.strictEqual(isSafeLinkUrl(''), false, 'Empty string must be rejected');
+    assert.strictEqual(isSafeLinkUrl('   '), false, 'Whitespace-only string must be rejected');
+    assert.strictEqual(isSafeLinkUrl(null), false, 'null must be rejected');
+    assert.strictEqual(isSafeLinkUrl(undefined), false, 'undefined must be rejected');
   });
 
   test('ImagePickerField provides live image thumbnail preview and error fallback', () => {
