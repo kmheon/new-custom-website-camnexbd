@@ -90,6 +90,22 @@ ENCRYPTION_KEY=generate_a_random_64_character_hex_string_for_aes_256_gcm
 
 ```
 
+### Resetting Administrator Credentials
+To change or reset an administrator's password securely from the server command line:
+```bash
+# Interactive prompt (recommended):
+node scripts/reset_admin_password.js admin@camnexbd.com
+
+# Non-interactive via environment variable:
+NEW_ADMIN_PASSWORD="YourStrongNewPassword2026!" node scripts/reset_admin_password.js admin@camnexbd.com
+```
+This utility:
+- Hashes the new password with bcrypt (cost factor 10)
+- Updates `password_hash` and resets `must_change_password`
+- Invalidates and purges all active administrator sessions in SQLite
+- Records a tamper-evident entry in the `audit_logs` table
+
+
 ### Multi-Surface Architecture & Deployment Modes
 The CamneX platform is built as one unified Business API with three independent surfaces:
 1. **Public Storefront** (`/`): Customer-facing catalog, packages, solutions, and checkout.
