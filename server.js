@@ -2283,6 +2283,38 @@ app.put('/api/orders/:id/payment', requireAdmin, (req, res) => {
   }
 });
 
+app.put('/api/orders/:id/details', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const { internalStaffNotes, courierName, trackingNumber, estimatedDeliveryDate } = req.body;
+
+    const row = db.prepare('SELECT data_json FROM orders WHERE id = ? OR order_number = ?').get(id, id);
+    if (!row) return res.status(404).json({ error: 'Order not found' });
+
+    const order = JSON.parse(row.data_json);
+    if (internalStaffNotes !== undefined) order.internalStaffNotes = internalStaffNotes;
+    if (courierName !== undefined) order.courierName = courierName;
+    if (trackingNumber !== undefined) order.trackingNumber = trackingNumber;
+    if (estimatedDeliveryDate !== undefined) order.estimatedDeliveryDate = estimatedDeliveryDate;
+
+    db.prepare('UPDATE orders SET data_json = ? WHERE id = ? OR order_number = ?').run(JSON.stringify(order), id, id);
+
+    logAudit({
+      entity: 'order',
+      entityId: id,
+      action: 'update_order_details',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: { courierName, trackingNumber }
+    });
+
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================================
 // 7. CUSTOMERS REST APIs
 // ============================================================================
@@ -2464,6 +2496,111 @@ app.put('/api/quotes/:id/status', requireAdmin, (req, res) => {
   }
 });
 
+app.put('/api/quotes/:id/details', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const { internalStaffNotes, assignedStaffId, assignedStaffName, quotationAmount } = req.body;
+
+    const row = db.prepare('SELECT data_json FROM quotes WHERE id = ? OR reference_number = ?').get(id, id);
+    if (!row) return res.status(404).json({ error: 'Quote request not found' });
+
+    const quote = JSON.parse(row.data_json);
+    if (internalStaffNotes !== undefined) quote.internalStaffNotes = internalStaffNotes;
+    if (assignedStaffId !== undefined) quote.assignedStaffId = assignedStaffId;
+    if (assignedStaffName !== undefined) quote.assignedStaffName = assignedStaffName;
+    if (quotationAmount !== undefined) quote.quotationAmount = parseFloat(quotationAmount) || 0;
+
+    db.prepare('UPDATE quotes SET data_json = ? WHERE id = ? OR reference_number = ?').run(JSON.stringify(quote), id, id);
+
+    res.json(quote);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/quotes/:id/convert-to-order', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const row = db.prepare('SELECT data_json FROM quotes WHERE id = ? OR reference_number = ?').get(id, id);
+    if (!row) return res.status(404).json({ error: 'Quote request not found' });
+
+    const quote = JSON.parse(row.data_json);
+    const orderId = `ord-${Date.now()}`;
+    const orderNumber = generateNumber('CNX-ORD');
+    const createdAt = new Date().toISOString();
+
+    const orderTotal = quote.quotationAmount || 0;
+    const orderData = {
+      id: orderId,
+      orderNumber,
+      customerName: quote.customerName,
+      customerPhone: quote.phone,
+      customerEmail: quote.email || '',
+      deliveryAddress: quote.siteAddress || 'To be specified',
+      deliveryCity: 'Dhaka',
+      deliveryMethod: 'courier',
+      deliveryFee: 0,
+      paymentMethod: 'cash_on_delivery',
+      paymentStatus: 'unpaid',
+      items: [
+        {
+          productId: 'custom-quote-item',
+          name: `Turnkey Quote: ${quote.serviceType || 'Security System'}`,
+          model: quote.referenceNumber || 'CUSTOM',
+          quantity: 1,
+          unitPrice: orderTotal,
+          totalPrice: orderTotal,
+          image: '/images/hero/hikvision-bullet.png'
+        }
+      ],
+      subtotal: orderTotal,
+      tax: 0,
+      total: orderTotal,
+      status: 'pending',
+      timeline: [
+        {
+          id: `ev-${Date.now()}`,
+          status: 'pending',
+          title: 'Order Converted from Quotation',
+          description: `Generated from Quote #${quote.referenceNumber}`,
+          timestamp: createdAt
+        }
+      ],
+      internalStaffNotes: `Converted from quotation ${quote.referenceNumber} by ${req.user?.name || 'Staff'}`,
+      createdAt
+    };
+
+    db.prepare(`
+      INSERT INTO orders (id, order_number, customer_name, customer_phone, customer_email, total_amount, payment_method, payment_status, order_status, data_json, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      orderId, orderNumber, orderData.customerName, orderData.customerPhone,
+      orderData.customerEmail, orderTotal, orderData.paymentMethod,
+      orderData.paymentStatus, orderData.status, JSON.stringify(orderData), createdAt
+    );
+
+    // Update quote status to quoted/approved
+    quote.status = 'approved';
+    quote.convertedOrderId = orderId;
+    quote.convertedOrderNumber = orderNumber;
+    db.prepare('UPDATE quotes SET status = ?, data_json = ? WHERE id = ?').run('approved', JSON.stringify(quote), id);
+
+    logAudit({
+      entity: 'quote',
+      entityId: id,
+      action: 'convert_to_order',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: { orderId, orderNumber }
+    });
+
+    res.json({ success: true, order: orderData, quote });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get(['/api/service-requests'], requireAdmin, (req, res) => {
   try {
     const rows = db.prepare('SELECT data_json FROM service_requests ORDER BY created_at DESC').all();
@@ -2513,6 +2650,104 @@ app.post(['/api/services', '/api/service-requests'], submissionLimiter, validate
     );
 
     res.json(fullRequest);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// Callback & Service Request Inbox Controls
+// ----------------------------------------------------------------------------
+app.put('/api/admin/callbacks/:id', requireAdmin, (req, res) => {
+  try {
+    const id = req.params.id;
+    const { status, internalNotes } = req.body;
+    const row = db.prepare('SELECT data_json FROM service_requests WHERE id = ? OR request_number = ?').get(id, id);
+    if (!row) return res.status(404).json({ error: 'Request not found' });
+
+    const reqData = JSON.parse(row.data_json);
+    if (status) reqData.status = status;
+    if (internalNotes !== undefined) reqData.internalNotes = internalNotes;
+
+    db.prepare('UPDATE service_requests SET status = ?, data_json = ? WHERE id = ? OR request_number = ?').run(
+      reqData.status, JSON.stringify(reqData), id, id
+    );
+
+    res.json(reqData);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// Newsletter Subscriptions REST APIs
+// ----------------------------------------------------------------------------
+app.post('/api/newsletter/subscribe', submissionLimiter, (req, res) => {
+  try {
+    const { email, source = 'footer_form' } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ error: 'Valid email address is required' });
+    }
+
+    const id = `sub-${Date.now()}`;
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null;
+
+    db.prepare(`
+      INSERT INTO newsletter_subscribers (id, email, status, source, ip_address, created_at)
+      VALUES (?, ?, 'active', ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET
+        status = 'active',
+        unsubscribed_at = NULL
+    `).run(id, cleanEmail, source, String(ip));
+
+    res.json({ success: true, message: 'Subscribed successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/newsletter', requireAdmin, (req, res) => {
+  try {
+    const format = (req.query.format || 'json').toLowerCase();
+    const rows = db.prepare('SELECT * FROM newsletter_subscribers ORDER BY created_at DESC').all();
+
+    if (format === 'csv') {
+      const headers = ['ID', 'Email', 'Status', 'Source', 'IP Address', 'Created At'];
+      const csvRows = [headers.join(',')];
+      for (const r of rows) {
+        csvRows.push([
+          `"${r.id}"`,
+          `"${r.email}"`,
+          `"${r.status}"`,
+          `"${r.source || ''}"`,
+          `"${r.ip_address || ''}"`,
+          `"${r.created_at}"`
+        ].join(','));
+      }
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="newsletter_subscribers_${Date.now()}.csv"`);
+      return res.send(csvRows.join('\r\n'));
+    }
+
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/newsletter/unsubscribe', (req, res) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) return res.status(400).json({ error: 'Email required' });
+
+    db.prepare('UPDATE newsletter_subscribers SET status = ?, unsubscribed_at = CURRENT_TIMESTAMP WHERE email = ?').run(
+      'unsubscribed', cleanEmail
+    );
+
+    res.json({ success: true, message: 'Unsubscribed successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

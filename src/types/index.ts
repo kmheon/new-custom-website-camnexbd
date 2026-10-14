@@ -25,6 +25,8 @@ export interface Customer {
   companyName?: string;
   customerType: 'individual' | 'business';
   addresses: Address[];
+  internalStaffNotes?: string;
+  isArchived?: boolean;
   createdAt: string;
 }
 
@@ -425,6 +427,10 @@ export interface Order {
   status: OrderStatus;
   timeline: OrderTimelineEvent[];
   notes?: string;
+  internalStaffNotes?: string;
+  courierName?: string;
+  trackingNumber?: string;
+  estimatedDeliveryDate?: string;
   createdAt: string;
   isDemo?: boolean;
 }
@@ -456,6 +462,10 @@ export interface QuoteRequest {
   doorCount?: number;
   preferredDate?: string;
   notes: string;
+  internalStaffNotes?: string;
+  assignedStaffId?: string;
+  assignedStaffName?: string;
+  quotationAmount?: number;
   status: 'pending' | 'contacted' | 'quoted' | 'approved' | 'rejected';
   estimatedBudget?: string;
   attachmentName?: string;
@@ -912,5 +922,27 @@ export interface CatalogImportPreview {
   errors: Array<{ row: number; error: string; field?: string }>;
   rows: CatalogImportRow[];
 }
+
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  status: 'active' | 'unsubscribed';
+  source?: string;
+  createdAt: string;
+  unsubscribedAt?: string;
+}
+
+export interface CallbackRequest {
+  id: string;
+  requestNumber: string;
+  customerName: string;
+  phone: string;
+  serviceType: string;
+  serviceId?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  internalNotes?: string;
+  createdAt: string;
+}
+
 
 

@@ -96,6 +96,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     }
 
     setEmailError('');
+    try {
+      fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, source: 'footer_form' })
+      }).catch(() => {});
+    } catch (_) {}
     setNewsletterSubscribed(true);
     setNewsletterEmail('');
     setTimeout(() => {

@@ -239,6 +239,24 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Dry-Run Import Validation**: Validation engine parses and checks required fields (`name`, `sku`, positive `regularPrice`) reporting exact row error diagnostics prior to any database mutation.
 - **Idempotent Upsert**: Imports upsert products by unique `sku` (`ON CONFLICT(sku) DO UPDATE`) to avoid duplicate records.
 
+---
+
+## 12. Commerce Operations & CRM Architecture
+
+### Orders, Timeline & Commercial Invoices
+- **Internal Staff Notes & Courier Logistics**: Orders support private internal CRM notes (`internalStaffNotes`), assigned courier partners (`courierName`), tracking IDs (`trackingNumber`), and estimated delivery dates.
+- **Printable Commercial Invoice**: Dedicated client invoice view formatted for clean A4 printing with business header, itemized BOM line items, delivery fee, and payment status badges.
+- **Status Timeline Verification**: Granular status timeline transitions (`pending`, `confirmed`, `processing`, `dispatched`, `delivered`, `cancelled`) record audit entries and trigger domain events for notifications.
+
+### Quotes & Consultation Conversion
+- **1-Click Quote-to-Order Conversion**: Converts engineering consultations and technical quote inquiries into active customer orders (`CNX-ORD-*`) with pre-calculated totals and quotation references, preserving lead history without double entry.
+- **Assigned Engineering Staff**: Inquiries support staff assignment (`assignedStaffId`, `assignedStaffName`) and quotation amount tracking.
+
+### Newsletter Subscription & Persistence
+- **Dedicated Persistence Table**: `newsletter_subscribers` table captures subscriber emails, sources, and IP metadata with clean double-opt-in state support and CSV export.
+- **Storefront Wire**: The storefront footer subscription form sends requests directly to `POST /api/newsletter/subscribe` with rate-limiting and validation.
+
+
 
 
 

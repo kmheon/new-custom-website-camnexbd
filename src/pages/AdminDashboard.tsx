@@ -24,6 +24,7 @@ import {
 import { ProductEditModal } from '../components/admin/ProductEditModal';
 import { PackageEditModal } from '../components/admin/PackageEditModal';
 import { BulkToolsModal } from '../components/admin/BulkToolsModal';
+import { OrderDetailModal } from '../components/admin/OrderDetailModal';
 import { PromoTileEditor } from '../components/admin/PromoTileEditor';
 import { CustomersModule } from '../components/admin/CustomersModule';
 import { SpecTemplatesModule } from '../components/admin/SpecTemplatesModule';
@@ -105,6 +106,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [productPageSize, setProductPageSize] = useState(15);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [bulkToolsModalOpen, setBulkToolsModalOpen] = useState(false);
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null);
+  const [orderInvoiceModalOpen, setOrderInvoiceModalOpen] = useState(false);
 
   const handleOpenProductEdit = (p: Product) => {
     setEditingProduct(p);
@@ -2744,7 +2747,19 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         </td>
                         <td className="p-3.5 font-bold text-[#F15A24]">৳{o.total?.toLocaleString ? o.total.toLocaleString() : (o.total ?? 0)}</td>
                         <td className="p-3.5"><Badge variant="orange">{o.status}</Badge></td>
-                        <td className="p-3.5 text-right">
+                        <td className="p-3.5 text-right flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedOrderForInvoice(o);
+                              setOrderInvoiceModalOpen(true);
+                            }}
+                            className="border-slate-700 text-slate-300 hover:text-white"
+                          >
+                            <FileText className="w-3.5 h-3.5 mr-1 text-orange-400" />
+                            <span>Invoice & Notes</span>
+                          </Button>
                           <select
                             value={o.status}
                             onChange={async (e) => {
@@ -2846,7 +2861,31 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                               {q.status}
                             </Badge>
                           </td>
-                          <td className="p-3.5 text-right">
+                          <td className="p-3.5 text-right flex items-center justify-end gap-2">
+                            {q.status !== 'approved' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch(`/api/quotes/${encodeURIComponent(q.id)}/convert-to-order`, {
+                                      method: 'POST'
+                                    });
+                                    if (res.ok) {
+                                      refreshAllData();
+                                      setActiveModule('orders');
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                  }
+                                }}
+                                className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-600 hover:text-white"
+                                title="Convert this quotation request directly into a customer order"
+                              >
+                                <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                                <span>Convert to Order</span>
+                              </Button>
+                            )}
                             <select
                               value={q.status}
                               onChange={(e) => handleUpdateQuoteStatus(q.id, e.target.value as any)}
@@ -5898,6 +5937,21 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               }
             });
             setSelectedProductIds([]);
+          }}
+        />
+      )}
+
+      {/* ORDER INVOICE & DETAILS MODAL */}
+      {orderInvoiceModalOpen && selectedOrderForInvoice && (
+        <OrderDetailModal
+          isOpen={orderInvoiceModalOpen}
+          onClose={() => {
+            setOrderInvoiceModalOpen(false);
+            setSelectedOrderForInvoice(null);
+          }}
+          order={selectedOrderForInvoice}
+          onOrderUpdated={() => {
+            refreshAllData();
           }}
         />
       )}

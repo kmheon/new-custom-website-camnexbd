@@ -204,6 +204,33 @@ function initDb() {
   `).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_wishlist_customer ON wishlists(customer_id)`).run();
 
+  // 9c. Newsletter Subscribers
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      status TEXT DEFAULT 'active',
+      source TEXT DEFAULT 'footer_form',
+      ip_address TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      unsubscribed_at DATETIME
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_newsletter_email ON newsletter_subscribers(email)`).run();
+
+  // 9d. Customer Notes & CRM Interactions
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS customer_notes (
+      id TEXT PRIMARY KEY,
+      customer_id TEXT NOT NULL,
+      author_id TEXT,
+      author_name TEXT,
+      note_text TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_customer_notes_customer ON customer_notes(customer_id)`).run();
+
   // 10. Quotes
   db.prepare(`
     CREATE TABLE IF NOT EXISTS quotes (
