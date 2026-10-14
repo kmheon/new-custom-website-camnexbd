@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = parseInt(process.env.TEST_PORT || process.env.PORT || '3000', 10);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 // Helper: Make HTTP request with cookies

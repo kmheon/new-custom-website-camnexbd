@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = parseInt(process.env.TEST_PORT || process.env.PORT || '3000', 10);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 function request(options, postData = null) {
@@ -96,7 +96,7 @@ async function run() {
         'X-CSRF-Token': csrfToken
       }
     }, {
-      email: 'admin@camnexbd.com',
+      email: process.env.ADMIN_EMAIL || 'admin@camnexbd.com',
       password: process.env.ADMIN_PASSWORD || 'CamneX@Admin2026!'
     });
 

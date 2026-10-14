@@ -257,6 +257,7 @@ async function main() {
   serverProc.on('exit', () => { serverClosed = true; });
 
   const testEnv = {
+    PORT: String(TEST_PORT),
     TEST_PORT: String(TEST_PORT),
     TEST_BASE_URL: `http://127.0.0.1:${TEST_PORT}`,
     DB_PATH: TEST_DB_PATH,
