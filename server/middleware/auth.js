@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 const db = require('../../database');
-const { PERMISSIONS, hasPermission } = require('../shared/permissions');
+const { PERMISSIONS, hasPermission, isKnownPermission, canonicalizePermission } = require('../shared/permissions');
 
 // 1. Rate Limiters
 const isProd = process.env.NODE_ENV === 'production';
@@ -222,13 +222,17 @@ function authenticate(req, res, next) {
 
 // 5. Permission & Access Checks
 function requirePermission(permissionKey) {
+  const canonical = canonicalizePermission(permissionKey);
+  if (!isKnownPermission(canonical)) {
+    throw new Error(`CRITICAL SECURITY CONFIG: Unknown permission key "${permissionKey}" provided to requirePermission()`);
+  }
   return (req, res, next) => {
     if (!req.user) {
       return res.status(403).json({ error: 'Access denied: Authentication required.' });
     }
-    if (!hasPermission(req.user, permissionKey)) {
+    if (!hasPermission(req.user, canonical)) {
       return res.status(403).json({ 
-        error: `Access denied: Missing required permission [${permissionKey}].` 
+        error: `Access denied: Missing required permission [${canonical}].` 
       });
     }
     next();

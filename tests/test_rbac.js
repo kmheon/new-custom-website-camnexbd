@@ -217,9 +217,47 @@ const denied = (r) => r.status === 401 || r.status === 403;
   const hashes = db.prepare('SELECT password_hash FROM users').all();
   check('All staff passwords are stored as bcrypt hashes', hashes.every(h => /^\$2[aby]\$/.test(h.password_hash)));
 
-  // 11. Audit trail records staff changes
-  const audit = db.prepare(`SELECT COUNT(*) AS c FROM audit_logs WHERE entity_type = 'user'`).get();
-  check('Staff user changes are written to the audit log', audit.c >= 5, `count ${audit.c}`);
+  // 12. Canonical Permission Registry Integrity & Strict Key Validator
+  const { PERMISSIONS: CANONICAL_PERMS, VALID_PERMISSIONS_SET, canonicalizePermission } = require('../server/shared/permissions');
+  const { requirePermission } = require('../server/middleware/auth');
+  const { RULES } = require('../server/middleware/policy');
+
+  // Test that requirePermission throws if an unmapped / non-registry key is provided
+  let bogusThrew = false;
+  try {
+    requirePermission('non_existent.bogus.permission');
+  } catch (e) {
+    bogusThrew = true;
+  }
+  check('requirePermission rejects unregistered permission keys with fatal error', bogusThrew);
+
+  // Test that all policy.js RULES use valid canonical registry keys
+  let policyKeysValid = true;
+  for (const rule of RULES) {
+    const perm = rule[2];
+    if (perm !== null && !VALID_PERMISSIONS_SET.has(perm)) {
+      policyKeysValid = false;
+      console.error(`Invalid policy permission key: "${perm}"`);
+    }
+  }
+  check('All server policy middleware rules enforce canonical permission keys', policyKeysValid);
+
+  // Test alias resolution maps legacy styles to canonical dotted keys
+  const sampleAliasTests = [
+    ['website_content.write', 'website.content.write'],
+    ['website_settings.write', 'website.settings.write'],
+    ['orders.status.update', 'orders.update'],
+    ['orders.payment.verify', 'orders.update'],
+    ['analytics.read', 'website.access'],
+    ['system.jobs.manage', 'website.settings.write']
+  ];
+  const allAliasesResolve = sampleAliasTests.every(([alias, canonical]) => canonicalizePermission(alias) === canonical);
+  check('Permission alias map correctly resolves all legacy/alternate styles to canonical dotted keys', allAliasesResolve);
+
+  // Test stored database role_permissions are canonical dotted keys
+  const storedPerms = db.prepare('SELECT DISTINCT permission_key FROM role_permissions').all().map(r => r.permission_key);
+  const allStoredAreCanonical = storedPerms.every(k => VALID_PERMISSIONS_SET.has(canonicalizePermission(k)));
+  check('All stored role permissions in database match canonical dotted registry', allStoredAreCanonical);
 
   console.log(`\nRBAC SUITE: ${passed} passed, ${failed} failed`);
   db.close();

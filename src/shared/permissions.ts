@@ -219,6 +219,61 @@ export const SYSTEM_ROLES: Record<string, SystemRoleDefinition> = {
   }
 };
 
+export const VALID_PERMISSIONS_SET = new Set<string>(Object.values(PERMISSIONS));
+
+export const PERMISSION_ALIASES: Record<string, string> = {
+  // Legacy underscore and alternate key variations mapped to dotted canonical
+  'website_access': PERMISSIONS.WEBSITE_ACCESS,
+  'website_content.write': PERMISSIONS.WEBSITE_CONTENT_WRITE,
+  'website_content_write': PERMISSIONS.WEBSITE_CONTENT_WRITE,
+  'website_seo.write': PERMISSIONS.WEBSITE_SEO_WRITE,
+  'website_seo_write': PERMISSIONS.WEBSITE_SEO_WRITE,
+  'website_redirects.write': PERMISSIONS.WEBSITE_REDIRECTS_WRITE,
+  'website_redirects_write': PERMISSIONS.WEBSITE_REDIRECTS_WRITE,
+  'website_settings.write': PERMISSIONS.WEBSITE_SETTINGS_WRITE,
+  'website_settings_write': PERMISSIONS.WEBSITE_SETTINGS_WRITE,
+  'media_write': PERMISSIONS.MEDIA_WRITE,
+  'catalog_read': PERMISSIONS.CATALOG_READ,
+  'catalog_write': PERMISSIONS.CATALOG_WRITE,
+  'catalog_archive': PERMISSIONS.CATALOG_ARCHIVE,
+  'pricing_write': PERMISSIONS.PRICING_WRITE,
+  'pricing_cost_read': PERMISSIONS.PRICING_COST_READ,
+  'pricing_cost.read': PERMISSIONS.PRICING_COST_READ,
+  'inventory_read': PERMISSIONS.INVENTORY_READ,
+  'inventory_adjust': PERMISSIONS.INVENTORY_ADJUST,
+  'orders_read': PERMISSIONS.ORDERS_READ,
+  'orders_update': PERMISSIONS.ORDERS_UPDATE,
+  'orders.status.update': PERMISSIONS.ORDERS_UPDATE,
+  'orders_status_update': PERMISSIONS.ORDERS_UPDATE,
+  'orders.payment.verify': PERMISSIONS.ORDERS_UPDATE,
+  'orders_payment_verify': PERMISSIONS.ORDERS_UPDATE,
+  'customers_read': PERMISSIONS.CUSTOMERS_READ,
+  'customers_write': PERMISSIONS.CUSTOMERS_WRITE,
+  'quotes_manage': PERMISSIONS.QUOTES_MANAGE,
+  'services_manage': PERMISSIONS.SERVICES_MANAGE,
+  'staff_access': PERMISSIONS.STAFF_ACCESS,
+  'staff_manage': PERMISSIONS.STAFF_MANAGE,
+  'roles_manage': PERMISSIONS.ROLES_MANAGE,
+  'audit_read': PERMISSIONS.AUDIT_READ,
+  'system_maintenance': PERMISSIONS.SYSTEM_MAINTENANCE,
+  'system.jobs.manage': PERMISSIONS.WEBSITE_SETTINGS_WRITE,
+  'analytics.read': PERMISSIONS.WEBSITE_ACCESS,
+  'analytics_read': PERMISSIONS.WEBSITE_ACCESS
+};
+
+export function canonicalizePermission(key: string): string {
+  if (!key || typeof key !== 'string') return key;
+  const trimmed = key.trim();
+  if (PERMISSION_ALIASES[trimmed]) return PERMISSION_ALIASES[trimmed];
+  return trimmed;
+}
+
+export function isKnownPermission(key: string): boolean {
+  if (!key || typeof key !== 'string') return false;
+  const canonical = canonicalizePermission(key);
+  return VALID_PERMISSIONS_SET.has(canonical);
+}
+
 /**
  * Check if a list of user permissions satisfies a required permission key.
  * Super Admin implicitly has all permissions.
@@ -226,6 +281,7 @@ export const SYSTEM_ROLES: Record<string, SystemRoleDefinition> = {
 export function hasPermission(userPermissions: string[] | undefined | null, required: PermissionKey | string): boolean {
   if (!userPermissions || !Array.isArray(userPermissions)) return false;
   if (userPermissions.includes('*')) return true;
-  return userPermissions.includes(required);
+  const canonicalRequired = canonicalizePermission(required);
+  return userPermissions.some(p => canonicalizePermission(p) === canonicalRequired);
 }
 

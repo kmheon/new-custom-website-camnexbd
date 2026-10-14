@@ -147,20 +147,80 @@ const SYSTEM_ROLES = {
   }
 };
 
+const VALID_PERMISSIONS_SET = new Set(Object.values(PERMISSIONS));
+
+const PERMISSION_ALIASES = {
+  // Legacy underscore and legacy variations mapped to dotted canonical
+  'website_access': PERMISSIONS.WEBSITE_ACCESS,
+  'website_content.write': PERMISSIONS.WEBSITE_CONTENT_WRITE,
+  'website_content_write': PERMISSIONS.WEBSITE_CONTENT_WRITE,
+  'website_seo.write': PERMISSIONS.WEBSITE_SEO_WRITE,
+  'website_seo_write': PERMISSIONS.WEBSITE_SEO_WRITE,
+  'website_redirects.write': PERMISSIONS.WEBSITE_REDIRECTS_WRITE,
+  'website_redirects_write': PERMISSIONS.WEBSITE_REDIRECTS_WRITE,
+  'website_settings.write': PERMISSIONS.WEBSITE_SETTINGS_WRITE,
+  'website_settings_write': PERMISSIONS.WEBSITE_SETTINGS_WRITE,
+  'media_write': PERMISSIONS.MEDIA_WRITE,
+  'catalog_read': PERMISSIONS.CATALOG_READ,
+  'catalog_write': PERMISSIONS.CATALOG_WRITE,
+  'catalog_archive': PERMISSIONS.CATALOG_ARCHIVE,
+  'pricing_write': PERMISSIONS.PRICING_WRITE,
+  'pricing_cost_read': PERMISSIONS.PRICING_COST_READ,
+  'pricing_cost.read': PERMISSIONS.PRICING_COST_READ,
+  'inventory_read': PERMISSIONS.INVENTORY_READ,
+  'inventory_adjust': PERMISSIONS.INVENTORY_ADJUST,
+  'orders_read': PERMISSIONS.ORDERS_READ,
+  'orders_update': PERMISSIONS.ORDERS_UPDATE,
+  'orders.status.update': PERMISSIONS.ORDERS_UPDATE,
+  'orders_status_update': PERMISSIONS.ORDERS_UPDATE,
+  'orders.payment.verify': PERMISSIONS.ORDERS_UPDATE,
+  'orders_payment_verify': PERMISSIONS.ORDERS_UPDATE,
+  'customers_read': PERMISSIONS.CUSTOMERS_READ,
+  'customers_write': PERMISSIONS.CUSTOMERS_WRITE,
+  'quotes_manage': PERMISSIONS.QUOTES_MANAGE,
+  'services_manage': PERMISSIONS.SERVICES_MANAGE,
+  'staff_access': PERMISSIONS.STAFF_ACCESS,
+  'staff_manage': PERMISSIONS.STAFF_MANAGE,
+  'roles_manage': PERMISSIONS.ROLES_MANAGE,
+  'audit_read': PERMISSIONS.AUDIT_READ,
+  'system_maintenance': PERMISSIONS.SYSTEM_MAINTENANCE,
+  'system.jobs.manage': PERMISSIONS.WEBSITE_SETTINGS_WRITE,
+  'analytics.read': PERMISSIONS.WEBSITE_ACCESS,
+  'analytics_read': PERMISSIONS.WEBSITE_ACCESS
+};
+
+function canonicalizePermission(key) {
+  if (!key || typeof key !== 'string') return key;
+  const trimmed = key.trim();
+  if (PERMISSION_ALIASES[trimmed]) return PERMISSION_ALIASES[trimmed];
+  return trimmed;
+}
+
+function isKnownPermission(key) {
+  if (!key || typeof key !== 'string') return false;
+  const canonical = canonicalizePermission(key);
+  return VALID_PERMISSIONS_SET.has(canonical);
+}
+
 function hasPermission(userOrPermissions, required) {
   if (!userOrPermissions) return false;
+  const canonicalRequired = canonicalizePermission(required);
   if (!Array.isArray(userOrPermissions)) {
     const u = userOrPermissions;
     if (u.role === 'admin' || u.role === 'super-admin') return true;
-    return hasPermission(u.permissions, required);
+    return hasPermission(u.permissions, canonicalRequired);
   }
   if (userOrPermissions.includes('*')) return true;
-  return userOrPermissions.includes(required);
+  return userOrPermissions.some(p => canonicalizePermission(p) === canonicalRequired);
 }
 
 module.exports = {
   PERMISSIONS,
+  VALID_PERMISSIONS_SET,
+  PERMISSION_ALIASES,
   SYSTEM_ROLES,
+  canonicalizePermission,
+  isKnownPermission,
   hasPermission
 };
 
