@@ -160,6 +160,39 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     }
   };
 
+  const handleArchiveProduct = async (id: string, name: string) => {
+    const reason = prompt(`Enter archive reason for "${name}" (optional):`, 'Catalog rotation / superseded model');
+    if (reason === null) return;
+    try {
+      if (productService.archiveProduct) {
+        await productService.archiveProduct(id);
+      } else {
+        await productService.updateProduct(id, { status: 'archived', websiteVisible: false });
+      }
+      const res = await productService.getProducts({ limit: 100 });
+      setProducts(res.items);
+      if (typeof res?.total === 'number') setTotalProductsCount(res.total);
+    } catch (err: any) {
+      alert(err.message || 'Failed to archive product');
+    }
+  };
+
+  const handleRestoreProduct = async (id: string, name: string) => {
+    if (!confirm(`Restore "${name}" to active published catalog?`)) return;
+    try {
+      if (productService.restoreProduct) {
+        await productService.restoreProduct(id);
+      } else {
+        await productService.updateProduct(id, { status: 'active', websiteVisible: true });
+      }
+      const res = await productService.getProducts({ limit: 100 });
+      setProducts(res.items);
+      if (typeof res?.total === 'number') setTotalProductsCount(res.total);
+    } catch (err: any) {
+      alert(err.message || 'Failed to restore product');
+    }
+  };
+
   // Special Offer Slider & Management State
   const [quickOfferProductId, setQuickOfferProductId] = useState<string>('');
   const [quickOfferSalePrice, setQuickOfferSalePrice] = useState<string>('');
@@ -2189,10 +2222,27 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                                 >
                                   Edit
                                 </button>
+                                {p.status === 'archived' || (p as any).is_archived ? (
+                                  <button
+                                    onClick={() => handleRestoreProduct(p.id, p.name)}
+                                    className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
+                                    title="Restore Archived Product"
+                                  >
+                                    Restore
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleArchiveProduct(p.id, p.name)}
+                                    className="text-xs text-slate-400 hover:text-amber-300 transition-colors"
+                                    title="Safely Archive Product"
+                                  >
+                                    Archive
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDeleteProduct(p.id, p.name)}
                                   className="text-xs text-rose-400 hover:text-rose-300 transition-colors"
-                                  title="Delete or Archive Product"
+                                  title="Delete Product (Safeguarded)"
                                 >
                                   Delete
                                 </button>
@@ -5937,6 +5987,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           categories={categories}
           brands={brands}
           templates={templates}
+          allProducts={products}
           onSaveSuccess={() => {
             productService.getProducts({ limit: 100 }).then(res => {
               if (res) {

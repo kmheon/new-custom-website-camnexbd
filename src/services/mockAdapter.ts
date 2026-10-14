@@ -238,6 +238,10 @@ export class MockProductService implements IProductService {
     return this.updateProduct(id, { status: 'archived', websiteVisible: false });
   }
 
+  async restoreProduct(id: string): Promise<any> {
+    return this.updateProduct(id, { status: 'active', websiteVisible: true });
+  }
+
   async getAvailableSpecFiltersForCategory(categorySlug: string): Promise<Record<string, string[]>> {
     const categories = getStorage<Category[]>(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
     const cat = categories.find(c => c.slug === categorySlug || c.id === categorySlug);

@@ -139,6 +139,9 @@ export interface ProductPrice {
   regularPrice?: number | null;   // In BDT (৳) - if undefined, "Request quotation"
   salePrice?: number | null;      // Optional promotional price
   wholesalePrice?: number | null; // Phase 2 B2B
+  costPrice?: number | null;      // Guarded by pricing.cost.read
+  saleStartDate?: string;         // ISO date YYYY-MM-DD
+  saleEndDate?: string;           // ISO date YYYY-MM-DD
   currency?: 'BDT' | string;
 }
 
@@ -149,12 +152,19 @@ export interface ProductInventory {
   warehouseId?: string;
   trackQuantity?: boolean;
   lowStockThreshold?: number;
+  allowBackorder?: boolean;
+}
+
+export interface ProductGalleryItem {
+  url: string;
+  altText?: string;
+  caption?: string;
 }
 
 export interface ProductDocument {
   id: string;
   title: string;
-  type: 'datasheet' | 'user_manual' | 'firmware' | 'quick_start_guide';
+  type: 'datasheet' | 'user_manual' | 'firmware' | 'quick_start_guide' | 'warranty_card';
   url: string;
   size?: string;
 }
@@ -177,6 +187,7 @@ export interface Product {
   model?: string;
   sku: string;
   barcode?: string;
+  barcodeFormat?: 'EAN-13' | 'UPC-A' | 'Code 128' | 'QR Code' | string;
   category: string;
   categoryId: string;
   categorySlug?: string;
@@ -185,11 +196,13 @@ export interface Product {
   subcategorySlug?: string;
   productType: 'physical' | 'service' | 'package_bundle';
   status: 'active' | 'draft' | 'archived';
+  archiveReason?: string;
   websiteVisible: boolean;
   posAvailable: boolean;
   slug?: string;
   images: string[];
   gallery?: string[];
+  galleryItems?: ProductGalleryItem[];
   primaryImage: string;
   shortDescription: string;
   description: string;
@@ -198,13 +211,20 @@ export interface Product {
   specs?: Record<string, any>;
   pricing: ProductPrice;
   inventory: ProductInventory;
+  costPrice?: number | null;
+  wholesalePrice?: number | null;
   unit: string; // "Piece", "Meter", "Box", "Set"
   warrantyMonths?: number;
+  warrantyType?: 'official' | 'vendor' | 'replacement' | string;
   warrantyText?: string;
   warranty?: string;
   documents?: ProductDocument[];
   compatibleProductIds?: string[];
   relatedProductIds?: string[];
+  packageEligible?: boolean;
+  packageRoles?: Array<'camera' | 'recorder' | 'storage' | 'cable' | 'power' | 'connectors' | 'accessory'>;
+  serialTracking?: boolean;
+  batchTracking?: boolean;
   seo?: ProductSeo;
   createdAt: string;
   updatedAt: string;
@@ -215,6 +235,8 @@ export interface Product {
   isNew?: boolean;
   isNewArrival?: boolean;
   isHot?: boolean;
+  isAccessory?: boolean;
+  showOnHomepage?: boolean;
 }
 
 // ----------------------------------------------------------------------------

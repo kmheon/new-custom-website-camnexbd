@@ -174,5 +174,24 @@ All admin modules adhere to a unified framework preventing ad-hoc, inconsistent 
 - **Operational Attention Bar**: Highlights critical operational bottlenecks (orders pending > 24 hours, unverified manual payments, pending quotations, and catalog products lacking studio photography).
 - **Catalog Priority Fixes**: Dynamically ranks products needing immediate metadata completion (missing image, missing SKU/model, or missing technical specifications) with direct 1-click modal editing.
 
+---
+
+## 8. Catalog Product Management & Phase 2 Data Contract
+
+### Unified Product Schema
+- **Identifier Stability**: Stable UUID/slug IDs, unique SKU enforcement across both active and archived products.
+- **Slug Management**: Automatic slug synthesis from title and model number with manual override and live URL preview (`/product/:slug`).
+- **PNG Alpha Transparency Checker**: Multi-mode visual preview (Checkerboard, Light, Dark) in the image picker, ensuring hardware photography has true alpha transparency before publication.
+- **Gallery & Documents**: Multi-image gallery with ordering controls, accessibility alt text, and technical document attachments (datasheets, user manuals, warranty cards).
+- **Specs & Highlighting**: Dynamic category template attribute fields combined with ad-hoc specifications, card highlight flags, and compact shortLabel controls.
+- **Commercial Merchandising**: Status lifecycle (`active`, `draft`, `archived` with archive reason), merchandising flags (`isNew`, `isPopular`, `isHot`, `isFeatured`, `isAccessory`, `showOnHomepage`), promotional pricing schedules (`saleStartDate`, `saleEndDate`).
+- **Phase 2 ERP/POS Readiness**:
+  - Barcode standards (`EAN-13`, `UPC-A`, `Code 128`, `QR Code`) with preview verification.
+  - Inventory tracking flags: `lowStockThreshold`, `allowBackorder`, `warehouseId`.
+  - Serial tracking flag (`serialTracking`) and Batch/Lot tracking flag (`batchTracking`).
+  - Purchase cost field (`costPrice`) strictly guarded by `pricing.cost.read` permission.
+  - CCTV Turnkey package eligibility rules: `packageEligible` and role assignments (`camera`, `recorder`, `storage`, `cable`, `power`, `connectors`, `accessory`).
+  - Referential integrity guard: 409 Conflict rejection if products are in stock or referenced by historical orders, quotes, or turnkey packages.
+
 
 

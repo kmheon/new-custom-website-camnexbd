@@ -61,6 +61,7 @@ export interface IProductService {
   updateProduct(id: string, updates: Partial<Product>): Promise<Product>;
   deleteProduct(id: string): Promise<boolean>;
   archiveProduct?(id: string): Promise<any>;
+  restoreProduct?(id: string): Promise<any>;
   getAvailableSpecFiltersForCategory(categorySlug: string): Promise<Record<string, string[]>>;
 }
 
