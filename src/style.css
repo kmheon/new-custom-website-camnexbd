@@ -87,3 +87,14 @@ img, svg, video, canvas, audio, iframe, embed, object {
   scroll-snap-align: start;
 }
 
+/* When placed in a CSS Grid (such as catalog, packages, or wishlist grids), cards fill the grid column */
+.grid > .card-item-fixed,
+.grid > * > .card-item-fixed,
+[data-packages-grid] .card-item-fixed,
+.packages-grid .card-item-fixed {
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+

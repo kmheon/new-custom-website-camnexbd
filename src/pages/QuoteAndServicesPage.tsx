@@ -30,6 +30,19 @@ export const QuoteAndServicesPage: React.FC<QuoteAndServicesPageProps> = ({
   const [submittedQuote, setSubmittedQuote] = useState<QuoteRequest | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
+  React.useEffect(() => {
+    try {
+      const prefillRaw = localStorage.getItem('camnex_quote_prefill');
+      if (prefillRaw) {
+        const prefill = JSON.parse(prefillRaw);
+        if (prefill.cameraCount) setCameraCount(prefill.cameraCount);
+        if (prefill.notes) setNotes(prefill.notes);
+        if (prefill.serviceType) setServiceType(prefill.serviceType);
+        localStorage.removeItem('camnex_quote_prefill');
+      }
+    } catch (_) {}
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim() || !phone.trim() || !siteAddress.trim()) {

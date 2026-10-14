@@ -119,12 +119,12 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         onClick={() => onNavigate('packages', pkg.slug)}
         className="group/pkg"
       >
-        {/* 1. MEDIA SLOT (aspect 16/10, max 110px tall, with optional tag ribbon) */}
+        {/* 1. MEDIA SLOT (aspect 16/10, 115px tall, clean object-contain with soft background) */}
         <CardMediaSlot>
-          <div className="aspect-[16/10] max-h-[110px] w-full bg-[#F4EEE6] rounded-xl flex items-center justify-center p-2 overflow-hidden relative">
+          <div className="aspect-[16/10] h-[115px] w-full bg-[#F4EEE6] rounded-xl flex items-center justify-center p-2.5 overflow-hidden relative">
             {pkgTag && (
               <div className="absolute top-2 left-2 z-10 pointer-events-none" data-pkg-tag>
-                <span className="text-[9px] font-black uppercase tracking-wider bg-[#F15A24] text-white px-2 py-0.5 rounded shadow-2xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-[#F15A24] text-white px-2 py-0.5 rounded shadow-2xs">
                   {pkgTag}
                 </span>
               </div>
@@ -145,19 +145,19 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         </CardMediaSlot>
 
         {/* 2. META SLOT (system type label on left, camera count chip on right) */}
-        <CardMetaSlot className="mb-1.5 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-[#5B6472] uppercase tracking-wider">
+        <CardMetaSlot className="mb-1 flex items-center justify-between">
+          <span className="text-[11px] font-bold text-[#5B6472] uppercase tracking-wider">
             {pkg.systemTypeSlug ? (pkg.systemTypeSlug === 'wireless' ? 'Wi-Fi Wireless' : pkg.systemTypeSlug === 'ip' ? 'IP Network' : 'Analogue HD') : 'CCTV System'}
           </span>
-          <span className="text-[10px] sm:text-[11px] font-bold bg-slate-100 text-[#111827] px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-[11px] font-bold bg-slate-100 text-[#111827] px-2.5 py-0.5 rounded-full shrink-0">
             {pkg.cameraCount ? `${pkg.cameraCount} Cameras` : 'Camera set'}
           </span>
         </CardMetaSlot>
 
-        {/* 3. TITLE SLOT (Clamped to 2 lines) */}
+        {/* 3. TITLE SLOT (Natural wrapping with consistent min-height) */}
         <CardTitleSlot className="mb-0.5">
           <h3
-            className="font-heading font-bold text-sm sm:text-base text-[#111827] group-hover:text-[#F15A24] transition-colors leading-snug line-clamp-2 min-h-[2.3rem]"
+            className="font-heading font-bold text-base text-[#111827] group-hover:text-[#F15A24] transition-colors leading-snug line-clamp-2 min-h-[2.5rem]"
             title={pkg.name}
           >
             {pkg.name}
@@ -167,30 +167,30 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         {/* Technology label: muted text line directly under the title */}
         <div className="min-h-[16px] mb-1">
           {pkg.technologyLabel ? (
-            <p className="text-[11px] font-semibold text-[#5B6472] truncate" data-pkg-tech>
+            <p className="text-xs font-semibold text-[#5B6472] truncate" data-pkg-tech>
               {pkg.technologyLabel}
             </p>
           ) : (
-            <span className="invisible select-none text-[11px]" aria-hidden="true">&nbsp;</span>
+            <span className="invisible select-none text-xs" aria-hidden="true">&nbsp;</span>
           )}
         </div>
 
-        {/* 4. SUMMARY LINE (Generated from data, at most 2 lines, reserved height) */}
+        {/* 4. SUMMARY LINE (Generated from data, readable 2 lines) */}
         <div className="mb-1.5 min-h-[2.0rem]">
-          <p className="text-xs text-[#5B6472] leading-snug line-clamp-2 font-medium">
+          <p className="text-[13px] text-[#5B6472] leading-snug line-clamp-2 font-normal">
             {summaryLine}
           </p>
         </div>
 
         {/* 5. TOP 3 INCLUDED ITEMS & "See what's included" button */}
         <CardDetailsSlot className="mb-2">
-          <div className="py-1.5 border-y border-[#EDE8E1] text-xs flex flex-col justify-between min-h-[78px]">
+          <div className="py-1.5 border-y border-[#EDE8E1] text-xs flex flex-col justify-between min-h-[80px]">
             <div className="space-y-0.5">
               {top3Items.map((item: string, rIdx: number) => (
                 <div key={rIdx} className="flex items-start gap-1.5 min-w-0">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0 mt-px" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F15A24] shrink-0 mt-0.5" />
                   <span
-                    className="line-clamp-2 break-words text-[11px] leading-snug font-medium text-slate-700"
+                    className="line-clamp-2 break-words text-xs leading-snug font-medium text-slate-700"
                     title={item}
                     data-pkg-item
                   >
@@ -203,7 +203,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
             <button
               type="button"
               onClick={handleOpenModal}
-              className="text-[11px] font-semibold text-[#F15A24] hover:underline flex items-center gap-1 pt-0.5 self-start cursor-pointer focus:outline-none"
+              className="text-xs font-semibold text-[#F15A24] hover:underline flex items-center gap-1 pt-1 self-start cursor-pointer focus:outline-none"
             >
               <ChevronDown className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
               <span>See what's included ({allInclusions.length} items)</span>
@@ -212,11 +212,11 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         </CardDetailsSlot>
 
         {/* 6. PRICE SLOT (Pinned to bottom with mt-auto) */}
-        <CardPriceSlot className="mt-auto mb-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B6472] block min-h-[14px]">
+        <CardPriceSlot className="mt-auto mb-2.5">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#5B6472] block min-h-[14px]">
             {isQuoteOnly ? 'Pricing' : 'Starting From'}
           </span>
-          <div className="text-lg sm:text-xl font-black text-[#111827] font-heading min-h-[26px] flex items-baseline">
+          <div className="text-xl font-black text-[#111827] font-heading min-h-[26px] flex items-baseline">
             {isQuoteOnly || !pkg.basePrice ? (
               <span>Ask for price</span>
             ) : (
@@ -230,7 +230,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
           <button
             type="button"
             onClick={handleAction}
-            className="w-full min-h-[38px] py-1.5 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+            className="w-full min-h-[38px] py-2 px-4 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-[13px] font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
           >
             <span>{isQuoteOnly ? 'Ask for price' : 'Customize package'}</span>
             <ArrowRight className="w-3.5 h-3.5" />

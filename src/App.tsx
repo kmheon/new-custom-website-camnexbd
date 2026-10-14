@@ -92,6 +92,9 @@ export default function App() {
         setCurrentRoute('packages');
         const parts = path.split('/');
         setRouteParam(parts[2]);
+      } else if (path.startsWith('/package-builder') || path.startsWith('/package-maker')) {
+        setCurrentRoute('packages');
+        setRouteParam('custom');
       } else if (path === '/cart') {
         setCurrentRoute('cart');
       } else if (path === '/checkout') {
@@ -172,6 +175,7 @@ export default function App() {
     else if (route === 'product' && param) newUrl = `/product/${param}`;
     else if (route === 'compare') newUrl = '/compare';
     else if (route === 'packages') newUrl = param ? `/packages/${param}` : '/packages';
+    else if (route === 'package_builder' || route === 'package-builder') newUrl = param ? `/packages/${param}` : '/package-builder';
     else if (route === 'cart') newUrl = '/cart';
     else if (route === 'checkout') newUrl = '/checkout';
     else if (route === 'tracking') newUrl = param ? `/tracking/${param}` : '/tracking';

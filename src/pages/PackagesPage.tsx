@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Camera, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Camera, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs } from '../components/common/UI';
 import { PackageFilterBar } from '../components/packages/PackageFilterBar';
@@ -151,7 +151,7 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
         canonicalPath="/packages"
       />
 
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <Breadcrumbs
           items={[
             { label: 'Home', onClick: () => onNavigate('home') },
@@ -167,6 +167,44 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
           <p className="text-sm text-[#5B6472]">
             Camera sets with matching recorder, surveillance storage and cables. Sized and configured for Bangladeshi homes and businesses.
           </p>
+        </div>
+
+        {/* Custom Package Maker Entry Banner */}
+        <div className="bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white rounded-[20px] p-6 sm:p-7 shadow-xs border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-[#F15A24] text-white px-2.5 py-0.5 rounded-full">
+                Custom Package Maker
+              </span>
+              <span className="text-[11px] text-slate-300 font-medium">
+                Need a specific setup for your premises?
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-heading font-black text-white">
+              Can't find the exact package? Build Your Own System
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Use our guided 6-step system builder to select your exact camera count, form factor, night vision type, matched recorder, surveillance HDD, and cables with instant engineering rule validation.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => onNavigate('packages', 'custom')}
+              className="px-5 py-2.5 rounded-full bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Launch Package Builder</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('quote')}
+              className="px-5 py-2.5 rounded-full border border-slate-600 hover:border-slate-400 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-800"
+            >
+              <span>Book Premises Survey</span>
+            </button>
+          </div>
         </div>
 
         {/* Full Variant Package Filter Bar */}
@@ -210,7 +248,10 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div
+              data-packages-grid
+              className="packages-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch"
+            >
               {paginatedPackages.map((pkg) => (
                 <PackageCard
                   key={pkg.id}
