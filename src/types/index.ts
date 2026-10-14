@@ -451,6 +451,8 @@ export type ServiceType =
   | 'access_control_biometric'
   | 'it_infrastructure'
   | 'maintenance_amc'
+  | 'home_automation'
+  | 'fire_safety'
   | 'configuration'
   | 'other';
 

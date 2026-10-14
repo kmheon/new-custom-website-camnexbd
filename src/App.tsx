@@ -15,6 +15,7 @@ const ComparePage = lazy(() => import('./pages/ComparePage').then(m => ({ defaul
 const CartAndCheckoutPage = lazy(() => import('./pages/CartAndCheckoutPage').then(m => ({ default: m.CartAndCheckoutPage })));
 const OrderTrackingPage = lazy(() => import('./pages/OrderTrackingPage').then(m => ({ default: m.OrderTrackingPage })));
 const QuoteAndServicesPage = lazy(() => import('./pages/QuoteAndServicesPage').then(m => ({ default: m.QuoteAndServicesPage })));
+const ServicesPage = lazy(() => import('./pages/ServicesPage').then(m => ({ default: m.ServicesPage })));
 const SearchPage = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
 const CustomerAccountPage = lazy(() => import('./pages/CustomerAccountPage').then(m => ({ default: m.CustomerAccountPage })));
 const ContentPages = lazy(() => import('./pages/ContentPages').then(m => ({ default: m.ContentPages })));
@@ -222,7 +223,7 @@ export default function App() {
           {currentRoute === 'tracking' && <OrderTrackingPage initialOrderNumber={routeParam} onNavigate={navigate} />}
           {currentRoute === 'quote' && <QuoteAndServicesPage onNavigate={navigate} defaultService="site_survey" />}
           {currentRoute === 'wishlist' && <WishlistPage onNavigate={navigate} />}
-          {currentRoute === 'services' && <QuoteAndServicesPage onNavigate={navigate} defaultService="cctv_installation" />}
+          {currentRoute === 'services' && <ServicesPage onNavigate={navigate} />}
           {currentRoute === 'search' && <SearchPage initialQuery={routeParam} onNavigate={navigate} />}
           {currentRoute === 'account' && <CustomerAccountPage onNavigate={navigate} />}
           {currentRoute === 'solutions' && <ContentPages type="solutions" param={routeParam} onNavigate={navigate} />}

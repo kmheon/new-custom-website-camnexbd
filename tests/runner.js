@@ -311,6 +311,7 @@ async function main() {
     results.push(await runTestSuite('Universal Image Input & Media Library Picker Suite', path.join(__dirname, 'test_image_picker_components.js'), testEnv));
     results.push(await runTestSuite('Universal Image Picker Final Acceptance Audit Suite', path.join(__dirname, 'test_image_picker_acceptance.js'), testEnv));
     results.push(await runTestSuite('Solutions & Engineering (Deployment Scenarios) Suite', path.join(__dirname, 'test_solutions_page.js'), testEnv));
+    results.push(await runTestSuite('Services & Engineering Suite', path.join(__dirname, 'test_services_page.js'), testEnv));
     results.push(await runTestSuite('Headless Smoke Test Suite (Admin, Storefront & Staff)', path.join(__dirname, 'test_smoke_routes.js'), testEnv));
 
   } finally {
