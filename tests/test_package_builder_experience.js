@@ -16,7 +16,7 @@ const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const CDP_PORT = parseInt(process.env.BUILDER_CDP_PORT || '9825', 10);
 const USER_DATA_DIR = path.join(os.tmpdir(), `builder_spec_${Date.now()}`);
 
-const ARTIFACT_DIR = path.join(__dirname, '../../Users/kmheo/.gemini/antigravity/brain/36271926-f329-4e6a-b73d-dc302fd8fe3b');
+const ARTIFACT_DIR = 'C:\\Users\\kmheo\\.gemini\\antigravity\\brain\\36271926-f329-4e6a-b73d-dc302fd8fe3b';
 const SHOTS_DIR = path.join(__dirname, '../scratch/shots');
 
 function sleep(ms) {
@@ -246,6 +246,32 @@ async function run() {
     assert.ok(builderContent.includes('handleDownloadBOM') && builderContent.includes('Download BOM (.txt)'), 'Must provide Download BOM functionality');
     assert.ok(builderContent.includes('fallbackCopyText') && builderContent.includes('handleCopyBOM'), 'Must include clipboard fallback copy handler');
     assert.ok(builderContent.includes('OFFICIAL TECHNICAL BILL OF MATERIALS (BOM)'), 'Must format official technical export letterhead');
+  });
+
+  test('Step 6: Final Review summary renders all 3 engineering pillars, warranty policy, and service assurances', () => {
+    assert.ok(builderContent.includes('Engineered Turnkey Configuration'), 'Step 6 must render turnkey configuration card');
+    assert.ok(builderContent.includes('1. Cameras & Coverage'), 'Must render Cameras & Coverage pillar');
+    assert.ok(builderContent.includes('2. Recording & Storage'), 'Must render Recording & Storage pillar');
+    assert.ok(builderContent.includes('3. Cabling, Power & Display'), 'Must render Cabling, Power & Display pillar');
+    assert.ok(builderContent.includes('Verified Product Warranty Policy'), 'Must render verified warranty schedule');
+    assert.ok(builderContent.includes('Surveillance HDDs: 3 Years'), 'Must disclose 3-year HDD warranty');
+    assert.ok(builderContent.includes('Certified Genuine Hardware') && builderContent.includes('Nationwide Express Delivery') && builderContent.includes('Turnkey Installation Option'), 'Must render CamneX service assurances');
+  });
+
+  test('Step 6: Add to Cart safeguards enforce pricing integrity, capacity matching, storage bays, and enterprise checks', () => {
+    assert.ok(builderContent.includes('canAddToCart'), 'Must define canAddToCart gatekeeper');
+    assert.ok(builderContent.includes('isEnterpriseOver64') || builderContent.includes('cameraCount > 64'), 'Must gatekeep enterprise configurations over 64 cameras');
+    assert.ok(builderContent.includes('recorderSpec.isUnderCapacity'), 'Must gatekeep under-capacity recorders');
+    assert.ok(builderContent.includes('isStorageDriveBayIncompatible'), 'Must gatekeep storage bay incompatibilities');
+    assert.ok(builderContent.includes('bundle-${systemArch}-${cameraCount}c-${formFactor}-${storageOption}'), 'Must generate deterministic bundle ID to prevent spurious cart line duplication');
+  });
+
+  test('Step 6: In-page quotation modal features granular field-level validation, WhatsApp sync, and reference number display', () => {
+    assert.ok(builderContent.includes('quoteFormErrors'), 'Must manage field-level form validation errors');
+    assert.ok(builderContent.includes('whatsappSameAsPhone'), 'Must support WhatsApp Same-as-mobile sync');
+    assert.ok(builderContent.includes('quoteSuccessResult'), 'Must manage quote success state');
+    assert.ok(builderContent.includes('quoteNumber'), 'Must display official quote reference number');
+    assert.ok(builderContent.includes('keydown') && builderContent.includes('Escape'), 'Must support Escape key dismissal for accessibility');
   });
 
   const packagesContent = fs.readFileSync(packagesPagePath, 'utf8');
@@ -1073,7 +1099,30 @@ async function run() {
       assert.strictEqual(v.hasBookSurvey, true, 'Book Site Survey button rendered');
     });
 
-    // 2f-4. Test In-Page Quotation Modal Opening and Closing
+    const step6DetailedEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const text = document.body.innerText.toLowerCase();
+        return {
+          hasCol1: text.includes('1. cameras & coverage') || text.includes('cameras & coverage'),
+          hasCol2: text.includes('2. recording & storage') || text.includes('recording & storage'),
+          hasCol3: text.includes('3. cabling, power & display') || text.includes('cabling, power & display'),
+          hasWarranty: text.includes('verified product warranty policy') && text.includes('surveillance hdds: 3 years'),
+          hasAssurances: text.includes('certified genuine hardware') && text.includes('nationwide express delivery') && text.includes('turnkey installation option')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Package Builder Step 6 renders all 3 engineering pillars, warranty policy, and service assurances', () => {
+      const v = step6DetailedEval.result.value || {};
+      assert.strictEqual(v.hasCol1, true, 'Pillar 1: Cameras & Coverage rendered');
+      assert.strictEqual(v.hasCol2, true, 'Pillar 2: Recording & Storage rendered');
+      assert.strictEqual(v.hasCol3, true, 'Pillar 3: Cabling, Power & Display rendered');
+      assert.strictEqual(v.hasWarranty, true, 'Verified Warranty Policy schedule rendered');
+      assert.strictEqual(v.hasAssurances, true, 'Service & installation assurances rendered');
+    });
+
+    // 2f-4. Test In-Page Quotation Modal Opening, Validation, WhatsApp Sync, Submission and Dismissal
     await send('Runtime.evaluate', {
       expression: `(() => {
         const surveyBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Book Site Survey'));
@@ -1104,23 +1153,149 @@ async function run() {
       assert.strictEqual(v.hasPhoneField, true, 'Phone number field rendered');
     });
 
-    // Close Quote Modal
+    // Test form field validation (submit empty fields)
     await send('Runtime.evaluate', {
       expression: `(() => {
-        const closeBtn = document.querySelector('[data-modal-close="package-quote"]') ||
-                         Array.from(document.querySelectorAll('button')).find(b => b.textContent === 'Cancel');
-        if (closeBtn) closeBtn.click();
+        const modal = document.querySelector('[data-modal="package-quote"]');
+        if (!modal) return;
+
+        const nameInput = document.getElementById('quote-customer-name');
+        const phoneInput = document.getElementById('quote-customer-phone');
+        if (nameInput) {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          setter.call(nameInput, '');
+          nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (phoneInput) {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          setter.call(phoneInput, '');
+          phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.click();
       })()`
     });
     await sleep(300);
 
-    const quoteModalCloseEval = await send('Runtime.evaluate', {
+    const quoteValidationEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const modal = document.querySelector('[data-modal="package-quote"]');
+        const text = modal ? modal.innerText : '';
+        return {
+          hasNameError: text.includes('Please enter your full name'),
+          hasPhoneError: text.includes('valid 11-digit Bangladesh mobile number') || text.includes('Please enter a valid'),
+          hasGlobalError: text.includes('Please correct the highlighted fields')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('In-Page Quotation Modal enforces field-level validation on required customer inputs', () => {
+      const v = quoteValidationEval.result.value || {};
+      assert.strictEqual(v.hasNameError, true, 'Name field validation error displayed');
+      assert.strictEqual(v.hasPhoneError, true, 'Phone field validation error displayed');
+      assert.strictEqual(v.hasGlobalError, true, 'Global correction banner displayed');
+    });
+
+    // Test WhatsApp Same-as-mobile sync
+    const quoteWhatsAppSyncEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const modal = document.querySelector('[data-modal="package-quote"]');
+        if (!modal) return { success: false };
+
+        const phoneInput = document.getElementById('quote-customer-phone');
+        const whatsappInput = document.getElementById('quote-customer-whatsapp');
+        const sameAsLabel = Array.from(modal.querySelectorAll('label')).find(l => l.textContent.includes('Same as mobile'));
+        const sameAsCheckbox = sameAsLabel?.querySelector('input[type="checkbox"]');
+
+        if (!phoneInput || !whatsappInput || !sameAsCheckbox) return { success: false, reason: 'Elements missing' };
+
+        const valSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        valSetter.call(phoneInput, '01712345678');
+        phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+        sameAsCheckbox.click();
+
+        return {
+          phoneVal: phoneInput.value,
+          whatsappVal: whatsappInput.value,
+          isWhatsAppDisabled: whatsappInput.disabled,
+          isSame: whatsappInput.value === '01712345678'
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('In-Page Quotation Modal synchronizes WhatsApp number and disables input when "Same as mobile" is checked', () => {
+      const v = quoteWhatsAppSyncEval.result.value || {};
+      assert.strictEqual(v.isWhatsAppDisabled, true, 'WhatsApp input is disabled');
+      assert.strictEqual(v.isSame, true, 'WhatsApp input value mirrors mobile phone');
+    });
+
+    // Test official quote submission to backend SQLite and reference number display
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const modal = document.querySelector('[data-modal="package-quote"]');
+        if (!modal) return;
+
+        const nameInput = document.getElementById('quote-customer-name');
+        const phoneInput = document.getElementById('quote-customer-phone');
+        const submitBtn = modal.querySelector('button[type="submit"]');
+
+        const valSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        valSetter.call(nameInput, 'Engr. Tanvir Ahmed');
+        nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+        valSetter.call(phoneInput, '01712345678');
+        phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+        submitBtn.click();
+      })()`
+    });
+
+    // Wait for backend response & re-render
+    await sleep(1500);
+
+    const quoteSuccessEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const modal = document.querySelector('[data-modal="package-quote"]');
+        if (!modal) return { isSuccess: false };
+        const text = modal.innerText;
+        const refMatch = text.match(/CNX-QTE-[0-9A-Z\-]+/);
+        return {
+          isSuccess: text.includes('Quote Submitted Successfully') || text.includes('Thank You, Engr. Tanvir Ahmed'),
+          hasReference: !!refMatch,
+          refNumber: refMatch ? refMatch[0] : null,
+          hasDoneBtn: text.includes('Done & Close')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('In-Page Quotation Modal successfully submits to backend SQLite and displays official CNX-QTE- reference', () => {
+      const v = quoteSuccessEval.result.value || {};
+      assert.strictEqual(v.isSuccess, true, 'Quote submitted successfully screen rendered');
+      assert.strictEqual(v.hasReference, true, 'Official CNX-QTE reference number rendered');
+      assert.strictEqual(v.hasDoneBtn, true, 'Done & Close action button rendered');
+    });
+
+    // Close quote modal using Done & Close
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const doneBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Done & Close'));
+        if (doneBtn) doneBtn.click();
+      })()`
+    });
+    await sleep(300);
+
+    const quoteModalDoneEval = await send('Runtime.evaluate', {
       expression: `!document.querySelector('[data-modal="package-quote"]')`,
       returnByValue: true
     });
 
-    test('In-Page Quotation Modal closes properly', () => {
-      assert.strictEqual(quoteModalCloseEval.result.value, true, 'Quotation modal closed');
+    test('In-Page Quotation Modal closes properly via "Done & Close"', () => {
+      assert.strictEqual(quoteModalDoneEval.result.value, true, 'Quotation modal closed');
     });
 
     // 2g. Capture Viewport Screenshots (1440, 1280, 768, 390)
@@ -1155,6 +1330,37 @@ async function run() {
       }
       console.log(`  ✓ Saved screenshot: ${filename} (${vp.w}x${vp.h})`);
     }
+
+    // 2h. Test Add Package to Cart button & cart integration
+    console.log('\n--- 4. Testing Step 6 Add to Cart Handoff ---');
+    await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await sleep(300);
+
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Add Package to Cart'));
+        if (addBtn) addBtn.click();
+      })()`
+    });
+    await sleep(1000);
+
+    const cartNavEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const path = window.location.pathname;
+        const text = document.body.innerText;
+        return {
+          isCartPath: path.includes('/cart') || text.includes('Your Shopping Cart') || text.includes('Shopping Cart'),
+          hasBundleName: text.includes('Camera') || text.includes('Turbo HD') || text.includes('Security Setup') || text.includes('Complete Turnkey Set') || text.includes('Custom')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Package Builder Step 6 "Add Package to Cart" adds engineered bundle and navigates to /cart', () => {
+      const v = cartNavEval.result.value || {};
+      assert.strictEqual(v.isCartPath, true, 'Navigated to Cart page');
+      assert.strictEqual(v.hasBundleName, true, 'Configured package bundle is present in cart');
+    });
 
   } finally {
     if (ws) ws.close();

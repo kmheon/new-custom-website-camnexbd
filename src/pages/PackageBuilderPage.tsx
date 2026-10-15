@@ -45,7 +45,8 @@ import {
   Loader2,
   Monitor,
   Volume2,
-  Box
+  Box,
+  Truck
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge } from '../components/common/UI';
@@ -436,6 +437,23 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const [quoteSubmitting, setQuoteSubmitting] = useState<boolean>(false);
   const [quoteSuccessResult, setQuoteSuccessResult] = useState<{ quoteNumber: string } | null>(null);
   const [quoteErrorMessage, setQuoteErrorMessage] = useState<string | null>(null);
+  const [quoteFormErrors, setQuoteFormErrors] = useState<{
+    customerName?: string;
+    phone?: string;
+    email?: string;
+  }>({});
+
+  // Escape key accessibility handler to close quotation modal
+  useEffect(() => {
+    if (!showQuoteModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowQuoteModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showQuoteModal]);
 
   // BOM validity: 7 calendar days from issue date, stable across page reloads
   const [bomDates, setBomDates] = useState<{ issueDate: string; validUntilDate: string }>(() => {
@@ -2234,7 +2252,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   }, [computedBOM, cameraCount, cameraSpec, recorderSpec.isUnderCapacity, recorderSpec.underCapacityReason, isStorageDriveBayIncompatible]);
 
   const isEnterpriseOver64 = cameraCount > 64;
-  const canAddToCart = !quotationRequired && totalPrice !== null && !recorderSpec.isUnderCapacity && !isStorageDriveBayIncompatible && !isEnterpriseOver64;
+  const canAddToCart = !quotationRequired && totalPrice !== null && !recorderSpec.isUnderCapacity && !isStorageDriveBayIncompatible && !isEnterpriseOver64 && !cameraSpec.isSpecialist;
 
   // Pure Infrared standard check
   const isPureIR = nightVision === 'ir' && systemArch === 'analogue';
@@ -2246,7 +2264,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       return;
     }
 
-    const bundleId = `bundle-${systemArch}-${cameraCount}cam-${formFactor}-${Date.now()}`;
+    const bundleId = selectedBasePkg ? selectedBasePkg.id : `bundle-${systemArch}-${cameraCount}c-${formFactor}-${storageOption}`;
     const bundleName = `${cameraCount}-Camera ${
       systemArch === 'wireless'
         ? 'Wireless Smart Kit'
@@ -2299,14 +2317,15 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const handleRequestQuote = () => {
     setShowQuoteModal(true);
     setQuoteErrorMessage(null);
+    setQuoteFormErrors({});
     setQuoteSuccessResult(null);
 
     // Also update localStorage prefill as backup for navigation
     const summaryText = `[Custom Package Builder Configuration]
 Architecture: ${systemArch.toUpperCase()}
-Cameras: ${cameraCount}x ${cameraSpec.name} (${formFactor.toUpperCase()})
+Cameras: ${cameraCount}x ${cameraSpec.name} (${formFactor.toUpperCase()}) - Model: ${cameraSpec.model}
 Night Vision: ${nightVision.toUpperCase()}
-Recorder: ${recorderSpec.name} (${recorderSpec.channels} Channels)
+Recorder: ${recorderSpec.name} (${recorderSpec.channels} Channels) - Model: ${recorderSpec.model}
 Storage: ${storageSpec ? storageSpec.name : 'None'}
 Cable Allocation: ${cableLengthMeters}m (${systemArch === 'ip' ? 'Cat6 UTP Solid Copper' : 'RG59 Coax Solid Copper'})
 Power: ${powerSpec?.name || 'Standard'}
@@ -2330,29 +2349,42 @@ Reason: ${quotationReason || 'Standard verification'}`;
   const handleQuoteFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setQuoteErrorMessage(null);
+    const errors: { customerName?: string; phone?: string; email?: string } = {};
 
-    if (!quoteFormData.customerName.trim() || quoteFormData.customerName.trim().length < 2) {
-      setQuoteErrorMessage('Please enter your full name (minimum 2 characters).');
+    const name = quoteFormData.customerName.trim();
+    if (!name || name.length < 2) {
+      errors.customerName = 'Please enter your full name (minimum 2 characters).';
+    }
+
+    const rawPhone = quoteFormData.phone.trim();
+    const cleanPhone = rawPhone.replace(/[\s\-\(\)]/g, '').replace(/^\+?88/, '');
+    if (!cleanPhone || cleanPhone.length < 11 || !cleanPhone.startsWith('01')) {
+      errors.phone = 'Please enter a valid 11-digit Bangladesh mobile number (e.g. 01712345678).';
+    }
+
+    const email = quoteFormData.email.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = 'Please enter a valid email address (e.g. name@company.com).';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setQuoteFormErrors(errors);
+      setQuoteErrorMessage('Please correct the highlighted fields before submitting.');
       return;
     }
 
-    const cleanPhone = quoteFormData.phone.trim();
-    if (!cleanPhone || cleanPhone.length < 11) {
-      setQuoteErrorMessage('Please enter a valid 11-digit mobile phone number (e.g. 01712345678).');
-      return;
-    }
-
+    setQuoteFormErrors({});
     setQuoteSubmitting(true);
 
     const notesContent = `[Package Builder Official Quote Request]
 Architecture: ${systemArch.toUpperCase()}
-Cameras: ${cameraCount}x ${cameraSpec.name} (${formFactor.toUpperCase()})
+Cameras: ${cameraCount}x ${cameraSpec.name} (${formFactor.toUpperCase()}) - Model: ${cameraSpec.model} | SKU: ${cameraSpec.sku}
 Night Vision: ${nightVision.toUpperCase()}
-Recorder: ${recorderSpec.name} (${recorderSpec.channels} Channels)
-Surveillance Storage: ${storageSpec ? storageSpec.name : 'None'}
+Recorder: ${recorderSpec.name} (${recorderSpec.channels} Channels) - Model: ${recorderSpec.model} | SKU: ${recorderSpec.sku}
+Surveillance Storage: ${storageSpec ? storageSpec.name : 'None'} - Model: ${storageSpec?.model || 'Surveillance Grade'}
 Transmission Cable: ${cableLengthMeters}m (${systemArch === 'ip' ? 'Cat6 UTP Solid Copper' : 'RG59 Coax Solid Copper'})
 Power Supply: ${powerSpec?.name || 'Included'}
-Monitor: ${monitorSpec ? monitorSpec.name : 'None'}
+Monitor: ${monitorSpec ? `${monitorSpec.name} (Model: ${monitorSpec.model})` : 'None'}
 Installation Service Requested: ${quoteFormData.includeInstallation ? 'YES (Full Turnkey Installation)' : 'NO (Equipment Only)'}
 Quotation Status: ${quotationReason || 'Standard Package Verification'}
 Calculated Hardware Estimate: ${totalPrice !== null ? `৳${totalPrice.toLocaleString()} BDT` : 'Quotation Required'}
@@ -2360,9 +2392,10 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
 
     try {
       const payload: any = {
-        customerName: quoteFormData.customerName.trim(),
+        customerName: name,
         phone: cleanPhone,
-        email: quoteFormData.email.trim() || undefined,
+        email: email || undefined,
+        whatsapp: quoteFormData.whatsapp.trim() || undefined,
         serviceType: 'cctv_installation',
         propertyType: cameraCount <= 4 ? 'home' : cameraCount <= 16 ? 'office' : 'factory',
         siteAddress: quoteFormData.siteAddress.trim() || 'Dhaka, Bangladesh',
@@ -4406,100 +4439,238 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
               <div className="space-y-6">
                 <div>
                   <span className="text-xs font-bold text-[#F15A24] uppercase tracking-wider block">
-                    Step 6 of 6
+                    Step 6 of 6 · Final System Review
                   </span>
                   <h2 className="text-xl font-heading font-black text-[#111827]">
                     Ready to Order or Request Site Survey
                   </h2>
                   <p className="text-xs text-[#5B6472] mt-1">
-                    Your custom system has been verified. You can add it directly to cart or submit it for an engineer site consultation in Dhaka.
+                    Review your complete engineered turnkey configuration, verified component warranties, and pricing before adding to cart or booking an on-site technical consultation.
                   </p>
                 </div>
 
-                {/* Summary Card */}
-                <div className="p-6 rounded-2xl bg-slate-900 text-white space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                    <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                      Engineered Turnkey Configuration
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {cameraCount} Cameras · {formFactor.toUpperCase()}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-300">
-                    <div className="space-y-1.5">
-                      <div><strong>Architecture:</strong> {systemArch.toUpperCase()}</div>
-                      <div><strong>Camera Model:</strong> {cameraSpec.name}</div>
-                      <div><strong>Night Vision:</strong> {nightVision.toUpperCase()}</div>
-                      <div><strong>Recorder:</strong> {recorderSpec.name}</div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div><strong>Storage:</strong> {storageOption.toUpperCase()} (Surveillance)</div>
-                      <div><strong>Cabling:</strong> {cableLengthMeters}m @ 10m/cam</div>
-                      <div><strong>Power Supply:</strong> {powerSpec?.name || 'Standard'}</div>
-                      <div><strong>Monitor:</strong> {monitorSpec ? monitorSpec.name : 'None'}</div>
+                {/* System Eligibility Banner */}
+                {canAddToCart ? (
+                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <strong className="block font-bold">Turnkey System Verified & Confirmed for Order</strong>
+                      <p className="text-emerald-800 text-[11px] leading-relaxed">
+                        All cameras, recorder channels, storage bays, cabling, and power distribution match CamneX engineering rules with confirmed catalog pricing.
+                      </p>
                     </div>
                   </div>
-
-                  <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <span className="text-xs text-slate-400 block">
-                        {quotationRequired ? 'System Pricing' : 'Total Package Price'}
+                ) : (
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <strong className="block font-bold">Technical Consultation & Quotation Required Prior to Order</strong>
+                      <p className="text-amber-800 text-[11px] leading-relaxed">
+                        {quotationReason || 'Custom setup requires site assessment or contains specialist/unpriced equipment.'}
+                      </p>
+                      <span className="inline-block text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded">
+                        Online instant checkout disabled · Official quotation flow active
                       </span>
-                      {totalPrice === null || quotationRequired ? (
-                        <div className="text-2xl font-heading font-black text-amber-400">
-                          Ask for price
-                        </div>
-                      ) : (
-                        <div className="text-3xl font-heading font-black text-white">
-                          ৳{totalPrice.toLocaleString()}
-                        </div>
-                      )}
-                      <div className="text-[11px] text-slate-400">
-                        {quotationRequired
-                          ? quotationReason || 'Custom setup requires technical consultation.'
-                          : 'Includes all hardware, cables, connectors & 1-Year Bangladesh Warranty'}
+                    </div>
+                  </div>
+                )}
+
+                {/* Comprehensive Turnkey System Summary */}
+                <div className="p-6 rounded-2xl bg-slate-900 text-white space-y-5 shadow-sm border border-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
+                    <div>
+                      <span className="text-xs font-bold text-orange-400 uppercase tracking-wider block">
+                        Engineered Turnkey Configuration
+                      </span>
+                      <h3 className="font-heading font-black text-lg text-white">
+                        {cameraCount}-Camera {systemArch === 'ip' ? 'PoE IP Network System' : systemArch === 'wireless' ? 'Smart Wi-Fi System' : 'Turbo HD Coaxial System'}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                        Ref: BOM-NX-{cameraCount}C-{systemArch.toUpperCase()}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-950 text-orange-400 border border-orange-800">
+                        {bomDates.issueDate}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 3-Column Detailed Engineering Breakdown */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+                    {/* Column 1: Cameras & Coverage */}
+                    <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-orange-400">
+                        1. Cameras & Coverage
+                      </div>
+                      <div className="space-y-1 text-[11px]">
+                        <div><strong className="text-white">Architecture:</strong> {systemArch === 'ip' ? 'IP PoE Digital' : systemArch === 'wireless' ? 'Wi-Fi Wireless' : 'Analogue Turbo HD'}</div>
+                        <div><strong className="text-white">Category:</strong> {cameraCategory ? cameraCategory.replace(/_/g, ' ').toUpperCase() : formFactor.toUpperCase()}</div>
+                        <div><strong className="text-white">Camera Model:</strong> {cameraSpec.name} ({cameraSpec.model})</div>
+                        <div><strong className="text-white">Night Vision:</strong> {nightVision === 'ir' ? 'Pure Infrared (IR 20m)' : nightVision === 'hybrid' ? 'Smart Hybrid Light' : 'ColorVu 24/7 Full Color'}</div>
+                        <div><strong className="text-white">Quantity:</strong> {cameraCount} Cameras</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      {quotationRequired ? (
-                        <Button
-                          size="lg"
-                          onClick={handleRequestQuote}
-                          className="bg-[#F15A24] hover:bg-[#D94D1C] text-white"
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          <span>Request Official Quote</span>
-                        </Button>
+                    {/* Column 2: Recording & Storage */}
+                    <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-orange-400">
+                        2. Recording & Storage
+                      </div>
+                      <div className="space-y-1 text-[11px]">
+                        <div><strong className="text-white">Recorder:</strong> {recorderSpec.name}</div>
+                        <div><strong className="text-white">Channels:</strong> {recorderSpec.channels} Channels ({recorderSpec.isUnderCapacity ? '⚠️ Under-Capacity' : '✓ Verified Matched'})</div>
+                        <div><strong className="text-white">Hard Drive:</strong> {storageOption.toUpperCase()} Surveillance Grade</div>
+                        <div><strong className="text-white">Drive Arrangement:</strong> {storageOption.includes('dual') ? '2x SATA Bays Occupied' : storageOption.includes('quad') ? '4x SATA Bays Occupied' : '1x SATA Bay Occupied'}</div>
+                        <div><strong className="text-white">Retention Est.:</strong> ~{retentionEstimate.estDays} Days ({recordingMode === 'motion' ? 'Motion' : '24/7'})</div>
+                      </div>
+                    </div>
+
+                    {/* Column 3: Cabling, Power & Display */}
+                    <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-orange-400">
+                        3. Cabling, Power & Display
+                      </div>
+                      <div className="space-y-1 text-[11px]">
+                        <div><strong className="text-white">Transmission:</strong> {cableLengthMeters}m ({systemArch === 'ip' ? 'Cat6 UTP Solid Copper' : analogueTransmission === 'utp_baluns' ? 'Cat6 UTP with Baluns' : 'Solid Copper RG59 Coaxial'})</div>
+                        <div><strong className="text-white">Connectors:</strong> {systemArch === 'ip' ? `${cameraCount * 2}x RJ45 Terminations` : analogueTransmission === 'utp_baluns' ? `${cameraCount}x Matched HD Video Balun Kits` : `${cameraCount * 2}x Pure Copper BNC Connectors + ${cameraCount}x DC Pigtails`}</div>
+                        <div><strong className="text-white">Power Unit:</strong> {powerSpec?.name || '12V Regulated DC Supply'}</div>
+                        <div><strong className="text-white">Junction Boxes:</strong> {includeJunctionBoxes ? `${cameraCount}x Waterproof Deep Base (IP66)` : 'Excluded (Direct Mount)'}</div>
+                        <div><strong className="text-white">Display Monitor:</strong> {monitorSpec ? `${monitorSpec.name} (${monitorSpec.model})` : 'None Included'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Financial Total & Action Row */}
+                  <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs text-slate-400 block font-bold uppercase tracking-wider">
+                        {quotationRequired ? 'Equipment Investment Assessment' : 'Total Package Price'}
+                      </span>
+                      {totalPrice === null || quotationRequired ? (
+                        <div>
+                          <div className="text-2xl font-heading font-black text-amber-400">
+                            ৳{pricedSubtotal.toLocaleString()} <span className="text-xs font-normal text-slate-400">(Priced hardware)</span>
+                          </div>
+                          <span className="text-[11px] font-bold text-amber-300">
+                            + {unpricedCount} custom component(s) pending official engineer quote
+                          </span>
+                        </div>
                       ) : (
-                        <Button
-                          size="lg"
-                          onClick={handleAddPackageToCart}
-                          className="bg-[#F15A24] hover:bg-[#D94D1C] text-white"
-                        >
-                          <ShoppingBag className="w-4 h-4 mr-2" />
-                          <span>Add Package to Cart</span>
-                        </Button>
+                        <div>
+                          <div className="text-3xl font-heading font-black text-white">
+                            ৳{totalPrice.toLocaleString()} <span className="text-xs font-semibold text-slate-400">BDT</span>
+                          </div>
+                          <span className="text-[10px] text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2 py-0.5 rounded font-semibold">
+                            Confirmed Turnkey Equipment Total
+                          </span>
+                        </div>
+                      )}
+                      <div className="text-[11px] text-slate-400 mt-1">
+                        Installation labor, conduit piping & network commissioning quoted separately following certified on-site survey.
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                      {canAddToCart ? (
+                        <>
+                          <Button
+                            size="lg"
+                            onClick={handleAddPackageToCart}
+                            className="bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold shadow-md cursor-pointer"
+                          >
+                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            <span>Add Package to Cart</span>
+                          </Button>
+                          <Button
+                            size="lg"
+                            variant="outline"
+                            onClick={handleRequestQuote}
+                            className="border-slate-700 text-slate-200 hover:bg-slate-800 cursor-pointer"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            <span>Book Site Survey</span>
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            size="lg"
+                            onClick={handleRequestQuote}
+                            className="bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold shadow-md cursor-pointer"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            <span>Request Official Quote</span>
+                          </Button>
+                          <button
+                            type="button"
+                            disabled
+                            title="Online checkout is disabled for custom quotation configurations."
+                            className="px-4 py-2.5 rounded-lg border border-slate-700 bg-slate-800/40 text-slate-500 text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed"
+                          >
+                            <ShoppingBag className="w-4 h-4 text-slate-600" />
+                            <span>Cart Checkout Unavailable</span>
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Additional Engineering Support Info */}
+                {/* Verified Product Warranty Schedule */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2.5">
+                  <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Verified Product Warranty Policy</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[11px]">
+                    <div className="p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200/80">
+                      <strong className="text-emerald-900 block font-bold">Surveillance HDDs: 3 Years</strong>
+                      <span className="text-slate-600">Western Digital Purple & Seagate SkyHawk official replacement warranty.</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200/80">
+                      <strong className="text-blue-900 block font-bold">Cameras & Recorders: 1–2 Years</strong>
+                      <span className="text-slate-600">Official Bangladesh distributor warranty against manufacturing defects.</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-indigo-50/60 border border-indigo-200/80">
+                      <strong className="text-indigo-900 block font-bold">PoE Network Switches: 3 Years</strong>
+                      <span className="text-slate-600">Ruijie Reyee Smart Cloud managed hardware warranty.</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                      <strong className="text-slate-800 block font-bold">Power & Cabling: Workmanship</strong>
+                      <span className="text-slate-600">SMPS boxes: 1 year · Adapters: 6 months · Cabling: Workmanship guarantee.</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CamneX Service & Installation Assurance */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <strong className="block text-slate-800 mb-0.5">1-Year Warranty</strong>
-                    Official Bangladesh distributor warranty on all cameras and recorders.
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-[#F15A24]" />
+                      <span>Certified Genuine Hardware</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      100% genuine Hikvision, Ruijie Reyee, and Western Digital equipment with official serial tracking and distributor replacement.
+                    </p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <strong className="block text-slate-800 mb-0.5">Nationwide Delivery</strong>
-                    Safe express courier delivery across all 64 districts in Bangladesh.
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <Truck className="w-4 h-4 text-[#F15A24]" />
+                      <span>Nationwide Express Delivery</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Safe insured courier dispatch across all 64 districts in Bangladesh with real-time tracking and protective packaging.
+                    </p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <strong className="block text-slate-800 mb-0.5">Installation Available</strong>
-                    Experienced CamneX certified technician team available in Dhaka and major cities.
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <Wrench className="w-4 h-4 text-[#F15A24]" />
+                      <span>Turnkey Installation Option</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      CamneX certified technician team available for neat PVC casing, conduit piping, camera focusing, and remote mobile viewing setup.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -4987,8 +5158,18 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
         {/* IN-PAGE QUOTATION REQUEST MODAL */}
         {/* ==================================================================== */}
         {showQuoteModal && (
-          <div data-modal="package-quote" className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in duration-150">
+          <div
+            data-modal="package-quote"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quote-modal-title"
+            onClick={() => setShowQuoteModal(false)}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in duration-150"
+            >
               {/* Modal Header */}
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <div className="flex items-center gap-2.5">
@@ -4996,11 +5177,11 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-heading font-black text-lg text-[#111827]">
+                    <h3 id="quote-modal-title" className="font-heading font-black text-lg text-[#111827]">
                       Request Official Engineering Quotation
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Configured for {cameraCount} Cameras · {systemArch.toUpperCase()} Architecture
+                      Configured for {cameraCount} Cameras · {systemArch === 'ip' ? 'IP PoE Digital' : systemArch === 'wireless' ? 'Wi-Fi Wireless' : 'Analogue Turbo HD'} Architecture
                     </p>
                   </div>
                 </div>
@@ -5008,6 +5189,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                   type="button"
                   onClick={() => setShowQuoteModal(false)}
                   data-modal-close="package-quote"
+                  aria-label="Close quote modal"
                   className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition cursor-pointer"
                 >
                   <X className="w-4 h-4" />
@@ -5034,12 +5216,12 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     </div>
 
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 max-w-sm mx-auto space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Quotation Reference Number</span>
+                      <span className="text-[10px] uppercase font-bold text-slate-400">Official Quotation Reference</span>
                       <div className="font-mono font-black text-lg text-[#F15A24]">
                         {quoteSuccessResult.quoteNumber}
                       </div>
                       <p className="text-[11px] text-slate-500">
-                        Please save this reference number. Our engineer will call you within 2–4 business hours.
+                        Please save this reference number. Our senior engineer will review your site requirements and call you within 2–4 business hours.
                       </p>
                     </div>
 
@@ -5052,23 +5234,30 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleQuoteFormSubmit} className="space-y-4">
+                  <form onSubmit={handleQuoteFormSubmit} noValidate className="space-y-4">
                     {/* Hardware Summary Box */}
                     <div className="p-4 rounded-xl bg-orange-50/50 border border-orange-200 text-xs space-y-2">
                       <div className="font-heading font-bold text-slate-900 flex items-center justify-between">
-                        <span>BOM Hardware Summary</span>
+                        <span>Configured Hardware Specification</span>
                         <span className="font-black text-[#F15A24]">
                           {totalPrice !== null ? `৳${totalPrice.toLocaleString()} BDT` : 'Quotation Required'}
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-600 text-[11px]">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-slate-600 text-[11px]">
                         <div><strong>Architecture:</strong> {systemArch.toUpperCase()}</div>
-                        <div><strong>Cameras:</strong> {cameraCount}x {cameraSpec.name}</div>
+                        <div><strong>Cameras:</strong> {cameraCount}x {cameraSpec.name} ({cameraSpec.model})</div>
                         <div><strong>Night Vision:</strong> {nightVision.toUpperCase()}</div>
                         <div><strong>Recorder:</strong> {recorderSpec.channels}-Ch ({recorderSpec.model})</div>
-                        <div><strong>Storage:</strong> {storageOption.toUpperCase()} Surveillance</div>
-                        <div><strong>Cabling:</strong> {cableLengthMeters}m pure copper</div>
+                        <div><strong>Storage:</strong> {storageOption.toUpperCase()} Surveillance Grade</div>
+                        <div><strong>Cabling:</strong> {cableLengthMeters}m pure copper allocation</div>
+                        <div><strong>Power Unit:</strong> {powerSpec?.name || '12V Regulated DC Supply'}</div>
+                        <div><strong>Monitor:</strong> {monitorSpec ? `${monitorSpec.name} (${monitorSpec.model})` : 'None Included'}</div>
                       </div>
+                      {quotationRequired && quotationReason && (
+                        <div className="pt-1.5 border-t border-orange-200/80 text-[10px] text-amber-800 font-semibold">
+                          ⚠️ Note: {quotationReason}
+                        </div>
+                      )}
                     </div>
 
                     {/* Turnkey Installation Checkbox */}
@@ -5089,26 +5278,36 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     {/* Customer Contact Fields */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="space-y-1">
-                        <label className="font-bold text-slate-700 flex items-center gap-1">
+                        <label htmlFor="quote-customer-name" className="font-bold text-slate-700 flex items-center gap-1">
                           <User className="w-3.5 h-3.5 text-[#F15A24]" />
                           <span>Full Name *</span>
                         </label>
                         <input
+                          id="quote-customer-name"
                           type="text"
                           required
                           value={quoteFormData.customerName}
-                          onChange={(e) => setQuoteFormData({ ...quoteFormData, customerName: e.target.value })}
+                          onChange={(e) => {
+                            setQuoteFormData({ ...quoteFormData, customerName: e.target.value });
+                            if (quoteFormErrors.customerName) setQuoteFormErrors(prev => ({ ...prev, customerName: undefined }));
+                          }}
                           placeholder="e.g. Engr. Tanvir Ahmed"
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                          className={`w-full px-3 py-2 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                            quoteFormErrors.customerName ? 'border-red-400 bg-red-50/20' : 'border-slate-300'
+                          }`}
                         />
+                        {quoteFormErrors.customerName && (
+                          <p className="text-[11px] text-red-600 font-medium mt-1">{quoteFormErrors.customerName}</p>
+                        )}
                       </div>
 
                       <div className="space-y-1">
-                        <label className="font-bold text-slate-700 flex items-center gap-1">
+                        <label htmlFor="quote-customer-phone" className="font-bold text-slate-700 flex items-center gap-1">
                           <Phone className="w-3.5 h-3.5 text-[#F15A24]" />
                           <span>Mobile Phone (11 Digits) *</span>
                         </label>
                         <input
+                          id="quote-customer-phone"
                           type="tel"
                           required
                           value={quoteFormData.phone}
@@ -5119,17 +5318,23 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                               phone: val,
                               whatsapp: prev.whatsappSameAsPhone ? val : prev.whatsapp
                             }));
+                            if (quoteFormErrors.phone) setQuoteFormErrors(prev => ({ ...prev, phone: undefined }));
                           }}
                           placeholder="01712345678"
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                          className={`w-full px-3 py-2 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                            quoteFormErrors.phone ? 'border-red-400 bg-red-50/20' : 'border-slate-300'
+                          }`}
                         />
+                        {quoteFormErrors.phone && (
+                          <p className="text-[11px] text-red-600 font-medium mt-1">{quoteFormErrors.phone}</p>
+                        )}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <label className="font-bold text-slate-700 flex items-center gap-1">
+                          <label htmlFor="quote-customer-whatsapp" className="font-bold text-slate-700 flex items-center gap-1">
                             <span>WhatsApp Number</span>
                           </label>
                           <label className="text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer">
@@ -5150,36 +5355,50 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                           </label>
                         </div>
                         <input
+                          id="quote-customer-whatsapp"
                           type="tel"
-                          value={quoteFormData.whatsapp}
+                          disabled={quoteFormData.whatsappSameAsPhone}
+                          value={quoteFormData.whatsappSameAsPhone ? quoteFormData.phone : quoteFormData.whatsapp}
                           onChange={(e) => setQuoteFormData({ ...quoteFormData, whatsapp: e.target.value })}
                           placeholder="01712345678 (Optional)"
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                            quoteFormData.whatsappSameAsPhone ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''
+                          }`}
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="font-bold text-slate-700 flex items-center gap-1">
+                        <label htmlFor="quote-customer-email" className="font-bold text-slate-700 flex items-center gap-1">
                           <Mail className="w-3.5 h-3.5 text-slate-400" />
                           <span>Email Address</span>
                         </label>
                         <input
+                          id="quote-customer-email"
                           type="email"
                           value={quoteFormData.email}
-                          onChange={(e) => setQuoteFormData({ ...quoteFormData, email: e.target.value })}
+                          onChange={(e) => {
+                            setQuoteFormData({ ...quoteFormData, email: e.target.value });
+                            if (quoteFormErrors.email) setQuoteFormErrors(prev => ({ ...prev, email: undefined }));
+                          }}
                           placeholder="you@example.com (Optional)"
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                          className={`w-full px-3 py-2 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F15A24] ${
+                            quoteFormErrors.email ? 'border-red-400 bg-red-50/20' : 'border-slate-300'
+                          }`}
                         />
+                        {quoteFormErrors.email && (
+                          <p className="text-[11px] text-red-600 font-medium mt-1">{quoteFormErrors.email}</p>
+                        )}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="space-y-1">
-                        <label className="font-bold text-slate-700 flex items-center gap-1">
+                        <label htmlFor="quote-company-name" className="font-bold text-slate-700 flex items-center gap-1">
                           <Building className="w-3.5 h-3.5 text-slate-400" />
                           <span>Company / Organization</span>
                         </label>
                         <input
+                          id="quote-company-name"
                           type="text"
                           value={quoteFormData.companyName}
                           onChange={(e) => setQuoteFormData({ ...quoteFormData, companyName: e.target.value })}
@@ -5189,11 +5408,12 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       </div>
 
                       <div className="space-y-1">
-                        <label className="font-bold text-slate-700 flex items-center gap-1">
+                        <label htmlFor="quote-site-address" className="font-bold text-slate-700 flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 text-[#F15A24]" />
                           <span>Installation Site Address</span>
                         </label>
                         <input
+                          id="quote-site-address"
                           type="text"
                           value={quoteFormData.siteAddress}
                           onChange={(e) => setQuoteFormData({ ...quoteFormData, siteAddress: e.target.value })}
@@ -5204,10 +5424,11 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     </div>
 
                     <div className="space-y-1 text-xs">
-                      <label className="font-bold text-slate-700">
+                      <label htmlFor="quote-notes" className="font-bold text-slate-700">
                         Project Notes / Special Site Requirements
                       </label>
                       <textarea
+                        id="quote-notes"
                         rows={2}
                         value={quoteFormData.notes}
                         onChange={(e) => setQuoteFormData({ ...quoteFormData, notes: e.target.value })}
