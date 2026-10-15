@@ -134,10 +134,41 @@ async function run() {
     assert.ok(builderContent.includes('Specialist Consultation') || builderContent.includes('specialistReason'), 'Specialist consultation state rendered');
   });
 
-  test('Phase A: Catalog model override modals for camera and recorder selection', () => {
-    assert.ok(builderContent.includes('Select Camera from Catalog'), 'Camera picker modal present');
-    assert.ok(builderContent.includes('Select Compatible Recorder'), 'Recorder picker modal present');
-    assert.ok(builderContent.includes('compatibleCatalogCameras') && builderContent.includes('compatibleCatalogRecorders'), 'Filters compatible catalog products');
+  test('Step 3: Analogue DVR channel validation distinguishes physical BNC from hybrid IP inputs', () => {
+    assert.ok(builderContent.includes('analogueBncChannels'), 'Must track physical analogue BNC channels separately');
+    assert.ok(builderContent.includes('hybridIpInputs'), 'Must track hybrid IP inputs separately');
+    assert.ok(builderContent.includes('Under-capacity analogue DVR') || builderContent.includes('physical analogue BNC inputs'), 'Must warn when analogue cameras exceed physical BNC inputs');
+  });
+
+  test('Step 3: Wireless duty cycle rules for battery and solar cameras', () => {
+    assert.ok(builderContent.includes('wirelessDutyCycleNote'), 'Must include wireless duty cycle note');
+    assert.ok(builderContent.includes('PIR wake-up cycles') || builderContent.includes('continuous 24/7 RTSP streams'), 'Must explain why PIR battery/solar cameras use edge MicroSD rather than continuous NVR streaming');
+  });
+
+  test('Step 3: Enterprise configurations (>64 cameras) display engineering review notice without mandating SAN/NAS', () => {
+    assert.ok(builderContent.includes('Large Enterprise Deployment (&gt;64 Cameras)') || builderContent.includes('Large Enterprise Deployment (>64 Cameras)'), 'Must include enterprise banner for >64 cameras');
+    assert.ok(builderContent.includes('server-based VMS') || builderContent.includes('multi-NVR cluster'), 'Must suggest multi-NVR cluster or server-based VMS');
+    assert.ok(builderContent.includes('SAN/NAS'), 'Must state alternatives without mandating rigid SAN/NAS');
+    assert.ok(builderContent.includes('isEnterpriseOver64') || builderContent.includes('cameraCount > 64'), 'Must prevent direct checkout for >64 cameras');
+  });
+
+  test('Step 3: Recorder manual override and under-capacity handling', () => {
+    assert.ok(builderContent.includes('isUnderCapacity') && builderContent.includes('underCapacityReason'), 'Must track under-capacity state and reason');
+    assert.ok(builderContent.includes('Hardware Under-Capacity Warning'), 'Must display under-capacity warning');
+    assert.ok(builderContent.includes('Reset to Recommended Recorder'), 'Must provide Reset to Recommended action');
+  });
+
+  test('Step 3: Storage selection covers 500GB-4TB presets and multi-bay arrays with SATA bay validation', () => {
+    assert.ok(builderContent.includes('dual_2tb') && builderContent.includes('dual_4tb') && builderContent.includes('quad_4tb'), 'Must support multi-bay storage arrays');
+    assert.ok(builderContent.includes('sataBays') && builderContent.includes('isStorageDriveBayIncompatible'), 'Must validate drive count against recorder SATA bays');
+    assert.ok(builderContent.includes('Drive Bay Incompatibility') || builderContent.includes('Drive Bay Sizing Incompatibility'), 'Must warn if selected storage requires more bays than available');
+  });
+
+  test('Step 3: Dynamic retention estimation engine with motion/continuous toggle and explicit disclaimer', () => {
+    assert.ok(builderContent.includes('retentionEstimate'), 'Must calculate dynamic retention estimate');
+    assert.ok(builderContent.includes('recordingMode') && builderContent.includes('setRecordingMode'), 'Must provide interactive motion vs continuous recording mode toggle');
+    assert.ok(builderContent.includes('codec') && builderContent.includes('H.265+'), 'Must use H.265+ smart compression profile');
+    assert.ok(builderContent.includes('Calculated for') && builderContent.includes('not manufacturer warranties'), 'Must disclose explicit engineering assumptions and disclaimer');
   });
 
   test('Step 4 & 5 Enhancements: Editable cable distance control and Analogue transmission toggle', () => {
@@ -552,22 +583,52 @@ async function run() {
     const step3Eval = await send('Runtime.evaluate', {
       expression: `(() => {
         const text = document.body.innerText;
+        const retentionCard = document.querySelector('[data-testid="retention-calculator"]');
         return {
           hasStep3: text.includes('Recorder Sizing & Surveillance Hard Drive'),
           hasChannelMatch: text.includes('Channels Matched for'),
           hasStorageOptions: text.includes('500 GB') && text.includes('1 TB') && text.includes('2 TB'),
-          hasChangeRecorderBtn: text.includes('Change Recorder')
+          hasChangeRecorderBtn: text.includes('Change Recorder'),
+          hasRetentionCalculator: !!retentionCard,
+          hasBncSpec: text.includes('BNC Coaxial Inputs'),
+          hasSataBays: text.includes('SATA Hard Drive Bay')
         };
       })()`,
       returnByValue: true
     });
 
-    test('Package Builder Step 3 validates recorder channels & displays surveillance storage', () => {
+    test('Package Builder Step 3 validates recorder channels, SATA bays & displays surveillance storage', () => {
       const v = step3Eval.result.value;
       assert.strictEqual(v.hasStep3, true, 'Step 3 must be active');
       assert.strictEqual(v.hasChannelMatch, true, 'Recorder channel matching badge rendered');
       assert.strictEqual(v.hasStorageOptions, true, 'Surveillance HDD sizing options rendered');
       assert.strictEqual(v.hasChangeRecorderBtn, true, 'Change Recorder button rendered');
+      assert.strictEqual(v.hasRetentionCalculator, true, 'Interactive retention calculator rendered');
+      assert.strictEqual(v.hasBncSpec, true, 'Physical BNC inputs breakdown rendered');
+      assert.strictEqual(v.hasSataBays, true, 'SATA hard drive bays indicator rendered');
+    });
+
+    // Test Retention Recording Mode Toggle (Motion -> Continuous)
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const continuousBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Continuous 24/7'));
+        if (continuousBtn) continuousBtn.click();
+      })()`
+    });
+    await sleep(300);
+
+    const continuousModeEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const text = document.body.innerText;
+        return {
+          hasContinuousDisclaimer: text.includes('24/7 continuous')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Retention calculator reacts to Continuous 24/7 recording mode toggle', () => {
+      assert.strictEqual(continuousModeEval.result.value.hasContinuousDisclaimer, true, 'Disclaimer reflects 24/7 continuous mode');
     });
 
     // Test Recorder Catalog Picker Modal Opening and Closing
@@ -580,13 +641,22 @@ async function run() {
     await sleep(400);
 
     const recorderModalOpenEval = await send('Runtime.evaluate', {
-      expression: `!!document.querySelector('[data-modal="recorder-catalog"]')`,
+      expression: `(() => {
+        const modal = document.querySelector('[data-modal="recorder-catalog"]');
+        const text = modal ? modal.innerText : '';
+        return {
+          isOpen: !!modal,
+          hasBncChannelInfo: text.includes('BNC Inputs'),
+          hasSataBayInfo: text.includes('SATA Bay')
+        };
+      })()`,
       returnByValue: true
     });
 
     await send('Runtime.evaluate', {
       expression: `(() => {
-        const closeBtn = document.querySelector('[data-modal-close="recorder"]');
+        const closeBtn = document.querySelector('[data-modal-close="recorder"]') ||
+                         Array.from(document.querySelectorAll('button')).find(b => b.textContent === 'Close');
         if (closeBtn) closeBtn.click();
       })()`
     });
@@ -597,8 +667,11 @@ async function run() {
       returnByValue: true
     });
 
-    test('Recorder Catalog Picker Modal opens, displays compatible recorders, and closes properly', () => {
-      assert.strictEqual(recorderModalOpenEval.result.value, true, 'Recorder picker modal opened');
+    test('Recorder Catalog Picker Modal opens, displays BNC/SATA specs, and closes properly', () => {
+      const v = recorderModalOpenEval.result.value;
+      assert.strictEqual(v.isOpen, true, 'Recorder picker modal opened');
+      assert.strictEqual(v.hasBncChannelInfo, true, 'Modal displays BNC channel breakdown');
+      assert.strictEqual(v.hasSataBayInfo, true, 'Modal displays SATA bay capacity');
       assert.strictEqual(recorderModalCloseEval.result.value, true, 'Recorder picker modal closed');
     });
 

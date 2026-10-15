@@ -27,6 +27,8 @@ import {
   Video,
   Radio,
   Server,
+  Database,
+  Clock,
   Settings2,
   Wrench,
   X,
@@ -67,8 +69,31 @@ const getProductBrand = (prod: Product | undefined | null, fallback = 'Hikvision
 
 export type SystemArch = 'analogue' | 'ip' | 'wireless';
 export type NightVisionMode = 'ir' | 'hybrid' | 'colorvu';
-export type StorageOption = '500gb' | '1tb' | '2tb' | '4tb' | 'none';
+export type StorageOption = '500gb' | '1tb' | '2tb' | '4tb' | 'dual_2tb' | 'dual_4tb' | 'quad_4tb' | 'none';
 export type MonitorOption = 'none' | '17inch' | '19inch' | 'large';
+
+export interface RecorderHardwareProfile {
+  channels: number;
+  name: string;
+  model: string;
+  sku: string;
+  unitPrice: number | null;
+  brand: string;
+  isCustomModel: boolean;
+  isMultiRecorder: boolean;
+  isUnderCapacity: boolean;
+  underCapacityReason?: string;
+  sataBays: number;
+  analogueBncChannels: number;
+  hybridIpInputs: number;
+  maxResolution: string;
+  compression: string;
+  incomingBandwidthMbps?: number;
+  poePorts?: number;
+  raidSupported?: boolean;
+  isWirelessEdge?: boolean;
+  wirelessDutyCycleNote?: string;
+}
 
 export interface PackageBuilderPageProps {
   onNavigate: (route: string, param?: string) => void;
@@ -367,8 +392,11 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const [specialistCapability, setSpecialistCapability] = useState<'none' | 'anpr' | 'thermal'>('none');
   const [nightVision, setNightVision] = useState<NightVisionMode>('ir');
   const [hasAudio, setHasAudio] = useState<boolean>(true);
-  const [storageOption, setStorageOption] = useState<StorageOption>('1tb');
+  const [storageOption, setStorageOption] = useState<StorageOption>('500gb');
+  const [hasUserCustomizedStorage, setHasUserCustomizedStorage] = useState<boolean>(false);
+  const [recordingMode, setRecordingMode] = useState<'motion' | 'continuous'>('motion');
   const [monitorOption, setMonitorOption] = useState<MonitorOption>('none');
+  const [hasUserCustomizedMonitor, setHasUserCustomizedMonitor] = useState<boolean>(false);
   const [customCableLength, setCustomCableLength] = useState<number | null>(null);
   const [analogueTransmission, setAnalogueTransmission] = useState<'coaxial' | 'utp_baluns'>('coaxial');
   const [copiedBOM, setCopiedBOM] = useState(false);
@@ -584,12 +612,34 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     }
   };
 
-  // Camera count update helper with boundary enforcement
+  // Camera count update helper with boundary enforcement and standard package defaults
   const handleUpdateCameraCount = (newCount: number) => {
     const maxLimit = systemArch === 'wireless' ? 8 : 128;
     const validCount = Math.max(1, Math.min(maxLimit, Math.floor(newCount) || 1));
     setCameraCount(validCount);
     setCustomCountInput(String(validCount));
+
+    // Standard package defaults: 2-4 cams -> 500GB & 17", 8 cams -> 1TB, 16 cams -> 2TB & 19"
+    if (!hasUserCustomizedStorage) {
+      if (validCount <= 4) {
+        setStorageOption('500gb');
+      } else if (validCount <= 8) {
+        setStorageOption('1tb');
+      } else if (validCount <= 16) {
+        setStorageOption('2tb');
+      } else {
+        setStorageOption('4tb');
+      }
+    }
+
+    // Keep monitor optional (default 'none' unless explicitly selected by user in Step 4)
+    if (hasUserCustomizedMonitor && monitorOption !== 'none') {
+      if (validCount <= 4) {
+        setMonitorOption('17inch');
+      } else if (validCount >= 16) {
+        setMonitorOption('19inch');
+      }
+    }
   };
 
   // Load existing packages for reference
@@ -680,7 +730,9 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const compatibleCatalogRecorders = useMemo(() => {
     const recorders = catalogProducts.filter((p) => {
       const cat = p.categorySlug || p.categoryId || '';
-      return (cat === 'recorders' || cat === 'dvr-nvr-recorders') && p.status !== 'archived';
+      const name = (p.name || '').toLowerCase();
+      const isRec = cat === 'recorders' || cat === 'dvr-nvr-recorders' || cat === 'cat-recorders' || (p.category && p.category.toLowerCase().includes('recorder'));
+      return isRec && p.status !== 'archived';
     });
 
     if (systemArch === 'wireless') {
@@ -697,28 +749,193 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     return recorders.filter(r => (r.name || '').toLowerCase().includes('dvr') || (r.name || '').toLowerCase().includes('xvr'));
   }, [catalogProducts, systemArch]);
 
-  // Derive Recorder Sizing (Rule: Recorder channels must be >= camera count)
-  const recorderSpec = useMemo(() => {
-    // 1. If user manually selected a catalog recorder, use it if compatible
+  // Derive Recorder Sizing & Complete Hardware Profile
+  const recorderSpec: RecorderHardwareProfile = useMemo(() => {
+    // 1. If user manually selected a catalog recorder, evaluate its exact specifications
     if (selectedRecorderProduct) {
+      const recId = selectedRecorderProduct.id;
+      const name = selectedRecorderProduct.name;
+      const model = selectedRecorderProduct.modelNumber || selectedRecorderProduct.model || 'REC-CUSTOM';
+      const sku = selectedRecorderProduct.sku || selectedRecorderProduct.id;
+      const brand = getProductBrand(selectedRecorderProduct);
+      const unitPrice = getProductPrice(selectedRecorderProduct);
       const specs = selectedRecorderProduct.specifications || {};
-      const chStr = specs.channels || specs.channel_capacity || '';
-      const parsedCh = parseInt(chStr, 10) || 8;
-      const isMultiRecorder = cameraCount > parsedCh;
+
+      let analogueBncChannels = 0;
+      let hybridIpInputs = 0;
+      let totalChannels = 8;
+      let sataBays = 1;
+      let maxHddCapacityPerBayTb = 10;
+      let maxResolution = '5MP Lite / 1080p';
+      let compression = 'H.265 Pro+';
+      let incomingBandwidthMbps: number | undefined = undefined;
+      let poePorts: number | undefined = undefined;
+      let raidSupported = false;
+
+      // Extract verified specifications for known catalog models
+      if (recId === 'prod-hik-dvr-4ch' || model.includes('7204')) {
+        analogueBncChannels = 4;
+        hybridIpInputs = 1;
+        totalChannels = 5;
+        sataBays = 1;
+        maxHddCapacityPerBayTb = 10;
+        maxResolution = '5MP Lite / 1080p @ 15fps';
+        compression = 'H.265 Pro+';
+      } else if (recId === 'prod-hik-dvr-8ch' || model.includes('7208')) {
+        analogueBncChannels = 8;
+        hybridIpInputs = 2;
+        totalChannels = 10;
+        sataBays = 1;
+        maxHddCapacityPerBayTb = 10;
+        maxResolution = '5MP Lite / 1080p';
+        compression = 'H.265 Pro+';
+      } else if (recId === 'prod-dahua-xvr-8ch' || model.includes('5108')) {
+        analogueBncChannels = 8;
+        hybridIpInputs = 4;
+        totalChannels = 12;
+        sataBays = 1;
+        maxHddCapacityPerBayTb = 16;
+        maxResolution = '5MP';
+        compression = 'AI Coding (H.265+)';
+      } else if (recId === 'prod-hik-dvr-16ch' || model.includes('7216')) {
+        analogueBncChannels = 16;
+        hybridIpInputs = 2;
+        totalChannels = 18;
+        sataBays = 2;
+        maxHddCapacityPerBayTb = 10;
+        maxResolution = '5MP Lite / 1080p';
+        compression = 'H.265 Pro+';
+      } else if (recId === 'prod-dahua-xvr-16ch' || model.includes('5216')) {
+        analogueBncChannels = 16;
+        hybridIpInputs = 8;
+        totalChannels = 24;
+        sataBays = 2;
+        maxHddCapacityPerBayTb = 16;
+        maxResolution = '5MP';
+        compression = 'AI Coding (H.265+)';
+      } else if (recId === 'prod-hik-dvr-32ch' || model.includes('7232')) {
+        analogueBncChannels = 32;
+        hybridIpInputs = 16;
+        totalChannels = 48;
+        sataBays = 4;
+        maxHddCapacityPerBayTb = 10;
+        maxResolution = '5MP Lite / 1080p';
+        compression = 'H.265 Pro+';
+      } else if (recId === 'prod-hik-nvr-8ch-poe' || model.includes('7608')) {
+        analogueBncChannels = 0;
+        hybridIpInputs = 8;
+        totalChannels = 8;
+        poePorts = 8;
+        incomingBandwidthMbps = 80;
+        sataBays = 1;
+        maxHddCapacityPerBayTb = 6;
+        maxResolution = '8MP (4K Ultra HD)';
+        compression = 'H.265+';
+      } else {
+        // Generic fallback from specifications
+        const chStr = specs.channels || specs.channel_capacity || '';
+        totalChannels = parseInt(chStr, 10) || 8;
+        analogueBncChannels = systemArch === 'analogue' ? totalChannels : 0;
+        hybridIpInputs = systemArch === 'ip' ? totalChannels : 0;
+        sataBays = specs.hdd_slots?.includes('2') ? 2 : specs.hdd_slots?.includes('4') ? 4 : 1;
+        maxResolution = specs.max_resolution || '1080p Full HD';
+        compression = specs.compression || 'H.265+';
+      }
+
+      // Check Under-Capacity / Incompatibility
+      let isUnderCapacity = false;
+      let underCapacityReason = '';
+
+      if (systemArch === 'analogue') {
+        // Strict physical analogue channel check! Hybrid IP inputs do not connect coaxial/balun lines.
+        if (cameraCount > analogueBncChannels) {
+          isUnderCapacity = true;
+          underCapacityReason = `Under-capacity analogue DVR: This model has ${analogueBncChannels} physical analogue BNC inputs for your ${cameraCount} cameras. The ${hybridIpInputs} extra hybrid IP inputs cannot connect physical coaxial or UTP/balun camera lines.`;
+        }
+      } else if (systemArch === 'ip') {
+        if (cameraCount > totalChannels) {
+          isUnderCapacity = true;
+          underCapacityReason = `Under-capacity IP NVR: This NVR supports up to ${totalChannels} IP channels (${cameraCount - totalChannels} channels short for your ${cameraCount} cameras).`;
+        }
+      } else if (systemArch === 'wireless') {
+        if (cameraCategory === 'wifi_battery' || cameraCategory === 'wifi_solar') {
+          isUnderCapacity = true;
+          underCapacityReason = 'Battery and solar cameras operate in low-power PIR sleep cycles and cannot stream 24/7 continuous video to an NVR. High-endurance edge MicroSD recording or cloud gateway is recommended.';
+        } else if (cameraCount > totalChannels) {
+          isUnderCapacity = true;
+          underCapacityReason = `Under-capacity wireless NVR: This unit supports up to ${totalChannels} Wi-Fi channels, but your setup requires ${cameraCount} channels.`;
+        }
+      }
+
+      const isMultiRecorder = cameraCount > (systemArch === 'analogue' ? analogueBncChannels : totalChannels);
 
       return {
-        channels: parsedCh,
-        name: selectedRecorderProduct.name,
-        model: selectedRecorderProduct.modelNumber || selectedRecorderProduct.model || 'REC-CUSTOM',
-        sku: selectedRecorderProduct.sku || selectedRecorderProduct.id,
-        unitPrice: getProductPrice(selectedRecorderProduct),
+        channels: totalChannels,
+        name,
+        model,
+        sku,
+        unitPrice,
+        brand,
         isCustomModel: true,
-        isMultiRecorder
+        isMultiRecorder,
+        isUnderCapacity,
+        underCapacityReason,
+        sataBays,
+        analogueBncChannels,
+        hybridIpInputs,
+        maxResolution,
+        compression,
+        incomingBandwidthMbps,
+        poePorts,
+        raidSupported
       };
     }
 
-    // 2. Wireless
+    // 2. Wireless Architecture
     if (systemArch === 'wireless') {
+      if (cameraCategory === 'wifi_battery' || cameraCategory === 'wifi_solar') {
+        return {
+          channels: 0,
+          name: 'Standalone Edge MicroSD Storage (NVR Incompatible with Battery Units)',
+          model: 'PIR-EDGE-STANDALONE',
+          sku: 'WIFI-EDGE-STORAGE',
+          unitPrice: 0,
+          brand: 'EZVIZ',
+          isCustomModel: false,
+          isMultiRecorder: false,
+          isUnderCapacity: false,
+          sataBays: 0,
+          analogueBncChannels: 0,
+          hybridIpInputs: 0,
+          maxResolution: '2K / 3MP',
+          compression: 'H.265 / PIR Duty Cycle',
+          isWirelessEdge: true,
+          wirelessDutyCycleNote: 'Low-power battery & solar cameras operate via PIR wake-up cycles and cannot sustain continuous 24/7 RTSP streams to an NVR without rapidly depleting battery reserves. Storage is handled via local high-endurance MicroSD (128GB per camera) or vendor cloud gateway.'
+        };
+      }
+
+      if (cameraCategory === 'wifi_cellular') {
+        return {
+          channels: 0,
+          name: '4G/5G Cellular Edge SIM Architecture (MicroSD Standard)',
+          model: '4G-EDGE-STANDALONE',
+          sku: 'CELLULAR-EDGE-STORAGE',
+          unitPrice: 0,
+          brand: 'CamneX Pro',
+          isCustomModel: false,
+          isMultiRecorder: false,
+          isUnderCapacity: false,
+          sataBays: 0,
+          analogueBncChannels: 0,
+          hybridIpInputs: 0,
+          maxResolution: '2K / 3MP',
+          compression: 'H.265 Mobile Stream',
+          isWirelessEdge: true,
+          wirelessDutyCycleNote: 'Cellular 4G/5G cameras communicate over mobile SIM networks. Centralized NVR recording requires private APN VPN tunneling or cloud VMS. Edge MicroSD storage is provided as standard.'
+        };
+      }
+
+      // wifi_smart / wifi_two_way_audio / wifi_pinhole
       const neededChannels = cameraCount <= 4 ? 4 : 8;
       const foundInCatalog = compatibleCatalogRecorders.find(r => {
         const specStr = JSON.stringify(r.specifications || {});
@@ -731,12 +948,20 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         model: foundInCatalog?.modelNumber || (neededChannels <= 4 ? 'CS-X5S-4W' : 'CS-X5S-8W'),
         sku: foundInCatalog?.sku || (neededChannels <= 4 ? 'EZV-NVR-4CH' : 'EZV-NVR-8CH'),
         unitPrice: foundInCatalog ? (getProductPrice(foundInCatalog) ?? 6500) : (neededChannels <= 4 ? 6500 : 9500),
+        brand: 'EZVIZ',
         isCustomModel: false,
-        isMultiRecorder: cameraCount > 8
+        isMultiRecorder: cameraCount > 8,
+        isUnderCapacity: false,
+        sataBays: 1,
+        analogueBncChannels: 0,
+        hybridIpInputs: neededChannels,
+        maxResolution: '5MP Super HD',
+        compression: 'H.265 Dual Stream',
+        isWirelessEdge: false
       };
     }
 
-    // 3. IP Network
+    // 3. IP Network (PoE)
     if (systemArch === 'ip') {
       if (cameraCount <= 8) {
         const catalog8 = compatibleCatalogRecorders.find(r => r.id === 'prod-hik-nvr-8ch-poe');
@@ -746,8 +971,17 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
           model: catalog8?.modelNumber || 'DS-7608NI-Q1/8P',
           sku: catalog8?.sku || 'HIK-NVR-8CH-POE',
           unitPrice: getProductPrice(catalog8) ?? 14800,
+          brand: 'Hikvision',
           isCustomModel: false,
-          isMultiRecorder: false
+          isMultiRecorder: false,
+          isUnderCapacity: false,
+          sataBays: 1,
+          analogueBncChannels: 0,
+          hybridIpInputs: 8,
+          poePorts: 8,
+          incomingBandwidthMbps: 80,
+          maxResolution: '8MP (4K Ultra HD)',
+          compression: 'H.265+'
         };
       } else if (cameraCount <= 16) {
         return {
@@ -756,8 +990,17 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
           model: 'DS-7616NI-K2/16P',
           sku: 'HIK-NVR-16CH-POE',
           unitPrice: 24500,
+          brand: 'Hikvision',
           isCustomModel: false,
-          isMultiRecorder: false
+          isMultiRecorder: false,
+          isUnderCapacity: false,
+          sataBays: 2,
+          analogueBncChannels: 0,
+          hybridIpInputs: 16,
+          poePorts: 16,
+          incomingBandwidthMbps: 160,
+          maxResolution: '8MP (4K Ultra HD)',
+          compression: 'H.265+'
         };
       } else if (cameraCount <= 32) {
         return {
@@ -765,20 +1008,56 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
           name: 'Hikvision 32-Channel 4K Enterprise NVR',
           model: 'DS-7732NI-M4',
           sku: 'HIK-NVR-32CH',
-          unitPrice: null, // Quote only
+          unitPrice: null, // Quote required
+          brand: 'Hikvision',
           isCustomModel: false,
-          isMultiRecorder: false
+          isMultiRecorder: false,
+          isUnderCapacity: false,
+          sataBays: 4,
+          analogueBncChannels: 0,
+          hybridIpInputs: 32,
+          incomingBandwidthMbps: 320,
+          maxResolution: '32MP / 8K / 4K',
+          compression: 'H.265+'
         };
-      } else {
-        // > 32 cameras (e.g. 64 cameras) -> Multi-recorder enterprise cluster
+      } else if (cameraCount <= 64) {
         return {
           channels: 64,
-          name: 'Dual Hikvision 32-Channel Enterprise 4K NVR Headend System (2x 32-CH)',
-          model: 'DS-7732NI-M4 (x2 Units)',
-          sku: 'HIK-NVR-64CH-DUAL',
+          name: 'Hikvision 64-Channel Enterprise 4K Ultra NVR with Hardware RAID',
+          model: 'DS-9664NI-I8',
+          sku: 'HIK-NVR-64CH-RAID',
           unitPrice: null, // Enterprise quote required
+          brand: 'Hikvision',
           isCustomModel: false,
-          isMultiRecorder: true
+          isMultiRecorder: false,
+          isUnderCapacity: false,
+          sataBays: 8,
+          analogueBncChannels: 0,
+          hybridIpInputs: 64,
+          incomingBandwidthMbps: 320,
+          raidSupported: true,
+          maxResolution: '12MP / 4K',
+          compression: 'H.265+'
+        };
+      } else {
+        // > 64 cameras Enterprise Architecture
+        return {
+          channels: 128,
+          name: `Enterprise Multi-Headend CCTV System (Engineered for ${cameraCount} Cameras)`,
+          model: 'HEADEND-CLUSTER-MULTI',
+          sku: 'ENT-NVR-CLUSTER-64PLUS',
+          unitPrice: null, // Enterprise quote required
+          brand: 'Hikvision / CamneX Enterprise',
+          isCustomModel: false,
+          isMultiRecorder: true,
+          isUnderCapacity: false,
+          sataBays: 16,
+          analogueBncChannels: 0,
+          hybridIpInputs: 128,
+          incomingBandwidthMbps: 640,
+          raidSupported: true,
+          maxResolution: '4K Ultra HD / Multi-Server VMS',
+          compression: 'H.265+ Smart Codec'
         };
       }
     }
@@ -792,8 +1071,15 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         model: catalog4?.modelNumber || 'iDS-7204HQHI-M1/S',
         sku: catalog4?.sku || 'HIK-DVR-4CH',
         unitPrice: getProductPrice(catalog4) ?? 4500,
+        brand: 'Hikvision',
         isCustomModel: false,
-        isMultiRecorder: false
+        isMultiRecorder: false,
+        isUnderCapacity: false,
+        sataBays: 1,
+        analogueBncChannels: 4,
+        hybridIpInputs: 1,
+        maxResolution: '5MP Lite / 1080p @ 15fps',
+        compression: 'H.265 Pro+'
       };
     } else if (cameraCount <= 8) {
       const catalog8 = compatibleCatalogRecorders.find(r => r.id === 'prod-hik-dvr-8ch');
@@ -803,8 +1089,15 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         model: catalog8?.modelNumber || 'iDS-7208HQHI-M1/S',
         sku: catalog8?.sku || 'HIK-DVR-8CH',
         unitPrice: getProductPrice(catalog8) ?? 6800,
+        brand: 'Hikvision',
         isCustomModel: false,
-        isMultiRecorder: false
+        isMultiRecorder: false,
+        isUnderCapacity: false,
+        sataBays: 1,
+        analogueBncChannels: 8,
+        hybridIpInputs: 2,
+        maxResolution: '5MP Lite / 1080p',
+        compression: 'H.265 Pro+'
       };
     } else if (cameraCount <= 16) {
       const catalog16 = compatibleCatalogRecorders.find(r => r.id === 'prod-hik-dvr-16ch');
@@ -814,8 +1107,15 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         model: catalog16?.modelNumber || 'iDS-7216HQHI-M2/S',
         sku: catalog16?.sku || 'HIK-DVR-16CH',
         unitPrice: getProductPrice(catalog16) ?? 12500,
+        brand: 'Hikvision',
         isCustomModel: false,
-        isMultiRecorder: false
+        isMultiRecorder: false,
+        isUnderCapacity: false,
+        sataBays: 2,
+        analogueBncChannels: 16,
+        hybridIpInputs: 2,
+        maxResolution: '5MP Lite / 1080p',
+        compression: 'H.265 Pro+'
       };
     } else if (cameraCount <= 32) {
       const catalog32 = compatibleCatalogRecorders.find(r => r.id === 'prod-hik-dvr-32ch');
@@ -825,22 +1125,54 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         model: catalog32?.modelNumber || 'iDS-7232HQHI-M2/S',
         sku: catalog32?.sku || 'HIK-DVR-32CH',
         unitPrice: getProductPrice(catalog32) ?? 28000,
+        brand: 'Hikvision',
         isCustomModel: false,
-        isMultiRecorder: false
+        isMultiRecorder: false,
+        isUnderCapacity: false,
+        sataBays: 4,
+        analogueBncChannels: 32,
+        hybridIpInputs: 16,
+        maxResolution: '5MP Lite / 1080p',
+        compression: 'H.265 Pro+'
       };
-    } else {
-      // > 32 cameras Analogue Enterprise (e.g. 64 cams) -> Multi-DVR cluster
+    } else if (cameraCount <= 64) {
+      // 33-64 cameras Analogue Enterprise -> Multi-DVR cluster
       return {
         channels: 64,
         name: 'Dual Hikvision 32-Channel Enterprise AcuSense HD DVR Headend Setup (2x 32-CH)',
         model: 'iDS-7232HQHI-M2/S (x2 Units)',
         sku: 'HIK-DVR-64CH-DUAL',
         unitPrice: null, // High-density quote only
+        brand: 'Hikvision',
         isCustomModel: false,
-        isMultiRecorder: true
+        isMultiRecorder: true,
+        isUnderCapacity: false,
+        sataBays: 8,
+        analogueBncChannels: 64,
+        hybridIpInputs: 32,
+        maxResolution: '5MP Lite / 1080p',
+        compression: 'H.265 Pro+'
+      };
+    } else {
+      // > 64 cameras Analogue Enterprise
+      return {
+        channels: 128,
+        name: `Enterprise Multi-DVR Headend Architecture (${cameraCount} Cameras)`,
+        model: 'DVR-CLUSTER-ENTERPRISE',
+        sku: 'HIK-DVR-ENTERPRISE-CLUSTER',
+        unitPrice: null,
+        brand: 'Hikvision',
+        isCustomModel: false,
+        isMultiRecorder: true,
+        isUnderCapacity: false,
+        sataBays: 16,
+        analogueBncChannels: 128,
+        hybridIpInputs: 32,
+        maxResolution: '5MP Lite / 1080p',
+        compression: 'H.265 Pro+'
       };
     }
-  }, [systemArch, cameraCount, selectedRecorderProduct, compatibleCatalogRecorders]);
+  }, [systemArch, cameraCount, cameraCategory, selectedRecorderProduct, compatibleCatalogRecorders]);
 
   // Derive Camera Model based on Hierarchy + Catalog + Overrides + Form Factor + Specialist + Night Vision
   const cameraSpec = useMemo(() => {
@@ -1197,17 +1529,20 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     compatibleCatalogCameras
   ]);
 
-  // Derive Hard Drive Sizing
+  // Derive Hard Drive Sizing & Storage Profile
   const storageSpec = useMemo(() => {
     if (systemArch === 'wireless') {
       return {
         name: 'Kingston High-Endurance 128GB MicroSD Card (Per Camera)',
         model: 'SDCE/128GB',
         sku: 'SD-128GB-SURV',
+        brand: 'Kingston',
         qty: cameraCount,
         unitPrice: 1450,
         lineTotal: 1450 * cameraCount,
-        warrantyMonths: 36
+        warrantyMonths: 36,
+        drivesRequired: cameraCount,
+        isCompatible: true
       };
     }
 
@@ -1220,10 +1555,13 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         name: 'Western Digital Purple 500GB 3.5" Surveillance Internal HDD',
         model: 'WD5000PURZ',
         sku: 'prod-wd-purple-500gb',
+        brand: 'Western Digital',
         qty: 1,
         unitPrice: 1800,
         lineTotal: 1800,
-        warrantyMonths: 36
+        warrantyMonths: 36,
+        drivesRequired: 1,
+        isCompatible: recorderSpec.sataBays >= 1
       };
     }
 
@@ -1232,10 +1570,13 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         name: 'Western Digital Purple 1TB 3.5" Surveillance Internal HDD',
         model: 'WD10PURZ',
         sku: 'prod-wd-purple-1tb',
+        brand: 'Western Digital',
         qty: 1,
         unitPrice: 4800,
         lineTotal: 4800,
-        warrantyMonths: 36
+        warrantyMonths: 36,
+        drivesRequired: 1,
+        isCompatible: recorderSpec.sataBays >= 1
       };
     }
 
@@ -1244,24 +1585,159 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         name: 'Western Digital Purple 2TB 3.5" Surveillance Internal HDD',
         model: 'WD20PURZ',
         sku: 'prod-wd-purple-2tb',
+        brand: 'Western Digital',
         qty: 1,
         unitPrice: 6900,
         lineTotal: 6900,
-        warrantyMonths: 36
+        warrantyMonths: 36,
+        drivesRequired: 1,
+        isCompatible: recorderSpec.sataBays >= 1
       };
     }
 
-    // 4TB
+    if (storageOption === '4tb') {
+      return {
+        name: 'Seagate SkyHawk 4TB Surveillance Internal Hard Drive 3.5"',
+        model: 'ST4000VX016',
+        sku: 'prod-st-skyhawk-4tb',
+        brand: 'Seagate',
+        qty: 1,
+        unitPrice: 11200,
+        lineTotal: 11200,
+        warrantyMonths: 36,
+        drivesRequired: 1,
+        isCompatible: recorderSpec.sataBays >= 1
+      };
+    }
+
+    if (storageOption === 'dual_2tb') {
+      return {
+        name: 'Dual Western Digital Purple 2TB Surveillance HDDs (4TB Total Array)',
+        model: 'WD20PURZ (x2 Units)',
+        sku: 'HDD-DUAL-2TB',
+        brand: 'Western Digital',
+        qty: 2,
+        unitPrice: 6900,
+        lineTotal: 13800,
+        warrantyMonths: 36,
+        drivesRequired: 2,
+        isCompatible: recorderSpec.sataBays >= 2
+      };
+    }
+
+    if (storageOption === 'dual_4tb') {
+      return {
+        name: 'Dual Seagate SkyHawk 4TB Surveillance Hard Drives (8TB Total Array)',
+        model: 'ST4000VX016 (x2 Units)',
+        sku: 'HDD-DUAL-4TB',
+        brand: 'Seagate',
+        qty: 2,
+        unitPrice: 11200,
+        lineTotal: 22400,
+        warrantyMonths: 36,
+        drivesRequired: 2,
+        isCompatible: recorderSpec.sataBays >= 2
+      };
+    }
+
+    if (storageOption === 'quad_4tb') {
+      return {
+        name: 'Quad Seagate SkyHawk 4TB Enterprise Storage Array (16TB Total, 4 Bays)',
+        model: 'ST4000VX016 (x4 Units)',
+        sku: 'HDD-QUAD-4TB',
+        brand: 'Seagate',
+        qty: 4,
+        unitPrice: 11200,
+        lineTotal: 44800,
+        warrantyMonths: 36,
+        drivesRequired: 4,
+        isCompatible: recorderSpec.sataBays >= 4
+      };
+    }
+
+    return null;
+  }, [storageOption, systemArch, cameraCount, recorderSpec.sataBays]);
+
+  // Drive Bay Compatibility Check
+  const isStorageDriveBayIncompatible = useMemo(() => {
+    if (systemArch === 'wireless' || !storageSpec) return false;
+    return !storageSpec.isCompatible;
+  }, [systemArch, storageSpec]);
+
+  // Recording Retention Calculation Engine
+  const retentionEstimate = useMemo(() => {
+    let resolutionLabel = '2MP Full HD (1080p)';
+    let bitrateKbps = 1500;
+
+    const camName = (cameraSpec.name || '').toLowerCase();
+    const camModel = (cameraSpec.model || '').toLowerCase();
+
+    if (camName.includes('4k') || camName.includes('8mp') || camModel.includes('8mp')) {
+      resolutionLabel = '8MP Ultra HD (4K)';
+      bitrateKbps = 4500;
+    } else if (camName.includes('5mp') || camName.includes('3k') || camModel.includes('5mp')) {
+      resolutionLabel = '5MP Super HD (3K)';
+      bitrateKbps = 2800;
+    } else if (camName.includes('4mp') || camName.includes('2k') || camModel.includes('4mp')) {
+      resolutionLabel = '4MP Quad HD (2K)';
+      bitrateKbps = 2400;
+    }
+
+    let usableGb = 0;
+    if (systemArch === 'wireless') {
+      usableGb = 115;
+    } else {
+      switch (storageOption) {
+        case '500gb': usableGb = 450; break;
+        case '1tb': usableGb = 900; break;
+        case '2tb': usableGb = 1800; break;
+        case '4tb': usableGb = 3600; break;
+        case 'dual_2tb': usableGb = 3600; break;
+        case 'dual_4tb': usableGb = 7200; break;
+        case 'quad_4tb': usableGb = 14400; break;
+        default: usableGb = 0; break;
+      }
+    }
+
+    const recordingHours = recordingMode === 'continuous' ? 24 : 12;
+    const gbPerCamPerDay = (bitrateKbps * 3600 * recordingHours) / (8 * 1024 * 1024);
+
+    if (systemArch === 'wireless') {
+      const rawDays = usableGb / (gbPerCamPerDay || 0.001);
+      const est = Math.max(1, Math.round(rawDays));
+      return {
+        resolutionLabel,
+        bitrateKbps,
+        recordingHours,
+        gbPerCamPerDay: Number(gbPerCamPerDay.toFixed(2)),
+        totalDailyGb: Number((gbPerCamPerDay * cameraCount).toFixed(2)),
+        usableGb,
+        estDays: est,
+        minDays: Math.max(1, Math.floor(est * 0.85)),
+        maxDays: Math.ceil(est * 1.15),
+        codec: 'H.265+ Smart Codec',
+        disclaimer: `Based on 128GB High-Endurance MicroSD per camera at ${recordingHours} hrs/day (${recordingMode === 'continuous' ? '24/7 continuous' : 'smart motion'}), 90% formatted storage.`
+      };
+    }
+
+    const totalDailyGb = gbPerCamPerDay * cameraCount;
+    const rawDays = usableGb / (totalDailyGb || 0.001);
+    const est = Math.max(1, Math.round(rawDays));
+
     return {
-      name: 'Seagate SkyHawk 4TB Surveillance Internal Hard Drive 3.5"',
-      model: 'ST4000VX016',
-      sku: 'prod-st-skyhawk-4tb',
-      qty: 1,
-      unitPrice: 11200,
-      lineTotal: 11200,
-      warrantyMonths: 36
+      resolutionLabel,
+      bitrateKbps,
+      recordingHours,
+      gbPerCamPerDay: Number(gbPerCamPerDay.toFixed(2)),
+      totalDailyGb: Number(totalDailyGb.toFixed(2)),
+      usableGb,
+      estDays: est,
+      minDays: Math.max(1, Math.floor(est * 0.85)),
+      maxDays: Math.ceil(est * 1.15),
+      codec: 'H.265+ Smart Codec',
+      disclaimer: `Calculated for ${cameraCount} cameras at ${resolutionLabel} using H.265+ at 15–20 fps, ${recordingHours} hrs/day (${recordingMode === 'continuous' ? '24/7 continuous' : 'smart motion'}), and 90% formatted HDD space. Actual retention varies with motion frequency, scene complexity, and ambient lighting. Estimates are engineering guidelines, not manufacturer warranties.`
     };
-  }, [storageOption, systemArch, cameraCount]);
+  }, [cameraSpec, cameraCount, storageOption, systemArch, recordingMode]);
 
   // Strict Cable Allocation: 10m per camera default, editable by customer
   const defaultCableMeters = cameraCount * 10;
@@ -1492,10 +1968,20 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
 
     if (cameraCount > 64) {
       quoteOnly = true;
-      unpricedItems.push(`${cameraCount} Camera High-Capacity Enterprise System`);
+      unpricedItems.push(`${cameraCount}-Camera Enterprise Deployment Review (>64 Cameras)`);
     } else if (cameraCount >= 32) {
       quoteOnly = true;
       unpricedItems.push('32+ Enterprise Scale System');
+    }
+
+    if (recorderSpec.isUnderCapacity) {
+      quoteOnly = true;
+      unpricedItems.push(`Under-Capacity Recorder Selection (${recorderSpec.underCapacityReason || 'Insufficient Channels'})`);
+    }
+
+    if (isStorageDriveBayIncompatible) {
+      quoteOnly = true;
+      unpricedItems.push('Drive Bay Sizing Incompatibility');
     }
 
     if (cameraSpec.isSpecialist) {
@@ -1513,20 +1999,24 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     }
 
     return {
+      // Missing price handling: unpriced items mark quotationRequired as true, setting totalPrice === null
       totalPrice: quoteOnly ? null : sum,
       quotationRequired: quoteOnly,
       quotationReason: quoteOnly
         ? `One or more custom items (${unpricedItems.join(', ')}) require technical site assessment or official engineering quotation.`
         : null
     };
-  }, [computedBOM, cameraCount, cameraSpec]);
+  }, [computedBOM, cameraCount, cameraSpec, recorderSpec.isUnderCapacity, recorderSpec.underCapacityReason, isStorageDriveBayIncompatible]);
+
+  const isEnterpriseOver64 = cameraCount > 64;
+  const canAddToCart = !quotationRequired && totalPrice !== null && !recorderSpec.isUnderCapacity && !isStorageDriveBayIncompatible && !isEnterpriseOver64;
 
   // Pure Infrared standard check
   const isPureIR = nightVision === 'ir' && systemArch === 'analogue';
 
   // Action: Add Package to Cart
   const handleAddPackageToCart = () => {
-    if (quotationRequired || totalPrice === null) {
+    if (!canAddToCart) {
       handleRequestQuote();
       return;
     }
@@ -2586,6 +3076,8 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
             {/* ==================================================================== */}
             {/* STEP 3: RECORDER & STORAGE MATCHING */}
             {/* ==================================================================== */}
+            {/* STEP 3: RECORDER SIZING & SURVEILLANCE HARD DRIVE */}
+            {/* ==================================================================== */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
@@ -2596,21 +3088,64 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     Recorder Sizing & Surveillance Hard Drive
                   </h2>
                   <p className="text-xs text-[#5B6472] mt-1">
-                    Recorders are automatically matched to support your channel count. Surveillance-grade hard drives ensure 24/7 continuous write durability.
+                    Recorders are automatically matched to support your channel count and physical camera connections. Surveillance-grade hard drives ensure 24/7 continuous write durability.
                   </p>
                 </div>
 
+                {/* Enterprise Architecture Notice for >64 Cameras */}
+                {cameraCount > 64 && (
+                  <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-900 space-y-2" data-testid="enterprise-banner">
+                    <div className="flex items-center gap-2 font-heading font-black text-sm">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                      <span>Large Enterprise Deployment (&gt;64 Cameras) — Engineering Review Notice</span>
+                    </div>
+                    <p className="text-xs leading-relaxed text-amber-800">
+                      Surveillance systems exceeding 64 channels require dedicated bandwidth profiling and headend architecture planning. CamneX engineering provisions multi-NVR clusters, high-capacity RAID-enabled NVR headends, or central server-based VMS platforms (such as HikCentral or Dahua DSS) based on site throughput requirements without mandating rigid proprietary SAN/NAS lock-in. Direct self-checkout is disabled; this package will be routed directly for engineering review and custom quotation.
+                    </p>
+                  </div>
+                )}
+
+                {/* Under-Capacity Hardware Warning */}
+                {recorderSpec.isUnderCapacity && (
+                  <div className="p-4 rounded-xl bg-red-50 border-2 border-red-300 text-red-900 space-y-2" data-testid="under-capacity-warning">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 font-heading font-bold text-sm text-red-800">
+                        <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                        <span>Hardware Under-Capacity Warning</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRecorderProduct(null)}
+                        className="text-xs font-bold text-red-700 underline hover:text-red-900 cursor-pointer text-left sm:text-right"
+                      >
+                        Reset to Recommended Recorder
+                      </button>
+                    </div>
+                    <p className="text-xs leading-relaxed text-red-700">
+                      {recorderSpec.underCapacityReason || `The selected recorder only supports ${recorderSpec.channels} channels, which is insufficient for your ${cameraCount} cameras.`}
+                    </p>
+                    <div className="text-[11px] font-semibold text-red-600">
+                      * Direct checkout is disabled until a fully compatible recorder is selected or an official engineering quote is requested.
+                    </div>
+                  </div>
+                )}
+
                 {/* Matched Recorder Card with Catalog Override Actions */}
-                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className={`p-5 rounded-2xl border space-y-3 ${recorderSpec.isUnderCapacity ? 'bg-red-50/30 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                       Matched Hardware Recorder
                     </span>
-                    <div className="flex items-center gap-2">
-                      {recorderSpec.isMultiRecorder ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {recorderSpec.isUnderCapacity ? (
+                        <span className="text-[10px] font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-red-600" />
+                          Under-Capacity ({recorderSpec.channels} CH for {cameraCount} Cams)
+                        </span>
+                      ) : recorderSpec.isMultiRecorder ? (
                         <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3 text-amber-600" />
-                          Enterprise Multi-Recorder Cluster ({recorderSpec.channels} Channels across 2x Units)
+                          Enterprise Multi-Recorder Cluster ({recorderSpec.channels} Channels)
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -2648,13 +3183,53 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     </div>
                   </div>
 
+                  {/* Hardware Specification Badges */}
+                  <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
+                    {systemArch === 'analogue' && (
+                      <span className="px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-800 font-semibold text-[11px]">
+                        {recorderSpec.analogueBncChannels} BNC Coaxial Inputs + {recorderSpec.hybridIpInputs} Hybrid IP Inputs
+                      </span>
+                    )}
+                    {systemArch === 'ip' && (
+                      <span className="px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-800 font-semibold text-[11px]">
+                        {recorderSpec.channels} IP PoE Network Channels {recorderSpec.incomingBandwidthMbps ? `(${recorderSpec.incomingBandwidthMbps} Mbps)` : ''}
+                      </span>
+                    )}
+                    {systemArch === 'wireless' && (
+                      <span className="px-2.5 py-1 rounded-md bg-purple-50 border border-purple-200 text-purple-800 font-semibold text-[11px]">
+                        Wireless Edge MicroSD Storage / Direct App Gateway
+                      </span>
+                    )}
+                    {recorderSpec.sataBays > 0 && (
+                      <span className="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px]">
+                        {recorderSpec.sataBays} SATA Hard Drive Bay{recorderSpec.sataBays > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {recorderSpec.compression && (
+                      <span className="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px]">
+                        {recorderSpec.compression}
+                      </span>
+                    )}
+                    {recorderSpec.maxResolution && (
+                      <span className="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px]">
+                        Max: {recorderSpec.maxResolution}
+                      </span>
+                    )}
+                  </div>
+
+                  {recorderSpec.wirelessDutyCycleNote && (
+                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-900 leading-relaxed">
+                      💡 <strong>Wireless Duty Cycle Notice:</strong> {recorderSpec.wirelessDutyCycleNote}
+                    </div>
+                  )}
+
                   {recorderSpec.isMultiRecorder && (
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 leading-relaxed">
                       💡 <strong>Multi-Unit Headend Architecture:</strong> Configurations with &gt;32 cameras utilize dual interconnected 32-channel network/digital video recorders for optimal bandwidth management and redundancy. Official engineering quotation required.
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/70 text-xs">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/70 text-xs flex-wrap gap-2">
                     <span className="text-slate-500">
                       Looking for a specific recorder model?
                     </span>
@@ -2688,41 +3263,178 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       Surveillance Storage Capacity
                     </label>
                     <span className="text-xs text-slate-500">
-                      WD Purple / Seagate SkyHawk 24/7 Surveillance Series
+                      {systemArch === 'wireless' ? 'High-Endurance MicroSD Storage' : 'WD Purple / Seagate SkyHawk 24/7 Surveillance Series'}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { key: '500gb', size: '500 GB', days: '~7-10 Days', price: '৳1,800' },
-                      { key: '1tb', size: '1 TB', days: '~10-14 Days', price: '৳4,800' },
-                      { key: '2tb', size: '2 TB', days: '~14-21 Days', price: '৳6,900' },
-                      { key: '4tb', size: '4 TB', days: '~30+ Days', price: '৳11,200' }
-                    ].map((stg) => (
+                  {systemArch === 'wireless' ? (
+                    <div className="p-4 rounded-xl border border-purple-200 bg-purple-50/50 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="font-heading font-bold text-sm text-purple-950">
+                          High-Endurance 128GB MicroSD Card (1x Per Camera)
+                        </div>
+                        <div className="font-heading font-black text-base text-purple-900">
+                          ৳{(1450 * cameraCount).toLocaleString()}
+                        </div>
+                      </div>
+                      <p className="text-xs text-purple-800 leading-relaxed">
+                        Includes {cameraCount}x Kingston High-Endurance 128GB MicroSD Card{cameraCount > 1 ? 's' : ''}. Each wireless camera stores footage directly to local solid-state flash memory, avoiding central Wi-Fi bandwidth bottlenecks and preserving video if home internet disconnects.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[
+                          { key: '500gb', size: '500 GB', bays: 1, price: '৳1,800' },
+                          { key: '1tb', size: '1 TB', bays: 1, price: '৳4,800' },
+                          { key: '2tb', size: '2 TB', bays: 1, price: '৳6,900' },
+                          { key: '4tb', size: '4 TB', bays: 1, price: '৳11,200' },
+                          { key: 'dual_2tb', size: 'Dual 2 TB (4TB Array)', bays: 2, price: '৳13,800' },
+                          { key: 'dual_4tb', size: 'Dual 4 TB (8TB Array)', bays: 2, price: '৳22,400' },
+                          { key: 'quad_4tb', size: 'Quad 4 TB (16TB Array)', bays: 4, price: '৳44,800' }
+                        ].map((stg) => {
+                          const isBayCompatible = recorderSpec.sataBays >= stg.bays;
+                          const isSelected = storageOption === stg.key;
+
+                          return (
+                            <button
+                              key={stg.key}
+                              type="button"
+                              onClick={() => {
+                                setStorageOption(stg.key as StorageOption);
+                                setHasUserCustomizedStorage(true);
+                              }}
+                              className={`p-3.5 rounded-xl border text-center transition-all cursor-pointer relative ${
+                                isSelected
+                                  ? 'bg-[#F15A24] border-[#F15A24] text-white shadow-xs'
+                                  : !isBayCompatible
+                                  ? 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
+                                  : 'bg-white border-[#EDE8E1] text-[#111827] hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className="font-heading font-bold text-sm">{stg.size}</div>
+                              <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
+                                {stg.bays} SATA Bay{stg.bays > 1 ? 's' : ''} Required
+                              </div>
+                              <div className={`text-[11px] font-bold mt-1 ${isSelected ? 'text-white' : 'text-[#F15A24]'}`}>
+                                {stg.price}
+                              </div>
+                              {!isBayCompatible && (
+                                <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded mt-1 inline-block">
+                                  Requires {stg.bays}-Bay DVR
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {isStorageDriveBayIncompatible && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 flex items-start gap-2" data-testid="bay-incompatible-warning">
+                          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Drive Bay Incompatibility:</strong> The selected storage configuration ({storageSpec?.name}) requires {storageSpec?.drivesRequired} SATA drive bays, but your selected recorder ({recorderSpec.model}) only has {recorderSpec.sataBays} SATA bay(s). Please choose a single drive or upgrade to a multi-bay recorder.
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Interactive Retention Calculation & Engineering Disclaimer Card */}
+                <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4" data-testid="retention-calculator">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-heading font-bold text-sm text-[#111827]">
+                        Surveillance Storage Retention Estimate
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        Dynamic calculation based on H.265+ bitrate, camera count, and 90% formatted HDD space.
+                      </p>
+                    </div>
+
+                    {/* Recording Mode Toggle */}
+                    <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
                       <button
-                        key={stg.key}
                         type="button"
-                        onClick={() => setStorageOption(stg.key as StorageOption)}
-                        className={`p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
-                          storageOption === stg.key
-                            ? 'bg-[#F15A24] border-[#F15A24] text-white shadow-xs'
-                            : 'bg-white border-[#EDE8E1] text-[#111827] hover:bg-slate-50'
+                        onClick={() => setRecordingMode('motion')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition cursor-pointer ${
+                          recordingMode === 'motion'
+                            ? 'bg-[#111827] text-white shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
-                        <div className="font-heading font-bold text-base">{stg.size}</div>
-                        <div className={`text-xs ${storageOption === stg.key ? 'text-white/80' : 'text-slate-500'}`}>
-                          {stg.days}
-                        </div>
-                        <div className={`text-[11px] font-bold mt-1 ${storageOption === stg.key ? 'text-white' : 'text-[#F15A24]'}`}>
-                          {stg.price}
-                        </div>
+                        Smart Motion (~12h/day)
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={() => setRecordingMode('continuous')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition cursor-pointer ${
+                          recordingMode === 'continuous'
+                            ? 'bg-[#111827] text-white shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Continuous 24/7 (24h/day)
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="text-[11px] text-slate-500 leading-relaxed">
-                    * Estimated retention days are calculated for {cameraCount} cameras with H.265+ smart motion compression.
+                  {/* Retention Metrics Display */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                    <div className="p-3 rounded-xl bg-orange-50/50 border border-orange-100 text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Estimated Retention
+                      </div>
+                      <div className="font-heading font-black text-xl text-[#F15A24] mt-1">
+                        {retentionEstimate.minDays} – {retentionEstimate.maxDays} Days
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        ~{retentionEstimate.estDays} days average
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Usable Storage
+                      </div>
+                      <div className="font-heading font-black text-xl text-slate-900 mt-1">
+                        {retentionEstimate.usableGb} GB
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {systemArch === 'wireless' ? 'Per camera edge' : 'Usable formatted pool'}
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Daily Write Rate
+                      </div>
+                      <div className="font-heading font-black text-xl text-slate-900 mt-1">
+                        {retentionEstimate.totalDailyGb} GB/day
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {retentionEstimate.gbPerCamPerDay} GB / camera / day
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Compression Profile
+                      </div>
+                      <div className="font-heading font-black text-base text-slate-900 mt-1 truncate">
+                        {retentionEstimate.codec}
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                        {retentionEstimate.bitrateKbps} Kbps · {retentionEstimate.resolutionLabel}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Engineering Assumptions & Disclaimer */}
+                  <p className="text-[11px] text-slate-500 leading-relaxed italic border-t border-slate-200/60 pt-2">
+                    {retentionEstimate.disclaimer}
+                  </p>
                 </div>
               </div>
             )}
@@ -3553,7 +4265,62 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                   compatibleCatalogRecorders.map((rec) => {
                     const isSelected = selectedRecorderProduct?.id === rec.id;
                     const price = getProductPrice(rec);
-                    const ch = rec.specifications?.channels || rec.specifications?.channel_capacity;
+                    const specs = rec.specifications || {};
+                    const recId = rec.id;
+                    const model = (rec.modelNumber || rec.name || '').toLowerCase();
+
+                    // Calculate accurate channels & bays matching recorderSpec
+                    let analogueBnc = 0;
+                    let hybridIp = 0;
+                    let totalCh = 8;
+                    let bays = 1;
+
+                    if (recId === 'prod-hik-dvr-4ch' || model.includes('7204')) {
+                      analogueBnc = 4;
+                      hybridIp = 1;
+                      totalCh = 5;
+                      bays = 1;
+                    } else if (recId === 'prod-hik-dvr-8ch' || model.includes('7208')) {
+                      analogueBnc = 8;
+                      hybridIp = 2;
+                      totalCh = 10;
+                      bays = 1;
+                    } else if (recId === 'prod-dahua-xvr-8ch' || model.includes('5108')) {
+                      analogueBnc = 8;
+                      hybridIp = 4;
+                      totalCh = 12;
+                      bays = 1;
+                    } else if (recId === 'prod-hik-dvr-16ch' || model.includes('7216')) {
+                      analogueBnc = 16;
+                      hybridIp = 2;
+                      totalCh = 18;
+                      bays = 2;
+                    } else if (recId === 'prod-dahua-xvr-16ch' || model.includes('5216')) {
+                      analogueBnc = 16;
+                      hybridIp = 8;
+                      totalCh = 24;
+                      bays = 2;
+                    } else if (recId === 'prod-hik-dvr-32ch' || model.includes('7232')) {
+                      analogueBnc = 32;
+                      hybridIp = 16;
+                      totalCh = 48;
+                      bays = 4;
+                    } else if (recId === 'prod-hik-nvr-8ch-poe' || model.includes('7608')) {
+                      analogueBnc = 0;
+                      hybridIp = 8;
+                      totalCh = 8;
+                      bays = 1;
+                    } else {
+                      const chStr = specs.channels || specs.channel_capacity || '';
+                      totalCh = parseInt(chStr, 10) || 8;
+                      analogueBnc = systemArch === 'analogue' ? totalCh : 0;
+                      hybridIp = systemArch === 'ip' ? totalCh : 0;
+                      bays = specs.hdd_slots?.includes('2') ? 2 : specs.hdd_slots?.includes('4') ? 4 : 1;
+                    }
+
+                    const isUnderCap = systemArch === 'analogue' 
+                      ? cameraCount > analogueBnc 
+                      : cameraCount > totalCh;
 
                     return (
                       <div
@@ -3561,10 +4328,12 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                         className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                           isSelected
                             ? 'border-[#F15A24] bg-orange-50/40 ring-1 ring-[#F15A24]'
+                            : isUnderCap
+                            ? 'border-amber-200 bg-amber-50/20 hover:border-amber-300'
                             : 'border-slate-200 hover:border-slate-300 bg-white'
                         }`}
                       >
-                        <div className="space-y-1">
+                        <div className="space-y-1.5 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-heading font-bold text-sm text-[#111827]">
                               {rec.name}
@@ -3574,25 +4343,32 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                                 Selected
                               </span>
                             )}
-                            {ch && (
-                              <span className="text-[10px] font-bold uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                                {ch} Channels
+                            {systemArch === 'analogue' ? (
+                              <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded">
+                                {analogueBnc} BNC Inputs (+{hybridIp} IP)
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded">
+                                {totalCh} IP Channels
                               </span>
                             )}
+                            <span className="text-[10px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                              {bays} SATA Bay{bays > 1 ? 's' : ''}
+                            </span>
                           </div>
                           <div className="text-xs text-slate-500 font-mono">
                             Model: {rec.modelNumber || rec.id} · Brand: {rec.brand || 'Hikvision'}
                           </div>
-                          {ch && parseInt(ch, 10) < cameraCount && (
-                            <p className="text-[11px] text-amber-700 bg-amber-50 rounded p-1.5 border border-amber-200">
-                              ⚠️ Channel count ({ch}) is lower than camera count ({cameraCount}). Additional cluster unit will be required.
+                          {isUnderCap && (
+                            <p className="text-[11px] text-amber-800 bg-amber-100/70 rounded-lg p-2 border border-amber-300 leading-relaxed">
+                              ⚠️ <strong>Under-Capacity Warning:</strong> Provides {systemArch === 'analogue' ? `${analogueBnc} physical BNC inputs` : `${totalCh} channels`} for your {cameraCount} cameras. Selecting this model flags your configuration as quotation-required and prevents instant self-checkout.
                             </p>
                           )}
                         </div>
 
                         <div className="flex items-center sm:flex-col sm:items-end justify-between gap-2 shrink-0">
                           <div className="font-heading font-black text-base text-[#111827]">
-                            {price ? `৳${price.toLocaleString()}` : 'Ask for price'}
+                            {price ? `৳${price.toLocaleString()}` : 'Quote required'}
                           </div>
                           <button
                             type="button"

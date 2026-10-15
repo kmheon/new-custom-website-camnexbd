@@ -280,6 +280,8 @@ export type CameraCategoryId =
 
 export type SpecialistSubcategory = 'anpr' | 'thermal' | 'industrial' | null;
 
+export type StorageOption = '500gb' | '1tb' | '2tb' | '4tb' | 'dual_2tb' | 'dual_4tb' | 'quad_4tb' | 'none';
+
 export interface PackageComponentRule {
   role: 'camera' | 'recorder' | 'storage' | 'cable' | 'power' | 'connectors' | 'installation';
   defaultModelId: string;
