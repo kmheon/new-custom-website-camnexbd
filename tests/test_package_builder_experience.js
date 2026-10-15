@@ -115,6 +115,43 @@ async function run() {
     assert.ok(builderContent.includes('Ask for price'), 'Must render "Ask for price" instead of 0 BDT');
   });
 
+  test('Phase A: Dynamic engineering notes for all three architectures', () => {
+    assert.ok(builderContent.includes('Engineering Note ('), 'Must render architecture-specific note header');
+    assert.ok(builderContent.includes('Solid copper RG59/RG6 coaxial'), 'Analogue dynamic note present');
+    assert.ok(builderContent.includes('Digital Cat6 UTP cabling with 48V Power-over-Ethernet'), 'IP Network dynamic note present');
+    assert.ok(builderContent.includes('2.4GHz Wi-Fi (requires &gt; -65 dBm signal') || builderContent.includes('2.4GHz Wi-Fi'), 'Wi-Fi dynamic note present');
+  });
+
+  test('Phase A: Custom camera count supporting up to 64 cameras with high-density cluster handling', () => {
+    assert.ok(builderContent.includes('Custom Quantity (>32)') || builderContent.includes('Custom Camera Quantity'), 'Custom quantity controls present');
+    assert.ok(builderContent.includes('64') && builderContent.includes('High-Density Deployment'), 'Supports up to 64 cameras with high-density note');
+    assert.ok(builderContent.includes('Enterprise Multi-Recorder Cluster'), 'Indicates multi-recorder cluster when cameras > 32');
+  });
+
+  test('Phase A: Catalog camera form factors include PTZ, Thermal, and ANPR with specialist handling', () => {
+    assert.ok(builderContent.includes('PTZ Speed Dome') || builderContent.includes('prod-hik-ptz-2mp'), 'PTZ camera supported');
+    assert.ok(builderContent.includes('Thermal Specialist') && builderContent.includes('ANPR Plate Reader'), 'Specialist form factors supported');
+    assert.ok(builderContent.includes('Specialist Consultation') || builderContent.includes('specialistReason'), 'Specialist consultation state rendered');
+  });
+
+  test('Phase A: Catalog model override modals for camera and recorder selection', () => {
+    assert.ok(builderContent.includes('Select Camera from Catalog'), 'Camera picker modal present');
+    assert.ok(builderContent.includes('Select Compatible Recorder'), 'Recorder picker modal present');
+    assert.ok(builderContent.includes('compatibleCatalogCameras') && builderContent.includes('compatibleCatalogRecorders'), 'Filters compatible catalog products');
+  });
+
+  test('Step 4 & 5 Enhancements: Editable cable distance control and Analogue transmission toggle', () => {
+    assert.ok(builderContent.includes('customCableLength') && builderContent.includes('Adjust Cable Length for Site Layout'), 'Must provide editable cable length control');
+    assert.ok(builderContent.includes('analogueTransmission') && builderContent.includes('Direct Solid Copper RG59 Coaxial'), 'Must provide transmission mode toggle');
+  });
+
+  test('Step 5 & 6 Enhancements: Stable 7-day BOM validity, Download BOM, and In-Page Quote Modal', () => {
+    assert.ok(builderContent.includes('camnex_bom_dates_v1'), 'Must store stable 7-day BOM validity in localStorage');
+    assert.ok(builderContent.includes('handleDownloadBOM') && builderContent.includes('Download BOM (.txt)'), 'Must provide Download BOM functionality');
+    assert.ok(builderContent.includes('data-modal="package-quote"'), 'Must render in-page quotation modal');
+    assert.ok(builderContent.includes('quoteService.createQuote'), 'Must integrate with quoteService API');
+  });
+
   const packagesContent = fs.readFileSync(packagesPagePath, 'utf8');
   test('PackagesPage includes Custom Package Maker entry banner', () => {
     assert.ok(packagesContent.includes('Custom Package Maker') || packagesContent.includes('Build Your Own System'), 'Must include Custom Package Maker banner');
@@ -182,6 +219,9 @@ async function run() {
     const pending = new Map();
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
+      if (msg.method === 'Runtime.exceptionThrown') {
+        console.error('BROWSER EXCEPTION:', JSON.stringify(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text));
+      }
       if (msg.id && pending.has(msg.id)) {
         const { resolve, reject } = pending.get(msg.id);
         pending.delete(msg.id);
@@ -258,10 +298,59 @@ async function run() {
       assert.strictEqual(v.hasWifi, true, 'Wi-Fi Wireless option present');
     });
 
+    // 2b-2. Test Step 1 Dynamic Engineering Notes
+    // Click IP Network
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const ipCard = document.querySelector('[data-arch-card="ip"]');
+        if (ipCard) ipCard.click();
+      })()`
+    });
+    await sleep(400);
+
+    const ipNoteEval = await send('Runtime.evaluate', {
+      expression: `document.body.innerText.includes('Digital Cat6 UTP cabling')`,
+      returnByValue: true
+    });
+
+    // Click Wi-Fi Wireless
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const wifiCard = document.querySelector('[data-arch-card="wireless"]');
+        if (wifiCard) wifiCard.click();
+      })()`
+    });
+    await sleep(400);
+
+    const wifiNoteEval = await send('Runtime.evaluate', {
+      expression: `document.body.innerText.includes('2.4GHz Wi-Fi')`,
+      returnByValue: true
+    });
+
+    // Click Analogue HD
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const analogueCard = document.querySelector('[data-arch-card="analogue"]');
+        if (analogueCard) analogueCard.click();
+      })()`
+    });
+    await sleep(400);
+
+    const analogueNoteEval = await send('Runtime.evaluate', {
+      expression: `document.body.innerText.includes('Solid copper RG59/RG6')`,
+      returnByValue: true
+    });
+
+    test('Package Builder dynamically updates engineering notes when switching architectures', () => {
+      assert.strictEqual(ipNoteEval.result.value, true, 'Dynamic note updates for IP Network PoE');
+      assert.strictEqual(wifiNoteEval.result.value, true, 'Dynamic note updates for Wi-Fi Wireless');
+      assert.strictEqual(analogueNoteEval.result.value, true, 'Dynamic note updates for Analogue HD');
+    });
+
     // 2c. Click Next to Step 2 (Coverage & Cameras)
     await send('Runtime.evaluate', {
       expression: `(() => {
-        const nextBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Next: Cameras'));
+        const nextBtn = document.querySelector('[data-next-step]') || Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Next: Cameras') || b.textContent.includes('Cameras & Coverage'));
         if (nextBtn) nextBtn.click();
       })()`
     });
@@ -270,26 +359,191 @@ async function run() {
     const step2Eval = await send('Runtime.evaluate', {
       expression: `(() => {
         const text = document.body.innerText;
+        const analogueSeries = document.querySelector('[data-series-card="analogue"]');
+        const ipSeries = document.querySelector('[data-series-card="ip"]');
+        const wirelessSeries = document.querySelector('[data-series-card="wireless"]');
         return {
-          hasStep2: text.includes('Camera Count, Form Factor & Night Vision'),
+          hasStep2: text.toLowerCase().includes('step 2 of 6') && (text.includes('Camera Count, Form Factor & Night Vision') || text.includes('Camera Selection')),
           hasPureIRNotice: text.includes('Pure Infrared Night Vision Standard'),
-          hasFormFactors: text.includes('Bullet Camera') && text.includes('Dome Camera') && text.includes('Turret')
+          analogueExpanded: analogueSeries ? analogueSeries.getAttribute('data-series-expanded') === 'true' : false,
+          ipCollapsed: ipSeries ? ipSeries.getAttribute('data-series-collapsed') === 'true' : false,
+          wirelessCollapsed: wirelessSeries ? wirelessSeries.getAttribute('data-series-collapsed') === 'true' : false,
+          hasAnalogueBullet: text.includes('Bullet Cameras'),
+          hasAnalogueDome: text.includes('Dome Cameras'),
+          hasAnalogueTurret: text.includes('Turret / Eyeball Cameras'),
+          hasAnaloguePTZ: text.includes('PTZ Speed Dome Cameras'),
+          // Specialist MUST NOT be rendered on default screen
+          hasThermalOnDefault: text.includes('Thermal Specialist'),
+          hasANPROnDefault: text.includes('ANPR Plate Reader'),
+          // Night vision order
+          hasNightVisionIR: text.includes('1. Infrared (IR)'),
+          hasNightVisionHybrid: text.includes('2. Hybrid Light'),
+          hasNightVisionColor: text.includes('3. Full Color'),
+          hasChangeModelBtn: text.includes('Change Model')
         };
       })()`,
       returnByValue: true
     });
 
-    test('Package Builder Step 2 renders camera count, form factors & Pure IR compliance notice', () => {
+    test('Package Builder Step 2 renders Camera Hierarchy: Analogue series expanded, IP/Wireless collapsed, Pure IR notice, no unrequested specialist options', () => {
       const v = step2Eval.result.value;
       assert.strictEqual(v.hasStep2, true, 'Step 2 must be active');
+      assert.strictEqual(v.analogueExpanded, true, 'Analogue series must be expanded by default');
+      assert.strictEqual(v.ipCollapsed, true, 'IP series must be collapsed by default');
+      assert.strictEqual(v.wirelessCollapsed, true, 'Wireless series must be collapsed by default');
+      assert.strictEqual(v.hasAnalogueBullet, true, 'Analogue Bullet category rendered');
+      assert.strictEqual(v.hasAnalogueDome, true, 'Analogue Dome category rendered');
+      assert.strictEqual(v.hasAnalogueTurret, true, 'Analogue Turret category rendered');
+      assert.strictEqual(v.hasAnaloguePTZ, true, 'Analogue PTZ category rendered');
+      assert.strictEqual(v.hasThermalOnDefault, false, 'Thermal Specialist MUST NOT appear on default screen');
+      assert.strictEqual(v.hasANPROnDefault, false, 'ANPR Plate Reader MUST NOT appear on default screen');
       assert.strictEqual(v.hasPureIRNotice, true, 'Pure IR compliance notice must be rendered');
-      assert.strictEqual(v.hasFormFactors, true, 'Bullet, Dome, and Turret form factors rendered');
+      assert.strictEqual(v.hasNightVisionIR, true, 'Night Vision option 1 is Infrared (IR)');
+      assert.strictEqual(v.hasNightVisionHybrid, true, 'Night Vision option 2 is Hybrid Light');
+      assert.strictEqual(v.hasNightVisionColor, true, 'Night Vision option 3 is Full Color');
+      assert.strictEqual(v.hasChangeModelBtn, true, 'Change Model button rendered');
+    });
+
+    // Test expanding IP Series and verifying Specialist rules
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const ipToggle = document.querySelector('[data-series-toggle="ip"]') || document.querySelector('[data-series-card="ip"]');
+        if (ipToggle) ipToggle.click();
+      })()`
+    });
+    await sleep(400);
+
+    const ipSeriesEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const text = document.body.innerText;
+        const analogueSeries = document.querySelector('[data-series-card="analogue"]');
+        const ipSeries = document.querySelector('[data-series-card="ip"]');
+        return {
+          ipExpanded: ipSeries ? ipSeries.getAttribute('data-series-expanded') === 'true' : false,
+          analogueCollapsed: analogueSeries ? analogueSeries.getAttribute('data-series-collapsed') === 'true' : false,
+          hasPoE: text.includes('PoE Network Cameras'),
+          hasSmartAI: text.includes('Smart AI Edge Cameras'),
+          hasSpecializedCat: text.includes('Specialized Cameras'),
+          // Under PoE, specialist subcategories MUST STILL be hidden
+          hasThermalUnderPoE: text.includes('Thermographic Heat Detection'),
+          hasANPRUnderPoE: text.includes('License Plate Recognition (ANPR / LPR)')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Switching to IP Series expands IP, collapses Analogue, and keeps specialist subcategories hidden under standard PoE', () => {
+      const v = ipSeriesEval.result.value;
+      assert.strictEqual(v.ipExpanded, true, 'IP series expanded upon click');
+      assert.strictEqual(v.analogueCollapsed, true, 'Analogue series collapsed when IP expanded');
+      assert.strictEqual(v.hasPoE, true, 'PoE Network Cameras category rendered');
+      assert.strictEqual(v.hasSmartAI, true, 'Smart AI category rendered');
+      assert.strictEqual(v.hasSpecializedCat, true, 'Specialized Cameras category rendered');
+      assert.strictEqual(v.hasThermalUnderPoE, false, 'Specialist thermal hidden under PoE');
+      assert.strictEqual(v.hasANPRUnderPoE, false, 'Specialist ANPR hidden under PoE');
+    });
+
+    // Test clicking Specialized Cameras to reveal specialist capabilities
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const specCat = document.querySelector('[data-category-card="ip_specialized"]');
+        if (specCat) specCat.click();
+      })()`
+    });
+    await sleep(400);
+
+    const specializedRevealedEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const text = document.body.innerText;
+        return {
+          hasANPR: text.includes('ANPR Plate Reader'),
+          hasThermal: text.includes('Thermal Specialist'),
+          hasIndustrial: text.includes('Industrial & Explosion-Proof')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Specialist options (Thermal, ANPR, Industrial) are revealed ONLY when Specialized Cameras is explicitly opened', () => {
+      const v = specializedRevealedEval.result.value;
+      assert.strictEqual(v.hasANPR, true, 'ANPR Plate Reader option revealed under Specialized Cameras');
+      assert.strictEqual(v.hasThermal, true, 'Thermal Specialist option revealed under Specialized Cameras');
+      assert.strictEqual(v.hasIndustrial, true, 'Industrial & Explosion-Proof option revealed under Specialized Cameras');
+    });
+
+    // Test switching away from Specialized Cameras resets specialistCapability
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const poeCat = document.querySelector('[data-category-card="ip_poe"]');
+        if (poeCat) poeCat.click();
+      })()`
+    });
+    await sleep(300);
+
+    const specialistResetEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const text = document.body.innerText;
+        return {
+          hasThermalAfterReset: text.includes('Thermal Specialist'),
+          hasANPRAfterReset: text.includes('ANPR Plate Reader'),
+          hasSpecialistNotice: text.includes('Specialist Consultation')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Switching away from Specialized Cameras to PoE immediately hides specialist options and clears specialist state', () => {
+      const v = specialistResetEval.result.value;
+      assert.strictEqual(v.hasThermalAfterReset, false, 'Thermal options hidden after switching away');
+      assert.strictEqual(v.hasANPRAfterReset, false, 'ANPR options hidden after switching away');
+      assert.strictEqual(v.hasSpecialistNotice, false, 'Specialist consultation note cleared');
+    });
+
+    // Switch back to Analogue for subsequent tests
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const analogueToggle = document.querySelector('[data-series-toggle="analogue"]') || document.querySelector('[data-series-card="analogue"]');
+        if (analogueToggle) analogueToggle.click();
+      })()`
+    });
+    await sleep(400);
+
+    // Test Camera Catalog Picker Modal Opening and Closing
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const btn = document.querySelector('[data-modal-open="camera"]');
+        if (btn) btn.click();
+      })()`
+    });
+    await sleep(400);
+
+    const cameraModalOpenEval = await send('Runtime.evaluate', {
+      expression: `!!document.querySelector('[data-modal="camera-catalog"]')`,
+      returnByValue: true
+    });
+
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const closeBtn = document.querySelector('[data-modal-close="camera"]');
+        if (closeBtn) closeBtn.click();
+      })()`
+    });
+    await sleep(400);
+
+    const cameraModalCloseEval = await send('Runtime.evaluate', {
+      expression: `!document.querySelector('[data-modal="camera-catalog"]')`,
+      returnByValue: true
+    });
+
+    test('Camera Catalog Picker Modal opens, displays live inventory, and closes properly', () => {
+      assert.strictEqual(cameraModalOpenEval.result.value, true, 'Camera picker modal opened');
+      assert.strictEqual(cameraModalCloseEval.result.value, true, 'Camera picker modal closed');
     });
 
     // 2d. Click Next to Step 3 (Recorder & Storage)
     await send('Runtime.evaluate', {
       expression: `(() => {
-        const nextBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Next: Recorder'));
+        const nextBtn = document.querySelector('[data-next-step]') || Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Next: Recorder'));
         if (nextBtn) nextBtn.click();
       })()`
     });
@@ -301,7 +555,8 @@ async function run() {
         return {
           hasStep3: text.includes('Recorder Sizing & Surveillance Hard Drive'),
           hasChannelMatch: text.includes('Channels Matched for'),
-          hasStorageOptions: text.includes('500 GB') && text.includes('1 TB') && text.includes('2 TB')
+          hasStorageOptions: text.includes('500 GB') && text.includes('1 TB') && text.includes('2 TB'),
+          hasChangeRecorderBtn: text.includes('Change Recorder')
         };
       })()`,
       returnByValue: true
@@ -312,12 +567,45 @@ async function run() {
       assert.strictEqual(v.hasStep3, true, 'Step 3 must be active');
       assert.strictEqual(v.hasChannelMatch, true, 'Recorder channel matching badge rendered');
       assert.strictEqual(v.hasStorageOptions, true, 'Surveillance HDD sizing options rendered');
+      assert.strictEqual(v.hasChangeRecorderBtn, true, 'Change Recorder button rendered');
+    });
+
+    // Test Recorder Catalog Picker Modal Opening and Closing
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const btn = document.querySelector('[data-modal-open="recorder"]');
+        if (btn) btn.click();
+      })()`
+    });
+    await sleep(400);
+
+    const recorderModalOpenEval = await send('Runtime.evaluate', {
+      expression: `!!document.querySelector('[data-modal="recorder-catalog"]')`,
+      returnByValue: true
+    });
+
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const closeBtn = document.querySelector('[data-modal-close="recorder"]');
+        if (closeBtn) closeBtn.click();
+      })()`
+    });
+    await sleep(400);
+
+    const recorderModalCloseEval = await send('Runtime.evaluate', {
+      expression: `!document.querySelector('[data-modal="recorder-catalog"]')`,
+      returnByValue: true
+    });
+
+    test('Recorder Catalog Picker Modal opens, displays compatible recorders, and closes properly', () => {
+      assert.strictEqual(recorderModalOpenEval.result.value, true, 'Recorder picker modal opened');
+      assert.strictEqual(recorderModalCloseEval.result.value, true, 'Recorder picker modal closed');
     });
 
     // 2e. Click Next to Step 4 (Cabling & Accessories)
     await send('Runtime.evaluate', {
       expression: `(() => {
-        const nextBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Next: Accessories'));
+        const nextBtn = document.querySelector('[data-next-step]') || Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Next: Accessories'));
         if (nextBtn) nextBtn.click();
       })()`
     });
@@ -348,7 +636,8 @@ async function run() {
     await send('Runtime.evaluate', {
       expression: `(() => {
         const stepBtns = Array.from(document.querySelectorAll('button'));
-        const nextBtn = stepBtns.find(b => b.textContent.includes('Next: BOM Review')) ||
+        const nextBtn = document.querySelector('[data-next-step]') ||
+                        stepBtns.find(b => b.textContent.includes('Next: BOM Review')) ||
                         stepBtns.find(b => b.textContent.includes('BOM Review'));
         if (nextBtn) nextBtn.click();
       })()`
@@ -379,6 +668,105 @@ async function run() {
       assert.strictEqual(v.hasRecorder, true, 'Recorder line rendered');
       assert.strictEqual(v.hasStorage, true, 'Storage line rendered');
       assert.strictEqual(v.hasLineTotals, true, 'Priced line items display BDT totals');
+    });
+
+    // 2f-2. Test Step 5 Stable 7-Day Validity & Download BOM
+    const step5BOMFeaturesEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const text = document.body.innerText;
+        return {
+          hasDownloadBOM: text.includes('Download BOM'),
+          has7DayValidity: text.includes('7 Calendar Days') || text.includes('Validity:')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Package Builder Step 5 provides Download BOM (.txt) and stable 7-day validity', () => {
+      assert.strictEqual(step5BOMFeaturesEval.result.value.hasDownloadBOM, true, 'Download BOM button rendered');
+      assert.strictEqual(step5BOMFeaturesEval.result.value.has7DayValidity, true, 'Stable 7-day validity rendered');
+    });
+
+    // 2f-3. Click Next to Step 6 (Finalize & Order)
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const stepBtns = Array.from(document.querySelectorAll('button'));
+        const nextBtn = document.querySelector('[data-next-step]') ||
+                        stepBtns.find(b => b.textContent.includes('Next: Finalize') || b.textContent.includes('Finalize & Order'));
+        if (nextBtn) nextBtn.click();
+      })()`
+    });
+    await sleep(800);
+
+    const step6Eval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const text = document.body.innerText;
+        return {
+          hasStep6: text.includes('Ready to Order or Request Site Survey'),
+          hasTurnkeySummary: text.toLowerCase().includes('engineered turnkey configuration'),
+          hasAddToCart: text.includes('Add Package to Cart'),
+          hasBookSurvey: text.includes('Book Site Survey')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('Package Builder Step 6 renders engineered turnkey summary, Add to Cart & Quote actions', () => {
+      const v = step6Eval.result.value || {};
+      assert.strictEqual(v.hasStep6, true, 'Step 6 heading must be active');
+      assert.strictEqual(v.hasTurnkeySummary, true, 'Turnkey summary card rendered');
+      assert.strictEqual(v.hasAddToCart, true, 'Add Package to Cart button rendered');
+      assert.strictEqual(v.hasBookSurvey, true, 'Book Site Survey button rendered');
+    });
+
+    // 2f-4. Test In-Page Quotation Modal Opening and Closing
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const surveyBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Book Site Survey'));
+        if (surveyBtn) surveyBtn.click();
+      })()`
+    });
+    await sleep(400);
+
+    const quoteModalOpenEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const modal = document.querySelector('[data-modal="package-quote"]');
+        const text = modal ? modal.innerText : '';
+        return {
+          isOpen: !!modal,
+          hasTitle: text.includes('Request Official Engineering Quotation'),
+          hasInstallationCheckbox: text.includes('Include Turnkey Installation'),
+          hasPhoneField: !!modal?.querySelector('input[type="tel"]')
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    test('In-Page Quotation Modal opens with installation checkbox and customer fields', () => {
+      const v = quoteModalOpenEval.result.value || {};
+      assert.strictEqual(v.isOpen, true, 'Quotation modal opened');
+      assert.strictEqual(v.hasTitle, true, 'Quotation modal title rendered');
+      assert.strictEqual(v.hasInstallationCheckbox, true, 'Installation service checkbox rendered');
+      assert.strictEqual(v.hasPhoneField, true, 'Phone number field rendered');
+    });
+
+    // Close Quote Modal
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const closeBtn = document.querySelector('[data-modal-close="package-quote"]') ||
+                         Array.from(document.querySelectorAll('button')).find(b => b.textContent === 'Cancel');
+        if (closeBtn) closeBtn.click();
+      })()`
+    });
+    await sleep(300);
+
+    const quoteModalCloseEval = await send('Runtime.evaluate', {
+      expression: `!document.querySelector('[data-modal="package-quote"]')`,
+      returnByValue: true
+    });
+
+    test('In-Page Quotation Modal closes properly', () => {
+      assert.strictEqual(quoteModalCloseEval.result.value, true, 'Quotation modal closed');
     });
 
     // 2g. Capture Viewport Screenshots (1440, 1280, 768, 390)

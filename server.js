@@ -5161,6 +5161,8 @@ function resolveRouteMetadata(reqPath) {
     '/compare': { title: 'Product Comparison | CamneX Bangladesh', description: 'Side-by-side technical specifications comparison.' },
     '/tracking': { title: 'Track Order Status | CamneX Bangladesh', description: 'Check delivery and installation status by order reference number.' },
     '/order-tracking': { title: 'Track Order Status | CamneX Bangladesh', description: 'Check delivery and installation status by order reference number.' },
+    '/package-builder': { title: 'Custom CCTV Package Builder & Estimator | CamneX Bangladesh', description: 'Design and configure your security camera system online with transparent engineering rules and genuine hardware.' },
+    '/package-maker': { title: 'Custom CCTV Package Builder & Estimator | CamneX Bangladesh', description: 'Design and configure your security camera system online with transparent engineering rules and genuine hardware.' },
     '/account': { title: 'Customer Account | CamneX Bangladesh', description: 'Customer account and order history.' },
     '/admin': { title: 'Admin Console | CamneX Bangladesh', description: 'CamneX administration dashboard.' }
   };

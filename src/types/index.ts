@@ -253,7 +253,32 @@ export interface Product {
 // ----------------------------------------------------------------------------
 // Packages (Configurable Turnkey Bundles)
 // ----------------------------------------------------------------------------
-export type CameraFormFactor = 'bullet' | 'dome' | 'turret';
+export type CameraFormFactor = 'bullet' | 'dome' | 'turret' | 'ptz' | 'other';
+
+export type CameraSeriesId = 'analogue' | 'ip' | 'wireless';
+
+export type CameraCategoryId =
+  // Analogue / HD Series
+  | 'analogue_bullet'
+  | 'analogue_dome'
+  | 'analogue_turret'
+  | 'analogue_box'
+  | 'analogue_ptz'
+  // IP Series
+  | 'ip_poe'
+  | 'ip_smart_ai'
+  | 'ip_multi_sensor'
+  | 'ip_fisheye'
+  | 'ip_specialized'
+  // Wireless Series
+  | 'wifi_smart'
+  | 'wifi_cellular'
+  | 'wifi_solar'
+  | 'wifi_battery'
+  | 'wifi_pinhole'
+  | 'wifi_two_way_audio';
+
+export type SpecialistSubcategory = 'anpr' | 'thermal' | 'industrial' | null;
 
 export interface PackageComponentRule {
   role: 'camera' | 'recorder' | 'storage' | 'cable' | 'power' | 'connectors' | 'installation';
