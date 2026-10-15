@@ -304,6 +304,19 @@ export interface PowerSupplyProfile {
   formFactor?: string;
 }
 
+export interface BomItem {
+  role: string;
+  name: string;
+  model: string;
+  sku: string;
+  qty: number;
+  unitPrice: number | null;
+  lineTotal: number | null;
+  specs?: string;
+  warrantyMonths?: number;
+  warrantyText?: string;
+}
+
 export interface PackageComponentRule {
   role: 'camera' | 'recorder' | 'storage' | 'cable' | 'power' | 'connectors' | 'installation';
   defaultModelId: string;

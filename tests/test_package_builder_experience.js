@@ -215,6 +215,39 @@ async function run() {
     assert.ok(builderContent.includes('quoteService.createQuote'), 'Must integrate with quoteService API');
   });
 
+  test('Step 5: Itemized Bill of Materials with full manufacturer models, SKUs, and specifications', () => {
+    assert.ok(builderContent.includes('Itemized Bill of Materials (BOM)'), 'Must render BOM header');
+    assert.ok(builderContent.includes('computedBOM.map'), 'Must iterate through computed BOM items');
+    assert.ok(builderContent.includes('Model:') && builderContent.includes('SKU:'), 'Must show full model number and SKU');
+    assert.ok(builderContent.includes('comp.specs'), 'Must display component technical specifications');
+  });
+
+  test('Step 5: Verified equipment warranty schedule and badges on item rows', () => {
+    assert.ok(builderContent.includes('comp.warrantyText'), 'Must render verified warranty badge on BOM items');
+    assert.ok(builderContent.includes('Verified Product Warranty Policy'), 'Must render warranty schedule banner');
+    assert.ok(builderContent.includes('Surveillance HDDs: 3 Years'), 'Must display 3 years for surveillance HDDs');
+    assert.ok(builderContent.includes('Cameras & Recorders: 1–2 Years'), 'Must display 1-2 years for cameras & recorders');
+    assert.ok(builderContent.includes('PoE Network Switches: 3 Years') || builderContent.includes('Cloud PoE Switches: 3 Years'), 'Must display 3 years for Cloud PoE switches');
+  });
+
+  test('Step 5: Transparent pricing separation (Indicative Subtotal vs Confirmed Total)', () => {
+    assert.ok(builderContent.includes('pricedSubtotal') && builderContent.includes('unpricedCount'), 'Must track priced subtotal and unpriced items count');
+    assert.ok(builderContent.includes('Indicative Hardware Subtotal (Pending Quotation)'), 'Must indicate pending quotation subtotal');
+    assert.ok(builderContent.includes('Confirmed Hardware Subtotal'), 'Must indicate confirmed turnkey hardware total');
+  });
+
+  test('Step 5: Stable 7-day BOM validity window and Re-issue BOM action', () => {
+    assert.ok(builderContent.includes('camnex_bom_dates_v1'), 'Must store stable 7-day BOM validity in localStorage');
+    assert.ok(builderContent.includes('handleReissueBOM') && builderContent.includes('Re-issue BOM'), 'Must provide Re-issue BOM button');
+    assert.ok(builderContent.includes('Validity:') && builderContent.includes('7 Calendar Days'), 'Must disclose 7 calendar days validity');
+  });
+
+  test('Step 5: Professional text document export and clipboard copy fallback', () => {
+    assert.ok(builderContent.includes('handleDownloadBOM') && builderContent.includes('Download BOM (.txt)'), 'Must provide Download BOM functionality');
+    assert.ok(builderContent.includes('fallbackCopyText') && builderContent.includes('handleCopyBOM'), 'Must include clipboard fallback copy handler');
+    assert.ok(builderContent.includes('OFFICIAL TECHNICAL BILL OF MATERIALS (BOM)'), 'Must format official technical export letterhead');
+  });
+
   const packagesContent = fs.readFileSync(packagesPagePath, 'utf8');
   test('PackagesPage includes Custom Package Maker entry banner', () => {
     assert.ok(packagesContent.includes('Custom Package Maker') || packagesContent.includes('Build Your Own System'), 'Must include Custom Package Maker banner');
@@ -911,9 +944,19 @@ async function run() {
         return {
           hasStep5: text.includes('Itemized Bill of Materials (BOM)'),
           hasCopyBOM: text.includes('Copy BOM') || text.includes('BOM Copied'),
+          hasDownloadBOM: text.includes('Download BOM'),
+          hasReissueBOM: text.includes('Re-issue BOM'),
+          has7DayValidity: text.includes('7 Calendar Days') || text.includes('Validity:'),
           hasCameras: text.includes('Surveillance Cameras') || text.includes('Camera'),
           hasRecorder: text.includes('Recording Hardware') || text.includes('Recorder') || text.includes('DVR'),
           hasStorage: text.includes('Surveillance Storage') || text.includes('HDD') || text.includes('Hard Drive'),
+          hasCabling: text.includes('Transmission Cabling') || text.includes('Coaxial Video Cable') || text.includes('Solid Copper') || text.includes('Cable'),
+          hasConnectors: text.includes('Connectors') || text.includes('Terminations') || text.includes('Balun'),
+          hasPower: text.includes('Power Supply') || text.includes('Power Distribution') || text.includes('Regulated Power'),
+          hasJunctionBox: text.includes('Junction Box') || text.includes('Weatherproof Mounting'),
+          hasWarrantyBadge: text.includes('Replacement Warranty') || text.includes('Official Warranty') || text.includes('Warranty'),
+          hasWarrantySchedule: text.includes('Verified Product Warranty Policy'),
+          hasSubtotalCard: text.toLowerCase().includes('equipment investment assessment') || text.includes('Hardware Subtotal'),
           hasLineTotals: text.includes('৳'),
           snippet: text.slice(0, 300)
         };
@@ -921,31 +964,81 @@ async function run() {
       returnByValue: true
     });
 
-    test('Package Builder Step 5 displays transparent itemized Bill of Materials with line totals', () => {
+    test('Package Builder Step 5 displays comprehensive itemized Bill of Materials with all components & warranties', () => {
       const v = step5Eval.result.value || {};
       assert.strictEqual(v.hasStep5, true, 'Step 5 must be active');
       assert.strictEqual(v.hasCopyBOM, true, 'Copy BOM button rendered');
+      assert.strictEqual(v.hasDownloadBOM, true, 'Download BOM button rendered');
+      assert.strictEqual(v.hasReissueBOM, true, 'Re-issue BOM button rendered');
+      assert.strictEqual(v.has7DayValidity, true, 'Stable 7-day validity banner rendered');
       assert.strictEqual(v.hasCameras, true, 'Cameras line rendered');
       assert.strictEqual(v.hasRecorder, true, 'Recorder line rendered');
       assert.strictEqual(v.hasStorage, true, 'Storage line rendered');
+      assert.strictEqual(v.hasCabling, true, 'Cabling line rendered');
+      assert.strictEqual(v.hasConnectors, true, 'Connectors line rendered');
+      assert.strictEqual(v.hasPower, true, 'Power supply line rendered');
+      assert.strictEqual(v.hasJunctionBox, true, 'Junction boxes line rendered');
+      assert.strictEqual(v.hasWarrantyBadge, true, 'Hardware warranty badges rendered on BOM items');
+      assert.strictEqual(v.hasWarrantySchedule, true, 'Verified warranty schedule breakdown rendered');
+      assert.strictEqual(v.hasSubtotalCard, true, 'Equipment investment assessment subtotal rendered');
       assert.strictEqual(v.hasLineTotals, true, 'Priced line items display BDT totals');
     });
 
-    // 2f-2. Test Step 5 Stable 7-Day Validity & Download BOM
-    const step5BOMFeaturesEval = await send('Runtime.evaluate', {
+    // Test Copy BOM button interaction
+    await send('Runtime.evaluate', {
       expression: `(() => {
-        const text = document.body.innerText;
-        return {
-          hasDownloadBOM: text.includes('Download BOM'),
-          has7DayValidity: text.includes('7 Calendar Days') || text.includes('Validity:')
-        };
+        const copyBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Copy BOM'));
+        if (copyBtn) copyBtn.click();
+      })()`
+    });
+    await sleep(400);
+
+    const copyBtnEval = await send('Runtime.evaluate', {
+      expression: `document.body.innerText.includes('BOM Copied!')`,
+      returnByValue: true
+    });
+
+    test('Package Builder Step 5 Copy BOM button triggers feedback ("BOM Copied!")', () => {
+      assert.strictEqual(copyBtnEval.result.value, true, 'Button text transitioned to "BOM Copied!"');
+    });
+
+    // Test Download BOM button interaction
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const dlBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Download BOM'));
+        if (dlBtn) dlBtn.click();
+      })()`
+    });
+    await sleep(300);
+
+    const downloadBtnEval = await send('Runtime.evaluate', {
+      expression: `document.body.innerText.includes('Downloaded!')`,
+      returnByValue: true
+    });
+
+    test('Package Builder Step 5 Download BOM button triggers feedback ("Downloaded!")', () => {
+      assert.strictEqual(downloadBtnEval.result.value, true, 'Button text transitioned to "Downloaded!"');
+    });
+
+    // Test Re-issue BOM button interaction
+    await send('Runtime.evaluate', {
+      expression: `(() => {
+        const reissueBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Re-issue BOM'));
+        if (reissueBtn) reissueBtn.click();
+      })()`
+    });
+    await sleep(300);
+
+    const reissueBtnEval = await send('Runtime.evaluate', {
+      expression: `(() => {
+        const banner = document.body.innerText;
+        return banner.includes('Date of Issue:') && banner.includes('Guaranteed Pricing Window');
       })()`,
       returnByValue: true
     });
 
-    test('Package Builder Step 5 provides Download BOM (.txt) and stable 7-day validity', () => {
-      assert.strictEqual(step5BOMFeaturesEval.result.value.hasDownloadBOM, true, 'Download BOM button rendered');
-      assert.strictEqual(step5BOMFeaturesEval.result.value.has7DayValidity, true, 'Stable 7-day validity rendered');
+    test('Package Builder Step 5 Re-issue BOM button refreshes 7-day validity window', () => {
+      assert.strictEqual(reissueBtnEval.result.value, true, 'BOM validity window re-issued');
     });
 
     // 2f-3. Click Next to Step 6 (Finalize & Order)

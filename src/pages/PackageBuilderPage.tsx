@@ -97,6 +97,7 @@ export interface RecorderHardwareProfile {
   raidSupported?: boolean;
   isWirelessEdge?: boolean;
   wirelessDutyCycleNote?: string;
+  warrantyMonths?: number;
 }
 
 export interface PackageBuilderPageProps {
@@ -113,6 +114,8 @@ export interface BomItem {
   unitPrice: number | null;
   lineTotal: number | null;
   specs?: string;
+  warrantyMonths?: number;
+  warrantyText?: string;
 }
 
 export interface CameraSeriesConfig {
@@ -435,7 +438,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const [quoteErrorMessage, setQuoteErrorMessage] = useState<string | null>(null);
 
   // BOM validity: 7 calendar days from issue date, stable across page reloads
-  const [bomDates] = useState<{ issueDate: string; validUntilDate: string }>(() => {
+  const [bomDates, setBomDates] = useState<{ issueDate: string; validUntilDate: string }>(() => {
     const key = 'camnex_bom_dates_v1';
     try {
       const stored = localStorage.getItem(key);
@@ -2000,7 +2003,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       sku: cameraSpec.sku,
       qty: cameraCount,
       unitPrice: cameraSpec.unitPrice,
-      lineTotal: cameraSpec.unitPrice !== null ? cameraSpec.unitPrice * cameraCount : null
+      lineTotal: cameraSpec.unitPrice !== null ? cameraSpec.unitPrice * cameraCount : null,
+      warrantyMonths: cameraSpec.warrantyMonths || 12,
+      warrantyText: cameraSpec.warrantyMonths === 24 ? '2 Years Official Warranty' : '1 Year Official Warranty',
+      specs: `${cameraSpec.brand} · ${formFactor.toUpperCase()} · ${nightVision === 'ir' ? 'Pure Infrared (20m IR)' : nightVision === 'hybrid' ? 'Smart Hybrid Light' : 'ColorVu 24/7 Full Color'}${hasBuiltinAudio ? ' · Built-in Audio Mic' : ''}`
     });
 
     // 2. Video Recorder
@@ -2011,7 +2017,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       sku: recorderSpec.sku,
       qty: 1,
       unitPrice: recorderSpec.unitPrice,
-      lineTotal: recorderSpec.unitPrice
+      lineTotal: recorderSpec.unitPrice,
+      warrantyMonths: recorderSpec.warrantyMonths || 12,
+      warrantyText: recorderSpec.warrantyMonths === 24 ? '2 Years Official Warranty' : '1 Year Official Warranty',
+      specs: `${recorderSpec.channels}-Channel ${systemArch === 'ip' ? 'PoE NVR' : 'Turbo HD DVR'} · ${recorderSpec.sataBays} SATA Drive Bay${recorderSpec.sataBays > 1 ? 's' : ''} · H.265+ Compression · Simultaneous HDMI/VGA`
     });
 
     // 3. Storage
@@ -2023,7 +2032,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         sku: storageSpec.sku,
         qty: storageSpec.qty,
         unitPrice: storageSpec.unitPrice,
-        lineTotal: storageSpec.lineTotal
+        lineTotal: storageSpec.lineTotal,
+        warrantyMonths: storageSpec.warrantyMonths || 36,
+        warrantyText: '3 Years Replacement Warranty',
+        specs: `${storageSpec.brand} 3.5" Surveillance Hard Drive · 24/7 Continuous Recording Duty · ${storageSpec.drivesRequired} Unit${storageSpec.drivesRequired > 1 ? 's in Array' : ''}`
       });
     }
 
@@ -2040,7 +2052,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         sku: isIp || isUtpAnalogue ? 'DL-CAT6-UTP' : 'COAX-RG59-PURE',
         qty: cableLengthMeters,
         unitPrice: isIp || isUtpAnalogue ? 32 : 30,
-        lineTotal: (isIp || isUtpAnalogue ? 32 : 30) * cableLengthMeters
+        lineTotal: (isIp || isUtpAnalogue ? 32 : 30) * cableLengthMeters,
+        warrantyMonths: 0,
+        warrantyText: 'Installation Workmanship Guarantee',
+        specs: `100% Solid Pure Copper Conductors · ${cableLengthMeters}m Total (${(cableLengthMeters / cameraCount).toFixed(1)}m/cam average)`
       });
     }
 
@@ -2054,7 +2069,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
           sku: 'acc-balun',
           qty: cameraCount,
           unitPrice: 250,
-          lineTotal: 250 * cameraCount
+          lineTotal: 250 * cameraCount,
+          warrantyMonths: 6,
+          warrantyText: '6 Months Replacement Warranty',
+          specs: `Matched Pair (1x Camera End + 1x DVR End) per camera · TVS Surge Protection · Anti-Interference`
         });
       } else {
         // Direct Coaxial: Heavy-duty BNC connectors & DC pigtails (No unnecessary baluns!)
@@ -2065,7 +2083,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
           sku: 'ACC-BNC-DC-KIT',
           qty: cameraCount,
           unitPrice: 150,
-          lineTotal: 150 * cameraCount
+          lineTotal: 150 * cameraCount,
+          warrantyMonths: 0,
+          warrantyText: 'Installation Workmanship Guarantee',
+          specs: `${cameraCount * 2}x Pure Copper BNC Crimps + ${cameraCount}x 12V DC Pigtails`
         });
       }
     } else if (systemArch === 'ip') {
@@ -2076,12 +2097,15 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         sku: 'ACC-RJ45-KIT',
         qty: cameraCount * 2,
         unitPrice: 25,
-        lineTotal: cameraCount * 2 * 25
+        lineTotal: cameraCount * 2 * 25,
+        warrantyMonths: 0,
+        warrantyText: 'Installation Workmanship Guarantee',
+        specs: `High-Grade Cat6 8P8C Modular Plugs (${cameraCount * 2} Units) + Snagless Protective Strain-Relief Boots`
       });
     }
 
     // 6. Power Distribution / PoE Networking
-    if (powerSpec && powerSpec.unitPrice !== 0) {
+    if (powerSpec) {
       list.push({
         role: powerSpec.type === 'external_poe_switch' ? 'PoE Networking Switch' : 'Power Distribution',
         name: powerSpec.name,
@@ -2089,7 +2113,18 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         sku: powerSpec.sku,
         qty: powerSpec.qty,
         unitPrice: powerSpec.unitPrice,
-        lineTotal: powerSpec.lineTotal
+        lineTotal: powerSpec.lineTotal,
+        warrantyMonths: powerSpec.warrantyMonths,
+        warrantyText: powerSpec.warrantyMonths === 36
+          ? '3 Years Official Warranty'
+          : powerSpec.warrantyMonths === 24
+          ? '2 Years Official Warranty'
+          : powerSpec.warrantyMonths === 12
+          ? '1 Year Warranty'
+          : powerSpec.warrantyMonths === 6
+          ? '6 Months Warranty'
+          : 'Included with Hardware',
+        specs: powerSpec.note || (powerSpec.type === 'external_poe_switch' ? `${powerSpec.ports} PoE Ports · Gigabit Uplinks · Cloud Management` : '12V Regulated DC SMPS Distribution')
       });
     }
 
@@ -2102,7 +2137,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         sku: junctionBoxSpec.sku,
         qty: junctionBoxSpec.qty,
         unitPrice: junctionBoxSpec.unitPrice,
-        lineTotal: junctionBoxSpec.lineTotal
+        lineTotal: junctionBoxSpec.lineTotal,
+        warrantyMonths: junctionBoxSpec.warrantyMonths,
+        warrantyText: '1 Year Warranty',
+        specs: 'Hikvision Deep Base Waterproof Mount (IP66 Rated) · Conceals BNC/RJ45 & DC Connections'
       });
     }
 
@@ -2115,7 +2153,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         sku: monitorSpec.sku,
         qty: monitorSpec.qty,
         unitPrice: monitorSpec.unitPrice,
-        lineTotal: null
+        lineTotal: null,
+        warrantyMonths: monitorSpec.warrantyMonths,
+        warrantyText: '1 Year Official Warranty',
+        specs: 'Surveillance Desk Display · Direct HDMI / VGA Video Input'
       });
     }
 
@@ -2130,41 +2171,51 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     cableLengthMeters,
     powerSpec,
     junctionBoxSpec,
-    monitorSpec
+    monitorSpec,
+    formFactor,
+    nightVision,
+    hasBuiltinAudio
   ]);
 
   // Calculate Pricing & Quote-Only status
-  const { totalPrice, quotationRequired, quotationReason } = useMemo(() => {
+  const { totalPrice, quotationRequired, quotationReason, pricedSubtotal, unpricedCount } = useMemo(() => {
     let sum = 0;
     let quoteOnly = false;
+    let unpriced = 0;
     const unpricedItems: string[] = [];
 
     if (cameraCount > 64) {
       quoteOnly = true;
+      unpriced++;
       unpricedItems.push(`${cameraCount}-Camera Enterprise Deployment Review (>64 Cameras)`);
     } else if (cameraCount >= 32) {
       quoteOnly = true;
+      unpriced++;
       unpricedItems.push('32+ Enterprise Scale System');
     }
 
     if (recorderSpec.isUnderCapacity) {
       quoteOnly = true;
+      unpriced++;
       unpricedItems.push(`Under-Capacity Recorder Selection (${recorderSpec.underCapacityReason || 'Insufficient Channels'})`);
     }
 
     if (isStorageDriveBayIncompatible) {
       quoteOnly = true;
+      unpriced++;
       unpricedItems.push('Drive Bay Sizing Incompatibility');
     }
 
     if (cameraSpec.isSpecialist) {
       quoteOnly = true;
+      unpriced++;
       unpricedItems.push(cameraSpec.name);
     }
 
     for (const item of computedBOM) {
       if (item.unitPrice === null || item.lineTotal === null) {
         quoteOnly = true;
+        unpriced++;
         unpricedItems.push(item.name);
       } else {
         sum += item.lineTotal;
@@ -2172,7 +2223,8 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     }
 
     return {
-      // Missing price handling: unpriced items mark quotationRequired as true, setting totalPrice === null
+      pricedSubtotal: sum,
+      unpricedCount: unpriced,
       totalPrice: quoteOnly ? null : sum,
       quotationRequired: quoteOnly,
       quotationReason: quoteOnly
@@ -2331,81 +2383,167 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
     }
   };
 
-  // Copy BOM to clipboard (with 7-day validity and disclaimers)
-  const handleCopyBOM = () => {
-    const lines = computedBOM.map(
-      (b, idx) =>
-        `${idx + 1}. [${b.role}] ${b.name} (Model: ${b.model}) - Qty: ${b.qty} ${
-          b.lineTotal !== null ? `@ ৳${b.lineTotal.toLocaleString()} BDT` : '(Quotation required)'
-        }`
-    );
-    lines.unshift(`CamneX Bangladesh — Official Technical Bill of Materials (${cameraCount} Cameras)\nDate of Issue: ${bomDates.issueDate} | Validity: 7 Calendar Days (Valid Until: ${bomDates.validUntilDate})\n======================================================`);
-    if (totalPrice) {
-      lines.push(`\nCalculated Hardware Subtotal: ৳${totalPrice.toLocaleString()} BDT`);
-    } else {
-      lines.push(`\nTotal: Official Engineering Quotation Required (${quotationReason || 'Custom setup'})`);
-    }
-    lines.push('\nImportant Disclaimers:');
-    lines.push('1. Prices may change depending on the actual order date and exchange rates.');
-    lines.push('2. Installation and service charges are excluded from the equipment total unless explicitly quoted.');
-    lines.push('3. Official Bangladesh distributor warranty applies to all eligible cameras, recorders, and storage.');
-
-    navigator.clipboard?.writeText(lines.join('\n'));
+  // Fallback Copy to Clipboard for Restricted Environments
+  const fallbackCopyText = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (_) {}
+      document.body.removeChild(textArea);
+    } catch (_) {}
     setCopiedBOM(true);
     setTimeout(() => setCopiedBOM(false), 2500);
   };
 
+  // Re-issue current BOM with fresh 7-day validity
+  const handleReissueBOM = () => {
+    const now = new Date();
+    const expiry = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const dates = {
+      issueDate: now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      validUntilDate: expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    };
+    try {
+      localStorage.setItem('camnex_bom_dates_v1', JSON.stringify(dates));
+    } catch (_) {}
+    setBomDates(dates);
+  };
+
+  // Copy BOM to clipboard (with 7-day validity, full model numbers, warranty, and disclaimers)
+  const handleCopyBOM = () => {
+    try {
+      const lines = [
+        '================================================================================',
+        'CAMNEX BANGLADESH — OFFICIAL TECHNICAL BILL OF MATERIALS (BOM)',
+        'Certified Security Systems Integrator & Authorized Hikvision Partner',
+        'Corporate Office: Dhaka, Bangladesh | Hotline: +880 1317-251000 | Web: https://camnexbd.com',
+        '================================================================================',
+        `Reference Number   : Ref: BOM-NX-${cameraCount}C-${systemArch.toUpperCase()}`,
+        `Date of Issue      : ${bomDates.issueDate}`,
+        `BOM Validity       : 7 Calendar Days (Valid Until: ${bomDates.validUntilDate})`,
+        `System Architecture: ${systemArch === 'ip' ? 'IP Network (PoE Digital)' : systemArch === 'wireless' ? 'Wi-Fi Smart Wireless' : 'Analogue Turbo HD'}`,
+        `Camera Quantity    : ${cameraCount} Cameras (${formFactor.toUpperCase()})`,
+        `Night Vision Mode  : ${nightVision === 'ir' ? 'Pure Infrared (IR)' : nightVision === 'hybrid' ? 'Smart Hybrid Light' : 'ColorVu 24/7 Full Color'}`,
+        `Recording Storage  : ${storageOption.toUpperCase()} Surveillance Grade HDD`,
+        '--------------------------------------------------------------------------------',
+        'ITEMIZED HARDWARE BREAKDOWN:',
+        '--------------------------------------------------------------------------------'
+      ];
+
+      computedBOM.forEach((item, idx) => {
+        const priceStr = item.lineTotal !== null ? `৳${item.lineTotal.toLocaleString()} BDT` : 'Quotation Required';
+        const unitStr = item.unitPrice !== null ? `(@ ৳${item.unitPrice.toLocaleString()}/ea)` : '(Price on quotation)';
+        lines.push(`${idx + 1}. [${item.role}] ${item.name}`);
+        lines.push(`   Model: ${item.model} | SKU: ${item.sku}`);
+        lines.push(`   Quantity: ${item.qty} ${unitStr} -> Line Total: ${priceStr}`);
+        if (item.specs) lines.push(`   Specs: ${item.specs}`);
+        if (item.warrantyText) lines.push(`   Warranty: ${item.warrantyText}`);
+        lines.push('');
+      });
+
+      lines.push('--------------------------------------------------------------------------------');
+      if (totalPrice !== null) {
+        lines.push(`CONFIRMED HARDWARE EQUIPMENT TOTAL: ৳${totalPrice.toLocaleString()} BDT`);
+      } else {
+        lines.push(`INDICATIVE HARDWARE SUBTOTAL (PRICED ITEMS): ৳${pricedSubtotal.toLocaleString()} BDT`);
+        lines.push(`FINAL PACKAGE TOTAL: Official Engineering Quotation Required (${quotationReason || 'Custom Configuration'})`);
+      }
+      lines.push('--------------------------------------------------------------------------------');
+      lines.push('COMMERCIAL TERMS, WARRANTY & SERVICE DISCLAIMERS:');
+      lines.push('1. BOM Validity: This bill of materials is held valid for 7 calendar days from the issue date.');
+      lines.push('2. Price Fluctuation: Equipment prices may vary depending on official distributor exchange rate and actual order placement date.');
+      lines.push('3. Service Charges: Installation, conduit piping, and engineering commissioning charges are excluded from the hardware total and will be quoted following on-site survey.');
+      lines.push('4. Warranty Schedule: Official Bangladesh distributor warranty applies to all eligible cameras (1-2 years), recorders (1-2 years), and surveillance hard drives (3 years).');
+      lines.push('5. Retention Estimates: Calculated storage retention periods are engineering estimates based on H.265+ smart compression and standard activity, not legal performance guarantees.');
+      lines.push('================================================================================');
+
+      const fullText = lines.join('\n');
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(fullText).then(() => {
+          setCopiedBOM(true);
+          setTimeout(() => setCopiedBOM(false), 2500);
+        }).catch(() => {
+          fallbackCopyText(fullText);
+        });
+      } else {
+        fallbackCopyText(fullText);
+      }
+    } catch (err) {
+      console.error('Failed to copy BOM:', err);
+    }
+  };
+
   // Download BOM as clean formatted technical text file
   const handleDownloadBOM = () => {
-    const lines: string[] = [];
-    lines.push('================================================================================');
-    lines.push('CAMNEX BANGLADESH — OFFICIAL TECHNICAL BILL OF MATERIALS (BOM)');
-    lines.push('Authorized Hikvision Partner & Certified Security Systems Integrator');
-    lines.push('Corporate Office: Dhaka, Bangladesh | Web: https://camnexbd.com');
-    lines.push('================================================================================');
-    lines.push(`System Architecture : ${systemArch.toUpperCase()}`);
-    lines.push(`Camera Quantity     : ${cameraCount} Cameras`);
-    lines.push(`Form Factor         : ${formFactor.toUpperCase()}`);
-    lines.push(`Night Vision Type   : ${nightVision === 'ir' ? 'Pure Infrared (IR)' : nightVision === 'hybrid' ? 'Smart Hybrid Light' : 'Full Color (ColorVu)'}`);
-    lines.push(`Date of Issue       : ${bomDates.issueDate}`);
-    lines.push(`BOM Validity        : Valid for 7 calendar days (Expires: ${bomDates.validUntilDate})`);
-    lines.push('--------------------------------------------------------------------------------');
-    lines.push('ITEMIZED HARDWARE BREAKDOWN:');
-    lines.push('--------------------------------------------------------------------------------');
-    computedBOM.forEach((item, idx) => {
-      const priceStr = item.lineTotal !== null ? `৳${item.lineTotal.toLocaleString()} BDT` : 'Quotation Required';
-      const unitStr = item.unitPrice !== null ? `(@ ৳${item.unitPrice.toLocaleString()}/ea)` : '';
-      lines.push(`${idx + 1}. [${item.role}] ${item.name}`);
-      lines.push(`   Model: ${item.model} | SKU: ${item.sku}`);
-      lines.push(`   Quantity: ${item.qty} ${unitStr} -> Line Total: ${priceStr}`);
-      lines.push('');
-    });
-    lines.push('--------------------------------------------------------------------------------');
-    if (totalPrice !== null) {
-      lines.push(`CALCULATED HARDWARE TOTAL: ৳${totalPrice.toLocaleString()} BDT`);
-    } else {
-      lines.push(`TOTAL: Official Engineering Quotation Required (${quotationReason || 'Custom Setup'})`);
-    }
-    lines.push('--------------------------------------------------------------------------------');
-    lines.push('TERMS, WARRANTY & SERVICE CONDITIONS:');
-    lines.push('1. BOM Validity: This bill of materials is valid for 7 calendar days from the issue date.');
-    lines.push('2. Pricing: Equipment prices may vary depending on official distributor exchange rate and actual order date.');
-    lines.push('3. Service Charges: Installation, conduit piping, and engineering commissioning charges are excluded from the hardware total and will be quoted following on-site survey.');
-    lines.push('4. Warranty: Official Bangladesh distributor warranty applies to all eligible cameras, recorders, and hard drives.');
-    lines.push('================================================================================');
+    try {
+      const lines = [
+        '================================================================================',
+        'CAMNEX BANGLADESH — OFFICIAL TECHNICAL BILL OF MATERIALS (BOM)',
+        'Certified Security Systems Integrator & Authorized Hikvision Partner',
+        'Corporate Office: Dhaka, Bangladesh | Hotline: +880 1317-251000 | Web: https://camnexbd.com',
+        '================================================================================',
+        `Reference Number   : Ref: BOM-NX-${cameraCount}C-${systemArch.toUpperCase()}`,
+        `Date of Issue      : ${bomDates.issueDate}`,
+        `BOM Validity       : 7 Calendar Days (Valid Until: ${bomDates.validUntilDate})`,
+        `System Architecture: ${systemArch === 'ip' ? 'IP Network (PoE Digital)' : systemArch === 'wireless' ? 'Wi-Fi Smart Wireless' : 'Analogue Turbo HD'}`,
+        `Camera Quantity    : ${cameraCount} Cameras (${formFactor.toUpperCase()})`,
+        `Night Vision Mode  : ${nightVision === 'ir' ? 'Pure Infrared (IR)' : nightVision === 'hybrid' ? 'Smart Hybrid Light' : 'Full Color (ColorVu)'}`,
+        `Recording Storage  : ${storageOption.toUpperCase()} Surveillance Grade HDD`,
+        '--------------------------------------------------------------------------------',
+        'ITEMIZED HARDWARE BREAKDOWN:',
+        '--------------------------------------------------------------------------------'
+      ];
 
-    const content = lines.join('\n');
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `CamneX_BOM_${cameraCount}_Cam_${systemArch.toUpperCase()}_${Date.now()}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setDownloadedBOM(true);
-    setTimeout(() => setDownloadedBOM(false), 2500);
+      computedBOM.forEach((item, idx) => {
+        const priceStr = item.lineTotal !== null ? `৳${item.lineTotal.toLocaleString()} BDT` : 'Quotation Required';
+        const unitStr = item.unitPrice !== null ? `(@ ৳${item.unitPrice.toLocaleString()}/ea)` : '(Price on quotation)';
+        lines.push(`${idx + 1}. [${item.role}] ${item.name}`);
+        lines.push(`   Model: ${item.model} | SKU: ${item.sku}`);
+        lines.push(`   Quantity: ${item.qty} ${unitStr} -> Line Total: ${priceStr}`);
+        if (item.specs) lines.push(`   Specs: ${item.specs}`);
+        if (item.warrantyText) lines.push(`   Warranty: ${item.warrantyText}`);
+        lines.push('');
+      });
+
+      lines.push('--------------------------------------------------------------------------------');
+      if (totalPrice !== null) {
+        lines.push(`CONFIRMED HARDWARE EQUIPMENT TOTAL: ৳${totalPrice.toLocaleString()} BDT`);
+      } else {
+        lines.push(`INDICATIVE HARDWARE SUBTOTAL (PRICED ITEMS): ৳${pricedSubtotal.toLocaleString()} BDT`);
+        lines.push(`FINAL PACKAGE TOTAL: Official Engineering Quotation Required (${quotationReason || 'Custom Configuration'})`);
+      }
+      lines.push('--------------------------------------------------------------------------------');
+      lines.push('COMMERCIAL TERMS, WARRANTY & SERVICE DISCLAIMERS:');
+      lines.push('1. BOM Validity: This bill of materials is held valid for 7 calendar days from the issue date.');
+      lines.push('2. Price Fluctuation: Equipment prices may vary depending on official distributor exchange rate and actual order placement date.');
+      lines.push('3. Service Charges: Installation, conduit piping, and engineering commissioning charges are excluded from the hardware total and will be quoted following on-site survey.');
+      lines.push('4. Warranty Schedule: Official Bangladesh distributor warranty applies to all eligible cameras (1-2 years), recorders (1-2 years), and surveillance hard drives (3 years).');
+      lines.push('5. Retention Estimates: Calculated storage retention periods are engineering estimates based on H.265+ smart compression and standard activity, not legal performance guarantees.');
+      lines.push('================================================================================');
+
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CamneX-BOM-${cameraCount}Cam-${systemArch.toUpperCase()}-${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setDownloadedBOM(true);
+      setTimeout(() => setDownloadedBOM(false), 2500);
+    } catch (err) {
+      console.error('Failed to download BOM:', err);
+    }
   };
 
   const steps = [
@@ -4017,7 +4155,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
                     <button
                       type="button"
                       onClick={handleCopyBOM}
@@ -4034,6 +4172,15 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       {downloadedBOM ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5 text-slate-300" />}
                       <span>{downloadedBOM ? 'Downloaded!' : 'Download BOM (.txt)'}</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={handleReissueBOM}
+                      title="Re-issue BOM with today's date and a fresh 7-day validity period"
+                      className="px-3 py-1.5 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3 text-slate-400" />
+                      <span>Re-issue BOM</span>
+                    </button>
                   </div>
                 </div>
 
@@ -4045,12 +4192,17 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       <strong>Date of Issue:</strong> {bomDates.issueDate} · <strong>Validity:</strong> 7 Calendar Days (Valid Until: <span className="text-orange-400 font-bold">{bomDates.validUntilDate}</span>)
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    Ref: BOM-NX-{cameraCount}C-{systemArch.toUpperCase()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2 py-0.5 rounded-full font-semibold">
+                      Guaranteed Pricing Window
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Ref: BOM-NX-{cameraCount}C-{systemArch.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Compatibility Badges */}
+                {/* Architecture & Sizing Badges */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
                     <div className="text-[10px] text-slate-400 uppercase font-bold">Channels</div>
@@ -4066,46 +4218,70 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
                     <div className="text-[10px] text-slate-400 uppercase font-bold">Power Unit</div>
-                    <div className="font-bold">12V Regulated</div>
+                    <div className="font-bold">{powerSpec?.voltage || '12V'} Regulated</div>
                   </div>
                 </div>
 
-                {/* BOM Table */}
-                <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 text-xs sm:text-sm">
+                {/* Upgraded Itemized BOM Table */}
+                <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 text-xs sm:text-sm shadow-2xs">
                   {computedBOM.map((comp, idx) => (
                     <div
                       key={idx}
-                      className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white hover:bg-slate-50 transition"
+                      className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 bg-white hover:bg-slate-50 transition"
                     >
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#F15A24]">
-                          {comp.role}
-                        </span>
-                        <div className="font-heading font-bold text-slate-900">
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#F15A24] bg-orange-50 px-2 py-0.5 rounded">
+                            {comp.role}
+                          </span>
+                          {comp.warrantyText && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                              comp.warrantyMonths && comp.warrantyMonths >= 24
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : comp.warrantyMonths && comp.warrantyMonths >= 12
+                                ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}>
+                              {comp.warrantyText}
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-heading font-bold text-slate-900 text-sm">
                           {comp.name}
                         </div>
                         <div className="text-xs text-slate-500 font-mono">
-                          Model: {comp.model} · SKU: {comp.sku}
+                          Model: <strong className="text-slate-700">{comp.model}</strong> · SKU: {comp.sku}
                         </div>
+                        {comp.specs && (
+                          <div className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
+                            {comp.specs}
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                      <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 self-stretch sm:self-center">
                         <div className="text-left sm:text-right">
                           <span className="text-xs text-slate-500">Qty: </span>
-                          <span className="font-bold text-slate-800">{comp.qty}</span>
+                          <span className="font-bold text-slate-900 text-sm">{comp.qty}</span>
                         </div>
 
-                        <div className="text-right min-w-[90px]">
+                        <div className="text-right min-w-[100px]">
                           {comp.lineTotal !== null ? (
-                            <div className="font-heading font-black text-slate-900">
-                              ৳{comp.lineTotal.toLocaleString()}
+                            <div className="font-heading font-black text-slate-900 text-base">
+                              {comp.lineTotal === 0 ? (
+                                <span className="text-emerald-700 font-bold text-xs bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                                  Included (৳0)
+                                </span>
+                              ) : (
+                                `৳${comp.lineTotal.toLocaleString()}`
+                              )}
                             </div>
                           ) : (
-                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded">
                               Ask for price
                             </span>
                           )}
-                          {comp.unitPrice !== null && comp.qty > 1 && (
+                          {comp.unitPrice !== null && comp.qty > 1 && comp.unitPrice > 0 && (
                             <div className="text-[10px] text-slate-400">
                               @ ৳{comp.unitPrice.toLocaleString()}/ea
                             </div>
@@ -4116,6 +4292,79 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                   ))}
                 </div>
 
+                {/* Subtotal & Financial Status Card */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                        Equipment Investment Assessment
+                      </span>
+                      <h4 className="font-heading font-bold text-slate-900 text-base">
+                        {quotationRequired ? 'Indicative Hardware Subtotal (Pending Quotation)' : 'Confirmed Hardware Subtotal'}
+                      </h4>
+                    </div>
+
+                    <div className="text-left sm:text-right">
+                      {quotationRequired ? (
+                        <div>
+                          <div className="text-xl sm:text-2xl font-heading font-black text-amber-700">
+                            ৳{pricedSubtotal.toLocaleString()} <span className="text-xs font-normal text-slate-500">(Priced items)</span>
+                          </div>
+                          <span className="text-[11px] font-bold text-amber-800">
+                            + {unpricedCount} custom item(s) pending site survey
+                          </span>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-2xl sm:text-3xl font-heading font-black text-[#F15A24]">
+                            ৳{totalPrice?.toLocaleString()} <span className="text-xs font-semibold text-slate-600">BDT</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                            Turnkey Hardware Confirmed
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-600 space-y-1">
+                    <p className="leading-relaxed">
+                      <strong>Installation Labor & Commissioning:</strong> Physical premises cabling, PVC casing/conduit laying, and DVR/NVR network configuration are excluded from equipment hardware subtotal and quoted separately following a certified site survey.
+                    </p>
+                    {quotationRequired && quotationReason && (
+                      <p className="text-amber-800 text-[11px] font-medium bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                        <strong>Quotation Notice:</strong> {quotationReason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Verified Product Warranty Schedule */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2.5">
+                  <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Verified Product Warranty Policy</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[11px]">
+                    <div className="p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200/80">
+                      <strong className="text-emerald-900 block font-bold">Surveillance HDDs: 3 Years</strong>
+                      <span className="text-slate-600">Western Digital Purple & Seagate SkyHawk official replacement warranty.</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200/80">
+                      <strong className="text-blue-900 block font-bold">Cameras & Recorders: 1–2 Years</strong>
+                      <span className="text-slate-600">Official Bangladesh distributor warranty against manufacturing defects.</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-indigo-50/60 border border-indigo-200/80">
+                      <strong className="text-indigo-900 block font-bold">PoE Network Switches: 3 Years</strong>
+                      <span className="text-slate-600">Ruijie Reyee Smart Cloud managed hardware warranty.</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                      <strong className="text-slate-800 block font-bold">Power & Cabling: Workmanship</strong>
+                      <span className="text-slate-600">SMPS boxes: 1 year · Adapters: 6 months · Cabling: Workmanship guarantee.</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Disclaimers & Notes */}
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs text-slate-600">
                   <div className="font-bold text-slate-800 flex items-center gap-1.5">
@@ -4124,13 +4373,16 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-500 leading-relaxed">
                     <li>
-                      <strong>Pricing:</strong> Equipment prices may vary depending on official distributor exchange rate and actual order placement date.
+                      <strong>7-Day Price Guarantee:</strong> This Bill of Materials is valid for 7 calendar days from {bomDates.issueDate} until {bomDates.validUntilDate}. Prices may adjust thereafter according to official distributor exchange rates.
                     </li>
                     <li>
                       <strong>Service Charges:</strong> Installation, conduit casing/piping, and engineering commissioning charges are excluded from the hardware total and will be quoted following on-site survey.
                     </li>
                     <li>
                       <strong>Warranty:</strong> Official Bangladesh distributor warranty applies to all eligible cameras (1-2 years), recorders (1-2 years), and Western Digital / Seagate surveillance hard drives (3 years).
+                    </li>
+                    <li>
+                      <strong>Retention Estimates:</strong> Calculated storage retention periods are engineering estimates based on H.265+ smart compression and standard activity, not legal performance guarantees.
                     </li>
                   </ul>
                 </div>
@@ -4140,7 +4392,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                   <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <span>
-                      <strong>Pure Infrared Verification:</strong> This bill of materials contains genuine Hikvision IRPF hardware. Real infrared clarity up to 20m.
+                      <strong>Pure Infrared Verification:</strong> This bill of materials contains genuine Hikvision IRPF hardware. Real infrared clarity up to 20m with zero fabricated color claims.
                     </span>
                   </div>
                 )}
@@ -4195,13 +4447,13 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       <span className="text-xs text-slate-400 block">
                         {quotationRequired ? 'System Pricing' : 'Total Package Price'}
                       </span>
-                      {totalPrice !== null ? (
-                        <div className="text-3xl font-heading font-black text-white">
-                          ৳{totalPrice.toLocaleString()}
-                        </div>
-                      ) : (
+                      {totalPrice === null || quotationRequired ? (
                         <div className="text-2xl font-heading font-black text-amber-400">
                           Ask for price
+                        </div>
+                      ) : (
+                        <div className="text-3xl font-heading font-black text-white">
+                          ৳{totalPrice.toLocaleString()}
                         </div>
                       )}
                       <div className="text-[11px] text-slate-400">
@@ -4369,13 +4621,13 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
                 {quotationRequired ? 'Investment Assessment' : 'Package Total Price'}
               </span>
-              {totalPrice !== null ? (
-                <div className="text-2xl sm:text-3xl font-heading font-black text-[#F15A24]">
-                  ৳{totalPrice.toLocaleString()}
-                </div>
-              ) : (
+              {totalPrice === null || quotationRequired ? (
                 <div className="text-xl sm:text-2xl font-heading font-black text-amber-600">
                   Ask for price
+                </div>
+              ) : (
+                <div className="text-2xl sm:text-3xl font-heading font-black text-[#F15A24]">
+                  ৳{totalPrice.toLocaleString()}
                 </div>
               )}
               <div className="text-[10px] text-slate-500">
