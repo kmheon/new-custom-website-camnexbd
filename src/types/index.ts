@@ -282,6 +282,28 @@ export type SpecialistSubcategory = 'anpr' | 'thermal' | 'industrial' | null;
 
 export type StorageOption = '500gb' | '1tb' | '2tb' | '4tb' | 'dual_2tb' | 'dual_4tb' | 'quad_4tb' | 'none';
 
+export type MonitorOption = 'none' | '17inch' | '19inch' | 'large';
+
+export interface PowerSupplyProfile {
+  name: string;
+  model: string;
+  sku: string;
+  qty: number;
+  unitPrice: number | null;
+  lineTotal: number | null;
+  warrantyMonths: number;
+  type: 'adapter' | 'central_box' | 'integrated_poe' | 'external_poe_switch' | 'solar_autonomous' | 'rechargeable_battery';
+  note?: string;
+  badge?: string;
+  description?: string;
+  voltage?: string;
+  currentRating?: string;
+  fuseProtection?: string;
+  ports?: number;
+  poeBudgetW?: number;
+  formFactor?: string;
+}
+
 export interface PackageComponentRule {
   role: 'camera' | 'recorder' | 'storage' | 'cable' | 'power' | 'connectors' | 'installation';
   defaultModelId: string;

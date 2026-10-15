@@ -42,7 +42,10 @@ import {
   MapPin,
   Calendar,
   Send,
-  Loader2
+  Loader2,
+  Monitor,
+  Volume2,
+  Box
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge } from '../components/common/UI';
@@ -53,7 +56,8 @@ import {
   CameraSeriesId,
   CameraCategoryId,
   SpecialistSubcategory,
-  Product
+  Product,
+  PowerSupplyProfile
 } from '../types';
 import { useCartStore } from '../store';
 
@@ -399,6 +403,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const [hasUserCustomizedMonitor, setHasUserCustomizedMonitor] = useState<boolean>(false);
   const [customCableLength, setCustomCableLength] = useState<number | null>(null);
   const [analogueTransmission, setAnalogueTransmission] = useState<'coaxial' | 'utp_baluns'>('coaxial');
+  const [includeJunctionBoxes, setIncludeJunctionBoxes] = useState<boolean>(true);
   const [copiedBOM, setCopiedBOM] = useState(false);
   const [downloadedBOM, setDownloadedBOM] = useState(false);
   const [incompatibilityAlert, setIncompatibilityAlert] = useState<string | null>(null);
@@ -1743,56 +1748,210 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const defaultCableMeters = cameraCount * 10;
   const cableLengthMeters = customCableLength !== null ? customCableLength : defaultCableMeters;
 
-  // Power Distribution
-  const powerSpec = useMemo(() => {
+  // Power Distribution & Networking Equipment Profile
+  const powerSpec: PowerSupplyProfile = useMemo(() => {
     if (systemArch === 'wireless') {
+      if (cameraCategory === 'wifi_solar') {
+        return {
+          name: 'Integrated High-Efficiency Solar Panel & Autonomous Lithium Power Unit',
+          model: 'SOLAR-LITHIUM-KIT',
+          sku: 'ACC-SOLAR-POWER',
+          qty: cameraCount,
+          unitPrice: 0,
+          lineTotal: 0,
+          warrantyMonths: 24,
+          type: 'solar_autonomous',
+          note: 'Continuous trickle-charge solar operation. Zero external 220V power adapter or cabling required.'
+        };
+      }
+      if (cameraCategory === 'wifi_battery') {
+        return {
+          name: 'High-Capacity Rechargeable Lithium Battery & USB Type-C Charging Kit',
+          model: 'BATT-TYPEC-KIT',
+          sku: 'ACC-BATT-CHARGER',
+          qty: cameraCount,
+          unitPrice: 0,
+          lineTotal: 0,
+          warrantyMonths: 12,
+          type: 'rechargeable_battery',
+          note: 'Cord-free battery power with PIR motion wake-up cycle. Includes high-current USB Type-C charging cable.'
+        };
+      }
       return {
-        name: 'CamneX 12V 2A Regulated Power Adapter (Per Camera)',
+        name: 'CamneX Pro 12V 2A Regulated DC Switching Power Adapter (Per Camera)',
         model: 'AD-12V2A-DC',
         sku: 'acc-power-adapter',
         qty: cameraCount,
         unitPrice: 350,
         lineTotal: 350 * cameraCount,
-        warrantyMonths: 6
+        warrantyMonths: 6,
+        type: 'adapter',
+        note: 'Dedicated 12V 2A regulated power adapter for each camera. Requires local 220V AC wall socket.'
       };
     }
 
     if (systemArch === 'ip') {
-      // PoE is supplied by NVR or PoE Switch
+      const nvrPoePorts = recorderSpec.poePorts || 0;
+      if (cameraCount <= nvrPoePorts) {
+        return {
+          name: `Integrated IEEE 802.3af/at PoE Power Delivery via NVR Ports (${nvrPoePorts}x Built-in PoE Ports)`,
+          model: 'POE-BUILTIN',
+          sku: 'POE-NVR-PORTS',
+          qty: 1,
+          unitPrice: 0,
+          lineTotal: 0,
+          warrantyMonths: 0,
+          type: 'integrated_poe',
+          note: `Cameras receive 48V DC power directly from NVR's integrated PoE ports over Cat6 Ethernet up to 100m. Zero individual camera power adapters needed.`
+        };
+      }
+
+      // External PoE switch required when cameraCount > nvrPoePorts
+      if (cameraCount <= 4) {
+        return {
+          name: 'Ruijie Reyee RG-ES205GC-P 5-Port Gigabit Smart Cloud PoE Switch (4 PoE Ports, 54W Budget)',
+          model: 'RG-ES205GC-P',
+          sku: 'prod-ruijie-es205gc-p',
+          qty: 1,
+          unitPrice: 4200,
+          lineTotal: 4200,
+          warrantyMonths: 36,
+          type: 'external_poe_switch',
+          note: 'Dedicated 5-Port Gigabit Smart Cloud PoE Switch powers all camera lines with 54W power budget.'
+        };
+      }
+      if (cameraCount <= 8) {
+        return {
+          name: 'Ruijie Reyee RG-ES209GC-P 9-Port Gigabit Smart Cloud PoE Switch (8 PoE Ports, 110W Budget)',
+          model: 'RG-ES209GC-P',
+          sku: 'prod-ruijie-es209gc-p',
+          qty: 1,
+          unitPrice: 7500,
+          lineTotal: 7500,
+          warrantyMonths: 36,
+          type: 'external_poe_switch',
+          note: '9-Port Gigabit Smart Cloud PoE switch with 110W power budget and cloud surveillance management.'
+        };
+      }
+      if (cameraCount <= 24) {
+        return {
+          name: 'Ruijie Reyee RG-ES224GC-P 24-Port Gigabit Smart Cloud PoE Switch (24 PoE Ports, 370W Budget)',
+          model: 'RG-ES224GC-P',
+          sku: 'prod-ruijie-es224gc-p',
+          qty: 1,
+          unitPrice: 24500,
+          lineTotal: 24500,
+          warrantyMonths: 36,
+          type: 'external_poe_switch',
+          note: '24-Port Gigabit Smart Cloud PoE switch with 370W power budget and surveillance VLAN isolation.'
+        };
+      }
       return {
-        name: 'Integrated IEEE 802.3af/at PoE Power Delivery via NVR Ports',
-        model: 'POE-BUILTIN',
-        sku: 'POE-NVR-PORTS',
-        qty: 1,
-        unitPrice: 0,
-        lineTotal: 0,
-        warrantyMonths: 0
+        name: 'Ruijie Managed Enterprise Distribution Gigabit PoE Switch',
+        model: 'RG-NBS3100-24GT4SFP-P',
+        sku: 'prod-enterprise-switch-req',
+        qty: Math.ceil(cameraCount / 24),
+        unitPrice: null, // Enterprise quote required
+        lineTotal: null,
+        warrantyMonths: 36,
+        type: 'external_poe_switch',
+        note: 'Enterprise Layer-2+ managed PoE distribution switch with 10G SFP+ fiber uplinks. Official quotation required.'
       };
     }
 
-    // Analogue
+    // Analogue Architecture
     if (cameraCount <= 2) {
       return {
-        name: 'CamneX Pro 12V 2A Regulated DC Switching Power Adapter',
+        name: 'CamneX Pro 12V 2A Regulated DC Switching Power Adapter (Per Camera)',
         model: 'AD-12V2A-DC',
         sku: 'acc-power-adapter',
-        qty: 2,
+        qty: cameraCount,
         unitPrice: 350,
-        lineTotal: 700,
-        warrantyMonths: 6
+        lineTotal: 350 * cameraCount,
+        warrantyMonths: 6,
+        type: 'adapter',
+        note: 'Compact individual regulated 12V 2A power adapters with overvoltage and short-circuit protection.'
+      };
+    }
+
+    if (cameraCount <= 8) {
+      return {
+        name: 'CamneX Central 12V 10A 9-Channel Metal Cased Power Supply Box',
+        model: 'PS-12V10A-9CH',
+        sku: 'acc-power',
+        qty: 1,
+        unitPrice: 1800,
+        lineTotal: 1800,
+        warrantyMonths: 12,
+        type: 'central_box',
+        note: 'Centralized lockable metal cabinet with 9 individual PTC auto-reset fuse protected outputs (1.1A per channel), master power switch, and LED status indicators.'
+      };
+    }
+
+    if (cameraCount <= 16) {
+      return {
+        name: 'CamneX Central 12V 20A 18-Channel Metal Cased Power Supply Box',
+        model: 'PS-12V20A-18CH',
+        sku: 'acc-power-18ch',
+        qty: 1,
+        unitPrice: 2800,
+        lineTotal: 2800,
+        warrantyMonths: 12,
+        type: 'central_box',
+        note: 'Centralized lockable cabinet with 18 individual PTC fuse-protected outputs (1.1A per channel), high-efficiency toroidal transformer, and cooling ventilation.'
+      };
+    }
+
+    if (cameraCount <= 32) {
+      return {
+        name: 'Dual CamneX Central 12V 20A 18-Channel Metal Cased Power Supply Boxes (2x Units, 36 Channels)',
+        model: 'PS-12V20A-18CH (x2 Units)',
+        sku: 'acc-power-36ch-dual',
+        qty: 2,
+        unitPrice: 2800,
+        lineTotal: 5600,
+        warrantyMonths: 12,
+        type: 'central_box',
+        note: 'Dual centralized 18-channel power distribution cabinets providing 36 fused terminal connections for 32 cameras with reserve capacity.'
       };
     }
 
     return {
-      name: 'CamneX Central 12V 10A 9-Channel Metal Cased Power Supply Box',
-      model: 'PS-12V10A-9CH',
-      sku: 'acc-power',
+      name: 'CamneX Enterprise Industrial Centralized SMPS Power Distribution Rack',
+      model: 'SMPS-DIST-ENTERPRISE',
+      sku: 'PS-ENTERPRISE-DIST',
       qty: 1,
-      unitPrice: 1800,
-      lineTotal: 1800,
-      warrantyMonths: 12
+      unitPrice: null,
+      lineTotal: null,
+      warrantyMonths: 12,
+      type: 'central_box',
+      note: 'High-amperage rackmount power distribution unit with redundant power rails and surge suppressors. Official quotation required.'
     };
-  }, [systemArch, cameraCount]);
+  }, [systemArch, cameraCount, cameraCategory, recorderSpec.poePorts]);
+
+  // Weatherproof Junction Boxes (Optional, Recommended for Outdoor & Conduit Installations)
+  const junctionBoxSpec = useMemo(() => {
+    if (!includeJunctionBoxes || systemArch === 'wireless') return null;
+    return {
+      role: 'Weatherproof Mounting',
+      name: 'Hikvision Deep Base Waterproof Junction Box & Camera Mount Bracket',
+      model: 'DS-1280ZJ-XS',
+      sku: 'acc-bracket',
+      qty: cameraCount,
+      unitPrice: 250,
+      lineTotal: 250 * cameraCount,
+      warrantyMonths: 12,
+      note: 'Conceals and protects BNC, DC, and RJ45 connectors against rainwater, humidity, and tamper damage (IP66 rated).'
+    };
+  }, [includeJunctionBoxes, systemArch, cameraCount]);
+
+  // Audio Capability Detection
+  const hasBuiltinAudio = useMemo(() => {
+    if (systemArch === 'wireless') return true;
+    const name = (cameraSpec.name || '').toLowerCase();
+    const model = (cameraSpec.model || '').toLowerCase();
+    return name.includes('audio') || model.includes('itpfs') || model.includes('lpfs') || model.includes('iu') || model.includes('df0t-fs');
+  }, [systemArch, cameraSpec]);
 
   // Optional Monitor Spec (Preserves standard presets: 17" for 2-4 cams, 19" for 16 cams)
   const monitorSpec = useMemo(() => {
@@ -1921,10 +2080,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       });
     }
 
-    // 6. Power Distribution
+    // 6. Power Distribution / PoE Networking
     if (powerSpec && powerSpec.unitPrice !== 0) {
       list.push({
-        role: 'Power Distribution',
+        role: powerSpec.type === 'external_poe_switch' ? 'PoE Networking Switch' : 'Power Distribution',
         name: powerSpec.name,
         model: powerSpec.model,
         sku: powerSpec.sku,
@@ -1934,7 +2093,20 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       });
     }
 
-    // 7. Optional Monitor
+    // 7. Optional Weatherproof Junction Boxes
+    if (junctionBoxSpec) {
+      list.push({
+        role: junctionBoxSpec.role,
+        name: junctionBoxSpec.name,
+        model: junctionBoxSpec.model,
+        sku: junctionBoxSpec.sku,
+        qty: junctionBoxSpec.qty,
+        unitPrice: junctionBoxSpec.unitPrice,
+        lineTotal: junctionBoxSpec.lineTotal
+      });
+    }
+
+    // 8. Optional Monitor
     if (monitorSpec) {
       list.push({
         role: 'Display Monitor',
@@ -1957,6 +2129,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     analogueTransmission,
     cableLengthMeters,
     powerSpec,
+    junctionBoxSpec,
     monitorSpec
   ]);
 
@@ -3477,6 +3650,16 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     Based on CamneX installation standards, exactly <strong>10 meters of pure copper cable</strong> is allocated per camera by default. For your {cameraCount} cameras, this totals <strong>{cableLengthMeters} meters</strong> of high-grade transmission cable.
                   </p>
 
+                  {/* Under-Allocation Advisory Warning */}
+                  {cableLengthMeters < cameraCount * 10 && (
+                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="text-[11px] leading-relaxed">
+                        <strong className="font-bold">Under-Allocation Advisory:</strong> Your custom allocation of {cableLengthMeters}m provides an average of {(cableLengthMeters / cameraCount).toFixed(1)}m per camera, which is less than the standard 10m/cam minimum. Ensure your camera mounting points are tightly clustered near the recorder location to prevent cable shortages during installation.
+                      </div>
+                    </div>
+                  )}
+
                   {/* Interactive Cable Quantity Adjustment */}
                   <div className="pt-3 border-t border-orange-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
@@ -3579,15 +3762,20 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                             : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                         }`}
                       >
-                        <div className="font-heading text-sm text-slate-900">
-                          Direct Solid Copper RG59 Coaxial
+                        <div className="flex items-center justify-between">
+                          <div className="font-heading text-sm text-slate-900">
+                            Direct Solid Copper RG59 Coaxial
+                          </div>
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                            Recommended Standard
+                          </span>
                         </div>
-                        <div className="text-xs text-slate-500 font-normal mt-0.5 leading-relaxed">
-                          Pure point-to-point coaxial video. Uses heavy-duty BNC crimp connectors & DC pigtails (zero baluns).
+                        <div className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
+                          Pure point-to-point coaxial video. Direct BNC crimp connections with heavy-duty DC pigtails (zero baluns required). 2-core power cable routed parallel from central power supply.
                         </div>
-                        <span className="inline-block mt-2 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                          Recommended Standard
-                        </span>
+                        <div className="mt-2 text-[11px] text-slate-600 font-medium">
+                          Includes: {cameraCount * 2}× Pure Copper BNC Connectors + {cameraCount}× Heavy-Duty Male DC Plugs
+                        </div>
                       </button>
 
                       <button
@@ -3599,40 +3787,163 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                             : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                         }`}
                       >
-                        <div className="font-heading text-sm text-slate-900">
-                          Cat6 UTP with HD Video Baluns
+                        <div className="flex items-center justify-between">
+                          <div className="font-heading text-sm text-slate-900">
+                            Cat6 UTP with HD Video Baluns
+                          </div>
+                          <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded">
+                            Multi-Pair / Conduit Laying
+                          </span>
                         </div>
-                        <div className="text-xs text-slate-500 font-normal mt-0.5 leading-relaxed">
-                          Transmits video over twisted-pair Cat6 network cable using matched passive HD video baluns.
+                        <div className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
+                          Transmits video over twisted-pair Cat6 network cable using matched passive HD video baluns. Facilitates running multiple camera signals inside unified conduit pipelines.
                         </div>
-                        <span className="inline-block mt-2 text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded">
-                          Multi-Pair / Conduit Laying
-                        </span>
+                        <div className="mt-2 text-[11px] text-slate-600 font-medium">
+                          Includes: {cameraCount * 2}× Matched Passive HD Video Baluns ({cameraCount} pairs) + {cameraCount}× DC Pigtails
+                        </div>
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Power Supply Info Card */}
-                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1 text-xs">
-                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-amber-600" />
-                    <span>Regulated Power Distribution</span>
+                {/* Regulated Power Distribution Architecture Card */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <div className="font-bold text-slate-800 flex items-center gap-2 text-xs">
+                      <Zap className="w-4 h-4 text-amber-500" />
+                      <span>Regulated Power Distribution & Network Power</span>
+                    </div>
+                    {powerSpec?.badge && (
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full w-fit">
+                        {powerSpec.badge}
+                      </span>
+                    )}
                   </div>
-                  <div className="text-slate-600">
-                    Included: <strong>{powerSpec?.name}</strong>. Provides clean, surge-protected 12V DC power distribution matched to camera load.
+
+                  <div className="space-y-1.5 text-xs">
+                    <div className="font-heading font-bold text-slate-900 text-sm">
+                      {powerSpec?.name}
+                    </div>
+                    <p className="text-slate-600 text-xs leading-relaxed">
+                      {powerSpec?.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 pt-1 text-[11px]">
+                      {powerSpec?.voltage && (
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
+                          Output: {powerSpec.voltage}
+                        </span>
+                      )}
+                      {powerSpec?.currentRating && (
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
+                          Current: {powerSpec.currentRating}
+                        </span>
+                      )}
+                      {powerSpec?.fuseProtection && (
+                        <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-medium border border-emerald-200">
+                          Fuse: {powerSpec.fuseProtection}
+                        </span>
+                      )}
+                      {powerSpec?.ports && (
+                        <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 font-medium border border-blue-200">
+                          {powerSpec.ports} PoE Ports ({powerSpec.poeBudgetW}W Budget)
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Optional Display Monitor */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                      Optional Security Display Monitor
-                    </label>
-                    <span className="text-xs text-slate-500">
-                      Connects directly to HDMI output
+                {/* Waterproof Junction Box Optional Enhancement Card (Analogue & IP only) */}
+                {systemArch !== 'wireless' && (
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1 text-xs">
+                      <div className="flex items-center gap-2 font-bold text-slate-800">
+                        <Box className="w-4 h-4 text-indigo-600" />
+                        <span>Hikvision Deep Base Waterproof Junction Boxes (DS-1280ZJ-XS)</span>
+                      </div>
+                      <p className="text-slate-600 text-xs leading-relaxed max-w-xl">
+                        Protects cable terminations, BNC/RJ45 connectors, and DC plugs from rainwater, humidity, dust, and physical tampering. Ensures long-term IP67 reliability and neat concealed installation.
+                      </p>
+                      <div className="text-[11px] text-slate-500 font-medium">
+                        Unit Price: ৳250/each · Total for {cameraCount} Cameras: ৳{(cameraCount * 250).toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIncludeJunctionBoxes(!includeJunctionBoxes)}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                          includeJunctionBoxes
+                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs'
+                            : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {includeJunctionBoxes && <Check className="w-3.5 h-3.5" />}
+                        <span>{includeJunctionBoxes ? 'Included in Package' : 'Add Junction Boxes'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Audio Transmission Architecture Card */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/80 space-y-1.5 text-xs">
+                  <div className="flex items-center gap-2 font-bold text-slate-800">
+                    <Volume2 className={`w-4 h-4 ${hasBuiltinAudio ? 'text-emerald-600' : 'text-slate-500'}`} />
+                    <span>Audio Transmission Architecture</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      hasBuiltinAudio
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {hasBuiltinAudio ? 'Audio-Capable' : 'Video-Only'}
                     </span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    {hasBuiltinAudio ? (
+                      systemArch === 'analogue' ? (
+                        <>
+                          <strong>Audio-over-Coax (AoC) Enabled:</strong> The selected camera model features a built-in microphone with AoC technology. High-clarity digital audio is transmitted over the single coaxial/UTP cable alongside HD video directly to the DVR with zero separate audio wiring or RCA runs required.
+                        </>
+                      ) : systemArch === 'ip' ? (
+                        <>
+                          <strong>Digital Audio over Ethernet (PoE):</strong> Selected IP camera features an integrated digital microphone. Audio is encoded directly into the H.265+ stream and transmitted over the Cat6 PoE network cable to the NVR.
+                        </>
+                      ) : (
+                        <>
+                          <strong>Two-Way Real-Time Audio:</strong> Selected wireless camera includes built-in microphone and speaker for real-time live monitoring and two-way talk through the mobile app.
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <strong>Video-Only Architecture:</strong> The selected camera configuration provides high-definition visual surveillance without onboard microphone recording. If sound capture is required for your site, contact CamneX engineering for high-sensitivity external microphone modules.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                {/* Security Display Monitor */}
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                        Optional Security Display Monitor
+                      </label>
+                      <span className="text-[11px] text-slate-500">
+                        Recorder includes simultaneous HDMI (up to 4K/1080p) & VGA display outputs
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (cameraCount <= 4) setMonitorOption('17inch');
+                        else if (cameraCount <= 16) setMonitorOption('19inch');
+                        else setMonitorOption('19inch');
+                      }}
+                      className="text-[11px] font-bold text-[#F15A24] hover:underline cursor-pointer self-start sm:self-auto"
+                    >
+                      Apply Standard Package Display Default
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -3641,7 +3952,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       onClick={() => setMonitorOption('none')}
                       className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                         monitorOption === 'none'
-                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold'
+                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
                           : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
                       }`}
                     >
@@ -3657,13 +3968,13 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       onClick={() => setMonitorOption('17inch')}
                       className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                         monitorOption === '17inch'
-                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold'
+                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
                           : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <div className="font-heading text-sm">17-Inch HD Monitor</div>
                       <div className="text-xs text-slate-500 font-normal mt-0.5">
-                        Compact security desk display. Recommended for 2 to 4 camera setups.
+                        Compact security desk display. Standard default for 2 to 4 camera ready-made packages.
                       </div>
                       <div className="text-xs font-bold text-amber-700 mt-2">Ask for price</div>
                     </button>
@@ -3673,13 +3984,13 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       onClick={() => setMonitorOption('19inch')}
                       className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                         monitorOption === '19inch'
-                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold'
+                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
                           : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <div className="font-heading text-sm">19-Inch LED Monitor</div>
                       <div className="text-xs text-slate-500 font-normal mt-0.5">
-                        Full surveillance display with wide angles. Recommended for 8 to 16 cameras.
+                        Surveillance monitor with wide viewing angles. Standard default for 8 to 16 camera packages.
                       </div>
                       <div className="text-xs font-bold text-amber-700 mt-2">Ask for price</div>
                     </button>
