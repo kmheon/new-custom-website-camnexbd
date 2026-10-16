@@ -12,9 +12,15 @@ import { DEFAULT_SCENARIOS } from '../services/seedData';
 import { SolutionsPage } from './SolutionsPage';
 import { CompanySubNav } from './CompanyProfilePage';
 import { apiClient } from '../shared/apiClient';
+import { FaqPage } from './FaqPage';
+import { WarrantyPolicyPage } from './WarrantyPolicyPage';
+import { PrivacyPolicyPage } from './PrivacyPolicyPage';
+import { TermsConditionsPage } from './TermsConditionsPage';
+import { RefundPolicyPage } from './RefundPolicyPage';
+import { TechnicalSupportPage } from './TechnicalSupportPage';
 
 interface ContentPageProps {
-  type: 'solutions' | 'projects' | 'testimonials' | 'faq' | 'contact' | 'blog' | 'blog_post' | 'about' | 'warranty' | 'terms' | 'privacy' | 'refund';
+  type: 'solutions' | 'projects' | 'testimonials' | 'faq' | 'contact' | 'blog' | 'blog_post' | 'about' | 'warranty' | 'terms' | 'privacy' | 'refund' | 'support';
   param?: string;
   onNavigate: (route: string, param?: string) => void;
 }
@@ -87,57 +93,14 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
   // FAQ PAGE
   // --------------------------------------------------------------------------
   if (type === 'faq') {
-    return (
-      <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO
-          title="Frequently Asked Questions | CamneX Bangladesh"
-          description="Common questions regarding hardware authenticity, phone apps, and site surveys in Dhaka."
-          jsonLd={{
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": faqs.map(f => ({
-              "@type": "Question",
-              "name": f.question,
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": f.answer
-              }
-            }))
-          }}
-        />
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
-          <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'FAQ' }]} />
-          
-          <div className="text-center max-w-xl mx-auto">
-            <h1 className="text-3xl font-black text-[#111827] font-heading mb-2">
-              Frequently Asked Questions
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600">
-              Clear technical answers regarding genuine serials, mobile viewing, and warranty.
-            </p>
-          </div>
+    return <FaqPage onNavigate={onNavigate} />;
+  }
 
-          <div className="space-y-3">
-            {faqs.map((f, idx) => (
-              <div key={f.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <button
-                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full p-5 text-left flex items-center justify-between font-bold text-sm sm:text-base text-[#111827] hover:text-[#F15A24]"
-                >
-                  <span>{f.question}</span>
-                  {openFaq === idx ? <ChevronUp className="w-4 h-4 text-[#F15A24]" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                </button>
-                {openFaq === idx && (
-                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 border-t border-slate-100 pt-3 leading-relaxed">
-                    {f.answer}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+  // --------------------------------------------------------------------------
+  // TECHNICAL SUPPORT PAGE (/support)
+  // --------------------------------------------------------------------------
+  if (type === 'support') {
+    return <TechnicalSupportPage onNavigate={onNavigate} />;
   }
 
   // --------------------------------------------------------------------------
@@ -1138,140 +1101,28 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
   // WARRANTY POLICY PAGE
   // --------------------------------------------------------------------------
   if (type === 'warranty') {
-    return (
-      <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO title="Warranty Policy | CamneX Bangladesh" description="Manufacturer warranty and service policy." />
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
-          <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Warranty Policy' }]} />
-
-          <div className="bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <Badge variant="success">Warranty Information</Badge>
-            <h1 className="text-3xl font-black text-[#111827] font-heading">
-              Warranty & Service Policy
-            </h1>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Every system supplied by CamneX Bangladesh carries manufacturer warranty coverage verifiable via authentic serial numbers.
-            </p>
-          </div>
-
-          {settings?.warrantyPolicyText ? (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-              {settings.warrantyPolicyText}
-            </div>
-          ) : (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-12 text-slate-600 space-y-3">
-              <p className="font-semibold text-slate-800">Warranty terms are established per equipment model upon quotation and delivery.</p>
-              <p className="text-xs text-slate-500">Please reach our engineering desk directly at <a href={`tel:${settings?.phone || '+8801540535150'}`} className="text-[#F15A24] font-bold">{settings?.phone || '+880 1540-535150'}</a> or email <a href={`mailto:${settings?.email || 'contact@camnexbd.com'}`} className="text-[#F15A24] font-bold">{settings?.email || 'contact@camnexbd.com'}</a>.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <WarrantyPolicyPage onNavigate={onNavigate} />;
   }
 
   // --------------------------------------------------------------------------
   // TERMS & CONDITIONS PAGE
   // --------------------------------------------------------------------------
   if (type === 'terms') {
-    return (
-      <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO title="Terms & Conditions | CamneX Bangladesh" description="Commercial and service terms for hardware orders and engineering installations." />
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
-          <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Terms & Conditions' }]} />
-
-          <div className="bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h1 className="text-3xl font-black text-[#111827] font-heading">
-              Terms & Conditions
-            </h1>
-            <p className="text-xs text-slate-400">CamneX Bangladesh · Terms of Service</p>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              These terms govern the purchase of hardware and engineering services from CamneX Bangladesh through camnexbd.com and our Dhaka operations center.
-            </p>
-          </div>
-
-          {settings?.termsPolicyText ? (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-              {settings.termsPolicyText}
-            </div>
-          ) : (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-12 text-slate-600 space-y-3">
-              <p className="font-semibold text-slate-800">Official terms of service are currently being configured by administration.</p>
-              <p className="text-xs text-slate-500">Please contact our official desk directly at <a href={`tel:${settings?.phone || '+8801540535150'}`} className="text-[#F15A24] font-bold">{settings?.phone || '+880 1540-535150'}</a> or <a href={`mailto:${settings?.email || 'contact@camnexbd.com'}`} className="text-[#F15A24] font-bold">{settings?.email || 'contact@camnexbd.com'}</a>.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <TermsConditionsPage onNavigate={onNavigate} />;
   }
 
   // --------------------------------------------------------------------------
   // PRIVACY POLICY PAGE
   // --------------------------------------------------------------------------
   if (type === 'privacy') {
-    return (
-      <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO title="Privacy Policy | CamneX Bangladesh" description="Information protection and privacy standards for client data." />
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
-          <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Privacy Policy' }]} />
-
-          <div className="bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h1 className="text-3xl font-black text-[#111827] font-heading">
-              Privacy Policy
-            </h1>
-            <p className="text-xs text-slate-400">CamneX Bangladesh · Data Protection Standard</p>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              At CamneX Bangladesh, we respect the confidentiality of your premise details, contact information, and security setup.
-            </p>
-          </div>
-
-          {settings?.privacyPolicyText ? (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-              {settings.privacyPolicyText}
-            </div>
-          ) : (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-12 text-slate-600 space-y-3">
-              <p className="font-semibold text-slate-800">CamneX Bangladesh does not sell, rent, or share customer contact lists or site engineering details.</p>
-              <p className="text-xs text-slate-500">Our engineering staff configures mobile access directly on the client's own device; CamneX does not retain passwords or remote stream access post-handover.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <PrivacyPolicyPage onNavigate={onNavigate} />;
   }
 
   // --------------------------------------------------------------------------
   // RETURN & REFUND POLICY PAGE
   // --------------------------------------------------------------------------
   if (type === 'refund') {
-    return (
-      <div className="bg-[#F8FAFC] min-h-screen py-10">
-        <SEO title="Return & Refund Policy | CamneX Bangladesh" description="Hardware replacement and refund standards." />
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
-          <Breadcrumbs items={[{ label: 'Home', onClick: () => onNavigate('home') }, { label: 'Return & Refund Policy' }]} />
-
-          <div className="bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h1 className="text-3xl font-black text-[#111827] font-heading">
-              Return & Refund Policy
-            </h1>
-            <p className="text-xs text-slate-400">CamneX Bangladesh · Policy Standard</p>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              We stand behind the authenticity and reliability of every product we supply.
-            </p>
-          </div>
-
-          {settings?.returnPolicyText ? (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-              {settings.returnPolicyText}
-            </div>
-          ) : (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-12 text-slate-600 space-y-3">
-              <p className="font-semibold text-slate-800">Official return & refund terms will be published by administration.</p>
-              <p className="text-xs text-slate-500">For return inquiries, please contact our support desk directly at <a href={`tel:${settings?.phone || '+8801540535150'}`} className="text-[#F15A24] font-bold">{settings?.phone || '+880 1540-535150'}</a> or email <a href={`mailto:${settings?.email || 'contact@camnexbd.com'}`} className="text-[#F15A24] font-bold">{settings?.email || 'contact@camnexbd.com'}</a>.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <RefundPolicyPage onNavigate={onNavigate} />;
   }
 
   return null;

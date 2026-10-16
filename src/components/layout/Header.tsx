@@ -687,7 +687,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                   data-testid="nav-support-button"
                   onClick={() => toggleDropdown('support')}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] transition-colors cursor-pointer ${
-                    ['warranty', 'faq', 'tracking'].includes(currentRoute)
+                    ['warranty', 'faq', 'tracking', 'support'].includes(currentRoute)
                       ? 'text-[#F15A24] font-semibold'
                       : 'text-[#111827] hover:text-[#F15A24]'
                   }`}
@@ -709,7 +709,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                     <button
                       type="button"
                       data-testid="nav-support-technical"
-                      onClick={() => { setActiveDropdown(null); onNavigate('contact'); }}
+                      onClick={() => { setActiveDropdown(null); onNavigate('support'); }}
                       className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827] hover:text-[#F15A24] transition-colors"
                     >
                       Technical Support
@@ -972,7 +972,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                   data-testid="mobile-nav-support-button"
                   onClick={() => toggleMobileAccordion('support')}
                   className={`w-full flex items-center justify-between py-2 px-3 text-sm font-bold rounded-xl hover:bg-[#FAF7F2] transition-colors ${
-                    ['warranty', 'faq', 'tracking'].includes(currentRoute)
+                    ['warranty', 'faq', 'tracking', 'support'].includes(currentRoute)
                       ? 'text-[#F15A24]'
                       : 'text-[#111827]'
                   }`}
@@ -993,7 +993,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                     <button
                       type="button"
                       data-testid="mobile-nav-support-technical"
-                      onClick={() => { setMobileMenuOpen(false); onNavigate('contact'); }}
+                      onClick={() => { setMobileMenuOpen(false); onNavigate('support'); }}
                       className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
                     >
                       Technical Support

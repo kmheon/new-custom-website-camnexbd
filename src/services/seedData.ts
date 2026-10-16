@@ -5222,23 +5222,151 @@ export const INITIAL_PROJECTS: ProjectCaseStudy[] = [];
 export const INITIAL_TESTIMONIALS: Testimonial[] = [];
 
 export const INITIAL_FAQS: FaqItem[] = [
+  // 1. Products & Compatibility
   {
-    id: 'faq-1',
-    question: 'Are all Hikvision and ZKTeco products 100% genuine?',
-    answer: 'Yes. Every device supplied by CamneX Bangladesh carries an authentic factory serial number verifiable through official manufacturer partner verification channels, accompanied by warranty documentation.',
-    category: 'Hardware & Authenticity'
+    id: 'faq-pc-1',
+    category: 'Products & Compatibility',
+    question: 'How do I choose a suitable CCTV system for my home or business?',
+    answer: 'Choosing a surveillance system depends on your coverage area, lighting conditions, and resolution needs. For homes and small retail shops in Dhaka, 2MP to 5MP smart-hybrid light cameras provide crisp day and night color imaging. For corporate offices, multi-story buildings, and large facilities, IP systems with Power over Ethernet (PoE) and high-capacity NVRs deliver superior scalability and structured cabling simplicity. You can also use our interactive Custom CCTV Package Builder on camnexbd.com to calculate camera counts and storage automatically.',
+    order: 1
   },
   {
-    id: 'faq-2',
+    id: 'faq-pc-2',
+    category: 'Products & Compatibility',
+    question: 'What is the difference between analogue HD and IP cameras?',
+    answer: 'Analogue HD cameras (Turbo HD / HD-TVI) transmit analog signals through coaxial cables to a central DVR. They are budget-friendly and well-suited for upgrades in buildings with existing coaxial wiring. IP cameras process and digitize footage directly on the camera, transmitting high-definition digital streams over standard Cat6 network cables to an NVR or PoE switch. IP cameras support advanced edge intelligence (such as human and vehicle motion detection) and flexible network topologies.',
+    order: 2
+  },
+  {
+    id: 'faq-pc-3',
+    category: 'Products & Compatibility',
+    question: 'Can I mix cameras from different brands on the same NVR or DVR?',
+    answer: 'Yes, provided the devices support the ONVIF open standard protocol. However, manufacturer-specific features like proprietary smart motion filtering (AcuSense), two-way audio talk, and direct firmware updates work most reliably when using matching brand hardware (such as Hikvision cameras with Hikvision NVRs, or Dahua cameras with Dahua recorders).',
+    order: 3
+  },
+
+  // 2. CCTV & Surveillance Systems
+  {
+    id: 'faq-cctv-1',
+    category: 'CCTV & Surveillance Systems',
     question: 'Can I view surveillance streams on my smartphone outside Bangladesh?',
-    answer: 'Yes. We configure encrypted cloud P2P (Hik-Connect / DMSS) on your smartphones and laptops, allowing live streaming and playback review globally without static IP requirements.',
-    category: 'App & Remote Access'
+    answer: 'Yes. Every Hikvision and Dahua recorder supplied by CamneX supports encrypted cloud P2P (Hik-Connect or DMSS). Our engineering team sets up the mobile viewing application directly on your smartphone and computer during installation, enabling secure live monitoring and playback review globally without requiring an expensive static IP.',
+    order: 4
   },
   {
-    id: 'faq-3',
-    question: 'Can an engineer inspect premises in Dhaka before quotation?',
-    answer: 'Yes. An engineer can visit premises in Dhaka to evaluate cable routes and formulate a bill of materials.',
-    category: 'Installation & Inspection'
+    id: 'faq-cctv-2',
+    category: 'CCTV & Surveillance Systems',
+    question: 'How much hard drive storage do I need for 4, 8, or 16 cameras?',
+    answer: 'Storage requirements depend on recording mode (continuous 24/7 vs. smart motion-triggered), camera resolution, and video compression (H.265+). Typically, a 4-camera 2MP system with H.265+ uses approximately 1TB to 2TB for 15 to 30 days of storage. An 8-camera setup generally requires 2TB to 4TB, and 16 cameras require 4TB to 8TB enterprise-grade surveillance hard drives (Western Digital Purple or Seagate SkyHawk).',
+    order: 5
+  },
+  {
+    id: 'faq-cctv-3',
+    category: 'CCTV & Surveillance Systems',
+    question: 'What happens to the surveillance system during power outages or load shedding?',
+    answer: 'Standard CCTV systems require continuous electricity. To maintain uninterrupted surveillance during load shedding in Dhaka, we recommend connecting the NVR/DVR and camera power supplies to an online UPS or dedicated inverter power backup with surge suppression.',
+    order: 6
+  },
+
+  // 3. Networking & Wi-Fi
+  {
+    id: 'faq-net-1',
+    category: 'Networking & Wi-Fi',
+    question: 'What is the difference between a PoE Switch and a regular network switch?',
+    answer: 'A Power over Ethernet (PoE) switch delivers both high-speed data connectivity and electrical power over a single Cat6 ethernet cable. This eliminates the need to run separate 220V electrical wiring or power adapters to each camera or Wi-Fi access point, significantly simplifying installation and enhancing reliability.',
+    order: 7
+  },
+  {
+    id: 'faq-net-2',
+    category: 'Networking & Wi-Fi',
+    question: 'Do you configure enterprise Wi-Fi 6 access points with seamless roaming?',
+    answer: 'Yes. CamneX installs and provisions enterprise ceiling and wall-mount Wi-Fi 6 access points (such as Ruijie Reyee) with hardware or cloud controller management. This enables 802.11k/v/r fast roaming across multi-story residences and corporate offices under a unified SSID.',
+    order: 8
+  },
+
+  // 4. Installation & Site Surveys
+  {
+    id: 'faq-inst-1',
+    category: 'Installation & Site Surveys',
+    question: 'Can I request a site survey before installation?',
+    answer: 'Yes. CamneX provides on-site engineering surveys across Dhaka. A qualified technician will inspect your physical layout, measure cable distances, assess indoor/outdoor camera mounting angles, and formulate an accurate Bill of Materials (BOM) before you commit to an order.',
+    order: 9
+  },
+  {
+    id: 'faq-inst-2',
+    category: 'Installation & Site Surveys',
+    question: 'What cabling and conduits are used during physical installation?',
+    answer: 'We strictly adhere to engineering standards. We use genuine copper Cat6 network cables or solid-core coaxial cables, protected by heavy-duty PVC conduits or interior casing/trunking. All outdoor junctions use waterproof boxes with secure connectors to prevent weather damage and humidity degradation.',
+    order: 10
+  },
+  {
+    id: 'faq-inst-3',
+    category: 'Installation & Site Surveys',
+    question: 'How long does a typical 4 to 8 camera installation take in Dhaka?',
+    answer: 'For a standard 4-camera residential or retail installation, deployment typically completes within 4 to 6 hours. An 8-camera setup usually requires 1 full working day, depending on cable pathway complexity, wall drilling requirements, and ceiling accessibility.',
+    order: 11
+  },
+
+  // 5. Orders & Payments
+  {
+    id: 'faq-ord-1',
+    category: 'Orders & Payments',
+    question: 'What payment methods are supported for orders?',
+    answer: 'CamneX Bangladesh supports Cash on Delivery (COD) for hardware orders in eligible Dhaka areas, manual mobile financial services (bKash and Nagad Send Money verification), and Corporate Bank Transfer for commercial projects. In-person payment is also welcome at our Chandrima Model Town engineering center.',
+    order: 12
+  },
+  {
+    id: 'faq-ord-2',
+    category: 'Orders & Payments',
+    question: 'Is Cash on Delivery (COD) available outside Dhaka?',
+    answer: 'For orders outside Dhaka, we deliver via standard courier services (such as SA Paribahan or Sundarban Courier). Courier policy generally requires courier condition payment upon parcel collection or advance booking verification.',
+    order: 13
+  },
+  {
+    id: 'faq-ord-3',
+    category: 'Orders & Payments',
+    question: 'How do I track an order?',
+    answer: 'You can track the fulfillment and dispatch status of your order anytime via our Track Order page (/tracking). Simply input your order reference number (e.g. CNX-ORD-...) along with the phone number provided during checkout.',
+    order: 14
+  },
+
+  // 6. Warranty & After-Sales Support
+  {
+    id: 'faq-war-1',
+    category: 'Warranty & After-Sales Support',
+    question: 'How do I check product warranty coverage?',
+    answer: 'Every genuine product supplied by CamneX features official manufacturer serial numbers verifiable with authorized distributor channels. Your warranty duration is specified on your official sales invoice and quotation documentation. For full details on coverage and claims, visit our Warranty Policy page (/warranty).',
+    order: 15
+  },
+  {
+    id: 'faq-war-2',
+    category: 'Warranty & After-Sales Support',
+    question: 'How can I contact technical support?',
+    answer: 'Our dedicated engineering support desk can be reached via phone at +880 1540-535150, secondary support line +880 1410-085848, WhatsApp at 8801540535150, or email at contact@camnexbd.com. Support hours are Saturday through Thursday from 9:30 AM to 7:30 PM, with Friday on-call support for corporate enterprise clients.',
+    order: 16
+  },
+  {
+    id: 'faq-war-3',
+    category: 'Warranty & After-Sales Support',
+    question: 'Are all Hikvision and ZKTeco products 100% genuine?',
+    answer: 'Yes. CamneX Bangladesh is an authorized partner and installer. We source exclusively from official brand distribution channels with intact manufacturer packaging, original serial numbers, and genuine warranty registration.',
+    order: 17
+  },
+
+  // 7. Quotations & Packages
+  {
+    id: 'faq-qp-1',
+    category: 'Quotations & Packages',
+    question: 'How can I request a quotation?',
+    answer: 'You can submit a formal quotation request online via our Request Quotation page (/quote) or by emailing contact@camnexbd.com with your site requirements. Our engineering team will review your specifications and provide a structured Bill of Materials with transparent line-item pricing.',
+    order: 18
+  },
+  {
+    id: 'faq-qp-2',
+    category: 'Quotations & Packages',
+    question: 'Can I customize the camera count and accessories in pre-configured packages?',
+    answer: 'Yes. Our online Package Builder (/package-builder) allows you to select custom combinations of indoor dome cameras, outdoor bullet cameras, storage hard drives, PoE switches, and cabling lengths tailored precisely to your premises.',
+    order: 19
   }
 ];
 

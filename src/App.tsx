@@ -135,7 +135,9 @@ export default function App() {
         setCurrentRoute('testimonials');
       } else if (path === '/faq') {
         setCurrentRoute('faq');
-      } else if (path === '/contact' || path === '/support') {
+      } else if (path === '/support') {
+        setCurrentRoute('support');
+      } else if (path === '/contact') {
         setCurrentRoute('contact');
       } else if (path === '/certifications') {
         setCurrentRoute('certifications');
@@ -213,6 +215,7 @@ export default function App() {
     else if (route === 'projects') newUrl = '/projects';
     else if (route === 'testimonials') newUrl = '/testimonials';
     else if (route === 'faq') newUrl = '/faq';
+    else if (route === 'support') newUrl = '/support';
     else if (route === 'contact') newUrl = '/contact';
     else if (route === 'company_profile') newUrl = param ? `/company-profile#${param}` : '/company-profile';
     else if (route === 'why_choose_us') newUrl = '/why-choose-us';
@@ -263,6 +266,7 @@ export default function App() {
           {currentRoute === 'projects' && <ContentPages type="projects" onNavigate={navigate} />}
           {currentRoute === 'testimonials' && <ContentPages type="testimonials" onNavigate={navigate} />}
           {currentRoute === 'faq' && <ContentPages type="faq" onNavigate={navigate} />}
+          {currentRoute === 'support' && <ContentPages type="support" onNavigate={navigate} />}
           {currentRoute === 'contact' && <ContentPages type="contact" onNavigate={navigate} />}
           {currentRoute === 'company_profile' && <CompanyProfilePage initialTab={routeParam} onNavigate={navigate} />}
           {currentRoute === 'why_choose_us' && <WhyChooseUsPage onNavigate={navigate} />}

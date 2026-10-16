@@ -84,19 +84,22 @@ export const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ initialOrd
                 placeholder="e.g. CNX-ORD-202610-1042"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
+                data-testid="track-order-input-number"
                 required
               />
               <Input
-                label="Phone Number (Optional verification)"
-                placeholder="e.g. 01712-XXXXXX"
+                label="Mobile Phone Number *"
+                placeholder="e.g. 017XXXXXXXX"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                data-testid="track-order-input-phone"
+                required
               />
             </div>
 
             {error && <Alert type="warning">{error}</Alert>}
 
-            <Button size="md" type="submit" isLoading={isLoading} className="w-full">
+            <Button size="md" type="submit" isLoading={isLoading} data-testid="track-order-submit-btn" className="w-full">
               <Search className="w-4 h-4 mr-2" />
               <span>Lookup Order Timeline</span>
             </Button>
@@ -105,7 +108,7 @@ export const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ initialOrd
 
         {/* Order Details & Timeline Display */}
         {searchedOrder && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-8 animate-fade-in">
+          <div data-testid="track-order-results" className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-8 animate-fade-in">
             
             {/* Header Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-200 gap-4">
@@ -121,19 +124,38 @@ export const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ initialOrd
 
               <div className="text-left sm:text-right">
                 <span className="text-xs text-slate-500 block mb-1">Current Status</span>
-                <Badge variant={searchedOrder.status === 'delivered' ? 'success' : 'orange'}>
+                <Badge data-testid="track-order-status-badge" variant={searchedOrder.status === 'delivered' || searchedOrder.status === 'installed' ? 'success' : 'orange'}>
                   {searchedOrder.status.toUpperCase()}
                 </Badge>
               </div>
             </div>
 
+            {/* Delivery & Fulfillment Information */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-orange-100 text-[#F15A24] flex items-center justify-center shrink-0">
+                  <Truck className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#111827]">Delivery & Fulfillment</div>
+                  <div className="text-slate-500">
+                    Method: {searchedOrder.deliveryInfo?.method || searchedOrder.deliveryMethod || 'Standard Courier / Installation'}
+                  </div>
+                </div>
+              </div>
+              <div className="text-slate-600 sm:text-right">
+                <span className="font-medium text-slate-700">Destination: </span>
+                <span>{searchedOrder.deliveryInfo?.district || 'Dhaka'}</span>
+              </div>
+            </div>
+
             {/* Timeline Events */}
-            <div>
+            <div data-testid="track-order-timeline">
               <h3 className="text-sm font-bold text-[#111827] uppercase tracking-wider mb-4 font-heading">
                 Status Timeline
               </h3>
               <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-                {searchedOrder.timeline.map((evt, idx) => (
+                {(searchedOrder.timeline || []).map((evt, idx) => (
                   <div key={idx} className="relative">
                     <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-[#F15A24] border-2 border-white ring-2 ring-orange-500/20" />
                     <div>
@@ -151,63 +173,84 @@ export const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ initialOrd
             </div>
 
             {/* Items Summary */}
-            <div className="pt-6 border-t border-slate-200">
-              <h3 className="text-sm font-bold text-[#111827] uppercase tracking-wider mb-4 font-heading">
-                Hardware Ordered ({searchedOrder.items.length} items)
-              </h3>
-              <div className="space-y-3">
-                {searchedOrder.items.map((item, idx) => (
-                  <div key={idx} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
-                    <div>
-                      <div className="font-bold text-[#111827]">{item.name}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">Model: {item.model}</div>
-                      {item.packageDetails && (
-                        <span className="text-[10px] text-orange-600 font-bold block">{item.packageDetails}</span>
-                      )}
+            {Array.isArray(searchedOrder.items) && searchedOrder.items.length > 0 && (
+              <div className="pt-6 border-t border-slate-200">
+                <h3 className="text-sm font-bold text-[#111827] uppercase tracking-wider mb-4 font-heading">
+                  Hardware Ordered ({searchedOrder.items.length} items)
+                </h3>
+                <div className="space-y-3">
+                  {searchedOrder.items.map((item, idx) => (
+                    <div key={idx} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
+                      <div>
+                        <div className="font-bold text-[#111827]">{item.name}</div>
+                        {item.model && <div className="text-[11px] text-slate-500 font-mono">Model: {item.model}</div>}
+                        {item.packageDetails && (
+                          <span className="text-[10px] text-orange-600 font-bold block">{item.packageDetails}</span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-[#111827]">Qty: {item.quantity}</div>
+                        {item.totalPrice != null && (
+                          <div className="text-slate-500">৳{item.totalPrice.toLocaleString()}</div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-[#111827]">Qty: {item.quantity}</div>
-                      <div className="text-slate-500">৳{item.totalPrice.toLocaleString()}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-200 space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Payment Method:</span>
-                  <span className="font-bold text-[#111827]">
-                    {searchedOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' :
-                     searchedOrder.paymentMethod === 'bkash_manual' ? 'bKash Send Money' :
-                     searchedOrder.paymentMethod === 'nagad_manual' ? 'Nagad' :
-                     searchedOrder.paymentMethod === 'bank_transfer' ? `Bank Transfer (${searchedOrder.paymentDetails?.bankName || 'Corporate'})` :
-                     'Online Payment Gateway'}
-                  </span>
-                </div>
-                {searchedOrder.paymentDetails?.transactionId && (
+                <div className="pt-4 mt-4 border-t border-slate-200 space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Transaction ID (TrxID):</span>
-                    <span className="font-mono font-bold text-emerald-600">{searchedOrder.paymentDetails.transactionId}</span>
+                    <span className="text-slate-500">Payment Method:</span>
+                    <span className="font-bold text-[#111827]">
+                      {searchedOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' :
+                       searchedOrder.paymentMethod === 'bkash_manual' ? 'bKash Send Money' :
+                       searchedOrder.paymentMethod === 'nagad_manual' ? 'Nagad' :
+                       searchedOrder.paymentMethod === 'bank_transfer' ? 'Corporate Bank Transfer' :
+                       typeof searchedOrder.paymentMethod === 'string' ? searchedOrder.paymentMethod : 'Official Payment'}
+                    </span>
                   </div>
-                )}
-                {searchedOrder.paymentDetails?.depositRef && (
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Bank Deposit Ref:</span>
-                    <span className="font-mono font-bold text-emerald-600">{searchedOrder.paymentDetails.depositRef}</span>
+                    <span className="text-slate-500">Payment Status:</span>
+                    <span className={`font-bold ${searchedOrder.paymentStatus === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {searchedOrder.paymentStatus === 'paid' ? 'Paid / Verified' : 'Pending Verification Upon Delivery / Audit'}
+                    </span>
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Payment Status:</span>
-                  <span className={`font-bold ${searchedOrder.paymentStatus === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {searchedOrder.paymentStatus === 'paid' ? 'Paid / Verified' : 'Pending Verification Upon Delivery / Audit'}
-                  </span>
+                  {searchedOrder.total != null && (
+                    <div className="flex justify-between items-baseline pt-2 border-t border-slate-200 text-sm font-bold">
+                      <span>Total:</span>
+                      <span className="text-xl text-[#F15A24] font-black font-heading">
+                        ৳{searchedOrder.total.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between items-baseline pt-2 border-t border-slate-200 text-sm font-bold">
-                  <span>Total Payable:</span>
-                  <span className="text-xl text-[#F15A24] font-black font-heading">
-                    ৳{searchedOrder.total.toLocaleString()}
-                  </span>
-                </div>
+              </div>
+            )}
+
+            {/* Need Assistance Action Card */}
+            <div className="pt-6 border-t border-slate-200 bg-orange-50/50 p-5 rounded-2xl border border-orange-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-sm text-[#111827]">Questions regarding your order or dispatch?</h4>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Our Dhaka dispatch and technical coordination desk is ready to assist you.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  data-testid="track-order-contact-btn"
+                  onClick={() => onNavigate('contact')}
+                >
+                  Contact Support
+                </Button>
+                <a
+                  href="tel:+8801540535150"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#F15A24] text-white font-bold text-xs rounded-xl hover:bg-[#D94D1C] transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call Desk</span>
+                </a>
               </div>
             </div>
 

@@ -2294,19 +2294,20 @@ app.get('/api/orders', requireAdmin, (req, res) => {
   }
 });
 
-app.get('/api/orders/:orderNumber', (req, res) => {
+app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
   try {
     const num = req.params.orderNumber;
     const row = db.prepare('SELECT customer_phone, customer_email, data_json FROM orders WHERE order_number = ? OR id = ?').get(num, num);
-    if (!row) return res.status(404).json({ error: 'Order not found' });
 
     // 1. If administrator, full access is granted
     if (req.user && (req.user.role === 'admin' || req.user.permissions?.includes('orders.read'))) {
+      if (!row) return res.status(404).json({ error: 'Order not found' });
       return res.json(JSON.parse(row.data_json));
     }
 
     // 2. If logged-in customer, verify ownership
     if (req.user && req.user.role === 'customer') {
+      if (!row) return res.status(404).json({ error: 'Order not found' });
       const cust = db.prepare('SELECT phone, email FROM customers WHERE id = ?').get(req.user.id);
       const isOwner = (cust && cust.phone === row.customer_phone) ||
                       (cust && cust.email && cust.email.toLowerCase() === (row.customer_email || '').toLowerCase());
@@ -2316,18 +2317,56 @@ app.get('/api/orders/:orderNumber', (req, res) => {
       return res.json(JSON.parse(row.data_json));
     }
 
-    // 3. For public/guest tracking, verify matching phone number
+    // 3. For public/guest tracking: requires both orderNumber and matching customer phone
     const verifyPhone = (req.query.phone || '').trim();
     if (!verifyPhone) {
-      return res.status(401).json({ error: 'Phone number verification required to view order details.' });
+      return res.status(400).json({ error: 'Phone number verification is required to view order tracking status.' });
     }
+
+    // Prevent existence leakage: uniform 404 whether order does not exist or phone does not match
+    if (!row) {
+      return res.status(404).json({ error: 'No order found matching the provided reference number and phone number. Please verify your details.' });
+    }
+
     const cleanVerify = verifyPhone.replace(/[^0-9]/g, '');
     const cleanOrderPhone = (row.customer_phone || '').replace(/[^0-9]/g, '');
     if (!cleanVerify || !cleanOrderPhone.endsWith(cleanVerify.slice(-10))) {
-      return res.status(403).json({ error: 'Verification failed: Order reference number and phone number do not match.' });
+      return res.status(404).json({ error: 'No order found matching the provided reference number and phone number. Please verify your details.' });
     }
 
-    res.json(JSON.parse(row.data_json));
+    // Return sanitized public tracking data (never exposing customer private address, phone, or raw payment secrets)
+    const fullOrder = JSON.parse(row.data_json);
+    const publicTrackingData = {
+      orderNumber: fullOrder.orderNumber,
+      createdAt: fullOrder.createdAt,
+      status: fullOrder.status,
+      timeline: fullOrder.timeline || [],
+      deliveryInfo: {
+        method: fullOrder.deliveryMethod || 'Standard Courier / Installation',
+        district: fullOrder.customer?.district || 'Dhaka',
+        estimatedTime: fullOrder.deliveryEstimatedTime || null
+      },
+      itemCount: Array.isArray(fullOrder.items) ? fullOrder.items.length : 0,
+      items: (fullOrder.items || []).map(i => ({
+        name: i.name,
+        model: i.model || i.modelNumber || '',
+        quantity: i.quantity,
+        packageDetails: i.packageDetails || null
+      })),
+      paymentMethod: fullOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' :
+                     fullOrder.paymentMethod === 'bkash_manual' ? 'bKash Send Money' :
+                     fullOrder.paymentMethod === 'nagad_manual' ? 'Nagad' :
+                     fullOrder.paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Official Payment',
+      paymentStatus: fullOrder.paymentStatus,
+      total: fullOrder.total,
+      contactSupport: {
+        phone: '+880 1540-535150',
+        email: 'contact@camnexbd.com',
+        whatsapp: '8801540535150'
+      }
+    };
+
+    res.json(publicTrackingData);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

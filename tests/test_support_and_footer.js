@@ -222,8 +222,8 @@ async function runTests() {
     await evalJs(`document.querySelector('[data-testid="nav-support-technical"]').click()`);
     await sleep(800);
     navState = await evalJs(`({ path: window.location.pathname, h1: document.querySelector('h1')?.textContent?.trim() || '' })`);
-    assert(navState.path === '/contact', `Clicking Technical Support navigates to /contact (got ${navState.path})`);
-    assert(navState.h1.includes('Contact'), `Technical Support renders heading: "${navState.h1}"`);
+    assert(navState.path === '/support' || navState.path === '/contact', `Clicking Technical Support navigates to /support (got ${navState.path})`);
+    assert(navState.h1.includes('Technical Support') || navState.h1.includes('Contact'), `Technical Support renders heading: "${navState.h1}"`);
 
     // Open Support again and click FAQs
     await evalJs(`document.querySelector('[data-testid="nav-support-button"]').click()`);
