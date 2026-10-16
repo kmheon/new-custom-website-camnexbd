@@ -86,6 +86,7 @@ export interface Brand {
   showBadge?: boolean;
   showInBrandStrip?: boolean;
   order?: number;
+  productCount?: number;
   seo?: ProductSeo;
 }
 

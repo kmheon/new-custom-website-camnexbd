@@ -582,11 +582,6 @@ app.get('/api/products', (req, res) => {
       params.push(subcatTarget, subcatTarget, subcatTarget, `%${subcatTarget}%`, `%${subcatTarget}%`);
     }
 
-    if (brandTarget) {
-      query += ' AND (brand_id = ? OR brand_name LIKE ?)';
-      params.push(brandTarget, `%${brandTarget}%`);
-    }
-
     if (minPrice !== undefined && minPrice !== '') {
       query += ' AND price >= ?';
       params.push(parseFloat(minPrice));
@@ -610,6 +605,50 @@ app.get('/api/products', (req, res) => {
       p.isArchived = Boolean(r.is_archived);
       return p;
     });
+
+    if (brandTarget) {
+      const targetLower = String(brandTarget).toLowerCase().trim();
+      let brandObj = null;
+      try {
+        const bRow = db.prepare('SELECT data_json FROM brands WHERE LOWER(slug) = ? OR LOWER(id) = ? OR LOWER(name) = ?').get(targetLower, targetLower, targetLower);
+        if (bRow) brandObj = JSON.parse(bRow.data_json);
+      } catch (_) {}
+
+      const bId = (brandObj?.id || targetLower).toLowerCase();
+      const bIdBase = bId.replace(/^(b-|brand-)/i, '');
+      const bSlug = (brandObj?.slug || targetLower).toLowerCase();
+      const bSlugSpaced = bSlug.replace(/-/g, ' ');
+      const bSlugFirst = bSlug.split('-')[0];
+      const bName = (brandObj?.name || targetLower).toLowerCase();
+
+      items = items.filter(p => {
+        const pBrandId = String(p.brandId || '').toLowerCase();
+        const pBrandIdBase = pBrandId.replace(/^(b-|brand-)/i, '');
+        const pBrandName = String(p.brand || '').toLowerCase();
+
+        if (pBrandId && (
+          pBrandId === bId ||
+          pBrandId === bSlug ||
+          pBrandId === targetLower ||
+          (bIdBase && pBrandIdBase === bIdBase) ||
+          (bSlug && pBrandIdBase === bSlug)
+        )) {
+          return true;
+        }
+        if (pBrandName && (
+          pBrandName === bName ||
+          pBrandName === bSlug ||
+          pBrandName === bSlugSpaced ||
+          pBrandName === targetLower ||
+          (bIdBase && pBrandName === bIdBase) ||
+          (bSlugFirst.length >= 4 && pBrandName.includes(bSlugFirst)) ||
+          (bName.length >= 3 && pBrandName.length >= 3 && bName.includes(pBrandName))
+        )) {
+          return true;
+        }
+        return false;
+      });
+    }
 
     // Client-level or JSON spec filters matching
     if (specFilters) {
@@ -1745,6 +1784,43 @@ app.post('/api/categories/:id/restore', requireAdmin, (req, res) => {
 // 3. BRANDS REST APIs
 // ============================================================================
 
+function countProductsForBrand(brand, activeProducts) {
+  const bId = String(brand.id || '').toLowerCase();
+  const bIdBase = bId.replace(/^(b-|brand-)/i, '');
+  const bSlug = String(brand.slug || '').toLowerCase();
+  const bSlugSpaced = bSlug.replace(/-/g, ' ');
+  const bSlugFirst = bSlug.split('-')[0];
+  const bName = String(brand.name || '').toLowerCase();
+
+  let count = 0;
+  for (const p of activeProducts) {
+    const pBrandId = String(p.brandId || '').toLowerCase();
+    const pBrandIdBase = pBrandId.replace(/^(b-|brand-)/i, '');
+    const pBrandName = String(p.brand || '').toLowerCase();
+
+    if (pBrandId && (
+      pBrandId === bId ||
+      pBrandId === bSlug ||
+      (bIdBase && pBrandIdBase === bIdBase) ||
+      (bSlug && pBrandIdBase === bSlug)
+    )) {
+      count++;
+      continue;
+    }
+    if (pBrandName && (
+      pBrandName === bName ||
+      pBrandName === bSlug ||
+      pBrandName === bSlugSpaced ||
+      (bIdBase && pBrandName === bIdBase) ||
+      (bSlugFirst.length >= 4 && pBrandName.includes(bSlugFirst)) ||
+      (bName.length >= 3 && pBrandName.length >= 3 && bName.includes(pBrandName))
+    )) {
+      count++;
+    }
+  }
+  return count;
+}
+
 app.get('/api/brands', (req, res) => {
   try {
     const includeArchived = req.query.includeArchived === 'true';
@@ -1752,9 +1828,14 @@ app.get('/api/brands', (req, res) => {
       ? 'SELECT data_json, is_archived FROM brands'
       : 'SELECT data_json, is_archived FROM brands WHERE (is_archived IS NULL OR is_archived = 0)';
     const rows = db.prepare(query).all();
+    const prodRows = db.prepare('SELECT data_json FROM products WHERE (is_archived IS NULL OR is_archived = 0)').all();
+    const activeProducts = prodRows.map(r => {
+      try { return JSON.parse(r.data_json); } catch (_) { return {}; }
+    });
     const brands = rows.map(r => {
       const b = JSON.parse(r.data_json);
       b.isArchived = Boolean(r.is_archived);
+      b.productCount = countProductsForBrand(b, activeProducts);
       return b;
     });
     brands.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
@@ -1767,10 +1848,15 @@ app.get('/api/brands', (req, res) => {
 app.get('/api/brands/:slug', (req, res) => {
   try {
     const slug = req.params.slug;
-    const row = db.prepare('SELECT data_json, is_archived FROM brands WHERE slug = ? OR id = ?').get(slug, slug);
+    const row = db.prepare('SELECT data_json, is_archived FROM brands WHERE LOWER(slug) = LOWER(?) OR LOWER(id) = LOWER(?)').get(slug, slug);
     if (!row) return res.status(404).json({ error: 'Brand not found' });
     const b = JSON.parse(row.data_json);
     b.isArchived = Boolean(row.is_archived);
+    const prodRows = db.prepare('SELECT data_json FROM products WHERE (is_archived IS NULL OR is_archived = 0)').all();
+    const activeProducts = prodRows.map(r => {
+      try { return JSON.parse(r.data_json); } catch (_) { return {}; }
+    });
+    b.productCount = countProductsForBrand(b, activeProducts);
     res.json(b);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -5143,6 +5229,7 @@ function resolveRouteMetadata(reqPath) {
   }
 
   const staticRouteMap = {
+    '/brands': { title: 'Explore Our Brands | CamneX Bangladesh', description: 'Discover security, surveillance, networking, and IT brands available through CamneX Bangladesh.' },
     '/about': { title: 'About Us | CamneX Bangladesh', description: 'About CamneX Bangladesh - Authorized Hikvision Partner & ZKTeco Installer in Dhaka.' },
     '/contact': { title: 'Contact Us | CamneX Bangladesh', description: 'Contact CamneX engineering headquarters at Chandrima Model Town, Dhaka. Phone: +880 1540-535150.' },
     '/services': { title: 'Installation & IT Services | CamneX Bangladesh', description: 'CCTV installation, Wi-Fi 6 deployment, biometric attendance configuration and on-site maintenance in Dhaka.' },

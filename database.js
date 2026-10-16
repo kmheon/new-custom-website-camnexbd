@@ -748,6 +748,46 @@ function ensureComponentProducts() {
         JSON.stringify(p)
       );
     }
+
+    const insertBrand = db.prepare(`
+      INSERT OR IGNORE INTO brands (id, name, slug, logo, description, website, featured, data_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const extraCatalogBrands = [
+      ...(seeds.INITIAL_BRANDS || []),
+      {
+        id: 'brand-ezviz',
+        name: 'EZVIZ',
+        slug: 'ezviz',
+        logo: '',
+        description: 'Smart home Wi-Fi security cameras, 360° pan-tilt outdoor cameras, and video doorbells.',
+        website: 'https://www.ezviz.com',
+        featured: false,
+        showBadge: false,
+        badgeText: '',
+        showInBrandStrip: false,
+        order: 11
+      },
+      {
+        id: 'b-dlink',
+        name: 'D-Link',
+        slug: 'd-link',
+        logo: '',
+        description: 'Structured network cabling, Cat6 UTP copper cable boxes, patch cords, and networking hardware.',
+        website: 'https://www.dlink.com',
+        featured: false,
+        showBadge: false,
+        badgeText: '',
+        showInBrandStrip: false,
+        order: 12
+      }
+    ];
+    for (const b of extraCatalogBrands) {
+      insertBrand.run(
+        b.id, b.name, b.slug, b.logo || '', b.description || '',
+        b.website || '', b.featured ? 1 : 0, JSON.stringify(b)
+      );
+    }
   } catch (err) {
     console.error('Failed to sync component products:', err.message);
   }

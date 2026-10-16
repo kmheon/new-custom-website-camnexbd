@@ -22,6 +22,7 @@ const ContentPages = lazy(() => import('./pages/ContentPages').then(m => ({ defa
 const WishlistPage = lazy(() => import('./pages/WishlistPage').then(m => ({ default: m.WishlistPage })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const CompanyProfilePage = lazy(() => import('./pages/CompanyProfilePage').then(m => ({ default: m.CompanyProfilePage })));
+const BrandsPage = lazy(() => import('./pages/BrandsPage').then(m => ({ default: m.BrandsPage })));
 
 const PageLoadingFallback: React.FC = () => (
   <div className="min-h-[50vh] flex items-center justify-center py-16">
@@ -77,12 +78,18 @@ export default function App() {
       } else if (path === '/catalog') {
         setCurrentRoute('catalog');
         setRouteParam(undefined);
+      } else if (path === '/brands' || path === '/brands/') {
+        setCurrentRoute('brands');
+        setRouteParam(undefined);
       } else if (path.startsWith('/category/')) {
         setCurrentRoute('category');
         setRouteParam(path.replace('/category/', ''));
       } else if (path.startsWith('/brand/')) {
         setCurrentRoute('brand');
         setRouteParam(path.replace('/brand/', ''));
+      } else if (path.startsWith('/brands/')) {
+        setCurrentRoute('brand');
+        setRouteParam(path.replace('/brands/', ''));
       } else if (path.startsWith('/product/')) {
         setCurrentRoute('product');
         setRouteParam(path.replace('/product/', ''));
@@ -170,6 +177,7 @@ export default function App() {
     let newUrl = '/';
     if (route === 'home') newUrl = '/';
     else if (route === 'catalog') newUrl = '/catalog';
+    else if (route === 'brands') newUrl = '/brands';
     else if (route === 'category' && param) newUrl = `/category/${param}`;
     else if (route === 'brand' && param) newUrl = `/brand/${param}`;
     else if (route === 'product' && param) newUrl = `/product/${param}`;
@@ -213,8 +221,11 @@ export default function App() {
         <Suspense fallback={<PageLoadingFallback />}>
           {currentRoute === 'home' && <HomePage onNavigate={navigate} />}
           {currentRoute === 'catalog' && <CatalogPage onNavigate={navigate} />}
+          {currentRoute === 'brands' && <BrandsPage onNavigate={navigate} />}
           {currentRoute === 'category' && <CatalogPage onNavigate={navigate} categorySlug={routeParam} />}
           {currentRoute === 'brand' && <CatalogPage onNavigate={navigate} brandSlug={routeParam} />}
+          {currentRoute === 'product' && routeParam && <ProductDetailPage productId={routeParam} onNavigate={navigate} />}
+          {currentRoute === 'compare' && <ComparePage onNavigate={navigate} />}
           {currentRoute === 'packages' && (
             routeParam ? (
               <PackageBuilderPage packageSlug={routeParam} onNavigate={navigate} />

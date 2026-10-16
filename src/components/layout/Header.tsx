@@ -595,37 +595,72 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 Packages
               </button>
 
-              {/* Brands Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => toggleDropdown('brands')}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
-                >
-                  <span>Brands</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-[#5B6472]" />
-                </button>
+              {/* Brands Dropdown & Direct Link */}
+              <div
+                className="relative"
+                onMouseEnter={() => setActiveDropdown('brands')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <div className="flex items-center rounded-full hover:bg-[#FAF7F2] transition-colors">
+                  <button
+                    type="button"
+                    data-testid="nav-brands-link"
+                    onClick={() => {
+                      setActiveDropdown(null);
+                      onNavigate('brands');
+                    }}
+                    className="pl-3 pr-1.5 py-1.5 text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                  >
+                    <span>Brands</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Toggle brands menu"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDropdown('brands');
+                    }}
+                    className="pr-2.5 pl-0.5 py-1.5 text-[#5B6472] hover:text-[#F15A24] transition-colors cursor-pointer"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
                 {activeDropdown === 'brands' && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2 z-50">
-                    {brands.map((b) => (
+                  <div className="absolute top-full left-0 pt-2 w-60 z-50">
+                    <div className="bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2">
                       <button
-                        key={b.id}
                         type="button"
                         onClick={() => {
                           setActiveDropdown(null);
-                          onNavigate('brand', b.slug);
+                          onNavigate('brands');
                         }}
-                        className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-[#FAF7F2] text-xs font-bold text-[#111827] text-left"
+                        className="w-full flex items-center justify-between p-2 mb-1 rounded-xl bg-orange-50/70 hover:bg-orange-100/80 text-xs font-extrabold text-[#F15A24] text-left transition-colors"
                       >
-                        <span>{b.name}</span>
-                        {b.showBadge && (
-                          <span className="text-[9px] font-bold text-[#F15A24] bg-orange-50 px-1.5 py-0.5 rounded-full">
-                            Partner
-                          </span>
-                        )}
+                        <span>Explore All Brands</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
-                    ))}
+                      <div className="max-h-64 overflow-y-auto space-y-0.5">
+                        {brands.map((b) => (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              onNavigate('brand', b.slug);
+                            }}
+                            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-[#FAF7F2] text-xs font-bold text-[#111827] text-left"
+                          >
+                            <span>{b.name}</span>
+                            {b.showBadge && (
+                              <span className="text-[9px] font-bold text-[#F15A24] bg-orange-50 px-1.5 py-0.5 rounded-full">
+                                Partner
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -928,6 +963,13 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
               >
                 Packages
+              </button>
+              <button
+                data-testid="mobile-nav-brands-link"
+                onClick={() => { setMobileMenuOpen(false); onNavigate('brands'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
+              >
+                Brands
               </button>
 
               {/* Company Accordion */}

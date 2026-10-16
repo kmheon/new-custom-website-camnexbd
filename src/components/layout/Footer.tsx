@@ -58,6 +58,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const quickLinks: FooterLinkItem[] = footerConfig?.quickLinks || [
     { label: 'Home', route: 'home' },
     { label: 'Products', route: 'catalog' },
+    { label: 'Brands', route: 'brands' },
     { label: 'Solutions', route: 'solutions' },
     { label: 'Installation Services', route: 'services' },
     { label: 'Packages', route: 'packages' },

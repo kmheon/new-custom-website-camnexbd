@@ -1142,13 +1142,19 @@ async function run() {
 
     // 2. Step 3: BarraCuda 2TB Desktop Advisory
     await goToStep(3);
-    const barracudaEval = await send('Runtime.evaluate', {
+    const hasBarraBtnEval = await send('Runtime.evaluate', {
       expression: `(() => {
         const barraBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('2 TB (Desktop)'));
-        if (barraBtn) barraBtn.click();
+        if (barraBtn) { barraBtn.click(); return true; }
+        return false;
+      })()`,
+      returnByValue: true
+    });
+    await sleep(300);
+    const barracudaEval = await send('Runtime.evaluate', {
+      expression: `(() => {
         const text = document.body.innerText;
         return {
-          hasBarraBtn: !!barraBtn,
           hasDesktopWarning: text.includes('Desktop Duty Rating') && text.includes('Seagate BarraCuda is engineered for general PC desktop computing')
         };
       })()`,
@@ -1156,7 +1162,7 @@ async function run() {
     });
     test('Scenario 11: Step 3 Seagate BarraCuda 2TB renders explicit desktop-duty rating advisory', () => {
       const v = barracudaEval.result.value || {};
-      assert.strictEqual(v.hasBarraBtn, true, 'BarraCuda 2TB present in storage options');
+      assert.strictEqual(hasBarraBtnEval.result.value, true, 'BarraCuda 2TB present in storage options');
       assert.strictEqual(v.hasDesktopWarning, true, 'Desktop duty rating notice displayed');
     });
 
@@ -1192,10 +1198,15 @@ async function run() {
     });
     await sleep(400);
     await goToStep(4);
-    const displayMountEval = await send('Runtime.evaluate', {
+    await send('Runtime.evaluate', {
       expression: `(() => {
         const btn24 = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('24-Inch FHD Display'));
         if (btn24) btn24.click();
+      })()`
+    });
+    await sleep(300);
+    const displayMountEval = await send('Runtime.evaluate', {
+      expression: `(() => {
         const text = document.body.innerText;
         return {
           has24Inch: text.includes('24-Inch FHD Display'),
@@ -1252,6 +1263,8 @@ async function run() {
     // SCENARIO 12: Cross-Step Consistency & Cart Handoff Verification
     // ========================================================================
     console.log('\n--- Cross-Step Consistency & Cart Handoff ---');
+    await loadBuilderFresh();
+    await goToStep(6);
     await send('Runtime.evaluate', {
       expression: `(() => {
         const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Add Package to Cart'));

@@ -80,7 +80,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         sortBy,
         minPrice: priceRange.min,
         maxPrice: priceRange.max,
-        limit: 24
+        limit: 100
       });
       let items = res.items;
       if (subcatParam && subcatParam !== 'all') {
@@ -148,22 +148,82 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         
         {/* Breadcrumbs */}
         <Breadcrumbs
-          items={[
-            { label: 'Home', onClick: () => onNavigate('home') },
-            { label: 'Catalog', onClick: () => onNavigate('catalog') },
-            ...(currentCategory ? [{ label: currentCategory.name }] : []),
-            ...(currentBrand ? [{ label: currentBrand.name }] : [])
-          ]}
+          items={
+            currentBrand
+              ? [
+                  { label: 'Home', onClick: () => onNavigate('home') },
+                  { label: 'Brands', onClick: () => onNavigate('brands') },
+                  { label: currentBrand.name }
+                ]
+              : [
+                  { label: 'Home', onClick: () => onNavigate('home') },
+                  { label: 'Catalog', onClick: () => onNavigate('catalog') },
+                  ...(currentCategory ? [{ label: currentCategory.name }] : [])
+                ]
+          }
         />
 
         {/* Title & Introduction */}
         <div className="mb-8 bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] font-heading mb-2">
-            {currentCategory?.name || currentBrand?.name || 'All Surveillance & IT Hardware'}
-          </h1>
-          <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
-            {currentCategory?.description || currentBrand?.description || 'Explore our verified catalog of genuine security cameras, digital recorders, network switches, and biometric access control devices with official warranties.'}
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-4">
+              {currentBrand && (
+                <div className="h-14 w-28 sm:w-32 rounded-xl bg-[#FAF7F2] border border-[#EDE8E1] px-3 py-2 flex items-center justify-center shrink-0 overflow-hidden">
+                  {currentBrand.logo && currentBrand.logo.trim() ? (
+                    <img
+                      src={currentBrand.logo}
+                      alt={`${currentBrand.name} logo`}
+                      className="max-h-9 max-w-full w-auto h-auto object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <span className="text-xs sm:text-sm font-extrabold text-[#111827] font-heading text-center leading-tight">
+                      {currentBrand.name}
+                    </span>
+                  )}
+                </div>
+              )}
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] font-heading">
+                    {currentCategory?.name || currentBrand?.name || 'All Surveillance & IT Hardware'}
+                  </h1>
+                  {currentBrand?.showBadge && currentBrand?.badgeText && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-[#F15A24] border border-orange-200/70">
+                      {currentBrand.badgeText}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
+                  {currentCategory?.description || currentBrand?.description || 'Explore our verified catalog of genuine security cameras, digital recorders, network switches, and biometric access control devices with official warranties.'}
+                </p>
+              </div>
+            </div>
+
+            {currentBrand && (
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  data-testid="back-to-brands-btn"
+                  onClick={() => onNavigate('brands')}
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 hover:border-[#F15A24] text-xs font-bold text-[#111827] hover:text-[#F15A24] bg-slate-50 hover:bg-orange-50/40 transition-colors"
+                >
+                  ← All Brands
+                </button>
+                <button
+                  type="button"
+                  data-testid="clear-brand-filter-btn"
+                  onClick={() => onNavigate('catalog')}
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 hover:border-slate-300 text-xs font-bold text-slate-600 hover:text-[#111827] bg-white hover:bg-slate-50 transition-colors flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear Brand Filter</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Catalog Main Layout (Sidebar Filters + Product Grid) */}
@@ -197,7 +257,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                   <button
                     onClick={() => onNavigate('catalog')}
                     className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      !categorySlug ? 'bg-orange-50 text-[#F15A24] font-bold' : 'text-slate-600 hover:bg-slate-50'
+                      !categorySlug && !brandSlug ? 'bg-orange-50 text-[#F15A24] font-bold' : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
                     All Categories
@@ -218,10 +278,27 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
 
               {/* Brands Filter List */}
               <div className="pt-4 border-t border-slate-100">
-                <span className="text-xs font-bold text-slate-700 block mb-2 uppercase">
-                  Manufacturers
-                </span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-slate-700 uppercase">
+                    Manufacturers
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('brands')}
+                    className="text-[11px] font-bold text-[#F15A24] hover:underline"
+                  >
+                    Directory →
+                  </button>
+                </div>
                 <div className="space-y-1">
+                  <button
+                    onClick={() => onNavigate('catalog')}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      !brandSlug ? 'bg-orange-50 text-[#F15A24] font-bold' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    All Manufacturers
+                  </button>
                   {brands.map((b) => (
                     <button
                       key={b.id}
@@ -397,6 +474,42 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : currentBrand && !hasActiveFilters ? (
+              <div
+                data-testid="brand-zero-products-state"
+                className="bg-white p-10 sm:p-12 rounded-2xl border border-slate-200 text-center space-y-4 shadow-sm"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F15A24] flex items-center justify-center mx-auto font-extrabold text-lg">
+                  {currentBrand.name.charAt(0)}
+                </div>
+                <div className="space-y-1.5 max-w-md mx-auto">
+                  <p className="text-base sm:text-lg font-extrabold text-[#111827] font-heading">
+                    No {currentBrand.name} products are currently listed online
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                    CamneX Bangladesh supplies genuine {currentBrand.name} equipment for commercial and project deployments. Request an official quotation or contact our engineering team for specific model availability and project pricing.
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                  <Button size="sm" onClick={() => onNavigate('quote')}>
+                    Request Quotation
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('brands')}
+                    className="px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 text-xs font-bold text-[#111827] bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    Explore All Brands
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('catalog')}
+                    className="px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 text-xs font-bold text-slate-600 hover:text-[#111827] bg-white hover:bg-slate-50 transition-colors"
+                  >
+                    View All Products
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
