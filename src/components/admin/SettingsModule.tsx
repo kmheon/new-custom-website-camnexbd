@@ -20,7 +20,8 @@ import {
   Tag,
   DollarSign,
   Clock,
-  Globe
+  Globe,
+  FileText
 } from 'lucide-react';
 import { ImagePickerField } from './ImagePickerField';
 import { useSettingsStore, useAdminAuthStore } from '../../store';
@@ -32,6 +33,7 @@ import {
   TaxRuleConfig,
   LocalizationConfig,
   NotificationTemplate,
+  LetterheadTemplateConfig,
   Product
 } from '../../types';
 import { PERMISSIONS } from '../../shared/permissions';
@@ -59,8 +61,9 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
   const { currentUser } = useAdminAuthStore();
 
   const [activeTab, setActiveTab] = useState<
-    'general' | 'payment' | 'delivery' | 'installation' | 'tax' | 'notifications' | 'storefront' | 'maintenance'
+    'general' | 'payment' | 'delivery' | 'installation' | 'tax' | 'notifications' | 'storefront' | 'letterhead' | 'maintenance'
   >('general');
+
 
   const [formData, setFormData] = useState<Partial<SiteSettings>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -302,8 +305,10 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
           { id: 'tax', label: 'Tax & Invoicing', icon: <Receipt className="w-3.5 h-3.5" /> },
           { id: 'notifications', label: 'Notification Templates', icon: <Bell className="w-3.5 h-3.5" /> },
           { id: 'storefront', label: 'Storefront CMS & SEO', icon: <LayoutTemplate className="w-3.5 h-3.5" /> },
+          { id: 'letterhead', label: 'BOM Letterhead & Templates', icon: <FileText className="w-3.5 h-3.5" /> },
           { id: 'maintenance', label: 'System Maintenance', icon: <ShieldAlert className="w-3.5 h-3.5" /> }
         ].map(t => (
+
           <button
             key={t.id}
             type="button"
@@ -1434,10 +1439,146 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
           </div>
         )}
 
-        {/* 8. SYSTEM MAINTENANCE */}
+        {/* 8. BOM & QUOTATION LETTERHEAD TEMPLATES */}
+        {activeTab === 'letterhead' && (
+          <div className="space-y-6 max-w-4xl">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Official Letterhead & Document Templates</h3>
+              <p className="text-xs text-slate-400">
+                Manage the company letterhead, branding accents, contact coordinates, and legal disclaimers applied to all exported Bills of Materials (BOM) and client quotations.
+              </p>
+            </div>
+
+            <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h4 className="font-bold text-white text-xs">Default Letterhead Template</h4>
+                  <p className="text-[11px] text-slate-400">Applied automatically to PDF and DOCX exports generated from the Package Builder.</p>
+                </div>
+                <Badge variant="orange" className="text-[10px]">Active Default</Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Company Display Name</label>
+                  <input
+                    type="text"
+                    value={formData.letterheadTemplate?.companyName || formData.companyName || 'CamneX Bangladesh'}
+                    onChange={(e) => updateField('letterheadTemplate', {
+                      ...(formData.letterheadTemplate || {}),
+                      companyName: e.target.value
+                    })}
+                    placeholder="CamneX Bangladesh"
+                    className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Tagline / Engineering Subtitle</label>
+                  <input
+                    type="text"
+                    value={formData.letterheadTemplate?.tagline || 'Certified Security Systems Integrator & Authorized Hikvision Partner'}
+                    onChange={(e) => updateField('letterheadTemplate', {
+                      ...(formData.letterheadTemplate || {}),
+                      tagline: e.target.value
+                    })}
+                    placeholder="Certified Security Systems Integrator"
+                    className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Direct Hotline / Support Phone</label>
+                  <input
+                    type="text"
+                    value={formData.letterheadTemplate?.phone || formData.phone || '+880 1317-251000'}
+                    onChange={(e) => updateField('letterheadTemplate', {
+                      ...(formData.letterheadTemplate || {}),
+                      phone: e.target.value
+                    })}
+                    placeholder="+880 1317-251000"
+                    className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Official Quotation Email</label>
+                  <input
+                    type="email"
+                    value={formData.letterheadTemplate?.email || formData.email || 'info@camnexbd.com'}
+                    onChange={(e) => updateField('letterheadTemplate', {
+                      ...(formData.letterheadTemplate || {}),
+                      email: e.target.value
+                    })}
+                    placeholder="info@camnexbd.com"
+                    className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Official Website URL</label>
+                  <input
+                    type="text"
+                    value={formData.letterheadTemplate?.website || formData.website || 'https://camnexbd.com'}
+                    onChange={(e) => updateField('letterheadTemplate', {
+                      ...(formData.letterheadTemplate || {}),
+                      website: e.target.value
+                    })}
+                    placeholder="https://camnexbd.com"
+                    className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Quotation Validity Window (Calendar Days)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={formData.letterheadTemplate?.validityDays || 7}
+                    onChange={(e) => updateField('letterheadTemplate', {
+                      ...(formData.letterheadTemplate || {}),
+                      validityDays: parseInt(e.target.value, 10) || 7
+                    })}
+                    className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Physical Corporate Address</label>
+                <input
+                  type="text"
+                  value={formData.letterheadTemplate?.address || formData.address || 'Block A, Chandrima Model Town, Main Rd, Dhaka 1207, Bangladesh'}
+                  onChange={(e) => updateField('letterheadTemplate', {
+                    ...(formData.letterheadTemplate || {}),
+                    address: e.target.value
+                  })}
+                  className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Terms, Cable Rules & Engineering Disclaimer</label>
+                <textarea
+                  rows={3}
+                  value={formData.letterheadTemplate?.disclaimerText || 'All prices are in BDT and valid for 7 calendar days from issue date. Cable allocations are based on 10m/camera engineering standards. Site installation, conduit piping, and commissioning quoted separately.'}
+                  onChange={(e) => updateField('letterheadTemplate', {
+                    ...(formData.letterheadTemplate || {}),
+                    disclaimerText: e.target.value
+                  })}
+                  className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs focus:ring-1 focus:ring-[#F15A24]"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 9. SYSTEM MAINTENANCE */}
         {activeTab === 'maintenance' && (
           <div className="space-y-6 max-w-4xl">
             <div>
+
               <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider">System & Database Maintenance</h3>
               <p className="text-xs text-slate-400">
                 Guarded actions for cleaning demo records or resetting baseline catalog seeds. Strictly blocked in production environments.

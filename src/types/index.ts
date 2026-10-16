@@ -36,6 +36,8 @@ export interface Address {
   addressLine: string;
   area: string;
   city: string;
+  district?: string;
+  thana?: string;
   isDefault?: boolean;
 }
 
@@ -699,11 +701,31 @@ export interface SiteSettings {
   // Notification Templates
   notificationTemplates?: NotificationTemplate[];
 
+  // Professional BOM & Quotation Letterhead Template
+  letterheadTemplate?: LetterheadTemplateConfig;
+
   // Localization & Translation Readiness
   languageSwitcherEnabled?: boolean;
   defaultLanguage?: 'en' | 'bn';
   contentOverrides?: Record<string, string>;
 }
+
+export interface LetterheadTemplateConfig {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  companyName: string;
+  tagline: string;
+  phone: string;
+  email: string;
+  website: string;
+  address: string;
+  primaryColor: string;
+  secondaryColor: string;
+  validityDays: number;
+  disclaimerText: string;
+}
+
 
 export interface DeliveryZone {
   id: string;

@@ -60,7 +60,9 @@ import {
   Product,
   PowerSupplyProfile
 } from '../types';
-import { useCartStore } from '../store';
+import { useCartStore, useCustomerAuthStore, useSettingsStore } from '../store';
+import { BANGLADESH_DISTRICTS, DISTRICT_NAMES, getThanasForDistrict } from '../data/bangladeshLocations';
+import { downloadBomDocument, generateBomText, BomExportData } from '../utils/bomExporter';
 
 const getProductPrice = (prod: Product | undefined | null): number | null => {
   if (!prod) return null;
@@ -74,8 +76,10 @@ const getProductBrand = (prod: Product | undefined | null, fallback = 'Hikvision
 
 export type SystemArch = 'analogue' | 'ip' | 'wireless';
 export type NightVisionMode = 'ir' | 'hybrid' | 'colorvu';
-export type StorageOption = '500gb' | '1tb' | '2tb' | '4tb' | 'dual_2tb' | 'dual_4tb' | 'quad_4tb' | 'none';
-export type MonitorOption = 'none' | '17inch' | '19inch' | 'large';
+export type StorageOption = '500gb' | '1tb' | '2tb' | '4tb' | 'dual_2tb' | 'dual_4tb' | 'quad_4tb' | 'barracuda_2tb' | 'none';
+export type MonitorOption = 'none' | '17inch' | '19inch' | '24inch' | '32inch' | 'large';
+export type WallMountOption = 'none' | 'standard_vesa' | 'heavy_duty_tilt';
+
 
 export interface RecorderHardwareProfile {
   channels: number;
@@ -400,10 +404,15 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const [specialistCapability, setSpecialistCapability] = useState<'none' | 'anpr' | 'thermal'>('none');
   const [nightVision, setNightVision] = useState<NightVisionMode>('ir');
   const [hasAudio, setHasAudio] = useState<boolean>(true);
+  const [requiresTwoWayAudio, setRequiresTwoWayAudio] = useState<boolean>(false);
+  const [wirelessRecordingType, setWirelessRecordingType] = useState<'nvr' | 'standalone_sd' | 'third_party_nvr'>('nvr');
   const [storageOption, setStorageOption] = useState<StorageOption>('500gb');
+  const [selectedHddModel, setSelectedHddModel] = useState<string | null>(null);
+  const [showStoragePicker, setShowStoragePicker] = useState<boolean>(false);
   const [hasUserCustomizedStorage, setHasUserCustomizedStorage] = useState<boolean>(false);
   const [recordingMode, setRecordingMode] = useState<'motion' | 'continuous'>('motion');
   const [monitorOption, setMonitorOption] = useState<MonitorOption>('none');
+  const [wallMountOption, setWallMountOption] = useState<WallMountOption>('none');
   const [hasUserCustomizedMonitor, setHasUserCustomizedMonitor] = useState<boolean>(false);
   const [customCableLength, setCustomCableLength] = useState<number | null>(null);
   const [analogueTransmission, setAnalogueTransmission] = useState<'coaxial' | 'utp_baluns'>('coaxial');
@@ -421,8 +430,15 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
   const [isCustomCount, setIsCustomCount] = useState<boolean>(false);
   const [customCountInput, setCustomCountInput] = useState<string>('4');
 
-  // In-Page Quotation Modal State
+  // Customer Auth and Website Settings Hooks
+  const { currentCustomer, isCustomerAuthenticated } = useCustomerAuthStore();
+  const { settings } = useSettingsStore();
+
+  // In-Page Quotation Modal State & Bangladesh Address
   const [showQuoteModal, setShowQuoteModal] = useState<boolean>(false);
+  const [selectedDistrict, setSelectedDistrict] = useState<string>('Dhaka');
+  const [selectedThana, setSelectedThana] = useState<string>('Gulshan');
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string>('new');
   const [quoteFormData, setQuoteFormData] = useState({
     customerName: '',
     phone: '',
@@ -441,7 +457,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     customerName?: string;
     phone?: string;
     email?: string;
+    district?: string;
+    siteAddress?: string;
   }>({});
+
 
   // Escape key accessibility handler to close quotation modal
   useEffect(() => {
@@ -543,12 +562,12 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       }
     }
 
-    // If switching to wireless, validate limits: wireless max camera count in catalog is 8
+    // If switching to wireless, validate limits: supported wireless NVR ecosystem supports up to 18 channels
     if (arch === 'wireless') {
-      if (cameraCount > 8) {
-        setCameraCount(8);
-        setCustomCountInput('8');
-        msg += 'Wi-Fi deployments are recommended up to 8 cameras per standard access point. Count adjusted to 8.';
+      if (cameraCount > 18 && wirelessRecordingType === 'nvr') {
+        setCameraCount(18);
+        setCustomCountInput('18');
+        msg += 'Supported wireless NVR ecosystem has an 18-camera maximum limit. For higher quantities, select Standalone Edge MicroSD storage or third-party NVR integration.';
       }
       if (formFactor === 'ptz') {
         setFormFactor('bullet');
@@ -640,10 +659,13 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
 
   // Camera count update helper with boundary enforcement and standard package defaults
   const handleUpdateCameraCount = (newCount: number) => {
-    const maxLimit = systemArch === 'wireless' ? 8 : 128;
+    const maxLimit = systemArch === 'wireless'
+      ? (wirelessRecordingType === 'nvr' ? 18 : 64)
+      : 128;
     const validCount = Math.max(1, Math.min(maxLimit, Math.floor(newCount) || 1));
     setCameraCount(validCount);
     setCustomCountInput(String(validCount));
+
 
     // Standard package defaults: 2-4 cams -> 500GB & 17", 8 cams -> 1TB, 16 cams -> 2TB & 19"
     if (!hasUserCustomizedStorage) {
@@ -962,22 +984,98 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       }
 
       // wifi_smart / wifi_two_way_audio / wifi_pinhole
-      const neededChannels = cameraCount <= 4 ? 4 : 8;
-      const foundInCatalog = compatibleCatalogRecorders.find(r => {
-        const specStr = JSON.stringify(r.specifications || {});
-        return specStr.includes(`${neededChannels} CH`) || (r.name || '').includes(`${neededChannels}-Channel`);
-      });
+      if (wirelessRecordingType === 'standalone_sd') {
+        return {
+          channels: 0,
+          name: 'Standalone Edge MicroSD Storage (No NVR Channel Limit)',
+          model: 'STANDALONE-EDGE-SD',
+          sku: 'WIFI-STANDALONE-SD',
+          unitPrice: 0,
+          brand: 'EZVIZ / Kingston',
+          isCustomModel: false,
+          isMultiRecorder: false,
+          isUnderCapacity: false,
+          sataBays: 0,
+          analogueBncChannels: 0,
+          hybridIpInputs: 0,
+          maxResolution: '2K / 3MP',
+          compression: 'H.265 / Edge Stream',
+          isWirelessEdge: true,
+          wirelessDutyCycleNote: 'Cameras record directly to local 128GB High-Endurance MicroSD storage. Standalone configuration operates without NVR channel limits and connects directly to the mobile app or cloud gateway.'
+        };
+      }
+
+      if (wirelessRecordingType === 'third_party_nvr') {
+        const nvrChannels = cameraCount <= 8 ? 8 : cameraCount <= 16 ? 16 : cameraCount <= 32 ? 32 : 64;
+        return {
+          channels: nvrChannels,
+          name: `Hikvision ${nvrChannels}-Channel 4K NVR with ONVIF Wi-Fi Camera Integration`,
+          model: nvrChannels <= 8 ? 'DS-7608NI-Q1' : nvrChannels <= 16 ? 'DS-7616NI-K2' : 'DS-7732NI-M4',
+          sku: `HIK-NVR-${nvrChannels}CH-WIFI-INT`,
+          unitPrice: nvrChannels <= 8 ? 11500 : nvrChannels <= 16 ? 18500 : null,
+          brand: 'Hikvision',
+          isCustomModel: false,
+          isMultiRecorder: false,
+          isUnderCapacity: cameraCount > nvrChannels,
+          underCapacityReason: cameraCount > nvrChannels ? `Selected NVR supports ${nvrChannels} channels (${cameraCount - nvrChannels} channels short).` : undefined,
+          sataBays: nvrChannels <= 8 ? 1 : nvrChannels <= 16 ? 2 : 4,
+          analogueBncChannels: 0,
+          hybridIpInputs: nvrChannels,
+          maxResolution: '8MP 4K Ultra HD',
+          compression: 'H.265+ Smart Codec',
+          isWirelessEdge: false,
+          wirelessDutyCycleNote: 'Third-party NVR recording for Wi-Fi cameras requires ONVIF Profile S and dedicated wireless AP throughput assessment. High-density Wi-Fi networks must segregate surveillance SSIDs.'
+        };
+      }
+
+      // Default wireless NVR ecosystem (EZVIZ / Imou supported up to 18 channels)
+      let neededChannels = 8;
+      let model = 'CS-X5S-8W';
+      let sku = 'EZV-NVR-8CH';
+      let name = 'EZVIZ 8-Channel Wireless Smart NVR';
+      let unitPrice: number | null = 9500;
+      let isUnderCap = false;
+      let underCapReason: string | undefined = undefined;
+
+      if (cameraCount <= 4) {
+        neededChannels = 4;
+        model = 'CS-X5S-4W';
+        sku = 'EZV-NVR-4CH';
+        name = 'EZVIZ 4-Channel Wireless Smart NVR';
+        unitPrice = 6500;
+      } else if (cameraCount <= 8) {
+        neededChannels = 8;
+        model = 'CS-X5S-8W';
+        sku = 'EZV-NVR-8CH';
+        name = 'EZVIZ 8-Channel Wireless Smart NVR';
+        unitPrice = 9500;
+      } else if (cameraCount <= 18) {
+        neededChannels = 18;
+        model = 'CS-X5S-18W';
+        sku = 'EZV-NVR-18CH';
+        name = 'EZVIZ 18-Channel Supported Wireless Smart NVR';
+        unitPrice = 14500;
+      } else {
+        neededChannels = 18;
+        model = 'CS-X5S-18W';
+        sku = 'EZV-NVR-18CH';
+        name = 'EZVIZ 18-Channel Wireless Smart NVR (Under-Capacity)';
+        unitPrice = 14500;
+        isUnderCap = true;
+        underCapReason = `Ecosystem limitation: Supported wireless NVRs (such as EZVIZ/Imou) have a maximum verified limit of 18 camera channels. For your ${cameraCount} cameras, choose Standalone Edge MicroSD storage (no NVR limit), a compatible Hikvision/Dahua 32-ch/64-ch recorder with ONVIF, or request an official technical engineering quotation.`;
+      }
 
       return {
         channels: neededChannels,
-        name: foundInCatalog ? foundInCatalog.name : (neededChannels <= 4 ? 'EZVIZ 4-Channel Wireless Smart NVR' : 'EZVIZ 8-Channel Wireless Smart NVR'),
-        model: foundInCatalog?.modelNumber || (neededChannels <= 4 ? 'CS-X5S-4W' : 'CS-X5S-8W'),
-        sku: foundInCatalog?.sku || (neededChannels <= 4 ? 'EZV-NVR-4CH' : 'EZV-NVR-8CH'),
-        unitPrice: foundInCatalog ? (getProductPrice(foundInCatalog) ?? 6500) : (neededChannels <= 4 ? 6500 : 9500),
+        name,
+        model,
+        sku,
+        unitPrice,
         brand: 'EZVIZ',
         isCustomModel: false,
-        isMultiRecorder: cameraCount > 8,
-        isUnderCapacity: false,
+        isMultiRecorder: false,
+        isUnderCapacity: isUnderCap,
+        underCapacityReason: underCapReason,
         sataBays: 1,
         analogueBncChannels: 0,
         hybridIpInputs: neededChannels,
@@ -986,6 +1084,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         isWirelessEdge: false
       };
     }
+
 
     // 3. IP Network (PoE)
     if (systemArch === 'ip') {
@@ -1400,11 +1499,16 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
 
     if (cameraCategory === 'ip_poe') {
       if (nightVision === 'colorvu') {
+        const is2Way = requiresTwoWayAudio;
         return {
-          name: `Hikvision 4MP ColorVu PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera`,
-          model: formFactor === 'dome' ? 'DS-2CD2147G2-SU' : 'DS-2CD2047G2-LU',
-          sku: 'HIK-IP-COLORVU-4MP',
-          unitPrice: 9200,
+          name: is2Way
+            ? `Hikvision 4MP ColorVu Live Guard PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera (Two-Way Audio)`
+            : `Hikvision 4MP ColorVu PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera`,
+          model: is2Way
+            ? (formFactor === 'dome' ? 'DS-2CD2147G2-SU' : formFactor === 'turret' ? 'DS-2CD2347G2-LSU/SL' : 'DS-2CD2T47G2-LSU/SL')
+            : (formFactor === 'dome' ? 'DS-2CD2147G2-SU' : 'DS-2CD2047G2-LU'),
+          sku: is2Way ? 'HIK-IP-COLORVU-2WAY-4MP' : 'HIK-IP-COLORVU-4MP',
+          unitPrice: is2Way ? 10500 : 9200,
           brand: 'Hikvision',
           isSpecialist: false,
           isCustomOverride: false,
@@ -1412,22 +1516,30 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         };
       }
       if (nightVision === 'hybrid') {
+        const is2Way = requiresTwoWayAudio;
         return {
-          name: `Hikvision 4MP Smart Hybrid Light PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera`,
+          name: is2Way
+            ? `Hikvision 4MP Smart Hybrid Light Live Guard PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera (Two-Way Audio)`
+            : `Hikvision 4MP Smart Hybrid Light PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera`,
           model: formFactor === 'dome' ? 'DS-2CD2147G2-LU/SL' : 'DS-2CD2047G2-LU/SL',
-          sku: 'HIK-IP-HYBRID-4MP',
-          unitPrice: 9500,
+          sku: is2Way ? 'HIK-IP-HYBRID-2WAY-4MP' : 'HIK-IP-HYBRID-4MP',
+          unitPrice: is2Way ? 10200 : 9500,
           brand: 'Hikvision',
           isSpecialist: false,
           isCustomOverride: false,
           warrantyMonths: 24
         };
       }
+      const is2Way = requiresTwoWayAudio;
       return {
-        name: `Hikvision 4MP EXIR PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera`,
-        model: formFactor === 'dome' ? 'DS-2CD1143G0-I' : 'DS-2CD1043G0-I',
-        sku: 'HIK-IP-EXIR-4MP',
-        unitPrice: 7200,
+        name: is2Way
+          ? `Hikvision 4MP EXIR PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera with Two-Way Audio Interface`
+          : `Hikvision 4MP EXIR PoE ${formFactor === 'dome' ? 'Dome' : formFactor === 'turret' ? 'Turret' : 'Bullet'} Camera`,
+        model: is2Way
+          ? (formFactor === 'dome' ? 'DS-2CD2143G2-IS' : formFactor === 'turret' ? 'DS-2CD2343G2-2WAY' : 'DS-2CD2043G2-IU')
+          : (formFactor === 'dome' ? 'DS-2CD1143G0-I' : 'DS-2CD1043G0-I'),
+        sku: is2Way ? 'HIK-IP-EXIR-2WAY-4MP' : 'HIK-IP-EXIR-4MP',
+        unitPrice: is2Way ? 8200 : 7200,
         brand: 'Hikvision',
         isSpecialist: false,
         isCustomOverride: false,
@@ -1549,6 +1661,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     cameraCategory,
     nightVision,
     formFactor,
+    requiresTwoWayAudio,
     specialistCapability,
     specialistSubcategory,
     selectedCameraProduct,
@@ -1616,6 +1729,21 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         unitPrice: 6900,
         lineTotal: 6900,
         warrantyMonths: 36,
+        drivesRequired: 1,
+        isCompatible: recorderSpec.sataBays >= 1
+      };
+    }
+
+    if (storageOption === 'barracuda_2tb') {
+      return {
+        name: 'Seagate BarraCuda 2TB 3.5" Internal Hard Drive (Desktop Duty Grade)',
+        model: 'ST2000DM008',
+        sku: 'prod-st-barracuda-2tb',
+        brand: 'Seagate',
+        qty: 1,
+        unitPrice: 5800,
+        lineTotal: 5800,
+        warrantyMonths: 24,
         drivesRequired: 1,
         isCompatible: recorderSpec.sataBays >= 1
       };
@@ -1717,6 +1845,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         case '500gb': usableGb = 450; break;
         case '1tb': usableGb = 900; break;
         case '2tb': usableGb = 1800; break;
+        case 'barracuda_2tb': usableGb = 1800; break;
         case '4tb': usableGb = 3600; break;
         case 'dual_2tb': usableGb = 3600; break;
         case 'dual_4tb': usableGb = 7200; break;
@@ -1725,15 +1854,22 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       }
     }
 
+    // Codec compatibility verification: fall back to H.264 when H.265+ unsupported by camera or recorder
+    const recCompression = (recorderSpec.compression || '').toLowerCase();
+    const camCompression = (cameraSpec.model || '').toLowerCase();
+    const isH265Supported = !camCompression.includes('legacy') && (recCompression.includes('h.265') || recCompression.includes('smart') || recCompression.includes('pro+') || recCompression.length === 0);
+    const activeCodec = isH265Supported ? 'H.265+ Smart Codec' : 'H.264 Baseline';
+    const effectiveBitrateKbps = isH265Supported ? bitrateKbps : Math.round(bitrateKbps * 1.8);
+
     const recordingHours = recordingMode === 'continuous' ? 24 : 12;
-    const gbPerCamPerDay = (bitrateKbps * 3600 * recordingHours) / (8 * 1024 * 1024);
+    const gbPerCamPerDay = (effectiveBitrateKbps * 3600 * recordingHours) / (8 * 1024 * 1024);
 
     if (systemArch === 'wireless') {
       const rawDays = usableGb / (gbPerCamPerDay || 0.001);
       const est = Math.max(1, Math.round(rawDays));
       return {
         resolutionLabel,
-        bitrateKbps,
+        bitrateKbps: effectiveBitrateKbps,
         recordingHours,
         gbPerCamPerDay: Number(gbPerCamPerDay.toFixed(2)),
         totalDailyGb: Number((gbPerCamPerDay * cameraCount).toFixed(2)),
@@ -1741,7 +1877,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         estDays: est,
         minDays: Math.max(1, Math.floor(est * 0.85)),
         maxDays: Math.ceil(est * 1.15),
-        codec: 'H.265+ Smart Codec',
+        codec: activeCodec,
         disclaimer: `Based on 128GB High-Endurance MicroSD per camera at ${recordingHours} hrs/day (${recordingMode === 'continuous' ? '24/7 continuous' : 'smart motion'}), 90% formatted storage.`
       };
     }
@@ -1752,7 +1888,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
 
     return {
       resolutionLabel,
-      bitrateKbps,
+      bitrateKbps: effectiveBitrateKbps,
       recordingHours,
       gbPerCamPerDay: Number(gbPerCamPerDay.toFixed(2)),
       totalDailyGb: Number(totalDailyGb.toFixed(2)),
@@ -1760,10 +1896,10 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       estDays: est,
       minDays: Math.max(1, Math.floor(est * 0.85)),
       maxDays: Math.ceil(est * 1.15),
-      codec: 'H.265+ Smart Codec',
-      disclaimer: `Calculated for ${cameraCount} cameras at ${resolutionLabel} using H.265+ at 15–20 fps, ${recordingHours} hrs/day (${recordingMode === 'continuous' ? '24/7 continuous' : 'smart motion'}), and 90% formatted HDD space. Actual retention varies with motion frequency, scene complexity, and ambient lighting. Estimates are engineering guidelines, not manufacturer warranties.`
+      codec: activeCodec,
+      disclaimer: `Calculated for ${cameraCount} cameras at ${resolutionLabel} using ${activeCodec} at 15–20 fps, ${recordingHours} hrs/day (${recordingMode === 'continuous' ? '24/7 continuous' : 'smart motion'}), and 90% formatted HDD space. Actual retention varies with motion frequency, scene complexity, and ambient lighting. Estimates are engineering guidelines, not manufacturer warranties.`
     };
-  }, [cameraSpec, cameraCount, storageOption, systemArch, recordingMode]);
+  }, [cameraSpec, cameraCount, storageOption, systemArch, recordingMode, recorderSpec.compression]);
 
   // Strict Cable Allocation: 10m per camera default, editable by customer
   const defaultCableMeters = cameraCount * 10;
@@ -1996,18 +2132,62 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         warrantyMonths: 12
       };
     }
-    if (monitorOption === 'large') {
+    if (monitorOption === '24inch' || monitorOption === 'large') {
       return {
-        name: '24-Inch Professional CCTV Security Display Wall Console',
+        name: '24-Inch Full HD 75Hz Professional CCTV Security Display Monitor',
         model: 'MON-SURV-24FHD',
         sku: 'MON-24INCH-SURV',
         qty: 1,
-        unitPrice: null,
+        unitPrice: null, // Quote item per catalog
+        warrantyMonths: 12
+      };
+    }
+    if (monitorOption === '32inch') {
+      return {
+        name: '32-Inch Commercial Ultra HD CCTV Security Wall Display',
+        model: 'MON-SURV-32UHD',
+        sku: 'MON-32INCH-SURV',
+        qty: 1,
+        unitPrice: null, // Quote item per catalog
         warrantyMonths: 12
       };
     }
     return null;
   }, [monitorOption]);
+
+  // Optional Wall Mount Bracket Spec
+  const wallMountSpec = useMemo(() => {
+    if (monitorOption === 'none' || wallMountOption === 'none') return null;
+    if (wallMountOption === 'standard_vesa') {
+      return {
+        role: 'Display Wall Mount',
+        name: 'Universal Full-Motion Articulating VESA Monitor Wall Mount Bracket (17"-32")',
+        model: 'BRK-VESA-ART-100',
+        sku: 'ACC-VESA-BRACKET',
+        qty: 1,
+        unitPrice: 1200,
+        lineTotal: 1200,
+        warrantyMonths: 12,
+        warrantyText: '1 Year Warranty',
+        specs: '100x100 / 75x75 VESA Compatible · 180° Swivel · ±15° Tilt · Solid Steel'
+      };
+    }
+    if (wallMountOption === 'heavy_duty_tilt') {
+      return {
+        role: 'Display Wall Mount',
+        name: 'Heavy-Duty Security Control-Room Tilt Wall Mount Bracket (Up to 43")',
+        model: 'BRK-VESA-HD-TILT',
+        sku: 'ACC-VESA-HD-TILT',
+        qty: 1,
+        unitPrice: 1800,
+        lineTotal: 1800,
+        warrantyMonths: 12,
+        warrantyText: '1 Year Warranty',
+        specs: 'Heavy-Gauge Cold Rolled Steel · Security Lock Mechanism · Up to 35kg capacity'
+      };
+    }
+    return null;
+  }, [monitorOption, wallMountOption]);
 
   // Compute Complete Bill of Materials (BOM)
   const computedBOM: BomItem[] = useMemo(() => {
@@ -2052,8 +2232,8 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         unitPrice: storageSpec.unitPrice,
         lineTotal: storageSpec.lineTotal,
         warrantyMonths: storageSpec.warrantyMonths || 36,
-        warrantyText: '3 Years Replacement Warranty',
-        specs: `${storageSpec.brand} 3.5" Surveillance Hard Drive · 24/7 Continuous Recording Duty · ${storageSpec.drivesRequired} Unit${storageSpec.drivesRequired > 1 ? 's in Array' : ''}`
+        warrantyText: storageSpec.warrantyMonths === 24 ? '2 Years Warranty' : '3 Years Replacement Warranty',
+        specs: `${storageSpec.brand} 3.5" Hard Drive · ${storageSpec.drivesRequired} Unit${storageSpec.drivesRequired > 1 ? 's in Array' : ''}`
       });
     }
 
@@ -2178,6 +2358,22 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
       });
     }
 
+    // 9. Optional Wall Mount
+    if (wallMountSpec) {
+      list.push({
+        role: wallMountSpec.role,
+        name: wallMountSpec.name,
+        model: wallMountSpec.model,
+        sku: wallMountSpec.sku,
+        qty: wallMountSpec.qty,
+        unitPrice: wallMountSpec.unitPrice,
+        lineTotal: wallMountSpec.lineTotal,
+        warrantyMonths: wallMountSpec.warrantyMonths,
+        warrantyText: wallMountSpec.warrantyText,
+        specs: wallMountSpec.specs
+      });
+    }
+
     return list;
   }, [
     cameraSpec,
@@ -2190,6 +2386,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     powerSpec,
     junctionBoxSpec,
     monitorSpec,
+    wallMountSpec,
     formFactor,
     nightVision,
     hasBuiltinAudio
@@ -2391,6 +2588,10 @@ Calculated Hardware Estimate: ${totalPrice !== null ? `৳${totalPrice.toLocaleS
 Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
 
     try {
+      const formattedSiteAddress = quoteFormData.siteAddress.trim()
+        ? `${quoteFormData.siteAddress.trim()}, ${selectedThana}, ${selectedDistrict}`
+        : `${selectedThana}, ${selectedDistrict}, Bangladesh`;
+
       const payload: any = {
         customerName: name,
         phone: cleanPhone,
@@ -2398,9 +2599,11 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
         whatsapp: quoteFormData.whatsapp.trim() || undefined,
         serviceType: 'cctv_installation',
         propertyType: cameraCount <= 4 ? 'home' : cameraCount <= 16 ? 'office' : 'factory',
-        siteAddress: quoteFormData.siteAddress.trim() || 'Dhaka, Bangladesh',
+        siteAddress: formattedSiteAddress,
         cameraCount: cameraCount,
         companyName: quoteFormData.companyName.trim() || undefined,
+        district: selectedDistrict,
+        thana: selectedThana,
         notes: notesContent,
         quotationAmount: totalPrice || undefined
       };
@@ -2514,68 +2717,46 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
     }
   };
 
-  // Download BOM as clean formatted technical text file
-  const handleDownloadBOM = () => {
+  // Download BOM with official CamneX letterhead template, logo, and 7-day validity
+  const handleDownloadBOM = (format: 'pdf' | 'docx' | 'txt' = 'pdf') => {
+    let exportData: BomExportData | null = null;
     try {
-      const lines = [
-        '================================================================================',
-        'CAMNEX BANGLADESH — OFFICIAL TECHNICAL BILL OF MATERIALS (BOM)',
-        'Certified Security Systems Integrator & Authorized Hikvision Partner',
-        'Corporate Office: Dhaka, Bangladesh | Hotline: +880 1317-251000 | Web: https://camnexbd.com',
-        '================================================================================',
-        `Reference Number   : Ref: BOM-NX-${cameraCount}C-${systemArch.toUpperCase()}`,
-        `Date of Issue      : ${bomDates.issueDate}`,
-        `BOM Validity       : 7 Calendar Days (Valid Until: ${bomDates.validUntilDate})`,
-        `System Architecture: ${systemArch === 'ip' ? 'IP Network (PoE Digital)' : systemArch === 'wireless' ? 'Wi-Fi Smart Wireless' : 'Analogue Turbo HD'}`,
-        `Camera Quantity    : ${cameraCount} Cameras (${formFactor.toUpperCase()})`,
-        `Night Vision Mode  : ${nightVision === 'ir' ? 'Pure Infrared (IR)' : nightVision === 'hybrid' ? 'Smart Hybrid Light' : 'Full Color (ColorVu)'}`,
-        `Recording Storage  : ${storageOption.toUpperCase()} Surveillance Grade HDD`,
-        '--------------------------------------------------------------------------------',
-        'ITEMIZED HARDWARE BREAKDOWN:',
-        '--------------------------------------------------------------------------------'
-      ];
+      exportData = {
+        referenceNumber: `Ref: BOM-NX-${cameraCount}C-${systemArch.toUpperCase()}`,
+        issueDate: bomDates.issueDate,
+        validUntilDate: bomDates.validUntilDate,
+        systemArch: systemArch === 'ip' ? 'IP Network (PoE Digital)' : systemArch === 'wireless' ? 'Wi-Fi Smart Wireless' : 'Analogue Turbo HD',
+        cameraCount,
+        cameraCategory: cameraCategory ? cameraCategory.replace(/_/g, ' ').toUpperCase() : formFactor.toUpperCase(),
+        formFactor: formFactor.toUpperCase(),
+        nightVision: nightVision === 'ir' ? 'Pure Infrared (IR)' : nightVision === 'hybrid' ? 'Smart Hybrid Light' : 'Full Color (ColorVu)',
+        storageOption: storageOption.toUpperCase(),
+        cableLengthMeters,
+        totalPrice,
+        pricedSubtotal,
+        unpricedCount,
+        quotationReason: quotationReason || undefined,
+        items: computedBOM
+      };
 
-      computedBOM.forEach((item, idx) => {
-        const priceStr = item.lineTotal !== null ? `৳${item.lineTotal.toLocaleString()} BDT` : 'Quotation Required';
-        const unitStr = item.unitPrice !== null ? `(@ ৳${item.unitPrice.toLocaleString()}/ea)` : '(Price on quotation)';
-        lines.push(`${idx + 1}. [${item.role}] ${item.name}`);
-        lines.push(`   Model: ${item.model} | SKU: ${item.sku}`);
-        lines.push(`   Quantity: ${item.qty} ${unitStr} -> Line Total: ${priceStr}`);
-        if (item.specs) lines.push(`   Specs: ${item.specs}`);
-        if (item.warrantyText) lines.push(`   Warranty: ${item.warrantyText}`);
-        lines.push('');
-      });
-
-      lines.push('--------------------------------------------------------------------------------');
-      if (totalPrice !== null) {
-        lines.push(`CONFIRMED HARDWARE EQUIPMENT TOTAL: ৳${totalPrice.toLocaleString()} BDT`);
-      } else {
-        lines.push(`INDICATIVE HARDWARE SUBTOTAL (PRICED ITEMS): ৳${pricedSubtotal.toLocaleString()} BDT`);
-        lines.push(`FINAL PACKAGE TOTAL: Official Engineering Quotation Required (${quotationReason || 'Custom Configuration'})`);
-      }
-      lines.push('--------------------------------------------------------------------------------');
-      lines.push('COMMERCIAL TERMS, WARRANTY & SERVICE DISCLAIMERS:');
-      lines.push('1. BOM Validity: This bill of materials is held valid for 7 calendar days from the issue date.');
-      lines.push('2. Price Fluctuation: Equipment prices may vary depending on official distributor exchange rate and actual order placement date.');
-      lines.push('3. Service Charges: Installation, conduit piping, and engineering commissioning charges are excluded from the hardware total and will be quoted following on-site survey.');
-      lines.push('4. Warranty Schedule: Official Bangladesh distributor warranty applies to all eligible cameras (1-2 years), recorders (1-2 years), and surveillance hard drives (3 years).');
-      lines.push('5. Retention Estimates: Calculated storage retention periods are engineering estimates based on H.265+ smart compression and standard activity, not legal performance guarantees.');
-      lines.push('================================================================================');
-
-      const content = lines.join('\n');
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `CamneX-BOM-${cameraCount}Cam-${systemArch.toUpperCase()}-${Date.now()}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBomDocument(exportData, settings?.letterheadTemplate, format);
       setDownloadedBOM(true);
       setTimeout(() => setDownloadedBOM(false), 2500);
     } catch (err) {
-      console.error('Failed to download BOM:', err);
+      console.error('Failed to download BOM document:', err);
+      if (exportData) {
+        // Fallback text download
+        const content = generateBomText(exportData);
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `CamneX-BOM-${cameraCount}Cam-${systemArch.toUpperCase()}-${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     }
   };
 
@@ -2894,7 +3075,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                             Custom Camera Quantity
                           </div>
                           <p className="text-xs text-slate-600">
-                            Enter any quantity from 1 to {systemArch === 'wireless' ? '8 (Wi-Fi limit)' : '128 (Enterprise cluster)'}.
+                            Enter any quantity from 1 to {systemArch === 'wireless' ? (wirelessRecordingType === 'nvr' ? '18 (Wi-Fi NVR ecosystem limit)' : '64 (Standalone Edge)') : '128 (Enterprise cluster)'}.
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -2909,7 +3090,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                           <input
                             type="number"
                             min="1"
-                            max={systemArch === 'wireless' ? 8 : 128}
+                            max={systemArch === 'wireless' ? (wirelessRecordingType === 'nvr' ? 18 : 64) : 128}
                             value={customCountInput}
                             onChange={(e) => {
                               setCustomCountInput(e.target.value);
@@ -2923,7 +3104,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                           <button
                             type="button"
                             onClick={() => handleUpdateCameraCount(cameraCount + 1)}
-                            disabled={cameraCount >= (systemArch === 'wireless' ? 8 : 128)}
+                            disabled={cameraCount >= (systemArch === 'wireless' ? (wirelessRecordingType === 'nvr' ? 18 : 64) : 128)}
                             className="w-9 h-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 flex items-center justify-center font-bold text-slate-700 disabled:opacity-40 cursor-pointer"
                           >
                             <Plus className="w-4 h-4" />
@@ -3256,6 +3437,55 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                                   </div>
                                 )}
 
+                                {/* Audio & Active Capabilities Attribute Selector */}
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                                      Audio & Active Capabilities
+                                    </label>
+                                    <span className="text-[11px] text-slate-500">
+                                      Independent of physical housing
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setRequiresTwoWayAudio(false)}
+                                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                        !requiresTwoWayAudio
+                                          ? 'border-[#F15A24] bg-orange-50/50 text-[#111827] font-bold ring-1 ring-[#F15A24]'
+                                          : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div className="text-xs font-bold">Standard Audio Mic (1-Way)</div>
+                                        <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">Standard</span>
+                                      </div>
+                                      <div className="text-[10px] text-slate-500 mt-0.5 font-normal">
+                                        Integrated microphone records site ambient sound directly over coax or Cat6.
+                                      </div>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => setRequiresTwoWayAudio(true)}
+                                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                        requiresTwoWayAudio
+                                          ? 'border-[#F15A24] bg-orange-50/50 text-[#111827] font-bold ring-1 ring-[#F15A24]'
+                                          : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div className="text-xs font-bold">Two-Way Audio Talk (2-Way)</div>
+                                        <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">Live Talk</span>
+                                      </div>
+                                      <div className="text-[10px] text-slate-500 mt-0.5 font-normal">
+                                        Built-in microphone & speaker for interactive 2-way talkback via mobile app.
+                                      </div>
+                                    </button>
+                                  </div>
+                                </div>
+
                                 {/* Selected Camera Model Showcase Card with Catalog Override Action */}
                                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -3471,6 +3701,91 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     <div className="text-[11px] font-semibold text-red-600">
                       * Direct checkout is disabled until a fully compatible recorder is selected or an official engineering quote is requested.
                     </div>
+                    {systemArch === 'wireless' && (
+                      <div className="pt-2 border-t border-red-200 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setWirelessRecordingType('standalone_sd')}
+                          className="px-2.5 py-1 rounded bg-white border border-red-300 text-xs font-bold text-red-800 hover:bg-red-100 cursor-pointer"
+                        >
+                          Option 1: Switch to Standalone MicroSD (No Limit)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setWirelessRecordingType('third_party_nvr')}
+                          className="px-2.5 py-1 rounded bg-white border border-red-300 text-xs font-bold text-red-800 hover:bg-red-100 cursor-pointer"
+                        >
+                          Option 2: Switch to Hikvision 32/64-Ch ONVIF NVR
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowQuoteModal(true)}
+                          className="px-2.5 py-1 rounded bg-red-800 text-white text-xs font-bold hover:bg-red-900 cursor-pointer"
+                        >
+                          Option 3: Request Technical Engineering Quote
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Wireless Architecture Recording Options Selector */}
+                {systemArch === 'wireless' && (
+                  <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="font-heading font-bold text-xs uppercase tracking-wider text-purple-900">
+                        Wireless Recording Architecture
+                      </div>
+                      <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                        {wirelessRecordingType === 'nvr' ? 'Dedicated Wireless NVR' : wirelessRecordingType === 'standalone_sd' ? 'Standalone MicroSD' : 'Third-Party NVR'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setWirelessRecordingType('nvr')}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          wirelessRecordingType === 'nvr'
+                            ? 'border-[#F15A24] bg-white ring-2 ring-[#F15A24] text-slate-900 shadow-sm'
+                            : 'border-purple-200 bg-white/70 text-slate-700 hover:bg-white'
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-slate-900">1. Supported Wireless NVR</div>
+                        <div className="text-[10px] text-slate-500 mt-1">
+                          Dedicated Wi-Fi base station NVR with centralized hard drive (up to 18 channels verified ecosystem limit).
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setWirelessRecordingType('standalone_sd')}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          wirelessRecordingType === 'standalone_sd'
+                            ? 'border-[#F15A24] bg-white ring-2 ring-[#F15A24] text-slate-900 shadow-sm'
+                            : 'border-purple-200 bg-white/70 text-slate-700 hover:bg-white'
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-slate-900">2. Standalone Edge MicroSD</div>
+                        <div className="text-[10px] text-slate-500 mt-1">
+                          Cameras record directly to local 128GB High-Endurance MicroSD. Direct cloud/app gateway without NVR channel limits.
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setWirelessRecordingType('third_party_nvr')}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          wirelessRecordingType === 'third_party_nvr'
+                            ? 'border-[#F15A24] bg-white ring-2 ring-[#F15A24] text-slate-900 shadow-sm'
+                            : 'border-purple-200 bg-white/70 text-slate-700 hover:bg-white'
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-slate-900">3. Hikvision/Dahua ONVIF NVR</div>
+                        <div className="text-[10px] text-slate-500 mt-1">
+                          High-channel 4K NVR (16, 32, 64-ch) integrating ONVIF wireless streams via site Wi-Fi / AP network.
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -3632,6 +3947,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                           { key: '500gb', size: '500 GB', bays: 1, price: '৳1,800' },
                           { key: '1tb', size: '1 TB', bays: 1, price: '৳4,800' },
                           { key: '2tb', size: '2 TB', bays: 1, price: '৳6,900' },
+                          { key: 'barracuda_2tb', size: '2 TB (Desktop)', bays: 1, price: '৳5,800' },
                           { key: '4tb', size: '4 TB', bays: 1, price: '৳11,200' },
                           { key: 'dual_2tb', size: 'Dual 2 TB (4TB Array)', bays: 2, price: '৳13,800' },
                           { key: 'dual_4tb', size: 'Dual 4 TB (8TB Array)', bays: 2, price: '৳22,400' },
@@ -3672,6 +3988,12 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                           );
                         })}
                       </div>
+
+                      {storageOption === 'barracuda_2tb' && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 leading-relaxed">
+                          ℹ️ <strong>Desktop Duty Rating:</strong> Seagate BarraCuda is engineered for general PC desktop computing (8x5 duty cycle). For 24/7 continuous surveillance recording, WD Purple or Seagate SkyHawk surveillance-grade drives are recommended.
+                        </div>
+                      )}
 
                       {isStorageDriveBayIncompatible && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 flex items-start gap-2" data-testid="bay-incompatible-warning">
@@ -4117,11 +4439,11 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     <button
                       type="button"
                       onClick={() => setMonitorOption('none')}
-                      className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                         monitorOption === 'none'
                           ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
                           : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
@@ -4129,7 +4451,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     >
                       <div className="font-heading text-sm">No Monitor Included</div>
                       <div className="text-xs text-slate-500 font-normal mt-0.5">
-                        Use smartphone app, PC browser, or existing TV / computer monitor.
+                        Use smartphone app, PC browser, or existing TV / monitor.
                       </div>
                       <div className="text-xs font-bold text-emerald-600 mt-2">৳0 (Included)</div>
                     </button>
@@ -4137,7 +4459,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     <button
                       type="button"
                       onClick={() => setMonitorOption('17inch')}
-                      className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                         monitorOption === '17inch'
                           ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
                           : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
@@ -4145,7 +4467,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     >
                       <div className="font-heading text-sm">17-Inch HD Monitor</div>
                       <div className="text-xs text-slate-500 font-normal mt-0.5">
-                        Compact security desk display. Standard default for 2 to 4 camera ready-made packages.
+                        Compact security desk display. Standard default for 2–4 cams.
                       </div>
                       <div className="text-xs font-bold text-amber-700 mt-2">Ask for price</div>
                     </button>
@@ -4153,7 +4475,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     <button
                       type="button"
                       onClick={() => setMonitorOption('19inch')}
-                      className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                         monitorOption === '19inch'
                           ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
                           : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
@@ -4161,11 +4483,100 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     >
                       <div className="font-heading text-sm">19-Inch LED Monitor</div>
                       <div className="text-xs text-slate-500 font-normal mt-0.5">
-                        Surveillance monitor with wide viewing angles. Standard default for 8 to 16 camera packages.
+                        Surveillance monitor with wide viewing. Standard default for 8–16 cams.
+                      </div>
+                      <div className="text-xs font-bold text-amber-700 mt-2">Ask for price</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMonitorOption('24inch')}
+                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        monitorOption === '24inch'
+                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
+                          : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="font-heading text-sm">24-Inch FHD Display</div>
+                      <div className="text-xs text-slate-500 font-normal mt-0.5">
+                        Professional high-clarity 1080p display for multi-camera grids.
+                      </div>
+                      <div className="text-xs font-bold text-amber-700 mt-2">Ask for price</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMonitorOption('32inch')}
+                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        monitorOption === '32inch'
+                          ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
+                          : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="font-heading text-sm">32-Inch 4K Commercial</div>
+                      <div className="text-xs text-slate-500 font-normal mt-0.5">
+                        Control-room grade large wall display for high-density viewing.
                       </div>
                       <div className="text-xs font-bold text-amber-700 mt-2">Ask for price</div>
                     </button>
                   </div>
+
+                  {/* Optional Monitor Wall Mount Selector */}
+                  {monitorOption !== 'none' && (
+                    <div className="pt-2 border-t border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                          Display Wall Mounting Bracket
+                        </label>
+                        <span className="text-[11px] text-slate-500">
+                          VESA compatible security mounts
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setWallMountOption('none')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            wallMountOption === 'none'
+                              ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
+                              : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">Standard Desk Stand</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">Uses monitor table-top pedestal stand (Included).</div>
+                          <div className="text-xs font-bold text-emerald-600 mt-1.5">৳0 (Included)</div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setWallMountOption('standard_vesa')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            wallMountOption === 'standard_vesa'
+                              ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
+                              : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">Full-Motion Articulating Arm</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">Swivel & tilt arm for flexible viewing angles.</div>
+                          <div className="text-xs font-bold text-[#F15A24] mt-1.5">+৳1,200</div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setWallMountOption('heavy_duty_tilt')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            wallMountOption === 'heavy_duty_tilt'
+                              ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] font-bold ring-1 ring-[#F15A24]'
+                              : 'border-[#EDE8E1] bg-white text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">Heavy-Duty Security Tilt Mount</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">Reinforced cold-rolled steel with security lock.</div>
+                          <div className="text-xs font-bold text-[#F15A24] mt-1.5">+৳1,800</div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -4199,7 +4610,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                     </button>
                     <button
                       type="button"
-                      onClick={handleDownloadBOM}
+                      onClick={() => handleDownloadBOM('pdf')}
                       className="px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-black text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
                     >
                       {downloadedBOM ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5 text-slate-300" />}
@@ -5391,6 +5802,89 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       </div>
                     </div>
 
+                    {/* Logged in saved addresses selector (if customer is authenticated) */}
+                    {isCustomerAuthenticated && currentCustomer?.addresses && currentCustomer.addresses.length > 0 && (
+                      <div className="space-y-1 text-xs">
+                        <label className="font-bold text-slate-700 flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-[#F15A24]" />
+                          <span>Select Saved Delivery / Site Address</span>
+                        </label>
+                        <select
+                          value={selectedSavedAddressId}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setSelectedSavedAddressId(val);
+                            if (val !== 'new') {
+                              const found = currentCustomer.addresses?.find((a: any) => a.id === val);
+                              if (found) {
+                                setSelectedDistrict(found.district || 'Dhaka');
+                                setSelectedThana(found.thana || 'Gulshan');
+                                setQuoteFormData(prev => ({
+                                  ...prev,
+                                  siteAddress: found.addressLine || (found as any).address || prev.siteAddress
+                                }));
+                              }
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                        >
+                          <option value="new">+ Enter New Site Address</option>
+                          {currentCustomer.addresses.map((addr: any) => (
+                            <option key={addr.id} value={addr.id}>
+                              {addr.label || addr.addressType || 'Saved Address'}: {addr.addressLine || addr.address}, {addr.thana || ''}, {addr.district || ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* District & Thana Selectors for Bangladesh */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="space-y-1">
+                        <label htmlFor="quote-district" className="font-bold text-slate-700 flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          <span>District *</span>
+                        </label>
+                        <select
+                          id="quote-district"
+                          value={selectedDistrict}
+                          onChange={(e) => {
+                            const newDist = e.target.value;
+                            setSelectedDistrict(newDist);
+                            const thanas = getThanasForDistrict(newDist);
+                            if (thanas && thanas.length > 0) {
+                              setSelectedThana(thanas[0]);
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                        >
+                          {BANGLADESH_DISTRICTS.map((d) => (
+                            <option key={d.district} value={d.district}>
+                              {d.district} ({d.division})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label htmlFor="quote-thana" className="font-bold text-slate-700 flex items-center gap-1">
+                          <span>Thana / Upazila *</span>
+                        </label>
+                        <select
+                          id="quote-thana"
+                          value={selectedThana}
+                          onChange={(e) => setSelectedThana(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F15A24]"
+                        >
+                          {getThanasForDistrict(selectedDistrict).map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="space-y-1">
                         <label htmlFor="quote-company-name" className="font-bold text-slate-700 flex items-center gap-1">
@@ -5410,7 +5904,7 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                       <div className="space-y-1">
                         <label htmlFor="quote-site-address" className="font-bold text-slate-700 flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 text-[#F15A24]" />
-                          <span>Installation Site Address</span>
+                          <span>Installation Street Address</span>
                         </label>
                         <input
                           id="quote-site-address"

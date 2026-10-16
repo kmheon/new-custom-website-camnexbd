@@ -240,8 +240,24 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   warrantyPolicyText: '',
   returnPolicyText: '',
   termsPolicyText: '',
-  privacyPolicyText: ''
+  privacyPolicyText: '',
+  letterheadTemplate: {
+    id: 'tmpl-camnex-default',
+    name: 'Official CamneX Bangladesh Letterhead',
+    isDefault: true,
+    companyName: 'CamneX Bangladesh',
+    tagline: 'Certified Security Systems Integrator & Authorized Hikvision Partner',
+    phone: '+880 1317-251000',
+    email: 'info@camnexbd.com',
+    website: 'https://camnexbd.com',
+    address: 'Block A, Chandrima Model Town, Main Rd, Dhaka 1207',
+    primaryColor: '#F15A24',
+    secondaryColor: '#111827',
+    validityDays: 7,
+    disclaimerText: 'All prices are in BDT and valid for 7 calendar days from issue date. Cable allocations are based on 10m/camera engineering standards. Site installation, conduit piping, and commissioning quoted separately.'
+  }
 };
+
 
 export const INITIAL_CTA_DATA = {
   eyebrow: 'Ready to get started',
