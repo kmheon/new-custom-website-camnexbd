@@ -423,7 +423,31 @@ async function runTests() {
     );
 
     // --- HEADER & FOOTER NAVIGATION + BROWSER HISTORY ---
-    console.log('\n8. Verifying Footer Links, Browser Back & Refresh');
+    console.log('\n8. Verifying Simplified Company Header Button, Footer Links & Browser History');
+
+    // 8a. Desktop direct Company button test
+    const desktopCompanyBtn = await evalJs(`(() => {
+      const btn = document.querySelector('[data-testid="nav-company-link"]');
+      const hasChevron = Boolean(btn?.querySelector('svg'));
+      const dropdownExists = Boolean(document.querySelector('[data-testid="nav-company-dropdown"]'));
+      return {
+        exists: Boolean(btn),
+        text: btn?.textContent?.trim() || '',
+        hasChevron,
+        dropdownExists
+      };
+    })()`);
+    assert(desktopCompanyBtn.exists, 'Desktop header has [data-testid="nav-company-link"] button');
+    assert(desktopCompanyBtn.text === 'Company', `Company button text is 'Company' (got '${desktopCompanyBtn.text}')`);
+    assert(!desktopCompanyBtn.hasChevron, 'Company navigation button does NOT contain a chevron icon');
+    assert(!desktopCompanyBtn.dropdownExists, 'Company navigation button does NOT render a dropdown menu');
+
+    // Click desktop Company button and verify direct navigation to /company-profile
+    await evalJs(`document.querySelector('[data-testid="nav-company-link"]').click()`);
+    await sleep(600);
+    assert((await evalJs(`window.location.pathname`)) === '/company-profile', 'Clicking desktop Company button navigates directly to /company-profile');
+
+    // 8b. Footer links verification
     const footerText = await evalJs(`document.querySelector('#site-footer')?.innerText || ''`);
     assert(
       footerText.includes('Company Profile') &&
@@ -437,7 +461,7 @@ async function runTests() {
     // Browser Back button
     await evalJs(`window.history.back()`);
     await sleep(800);
-    assert((await evalJs(`window.location.pathname`)) === '/company-profile', 'Browser Back button returns to previous Company route');
+    assert((await evalJs(`window.location.pathname`)) === '/contact', 'Browser Back button returns to previous route');
 
     // Navigate back to /contact and test Browser Refresh
     await send('Page.navigate', { url: `${BASE_URL}/contact` });
@@ -473,6 +497,26 @@ async function runTests() {
       assert(!overflow, `Zero horizontal overflow on /company-profile at ${vp.w}x${vp.h}`);
       if (vp.w === 390) {
         await saveScreenshot('company_profile_390x844.png');
+
+        // Test mobile menu direct Company button
+        await evalJs(`document.querySelector('[data-testid="mobile-menu-trigger"]')?.click()`);
+        await sleep(500);
+        const mobileCompany = await evalJs(`(() => {
+          const btn = document.querySelector('[data-testid="mobile-nav-company-link"]');
+          return {
+            exists: Boolean(btn),
+            text: btn?.textContent?.trim() || '',
+            hasChevron: Boolean(btn?.querySelector('svg'))
+          };
+        })()`);
+        assert(mobileCompany.exists, 'Mobile navigation menu includes direct Company button [data-testid="mobile-nav-company-link"]');
+        assert(mobileCompany.text === 'Company', `Mobile Company button text is 'Company' (got '${mobileCompany.text}')`);
+        assert(!mobileCompany.hasChevron, 'Mobile Company button does NOT contain chevron or accordion toggle');
+
+        // Click mobile Company button and ensure it navigates cleanly
+        await evalJs(`document.querySelector('[data-testid="mobile-nav-company-link"]')?.click()`);
+        await sleep(600);
+        assert((await evalJs(`window.location.pathname`)) === '/company-profile', 'Clicking mobile Company button navigates cleanly to /company-profile');
       }
     }
 

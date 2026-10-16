@@ -135,7 +135,7 @@ export default function App() {
         setCurrentRoute('testimonials');
       } else if (path === '/faq') {
         setCurrentRoute('faq');
-      } else if (path === '/contact') {
+      } else if (path === '/contact' || path === '/support') {
         setCurrentRoute('contact');
       } else if (path === '/certifications') {
         setCurrentRoute('certifications');

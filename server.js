@@ -5314,6 +5314,7 @@ function resolveRouteMetadata(reqPath) {
     '/why-choose-us': { title: 'Why Choose CamneX Bangladesh | CamneX Bangladesh', description: 'Discover why residential, commercial, and organizational customers choose CamneX Bangladesh for security, surveillance, networking, and IT solutions.' },
     '/certifications': { title: 'Certifications & Compliance | CamneX Bangladesh', description: 'Verified brand credentials including Hikvision Authorized Partner and ZKTeco Authorized Installer, warranty alignment, and operational compliance.' },
     '/contact': { title: 'Contact Us | CamneX Bangladesh', description: 'Contact CamneX Bangladesh at Chandrima Model Town, Dhaka 1207. Phone: +880 1540-535150, Email: contact@camnexbd.com.' },
+    '/support': { title: 'Contact & Technical Support | CamneX Bangladesh', description: 'Contact CamneX Bangladesh technical support and engineering desk.' },
     '/services': { title: 'Installation & IT Services | CamneX Bangladesh', description: 'CCTV installation, Wi-Fi 6 deployment, biometric attendance configuration and on-site maintenance in Dhaka.' },
     '/solutions': { title: 'Engineering Solutions & Services | CamneX Bangladesh', description: 'Professional security engineering, structured cabling, and IT infrastructure in Dhaka.' },
     '/quote': { title: 'Request Quotation & Site Survey | CamneX Bangladesh', description: 'Request a physical site survey and get a bill of materials in Dhaka.' },

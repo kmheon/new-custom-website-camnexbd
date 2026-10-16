@@ -78,11 +78,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   ];
 
   const supportLinks: FooterLinkItem[] = footerConfig?.customerSupport || [
-    { label: 'Track Order Status', route: 'tracking' },
-    { label: 'Warranty & Support Policy', route: 'warranty' },
-    { label: 'Ask for Price', route: 'quote' },
-    { label: 'Frequently Asked Questions', route: 'faq' },
-    { label: 'Contact Support Team', route: 'contact' }
+    { label: 'Warranty Policy', route: 'warranty' },
+    { label: 'Technical Support', route: 'contact' },
+    { label: 'FAQs', route: 'faq' },
+    { label: 'Track Order', route: 'tracking' },
+    { label: 'Privacy Policy', route: 'privacy' },
+    { label: 'Terms & Conditions', route: 'terms' },
+    { label: 'Refund Policy', route: 'refund' }
   ];
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -310,8 +312,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                     <button
                       key={idx}
                       type="button"
+                      data-testid={`footer-support-${link.route}`}
                       onClick={() => handleLinkClick(link)}
-                      className="block text-left w-full hover:text-white hover:translate-x-0.5 transition-all py-0.5"
+                      className="block text-left w-full hover:text-white hover:translate-x-0.5 transition-all py-0.5 cursor-pointer"
                     >
                       {link.label}
                     </button>
@@ -342,24 +345,27 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <div className="flex flex-wrap items-center gap-5 sm:gap-6">
               <button
                 type="button"
+                data-testid="footer-legal-privacy"
                 onClick={() => onNavigate('privacy')}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors cursor-pointer"
               >
                 Privacy Policy
               </button>
               <button
                 type="button"
+                data-testid="footer-legal-terms"
                 onClick={() => onNavigate('terms')}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors cursor-pointer"
               >
-                Terms of Service
+                Terms & Conditions
               </button>
               <button
                 type="button"
+                data-testid="footer-legal-refund"
                 onClick={() => onNavigate('refund')}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors cursor-pointer"
               >
-                Refund & Return Policy
+                Refund Policy
               </button>
             </div>
           </div>
