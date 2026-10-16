@@ -17,6 +17,7 @@ const DEFAULT_FOUNDERS = [
     id: 'founder-heon-khondokar',
     roleType: 'founder',
     name: 'Heon Khondokar',
+    officialName: 'MD. Eyaheya Khondoker',
     role: 'Founder & Engineer, CamneX Bangladesh',
     bio: 'Heon Khondokar leads technical delivery at CamneX Bangladesh, bringing practical engineering experience across IT support, networking, CCTV deployment, IT infrastructure, and system troubleshooting. He works directly with residential, commercial, and organizational clients to plan, configure, and support reliable security, networking, and IT solutions.',
     expertise: [
@@ -27,8 +28,8 @@ const DEFAULT_FOUNDERS = [
       'Troubleshooting'
     ],
     responsibilities: 'Managing technical delivery and helping customers implement security, networking, and IT solutions.',
-    photoUrl: '',
-    photoPlaceholderNote: 'Profile photograph to be supplied via Website Manager',
+    photoUrl: '/images/founders/heon-khondokar.jpg',
+    photoPlaceholderNote: null,
     order: 1,
     socialLinks: {
       linkedin: '',
@@ -37,50 +38,149 @@ const DEFAULT_FOUNDERS = [
     },
     isVerified: true,
     awaitingConfirmation: false,
-    missingFields: ['Profile Photograph']
+    missingFields: []
   },
   {
-    id: 'cofounder-camnex',
+    id: 'cofounder-ti-rafi',
     roleType: 'cofounder',
-    name: '',
+    name: 'TI Rafi',
     role: 'Co-Founder, CamneX Bangladesh',
-    bio: '',
-    expertise: [],
-    responsibilities: '',
+    bio: 'TI Rafi serves as Co-Founder of CamneX Bangladesh, overseeing business planning, accounts and finance administration, corporate coordination, and business operations to maintain structured service delivery and operational continuity.',
+    expertise: [
+      'Business Planning',
+      'Accounts & Finance Administration',
+      'Corporate Coordination',
+      'Business Operations'
+    ],
+    responsibilities: 'Business planning, accounts and finance administration, corporate coordination, and business operations.',
     photoUrl: '',
-    photoPlaceholderNote: 'Co-Founder portrait to be supplied via Website Manager',
+    photoPlaceholderNote: 'Co-Founder portrait pending photography upload in Website Manager',
     order: 2,
     socialLinks: {
       linkedin: '',
       facebook: '',
-      email: ''
+      email: 'contact@camnexbd.com'
     },
-    isVerified: false,
-    awaitingConfirmation: true,
-    missingFields: ['Full Name', 'Role Title', 'Biography', 'Profile Photograph']
+    isVerified: true,
+    awaitingConfirmation: false,
+    missingFields: ['Profile Photograph']
   }
 ];
 
 const DEFAULT_CERTIFICATIONS = [
+  // 6 Individual Professional Engineering Certifications (Held by MD. Eyaheya Khondoker)
+  {
+    id: 'cert-hik-cgsa-cctv',
+    type: 'individual',
+    title: 'CGSA-CCTV',
+    fullTitle: 'Certified General Security Associate - CCTV',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'CGSA-022026-0880-04-2097',
+    validUntil: 'February 2031',
+    status: 'Verified Professional Credential',
+    description: 'Certified General Security Associate for CCTV video surveillance engineering, system installation, and configuration.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-cgsa-cctv.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-cgsa-ac',
+    type: 'individual',
+    title: 'CGSA-Access Control',
+    fullTitle: 'Certified General Security Associate - Access Control',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'CGSA-032026-0880-04-1434',
+    validUntil: 'March 2031',
+    status: 'Verified Professional Credential',
+    description: 'Certified General Security Associate for access control, biometric verification, and terminal deployment.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-cgsa-access-control.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-cgsp-cctv',
+    type: 'individual',
+    title: 'CGSP-CCTV',
+    fullTitle: 'Certified General Security Professional - CCTV',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'CGSP-022026-0880-04-1118',
+    validUntil: 'February 2031',
+    status: 'Verified Professional Credential',
+    description: 'Certified General Security Professional for advanced CCTV system design, commissioning, and operational troubleshooting.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-cgsp-cctv.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-hcsa-cctv',
+    type: 'individual',
+    title: 'HCSA-CCTV',
+    fullTitle: 'Hikvision Certified Security Associate - CCTV',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'HCSA-012026-BD-04-2014',
+    validUntil: 'January 2030',
+    status: 'Verified Professional Credential',
+    description: 'Hikvision Certified Security Associate for camera selection, IP networking, NVR setup, and remote view architecture.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-hcsa-cctv.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-hcsa-hnet',
+    type: 'individual',
+    title: 'HCSA-HNET',
+    fullTitle: 'Hikvision Certified Security Associate - Hikvision Network (HNET)',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'HCSA-012026-0880-04-2515',
+    validUntil: 'January 2028',
+    status: 'Verified Professional Credential',
+    description: 'Hikvision Certified Security Associate for security network topology, VLAN configuration, bandwidth planning, and PoE distribution.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-hcsa-hnet.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-hcsa-maint',
+    type: 'individual',
+    title: 'HCSA-Maintenance',
+    fullTitle: 'Hikvision Certified Security Associate - Maintenance',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'HCSA-012026-0880-04-2369',
+    validUntil: 'January 2028',
+    status: 'Verified Professional Credential',
+    description: 'Hikvision Certified Security Associate for preventative system maintenance, diagnostics, firmware management, and recovery.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-hcsa-maintenance.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  // 2 Corporate Brand Authorizations
   {
     id: 'cred-hikvision',
+    type: 'corporate',
     title: 'Hikvision Authorized Partner',
     issuer: 'Hikvision',
     status: 'Verified Brand Credential',
     description: 'Authorized partner for Hikvision surveillance cameras, NVR/DVR recording systems, and security hardware.',
     logoUrl: '/images/brands/hikvision.svg',
     documentUrl: null,
-    documentStatus: 'Supporting certificate document awaiting upload in Website Manager'
+    documentStatus: 'Company-level brand partnership'
   },
   {
     id: 'cred-zkteco',
+    type: 'corporate',
     title: 'ZKTeco Authorized Installer',
     issuer: 'ZKTeco',
     status: 'Verified Brand Credential',
     description: 'Authorized installer for ZKTeco biometric time attendance, access control terminals, and entrance control systems.',
     logoUrl: '/images/brands/zkteco.svg',
     documentUrl: null,
-    documentStatus: 'Supporting certificate document awaiting upload in Website Manager'
+    documentStatus: 'Company-level installer authorization'
   }
 ];
 
@@ -282,9 +382,16 @@ export const CompanyProfilePage: React.FC<CompanyPageProps> = ({ initialTab, onN
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
             <div className="lg:col-span-7 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-[#F15A24] text-xs font-extrabold uppercase tracking-wider">
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Company Profile · Dhaka, Bangladesh</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-[#F15A24] text-xs font-extrabold uppercase tracking-wider">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Company Profile · Dhaka, Bangladesh</span>
+                </div>
+                {profile.slogan && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#111827] text-white text-xs font-extrabold tracking-wide">
+                    “{profile.slogan}”
+                  </span>
+                )}
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-black font-heading text-[#111827] tracking-tight leading-[1.15]">
@@ -298,17 +405,27 @@ export const CompanyProfilePage: React.FC<CompanyPageProps> = ({ initialTab, onN
 
               {/* Verified Brand Credentials Pills */}
               <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                {certsList.map((cert: any, i: number) => (
-                  <button
-                    key={cert.id || i}
-                    type="button"
-                    onClick={() => onNavigate('certifications')}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#FAF7F2] hover:bg-orange-50/70 border border-[#EDE8E1] hover:border-[#F15A24]/40 text-xs font-bold text-[#111827] transition-all cursor-pointer"
-                  >
-                    <Award className="w-4 h-4 text-[#F15A24] shrink-0" />
-                    <span>{cert.title}</span>
-                  </button>
-                ))}
+                {certsList
+                  .filter((c: any) => c.type === 'corporate' || String(c.id).startsWith('cred-'))
+                  .map((cert: any, i: number) => (
+                    <button
+                      key={cert.id || i}
+                      type="button"
+                      onClick={() => onNavigate('certifications')}
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#FAF7F2] hover:bg-orange-50/70 border border-[#EDE8E1] hover:border-[#F15A24]/40 text-xs font-bold text-[#111827] transition-all cursor-pointer"
+                    >
+                      <Award className="w-4 h-4 text-[#F15A24] shrink-0" />
+                      <span>{cert.title}</span>
+                    </button>
+                  ))}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('certifications')}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-orange-50 hover:bg-orange-100/80 border border-orange-200/80 text-xs font-bold text-[#F15A24] transition-all cursor-pointer"
+                >
+                  <Shield className="w-4 h-4 text-[#F15A24] shrink-0" />
+                  <span>Hikvision Certified Engineers (6 Credentials)</span>
+                </button>
               </div>
 
               {/* Hero Action Buttons */}
@@ -366,7 +483,14 @@ export const CompanyProfilePage: React.FC<CompanyPageProps> = ({ initialTab, onN
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3.5 rounded-xl bg-white border border-[#EDE8E1]">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-[#5B6472]">Headquarters</div>
-                    <div className="text-xs sm:text-sm font-extrabold text-[#111827] mt-1">Chandrima Model Town, Dhaka 1207</div>
+                    <a
+                      href={profile.maps_url || 'https://maps.app.goo.gl/DkugCNAAmQZ6ZfrdA'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs sm:text-sm font-extrabold text-[#111827] hover:text-[#F15A24] mt-1 block transition-colors"
+                    >
+                      Chandrima Model Town, Dhaka 1207
+                    </a>
                   </div>
                   <div className="p-3.5 rounded-xl bg-white border border-[#EDE8E1]">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-[#5B6472]">Direct Line</div>
@@ -376,6 +500,14 @@ export const CompanyProfilePage: React.FC<CompanyPageProps> = ({ initialTab, onN
                     >
                       {profile.primary_phone || '+880 1540-535150'}
                     </a>
+                    {profile.secondary_phone && (
+                      <a
+                        href={`tel:${profile.secondary_phone.replace(/\s+/g, '')}`}
+                        className="text-[11px] font-bold text-[#5B6472] hover:text-[#F15A24] block mt-0.5"
+                      >
+                        {profile.secondary_phone}
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1124,94 +1256,215 @@ export const CertificationsCompliancePage: React.FC<CompanyPageProps> = ({ onNav
           </p>
         </section>
 
-        {/* VERIFIED CREDENTIALS CARDS */}
+        {/* CORPORATE VERIFIED BRAND AUTHORIZATIONS */}
         <section
           data-testid="verified-credentials-section"
           className="bg-white rounded-[28px] border border-[#EDE8E1] p-6 sm:p-10 shadow-xs space-y-6"
         >
           <div className="max-w-3xl space-y-2">
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#F15A24]">
-              Verified Authorizations
+              Corporate Authorizations
             </span>
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-[#111827]">
               Brand Partnerships & Installer Credentials
             </h2>
             <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
-              Only verified brand credentials are listed below. Supporting certificate files can be attached or updated by administrators in Website Manager.
+              Official company authorizations to supply, configure, and install industry-standard security hardware in Bangladesh.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {certsList.map((cert: any, idx: number) => {
-              const hasDoc = Boolean(cert.documentUrl && String(cert.documentUrl).trim().length > 0);
-              return (
-                <article
-                  key={cert.id || idx}
-                  data-testid={`credential-card-${idx}`}
-                  className="p-6 sm:p-8 rounded-2xl bg-[#FAF7F2] border border-[#EDE8E1] flex flex-col justify-between space-y-6"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="w-28 h-16 rounded-xl bg-white border border-[#EDE8E1] p-3 flex items-center justify-center">
-                        {cert.logoUrl ? (
-                          <img
-                            src={cert.logoUrl}
-                            alt={cert.issuer || cert.title}
-                            className="max-h-10 max-w-full object-contain"
-                          />
-                        ) : (
-                          <Award className="w-7 h-7 text-[#F15A24]" />
+            {certsList
+              .filter((c: any) => c.type === 'corporate' || String(c.id).startsWith('cred-'))
+              .map((cert: any, idx: number) => {
+                const hasDoc = Boolean(cert.documentUrl && String(cert.documentUrl).trim().length > 0);
+                return (
+                  <article
+                    key={cert.id || idx}
+                    data-testid={`credential-card-${idx}`}
+                    className="p-6 sm:p-8 rounded-2xl bg-[#FAF7F2] border border-[#EDE8E1] flex flex-col justify-between space-y-6"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="w-28 h-16 rounded-xl bg-white border border-[#EDE8E1] p-3 flex items-center justify-center">
+                          {cert.logoUrl ? (
+                            <img
+                              src={cert.logoUrl}
+                              alt={cert.issuer || cert.title}
+                              className="max-h-10 max-w-full object-contain"
+                            />
+                          ) : (
+                            <Award className="w-7 h-7 text-[#F15A24]" />
+                          )}
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Verified Partner Credential</span>
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#F15A24]">
+                          Issuing Brand: {cert.issuer || 'Official Brand Partner'}
+                        </div>
+                        <h3 className="text-xl font-black font-heading text-[#111827]">
+                          {cert.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
+                          {cert.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-[#EDE8E1]">
+                      {hasDoc ? (
+                        <a
+                          href={cert.documentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#111827] hover:bg-[#F15A24] text-white text-xs font-bold transition-colors"
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span>View Supporting Authorization Document</span>
+                        </a>
+                      ) : (
+                        <div className="p-3.5 rounded-xl bg-white border border-[#EDE8E1] flex items-start gap-2.5 text-xs text-[#5B6472]">
+                          <Shield className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="text-[#111827] block font-bold">
+                              Verified Company Partnership
+                            </strong>
+                            <span>
+                              {cert.documentStatus || 'Official manufacturer-aligned supply and deployment partnership.'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+          </div>
+        </section>
+
+        {/* INDIVIDUAL PROFESSIONAL ENGINEERING CERTIFICATIONS */}
+        <section
+          data-testid="individual-certifications-section"
+          className="bg-white rounded-[28px] border border-[#EDE8E1] p-6 sm:p-10 shadow-xs space-y-6"
+        >
+          <div className="max-w-3xl space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-[#F15A24] text-xs font-extrabold uppercase tracking-wider">
+              <Award className="w-3.5 h-3.5" />
+              <span>Personal Engineering Qualifications</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-[#111827]">
+              Hikvision Engineering Certifications
+            </h2>
+            <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
+              Awarded to <strong className="text-[#111827]">MD. Eyaheya Khondoker</strong> (Founder & Engineer, CamneX Bangladesh) by Hikvision Academy.
+            </p>
+          </div>
+
+          {/* Context Note distinguishing personal from corporate */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs sm:text-sm text-amber-950 flex items-start gap-3.5 leading-relaxed">
+            <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div>
+              <strong className="font-extrabold block text-amber-900 mb-0.5">
+                Individual Credential Disclosure
+              </strong>
+              The six credentials below are individual professional engineering certifications awarded to <strong>MD. Eyaheya Khondoker</strong> by Hikvision Academy. They demonstrate personal engineering competency in CCTV architecture, biometric access control, network design, and maintenance, and are held individually and distinct from CamneX's company-level brand authorizations.
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {certsList
+              .filter((c: any) => c.type === 'individual' || String(c.id).startsWith('cert-'))
+              .map((cert: any, idx: number) => {
+                const hasDoc = Boolean(cert.documentUrl && String(cert.documentUrl).trim().length > 0);
+                return (
+                  <article
+                    key={cert.id || idx}
+                    data-testid={`individual-cert-card-${idx}`}
+                    className="p-5 sm:p-6 rounded-2xl bg-[#FAF7F2] border border-[#EDE8E1] flex flex-col justify-between space-y-5 hover:border-[#F15A24]/40 transition-colors"
+                  >
+                    <div className="space-y-3.5">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200/80 text-[#F15A24] font-black text-xs font-mono">
+                          {cert.title}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <CheckCircle className="w-3 h-3 text-emerald-600" />
+                          <span>Verified</span>
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-extrabold font-heading text-[#111827] leading-snug">
+                          {cert.fullTitle || cert.title}
+                        </h3>
+                        <p className="text-xs text-[#5B6472] mt-1 leading-relaxed">
+                          {cert.description}
+                        </p>
+                      </div>
+
+                      {/* Credential Metadata Table */}
+                      <div className="space-y-1.5 pt-2 border-t border-[#EDE8E1] text-[11px]">
+                        <div className="flex items-center justify-between gap-2 text-[#5B6472]">
+                          <span>Holder:</span>
+                          <span className="font-bold text-[#111827]">{cert.holder || 'MD. Eyaheya Khondoker'}</span>
+                        </div>
+                        {cert.certificateNumber && (
+                          <div className="flex items-center justify-between gap-2 text-[#5B6472]">
+                            <span>Cert No:</span>
+                            <span className="font-mono font-bold text-[#111827] bg-white px-1.5 py-0.5 rounded border border-[#EDE8E1]">
+                              {cert.certificateNumber}
+                            </span>
+                          </div>
                         )}
-                      </div>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Verified Credential</span>
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#F15A24]">
-                        Issuing Brand: {cert.issuer || 'Official Brand Partner'}
-                      </div>
-                      <h3 className="text-xl font-black font-heading text-[#111827]">
-                        {cert.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
-                        {cert.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Certificate Document Area (Never fabricates document numbers/dates) */}
-                  <div className="pt-4 border-t border-[#EDE8E1]">
-                    {hasDoc ? (
-                      <a
-                        href={cert.documentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#111827] hover:bg-[#F15A24] text-white text-xs font-bold transition-colors"
-                      >
-                        <FileText className="w-4 h-4" />
-                        <span>View Supporting Certificate Document</span>
-                      </a>
-                    ) : (
-                      <div className="p-3.5 rounded-xl bg-white border border-[#EDE8E1] flex items-start gap-2.5 text-xs text-[#5B6472]">
-                        <FileText className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
-                        <div>
-                          <strong className="text-[#111827] block font-bold">
-                            Certificate Document Slot Ready
-                          </strong>
-                          <span>
-                            {cert.documentStatus ||
-                              'Supporting certificate document copy awaiting upload in Website Manager. No unverified certificate numbers or dates are displayed.'}
-                          </span>
+                        {cert.validUntil && (
+                          <div className="flex items-center justify-between gap-2 text-[#5B6472]">
+                            <span>Validity:</span>
+                            <span className="font-bold text-emerald-700">Valid until {cert.validUntil}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-2 text-[#5B6472]">
+                          <span>Issuer:</span>
+                          <span className="font-bold text-[#111827]">{cert.issuer || 'Hikvision'}</span>
                         </div>
                       </div>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
+                    </div>
+
+                    {/* PDF Action Link */}
+                    <div className="pt-3 border-t border-[#EDE8E1]">
+                      {hasDoc ? (
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={cert.documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-testid={`cert-view-pdf-${idx}`}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#F15A24] text-white text-xs font-bold transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>View PDF</span>
+                            <ExternalLink className="w-3 h-3 text-slate-400" />
+                          </a>
+                          <a
+                            href={cert.documentUrl}
+                            download
+                            title="Download Certificate PDF"
+                            className="inline-flex items-center justify-center p-2 rounded-xl bg-white hover:bg-orange-50 border border-[#EDE8E1] text-[#111827] hover:text-[#F15A24] text-xs font-bold transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-[#5B6472]">Certificate record verified</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
           </div>
         </section>
 

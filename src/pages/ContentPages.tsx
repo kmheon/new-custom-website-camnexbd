@@ -216,15 +216,17 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
     const verifiedAddress =
       'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Road, Dhaka 1207, Bangladesh';
     const verifiedPhone = '+880 1540-535150';
+    const secondaryPhone = '+880 1410-085848';
     const verifiedEmail = 'contact@camnexbd.com';
     const verifiedFacebook = 'https://facebook.com/camnexbd';
     const verifiedWebsite = 'https://camnexbd.com';
+    const googleMapsUrl = 'https://maps.app.goo.gl/DkugCNAAmQZ6ZfrdA';
 
     return (
       <div className="bg-[#FAF7F2] min-h-screen py-8 md:py-12 text-[#111827]">
         <SEO
           title="Contact Us | CamneX Bangladesh"
-          description="Contact CamneX Bangladesh at Chandrima Model Town, Dhaka 1207. Phone: +880 1540-535150, Email: contact@camnexbd.com."
+          description="Contact CamneX Bangladesh at Chandrima Model Town, Dhaka 1207. Phone: +880 1540-535150 / +880 1410-085848, Email: contact@camnexbd.com."
           canonicalPath="/contact"
         />
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8 md:space-y-10">
@@ -276,40 +278,62 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
                   {/* Address */}
                   <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-[#FAF7F2] border border-[#EDE8E1]">
                     <MapPin className="w-5 h-5 text-[#F15A24] shrink-0 mt-0.5" />
-                    <div className="space-y-1">
+                    <div className="space-y-1.5 flex-1">
                       <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#5B6472]">
                         Office & Shop Address
                       </div>
-                      <div className="font-bold text-[#111827] leading-relaxed">
-                        {verifiedAddress}
-                      </div>
                       <a
-                        href="https://www.google.com/maps/search/?api=1&query=Block+A+Chandrima+Model+Town+House+22+Road+06+Dhaka+1207"
+                        href={googleMapsUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        data-testid="contact-directions-link"
-                        className="inline-flex items-center gap-1 text-xs font-extrabold text-[#F15A24] hover:underline pt-1"
+                        className="font-bold text-[#111827] hover:text-[#F15A24] leading-relaxed block transition-colors"
                       >
-                        <span>Open Location & Directions in Google Maps</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        {verifiedAddress}
                       </a>
+                      <div className="pt-1">
+                        <a
+                          href={googleMapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          data-testid="contact-directions-link"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F15A24] hover:bg-[#D94D1C] text-white text-xs font-bold transition-colors shadow-2xs"
+                        >
+                          <span>Get Directions in Google Maps</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Phone */}
+                  {/* Phone & Secondary Phone */}
                   <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-[#FAF7F2] border border-[#EDE8E1]">
                     <Phone className="w-5 h-5 text-[#F15A24] shrink-0 mt-0.5" />
-                    <div className="space-y-0.5">
+                    <div className="space-y-1.5 flex-1">
                       <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#5B6472]">
-                        Phone & WhatsApp
+                        Official Contact Numbers
                       </div>
-                      <a
-                        href="tel:+8801540535150"
-                        data-testid="contact-phone-link"
-                        className="text-base font-black text-[#111827] hover:text-[#F15A24] transition-colors block"
-                      >
-                        {verifiedPhone}
-                      </a>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[11px] text-[#5B6472] font-semibold">Primary (Sales & Support):</span>
+                          <a
+                            href="tel:+8801540535150"
+                            data-testid="contact-phone-link"
+                            className="text-sm font-black text-[#111827] hover:text-[#F15A24] transition-colors"
+                          >
+                            {verifiedPhone}
+                          </a>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[11px] text-[#5B6472] font-semibold">Secondary (Desk / Admin):</span>
+                          <a
+                            href="tel:+8801410085848"
+                            data-testid="contact-secondary-phone-link"
+                            className="text-sm font-bold text-[#111827] hover:text-[#F15A24] transition-colors"
+                          >
+                            {secondaryPhone}
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

@@ -8,48 +8,143 @@ const DEFAULT_FOUNDERS = [
     id: 'founder-heon-khondokar',
     roleType: 'founder',
     name: 'Heon Khondokar',
+    officialName: 'MD. Eyaheya Khondoker',
     role: 'Founder & Engineer, CamneX Bangladesh',
     bio: 'Heon Khondokar leads technical delivery at CamneX Bangladesh, bringing practical engineering experience across IT support, networking, CCTV deployment, IT infrastructure, and system troubleshooting. He works directly with residential, commercial, and organizational clients to plan, configure, and support reliable security, networking, and IT solutions.',
     expertise: ['IT Support', 'Networking', 'CCTV Deployment', 'IT Infrastructure', 'Troubleshooting'],
     responsibilities: 'Managing technical delivery and helping customers implement security, networking, and IT solutions.',
-    photoUrl: '',
+    photoUrl: '/images/founders/heon-khondokar.jpg',
     order: 1,
     socialLinks: { linkedin: '', facebook: '', email: 'contact@camnexbd.com' }
   },
   {
-    id: 'cofounder-camnex',
+    id: 'cofounder-ti-rafi',
     roleType: 'cofounder',
-    name: '',
+    name: 'TI Rafi',
     role: 'Co-Founder, CamneX Bangladesh',
-    bio: '',
-    expertise: [],
-    responsibilities: '',
+    bio: 'TI Rafi serves as Co-Founder of CamneX Bangladesh, overseeing business planning, accounts and finance administration, corporate coordination, and business operations to maintain structured service delivery and operational continuity.',
+    expertise: ['Business Planning', 'Accounts & Finance Administration', 'Corporate Coordination', 'Business Operations'],
+    responsibilities: 'Business planning, accounts and finance administration, corporate coordination, and business operations.',
     photoUrl: '',
     order: 2,
-    socialLinks: { linkedin: '', facebook: '', email: '' }
+    socialLinks: { linkedin: '', facebook: '', email: 'contact@camnexbd.com' }
   }
 ];
 
 const DEFAULT_CERTIFICATIONS = [
+  // 6 Individual Professional Engineering Certifications (Held by MD. Eyaheya Khondoker)
+  {
+    id: 'cert-hik-cgsa-cctv',
+    type: 'individual',
+    title: 'CGSA-CCTV',
+    fullTitle: 'Certified General Security Associate - CCTV',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'CGSA-022026-0880-04-2097',
+    validUntil: 'February 2031',
+    status: 'Verified Professional Credential',
+    description: 'Certified General Security Associate for CCTV video surveillance engineering, system installation, and configuration.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-cgsa-cctv.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-cgsa-ac',
+    type: 'individual',
+    title: 'CGSA-Access Control',
+    fullTitle: 'Certified General Security Associate - Access Control',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'CGSA-032026-0880-04-1434',
+    validUntil: 'March 2031',
+    status: 'Verified Professional Credential',
+    description: 'Certified General Security Associate for access control, biometric verification, and terminal deployment.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-cgsa-access-control.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-cgsp-cctv',
+    type: 'individual',
+    title: 'CGSP-CCTV',
+    fullTitle: 'Certified General Security Professional - CCTV',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'CGSP-022026-0880-04-1118',
+    validUntil: 'February 2031',
+    status: 'Verified Professional Credential',
+    description: 'Certified General Security Professional for advanced CCTV system design, commissioning, and operational troubleshooting.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-cgsp-cctv.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-hcsa-cctv',
+    type: 'individual',
+    title: 'HCSA-CCTV',
+    fullTitle: 'Hikvision Certified Security Associate - CCTV',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'HCSA-012026-BD-04-2014',
+    validUntil: 'January 2030',
+    status: 'Verified Professional Credential',
+    description: 'Hikvision Certified Security Associate for camera selection, IP networking, NVR setup, and remote view architecture.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-hcsa-cctv.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-hcsa-hnet',
+    type: 'individual',
+    title: 'HCSA-HNET',
+    fullTitle: 'Hikvision Certified Security Associate - Hikvision Network (HNET)',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'HCSA-012026-0880-04-2515',
+    validUntil: 'January 2028',
+    status: 'Verified Professional Credential',
+    description: 'Hikvision Certified Security Associate for security network topology, VLAN configuration, bandwidth planning, and PoE distribution.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-hcsa-hnet.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  {
+    id: 'cert-hik-hcsa-maint',
+    type: 'individual',
+    title: 'HCSA-Maintenance',
+    fullTitle: 'Hikvision Certified Security Associate - Maintenance',
+    issuer: 'Hikvision',
+    holder: 'MD. Eyaheya Khondoker (CamneX Bangladesh)',
+    certificateNumber: 'HCSA-012026-0880-04-2369',
+    validUntil: 'January 2028',
+    status: 'Verified Professional Credential',
+    description: 'Hikvision Certified Security Associate for preventative system maintenance, diagnostics, firmware management, and recovery.',
+    logoUrl: '/images/brands/hikvision.svg',
+    documentUrl: '/documents/certificates/hikvision-hcsa-maintenance.pdf',
+    documentStatus: 'Verified Original Certificate PDF available'
+  },
+  // 2 Corporate Brand Authorizations
   {
     id: 'cred-hikvision',
+    type: 'corporate',
     title: 'Hikvision Authorized Partner',
     issuer: 'Hikvision',
     status: 'Verified Brand Credential',
     description: 'Authorized partner for Hikvision surveillance cameras, NVR/DVR recording systems, and security hardware.',
     logoUrl: '/images/brands/hikvision.svg',
     documentUrl: null,
-    documentStatus: 'Supporting certificate document awaiting upload in Website Manager'
+    documentStatus: 'Company-level brand partnership'
   },
   {
     id: 'cred-zkteco',
+    type: 'corporate',
     title: 'ZKTeco Authorized Installer',
     issuer: 'ZKTeco',
     status: 'Verified Brand Credential',
     description: 'Authorized installer for ZKTeco biometric time attendance, access control terminals, and entrance control systems.',
     logoUrl: '/images/brands/zkteco.svg',
     documentUrl: null,
-    documentStatus: 'Supporting certificate document awaiting upload in Website Manager'
+    documentStatus: 'Company-level installer authorization'
   }
 ];
 

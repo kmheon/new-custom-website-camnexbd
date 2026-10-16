@@ -55,7 +55,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
   const footerConfig = settings?.footer;
 
-  const baseQuickLinks: FooterLinkItem[] = footerConfig?.quickLinks || [
+  const quickLinks: FooterLinkItem[] = footerConfig?.quickLinks || [
     { label: 'Home', route: 'home' },
     { label: 'Products', route: 'catalog' },
     { label: 'Brands', route: 'brands' },
@@ -67,29 +67,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     { label: 'Why Choose Us', route: 'why_choose_us' },
     { label: 'Certifications & Compliance', route: 'certifications' }
   ];
-
-  const requiredCompanyLinks: FooterLinkItem[] = [
-    { label: 'Company Profile', route: 'company_profile' },
-    { label: 'Projects & Portfolio', route: 'projects' },
-    { label: 'Why Choose Us', route: 'why_choose_us' },
-    { label: 'Certifications & Compliance', route: 'certifications' }
-  ];
-
-  const normalizedQuickLinks = baseQuickLinks.map((item) => {
-    if (item.route === 'about' || item.route === 'company_profile') {
-      return { ...item, label: 'Company Profile', route: 'company_profile' };
-    }
-    if (item.route === 'projects') {
-      return { ...item, label: 'Projects & Portfolio', route: 'projects' };
-    }
-    return item;
-  });
-  for (const reqLink of requiredCompanyLinks) {
-    if (!normalizedQuickLinks.some((l) => l.route === reqLink.route || l.label === reqLink.label)) {
-      normalizedQuickLinks.push(reqLink);
-    }
-  }
-  const quickLinks: FooterLinkItem[] = normalizedQuickLinks;
 
   const productsLinks: FooterLinkItem[] = footerConfig?.products || [
     { label: 'CCTV & IP Cameras', route: 'category', param: 'cctv-cameras' },
@@ -227,13 +204,26 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <div className="space-y-2 text-xs text-[#CBD5E1] pt-2">
                 <div className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-[#F15A24] shrink-0 mt-0.5" />
-                  <span className="leading-snug">{address}</span>
+                  <a
+                    href="https://maps.app.goo.gl/DkugCNAAmQZ6ZfrdA"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="leading-snug hover:text-white transition-colors"
+                  >
+                    {address}
+                  </a>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Phone className="w-4 h-4 text-[#F15A24] shrink-0" />
-                  <a href={`tel:${phone.replace(/\s+/g, '')}`} className="hover:text-white transition-colors font-bold">
-                    {phone}
-                  </a>
+                  <div className="flex flex-wrap items-center gap-x-2">
+                    <a href={`tel:${phone.replace(/\s+/g, '')}`} className="hover:text-white transition-colors font-bold">
+                      {phone}
+                    </a>
+                    <span className="text-slate-500">·</span>
+                    <a href="tel:+8801410085848" className="hover:text-white transition-colors">
+                      +880 1410-085848
+                    </a>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Mail className="w-4 h-4 text-[#F15A24] shrink-0" />

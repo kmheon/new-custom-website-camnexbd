@@ -48,9 +48,14 @@ async function runTests() {
   assert(Array.isArray(profile.founders) && profile.founders.length === 2, 'API returns 2 structured founder entries (Founder & Co-Founder)');
   assert(profile.founders[0].name === 'Heon Khondokar', 'Founder name is Heon Khondokar');
   assert(profile.founders[0].role === 'Founder & Engineer, CamneX Bangladesh', 'Founder role is Founder & Engineer, CamneX Bangladesh');
+  assert(profile.founders[0].photoUrl === '/images/founders/heon-khondokar.jpg', 'Founder has photoUrl set to /images/founders/heon-khondokar.jpg');
+  assert(profile.founders[1].name === 'TI Rafi', 'Co-Founder name is TI Rafi');
+  assert(profile.founders[1].role === 'Co-Founder, CamneX Bangladesh', 'Co-Founder role is Co-Founder, CamneX Bangladesh');
   assert(profile.founders[1].roleType === 'cofounder', 'Second card is structured Co-Founder entry');
   assert(!profile.founded_year, 'No invented founded_year (2020) in company profile API');
-  assert(Array.isArray(profile.certifications) && profile.certifications.length === 2, 'API returns only the 2 verified brand credentials');
+  assert(Array.isArray(profile.certifications) && profile.certifications.length === 8, 'API returns 8 credentials (6 individual Hikvision engineering certs + 2 corporate brand authorizations)');
+  assert(profile.secondary_phone === '+880 1410-085848', 'Secondary phone is +880 1410-085848');
+  assert(profile.slogan === 'Eyes On, Worries Gone.', 'Slogan is Eyes On, Worries Gone.');
 
   const routesToVerify = [
     { route: '/company-profile', expectedTitlePart: 'About CamneX Bangladesh' },
@@ -176,7 +181,7 @@ async function runTests() {
       const foundersHeading = document.querySelector('[data-testid="founders-section"] h2')?.textContent?.trim() || '';
       const founderCard = document.querySelector('[data-testid="founder-profile-card"]')?.innerText || '';
       const coFounderCard = document.querySelector('[data-testid="cofounder-profile-card"]')?.innerText || '';
-      const founderPhotoPlaceholder = Boolean(document.querySelector('[data-testid="founder-photo-placeholder"]'));
+      const founderImgSrc = document.querySelector('[data-testid="founder-profile-card"] img')?.getAttribute('src') || '';
       const coFounderPhotoPlaceholder = Boolean(document.querySelector('[data-testid="cofounder-photo-placeholder"]'));
       const bodyText = document.body.innerText;
       return {
@@ -187,7 +192,7 @@ async function runTests() {
         foundersHeading,
         founderCard,
         coFounderCard,
-        founderPhotoPlaceholder,
+        founderImgSrc,
         coFounderPhotoPlaceholder,
         hasFakeStats: bodyText.includes('350+') || bodyText.includes('520+') || bodyText.includes('Est. 2020') || bodyText.includes('BASIS Member')
       };
@@ -205,13 +210,14 @@ async function runTests() {
         cpReport.founderCard.includes('CCTV Deployment'),
       'Founder card displays Heon Khondokar, Founder & Engineer role, and verified engineering background'
     );
-    assert(cpReport.founderPhotoPlaceholder, 'Founder card renders clean portrait frame noting awaiting upload in Website Manager');
+    assert(cpReport.founderImgSrc === '/images/founders/heon-khondokar.jpg', `Founder card renders verified portrait (/images/founders/heon-khondokar.jpg) (got '${cpReport.founderImgSrc}')`);
     assert(
-      cpReport.coFounderCard.includes('Co-Founder') &&
-        cpReport.coFounderCard.includes('Full Name') &&
-        cpReport.coFounderCard.includes('Profile Photograph') &&
+      cpReport.coFounderCard.includes('TI Rafi') &&
+        cpReport.coFounderCard.includes('Co-Founder') &&
+        cpReport.coFounderCard.includes('Business Planning') &&
+        cpReport.coFounderCard.includes('Business Operations') &&
         cpReport.coFounderPhotoPlaceholder,
-      'Co-Founder card renders structured editable state identifying missing fields awaiting confirmation'
+      'Co-Founder card displays TI Rafi with verified business planning and operations profile and placeholder for missing portrait'
     );
     assert(!cpReport.hasFakeStats, 'Company Profile contains zero invented stats (350+, 520+, Est. 2020, BASIS)');
 
@@ -280,13 +286,18 @@ async function runTests() {
     await sleep(1000);
 
     const certReport = await evalJs(`(() => {
-      const cards = Array.from(document.querySelectorAll('[data-testid^="credential-card-"]')).map((el) => el.innerText);
+      const corpCards = Array.from(document.querySelectorAll('[data-testid^="credential-card-"]')).map((el) => el.innerText);
+      const indCards = Array.from(document.querySelectorAll('[data-testid^="individual-cert-card-"]')).map((el) => el.innerText);
       const complianceText = document.querySelector('[data-testid="compliance-standards-section"]')?.innerText || '';
+      const pdfLinks = Array.from(document.querySelectorAll('[data-testid^="cert-view-pdf-"]')).map((el) => el.getAttribute('href'));
       return {
         path: window.location.pathname,
         h1: document.querySelector('[data-testid="certifications-hero"] h1')?.textContent?.trim() || '',
-        cardCount: cards.length,
-        cardsText: cards.join(' | '),
+        corpCardCount: corpCards.length,
+        corpCardsText: corpCards.join(' | '),
+        indCardCount: indCards.length,
+        indCardsText: indCards.join(' | '),
+        pdfLinks,
         hasCompliancePillars: complianceText.includes('Manufacturer & Distributor Warranties') && complianceText.includes('Privacy, Security & Data-Handling Practices'),
         bodyText: document.body.innerText
       };
@@ -294,14 +305,32 @@ async function runTests() {
 
     assert(certReport.path === '/certifications', `Sub-navigation navigated to /certifications (got ${certReport.path})`);
     assert(certReport.h1 === 'Certifications & Compliance', `Certifications H1 is 'Certifications & Compliance' (got '${certReport.h1}')`);
-    assert(certReport.cardCount === 2, `Displays only the 2 verified brand credentials (got ${certReport.cardCount})`);
+    assert(certReport.corpCardCount === 2, `Displays the 2 verified corporate brand credentials (got ${certReport.corpCardCount})`);
     assert(
-      certReport.cardsText.includes('Hikvision Authorized Partner') && certReport.cardsText.includes('ZKTeco Authorized Installer'),
-      'Displays Hikvision Authorized Partner and ZKTeco Authorized Installer'
+      certReport.corpCardsText.includes('Hikvision Authorized Partner') && certReport.corpCardsText.includes('ZKTeco Authorized Installer'),
+      'Displays corporate Hikvision Authorized Partner and ZKTeco Authorized Installer'
+    );
+    assert(certReport.indCardCount === 6, `Displays the 6 individual engineering credentials held by MD. Eyaheya Khondoker (got ${certReport.indCardCount})`);
+    assert(
+      certReport.indCardsText.includes('CGSA-CCTV') &&
+        certReport.indCardsText.includes('CGSA-Access Control') &&
+        certReport.indCardsText.includes('CGSP-CCTV') &&
+        certReport.indCardsText.includes('HCSA-CCTV') &&
+        certReport.indCardsText.includes('HCSA-HNET') &&
+        certReport.indCardsText.includes('HCSA-Maintenance'),
+      'Displays all 6 verified Hikvision credentials: CGSA-CCTV, CGSA-AC, CGSP-CCTV, HCSA-CCTV, HCSA-HNET, HCSA-Maintenance'
     );
     assert(
-      !certReport.bodyText.includes('HCSA') && !certReport.bodyText.includes('RCNP') && !certReport.bodyText.includes('BASIS Member'),
-      'Does not display unverified HCSA, RCNP, or BASIS credentials'
+      certReport.indCardsText.includes('MD. Eyaheya Khondoker') && certReport.indCardsText.includes('CGSA-022026-0880-04-2097'),
+      'Displays credential holder MD. Eyaheya Khondoker and authentic certificate numbers'
+    );
+    assert(
+      certReport.pdfLinks.length === 6 && certReport.pdfLinks[0].includes('hikvision-cgsa-cctv.pdf'),
+      'All 6 individual certificates link directly to verified PDF documents'
+    );
+    assert(
+      !certReport.bodyText.includes('RCNP') && !certReport.bodyText.includes('BASIS Member'),
+      'Does not display unverified RCNP or BASIS credentials'
     );
     assert(certReport.hasCompliancePillars, 'Compliance & Warranty Alignment section displays warranty, authenticity, installation, and privacy practices');
 
@@ -323,23 +352,31 @@ async function runTests() {
 
     const contactReport = await evalJs(`(() => {
       const cardText = document.querySelector('[data-testid="verified-contact-info-card"]')?.innerText || '';
+      const directionsHref = document.querySelector('[data-testid="contact-directions-link"]')?.getAttribute('href') || '';
       return {
         path: window.location.pathname,
         h1: document.querySelector('[data-testid="contact-page-hero"] h1')?.textContent?.trim() || '',
-        hasPhone: cardText.includes('+880 1540-535150'),
+        hasPrimaryPhone: cardText.includes('+880 1540-535150'),
+        hasSecondaryPhone: cardText.includes('+880 1410-085848'),
+        hasOldPhone: cardText.includes('01688-966983'),
         hasEmail: cardText.includes('contact@camnexbd.com'),
         hasAddress: cardText.includes('Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Road, Dhaka 1207'),
-        hasDirectionsLink: Boolean(document.querySelector('[data-testid="contact-directions-link"]')),
+        directionsHref,
         hasFacebookLink: Boolean(document.querySelector('[data-testid="contact-facebook-link"]'))
       };
     })()`);
 
     assert(contactReport.path === '/contact', `Sub-navigation navigated to /contact (got ${contactReport.path})`);
     assert(contactReport.h1 === 'Contact Us', `Contact H1 is 'Contact Us' (got '${contactReport.h1}')`);
-    assert(contactReport.hasPhone, 'Contact page displays verified phone +880 1540-535150');
+    assert(contactReport.hasPrimaryPhone, 'Contact page displays verified primary phone +880 1540-535150');
+    assert(contactReport.hasSecondaryPhone, 'Contact page displays verified secondary phone +880 1410-085848');
+    assert(!contactReport.hasOldPhone, 'Contact page does NOT display old 01688-966983 phone number');
     assert(contactReport.hasEmail, 'Contact page displays verified email contact@camnexbd.com');
     assert(contactReport.hasAddress, 'Contact page displays verified Chandrima Model Town address');
-    assert(contactReport.hasDirectionsLink, 'Contact page includes working Open in Google Maps link');
+    assert(
+      contactReport.directionsHref === 'https://maps.app.goo.gl/DkugCNAAmQZ6ZfrdA',
+      `Contact page includes exact Google Maps destination https://maps.app.goo.gl/DkugCNAAmQZ6ZfrdA (got '${contactReport.directionsHref}')`
+    );
     assert(contactReport.hasFacebookLink, 'Contact page includes working Facebook page link');
 
     await saveScreenshot('company_contact_1280x800.png');
