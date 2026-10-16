@@ -7,10 +7,13 @@ class CompanyService {
     return {
       legal_name: 'CamneX Bangladesh',
       trade_name: 'CamneX',
-      tagline: 'Enterprise Security, Surveillance & Networking Solutions',
-      mission: 'Delivering genuine security and enterprise networking infrastructure with rigorous Dhaka engineering standards.',
-      vision: 'To be Bangladesh\'s most trusted corporate security technology partner.',
-      founded_year: 2020,
+      website: 'https://camnexbd.com',
+      tagline: 'CamneX Bangladesh provides security, networking, and IT solutions to help homes, businesses, and organizations build safer, more connected environments.',
+      mission: 'To provide dependable security, surveillance, networking, and IT solutions tailored to each customer\'s practical requirements.',
+      mission_is_proposed: true,
+      vision: 'To be a trusted partner in Bangladesh for practical, well-supported security, connectivity, and technology infrastructure.',
+      vision_is_proposed: true,
+      founded_year: null,
       registration_number: null,
       bin: null,
       tin: null,
@@ -18,42 +21,149 @@ class CompanyService {
       tax_circle: null,
       vat_reg_number: null,
       contact_email: 'contact@camnexbd.com',
-      sales_email: 'sales@camnexbd.com',
-      support_email: 'support@camnexbd.com',
+      sales_email: 'contact@camnexbd.com',
+      support_email: 'contact@camnexbd.com',
       primary_phone: '+880 1540-535150',
       secondary_phone: null,
-      hotline: '16000',
+      hotline: null,
       emergency_support_phone: '+880 1540-535150',
       whatsapp: '8801540535150',
-      registered_address: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207, Bangladesh',
-      corporate_office: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207',
-      warehouse_address: 'Dhaka Central Hub, Mohammadpur, Dhaka',
-      experience_summary: 'Over 6 years of turnkey engineering experience deploying high-reliability IP surveillance, biometric access control, and enterprise fiber/PoE networking.',
-      team_size_band: '15-25 engineers & field technicians',
-      active_client_count: 350,
-      completed_project_count: 520,
-      warranty_policy_summary: '1-Year official manufacturer warranty on all cameras and recorders; 2-Year warranty on enterprise switches; onsite Dhaka engineering warranty.',
-      service_sla_summary: '24-hour on-site dispatch in Dhaka metropolitan area; dedicated WhatsApp engineering hotline.',
+      registered_address: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Road, Dhaka 1207, Bangladesh',
+      corporate_office: 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Road, Dhaka 1207, Bangladesh',
+      warehouse_address: null,
+      experience_summary: 'CamneX Bangladesh provides CCTV and video surveillance installation, Wi-Fi camera solutions, networking and connectivity infrastructure, access control systems, and IT support and maintenance for residential, commercial, and organizational environments.',
+      team_size_band: null,
+      active_client_count: null,
+      completed_project_count: null,
+      warranty_policy_summary: 'Manufacturer and distributor warranties apply to eligible products according to official product and supplier terms. Installation and workmanship terms apply where installation services are included.',
+      service_sla_summary: 'Consultation, product recommendation, installation planning, system configuration, and ongoing support based on customer requirements and service scope.',
       bank_name: null,
       bank_account_name: null,
       bank_account_number: null,
       bank_branch: null,
       routing_number: null,
       certifications: [
-        { title: 'Hikvision Security Associate (HCSA)', issuer: 'Hikvision', year: 2022 },
-        { title: 'ZKTeco Authorized Enterprise Solution Partner', issuer: 'ZKTeco', year: 2023 },
-        { title: 'Ruijie Network Professional (RCNP)', issuer: 'Ruijie Networks', year: 2024 }
+        {
+          id: 'cred-hikvision',
+          title: 'Hikvision Authorized Partner',
+          issuer: 'Hikvision',
+          status: 'Verified Brand Credential',
+          description: 'Authorized partner for Hikvision surveillance cameras, NVR/DVR recording systems, and security hardware.',
+          logoUrl: '/images/brands/hikvision.svg',
+          documentUrl: null,
+          documentStatus: 'Supporting certificate document awaiting upload in Website Manager',
+          year: null
+        },
+        {
+          id: 'cred-zkteco',
+          title: 'ZKTeco Authorized Installer',
+          issuer: 'ZKTeco',
+          status: 'Verified Brand Credential',
+          description: 'Authorized installer for ZKTeco biometric time attendance, access control terminals, and entrance control systems.',
+          logoUrl: '/images/brands/zkteco.svg',
+          documentUrl: null,
+          documentStatus: 'Supporting certificate document awaiting upload in Website Manager',
+          year: null
+        }
       ],
-      brands_distributed: ['Hikvision', 'Dahua', 'ZKTeco', 'Ruijie Reyee', 'Western Digital Purple', 'Seagate SkyHawk', 'Cisco'],
-      industry_memberships: ['BASIS Associate Member Network', 'Dhaka Security Hardware Association'],
+      founders: [
+        {
+          id: 'founder-heon-khondokar',
+          roleType: 'founder',
+          name: 'Heon Khondokar',
+          role: 'Founder & Engineer, CamneX Bangladesh',
+          bio: 'Heon Khondokar leads technical delivery at CamneX Bangladesh, bringing practical engineering experience across IT support, networking, CCTV deployment, IT infrastructure, and system troubleshooting. He works directly with residential, commercial, and organizational clients to plan, configure, and support reliable security, networking, and IT solutions.',
+          expertise: [
+            'IT Support',
+            'Networking',
+            'CCTV Deployment',
+            'IT Infrastructure',
+            'Troubleshooting'
+          ],
+          responsibilities: 'Managing technical delivery and helping customers implement security, networking, and IT solutions.',
+          photoUrl: '',
+          photoPlaceholderNote: 'Profile photograph to be supplied via Website Manager',
+          order: 1,
+          socialLinks: {
+            linkedin: '',
+            facebook: '',
+            email: 'contact@camnexbd.com'
+          },
+          isVerified: true,
+          awaitingConfirmation: false,
+          missingFields: ['Profile Photograph']
+        },
+        {
+          id: 'cofounder-camnex',
+          roleType: 'cofounder',
+          name: '',
+          role: 'Co-Founder, CamneX Bangladesh',
+          bio: '',
+          expertise: [],
+          responsibilities: '',
+          photoUrl: '',
+          photoPlaceholderNote: 'Co-Founder portrait to be supplied via Website Manager',
+          order: 2,
+          socialLinks: {
+            linkedin: '',
+            facebook: '',
+            email: ''
+          },
+          isVerified: false,
+          awaitingConfirmation: true,
+          missingFields: ['Full Name', 'Role Title', 'Biography', 'Profile Photograph']
+        }
+      ],
+      brands_distributed: ['Hikvision', 'Dahua', 'ZKTeco', 'Ruijie Reyee', 'Western Digital Purple', 'Seagate SkyHawk', 'Cisco', 'MikroTik', 'TP-Link', 'Imou', 'EZVIZ', 'D-Link'],
+      industry_memberships: [],
       social_links: {
         facebook: 'https://facebook.com/camnexbd',
-        linkedin: 'https://linkedin.com/company/camnexbd',
         whatsapp: 'https://wa.me/8801540535150'
       },
       pdf_profile_media_id: null,
       pdf_url: null
     };
+  }
+
+  sanitizeProfileData(raw) {
+    const defaults = this.getDefaultProfile();
+    const merged = { ...defaults, ...raw };
+
+    // Remove legacy unverified demo values if they match the old template defaults
+    if (merged.founded_year === 2020 && merged.active_client_count === 350 && merged.completed_project_count === 520) {
+      merged.founded_year = null;
+      merged.active_client_count = null;
+      merged.completed_project_count = null;
+      merged.team_size_band = null;
+    }
+    if (merged.hotline === '16000') {
+      merged.hotline = null;
+    }
+    if (Array.isArray(merged.certifications) && merged.certifications.some(c => c.title && c.title.includes('HCSA'))) {
+      merged.certifications = defaults.certifications;
+    }
+    if (Array.isArray(merged.industry_memberships) && merged.industry_memberships.includes('BASIS Associate Member Network')) {
+      merged.industry_memberships = [];
+    }
+    if (!Array.isArray(merged.founders) || merged.founders.length === 0) {
+      merged.founders = defaults.founders;
+    } else {
+      // Ensure both founder and co-founder entries exist and compute missingFields accurately
+      merged.founders = merged.founders.map((f, idx) => {
+        const missing = [];
+        if (!f.name || !String(f.name).trim()) missing.push('Full Name');
+        if (!f.role || !String(f.role).trim()) missing.push('Role Title');
+        if (!f.bio || !String(f.bio).trim()) missing.push('Biography');
+        if (!f.photoUrl || !String(f.photoUrl).trim()) missing.push('Profile Photograph');
+        return {
+          ...f,
+          order: f.order || idx + 1,
+          missingFields: missing,
+          awaitingConfirmation: missing.includes('Full Name') || missing.includes('Biography')
+        };
+      });
+    }
+    return merged;
   }
 
   getProfile() {
@@ -63,7 +173,7 @@ class CompanyService {
         return this.getDefaultProfile();
       }
       const data = JSON.parse(row.data_json);
-      return { ...this.getDefaultProfile(), ...data, updated_at: row.updated_at };
+      return { ...this.sanitizeProfileData(data), updated_at: row.updated_at };
     } catch (_) {
       return this.getDefaultProfile();
     }
@@ -79,42 +189,39 @@ class CompanyService {
     const services = db.prepare("SELECT * FROM services WHERE enabled = 1 ORDER BY display_order ASC").all();
 
     // Pull featured projects
-    const projects = db.prepare("SELECT data_json FROM projects LIMIT 6").all().map(r => JSON.parse(r.data_json));
+    const projects = db.prepare("SELECT data_json FROM projects WHERE (is_archived IS NULL OR is_archived = 0) LIMIT 6").all().map(r => JSON.parse(r.data_json));
 
     // Pull testimonials
-    const testimonials = db.prepare("SELECT data_json FROM testimonials LIMIT 6").all().map(r => JSON.parse(r.data_json));
+    const testimonials = db.prepare("SELECT data_json FROM testimonials WHERE (is_archived IS NULL OR is_archived = 0) LIMIT 6").all().map(r => JSON.parse(r.data_json));
 
-    // Build Schema.org Organization + Corporation JSON-LD
+    // Build Schema.org Organization + Corporation JSON-LD using only verified data
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": ["Organization", "Corporation"],
-      "name": profile.trade_name || "CamneX",
+      "@type": ["Organization", "LocalBusiness"],
+      "name": profile.legal_name || "CamneX Bangladesh",
       "legalName": profile.legal_name || "CamneX Bangladesh",
-      "description": profile.tagline || profile.mission || "Enterprise Security, Surveillance & Networking Solutions",
+      "description": profile.tagline || "CamneX Bangladesh provides security, networking, and IT solutions to help homes, businesses, and organizations build safer, more connected environments.",
       "url": "https://camnexbd.com",
-      "foundingDate": String(profile.founded_year || "2020"),
-      "telephone": profile.hotline || profile.primary_phone || "+880 1540-535150",
+      "telephone": profile.primary_phone || "+880 1540-535150",
       "email": profile.contact_email || "contact@camnexbd.com",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": profile.corporate_office || profile.registered_address || "Dhaka, Bangladesh",
+        "streetAddress": profile.registered_address || "Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Road, Dhaka 1207, Bangladesh",
         "addressLocality": "Dhaka",
+        "postalCode": "1207",
         "addressCountry": "BD"
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "Heon Khondokar",
+        "jobTitle": "Founder & Engineer, CamneX Bangladesh"
       },
       "contactPoint": [
         {
           "@type": "ContactPoint",
-          "telephone": profile.primary_phone,
-          "contactType": "sales",
-          "email": profile.sales_email,
-          "areaServed": "BD",
-          "availableLanguage": ["en", "bn"]
-        },
-        {
-          "@type": "ContactPoint",
-          "telephone": profile.emergency_support_phone || profile.hotline,
+          "telephone": profile.primary_phone || "+880 1540-535150",
           "contactType": "customer service",
-          "email": profile.support_email,
+          "email": profile.contact_email || "contact@camnexbd.com",
           "areaServed": "BD",
           "availableLanguage": ["en", "bn"]
         }
@@ -122,6 +229,7 @@ class CompanyService {
       "sameAs": Object.values(profile.social_links || {}).filter(Boolean)
     };
 
+    if (profile.founded_year) jsonLd.foundingDate = String(profile.founded_year);
     if (profile.bin) jsonLd.taxID = profile.bin;
     if (profile.tin) jsonLd.vatID = profile.tin;
 

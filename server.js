@@ -233,7 +233,7 @@ app.use('/api', costFieldFilter);
 
 // New platform endpoints (staff, audit, inventory, docs, webhooks) are served by the domain modules;
 // all other routes are handled by the existing handlers below.
-const PLATFORM_PREFIXES = ['/staff', '/auth/staff', '/audit-logs', '/inventory', '/docs', '/webhooks', '/managed'];
+const PLATFORM_PREFIXES = ['/staff', '/auth/staff', '/audit-logs', '/inventory', '/docs', '/webhooks', '/managed', '/company-profile', '/company'];
 app.use('/api', (req, res, next) => {
   if (PLATFORM_PREFIXES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
     return apiV1Router(req, res, next);
@@ -2667,6 +2667,82 @@ app.post('/api/quotes', submissionLimiter, validateBody(schemas.quote), (req, re
   }
 });
 
+app.post('/api/contact', submissionLimiter, (req, res) => {
+  try {
+    const body = req.body || {};
+    // Honeypot check
+    if (body.website_url || body._honeypot || body.hp) {
+      return res.json({ success: true, referenceNumber: 'CNX-MSG-OK', message: 'Inquiry received' });
+    }
+
+    const name = String(body.name || body.customerName || '').trim();
+    const phone = String(body.phone || body.mobile || '').trim();
+    const email = String(body.email || '').trim();
+    const subject = String(body.subject || body.inquiryType || 'General Inquiry').trim();
+    const message = String(body.message || body.requirements || '').trim();
+
+    if (!name || name.length < 2) {
+      return res.status(400).json({ error: 'Please enter your full name.' });
+    }
+    const cleanPhone = phone.replace(/[\s-]/g, '');
+    if (!cleanPhone || !/^(\+?880|0)?1[3-9]\d{8}$/.test(cleanPhone)) {
+      return res.status(400).json({ error: 'Please enter a valid 11-digit Bangladesh mobile number (e.g., 017XXXXXXXX).' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    if (!subject) {
+      return res.status(400).json({ error: 'Please select or enter an inquiry subject.' });
+    }
+    if (!message || message.length < 5) {
+      return res.status(400).json({ error: 'Please enter a brief message describing your inquiry or requirements.' });
+    }
+
+    const id = `qte-cnt-${Date.now()}`;
+    const referenceNumber = generateNumber('CNX-INQ');
+    const createdAt = new Date().toISOString();
+
+    const fullInquiry = {
+      id,
+      referenceNumber,
+      customerName: name,
+      phone,
+      email: email || undefined,
+      serviceType: `Contact Inquiry: ${subject}`,
+      subject,
+      requirements: message,
+      message,
+      source: 'contact_page',
+      createdAt,
+      status: 'pending'
+    };
+
+    db.prepare(`
+      INSERT INTO quotes (id, reference_number, customer_name, phone, service_type, status, data_json, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      referenceNumber,
+      name,
+      phone,
+      fullInquiry.serviceType,
+      'pending',
+      JSON.stringify(fullInquiry),
+      createdAt
+    );
+
+    res.status(201).json({
+      success: true,
+      id,
+      referenceNumber,
+      createdAt,
+      inquiry: fullInquiry
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/quotes/:id/status', requireAdmin, (req, res) => {
   try {
     const id = req.params.id;
@@ -4496,13 +4572,16 @@ function generateSitemapXml() {
   const staticPages = [
     { loc: '/', priority: '1.0', changefreq: 'daily' },
     { loc: '/catalog', priority: '0.9', changefreq: 'daily' },
+    { loc: '/brands', priority: '0.8', changefreq: 'weekly' },
     { loc: '/packages', priority: '0.9', changefreq: 'weekly' },
     { loc: '/services', priority: '0.8', changefreq: 'weekly' },
     { loc: '/solutions', priority: '0.8', changefreq: 'weekly' },
+    { loc: '/company-profile', priority: '0.8', changefreq: 'monthly' },
     { loc: '/projects', priority: '0.7', changefreq: 'weekly' },
-    { loc: '/blog', priority: '0.8', changefreq: 'weekly' },
-    { loc: '/about', priority: '0.6', changefreq: 'monthly' },
+    { loc: '/why-choose-us', priority: '0.7', changefreq: 'monthly' },
+    { loc: '/certifications', priority: '0.7', changefreq: 'monthly' },
     { loc: '/contact', priority: '0.7', changefreq: 'monthly' },
+    { loc: '/blog', priority: '0.8', changefreq: 'weekly' },
     { loc: '/faq', priority: '0.6', changefreq: 'monthly' },
     { loc: '/warranty', priority: '0.5', changefreq: 'monthly' },
     { loc: '/terms', priority: '0.5', changefreq: 'monthly' },
@@ -5230,12 +5309,15 @@ function resolveRouteMetadata(reqPath) {
 
   const staticRouteMap = {
     '/brands': { title: 'Explore Our Brands | CamneX Bangladesh', description: 'Discover security, surveillance, networking, and IT brands available through CamneX Bangladesh.' },
-    '/about': { title: 'About Us | CamneX Bangladesh', description: 'About CamneX Bangladesh - Authorized Hikvision Partner & ZKTeco Installer in Dhaka.' },
-    '/contact': { title: 'Contact Us | CamneX Bangladesh', description: 'Contact CamneX engineering headquarters at Chandrima Model Town, Dhaka. Phone: +880 1540-535150.' },
+    '/about': { title: 'About CamneX Bangladesh — Company Profile | CamneX Bangladesh', description: 'CamneX Bangladesh provides security, networking, and IT solutions to help homes, businesses, and organizations build safer, more connected environments.' },
+    '/company-profile': { title: 'About CamneX Bangladesh — Company Profile | CamneX Bangladesh', description: 'CamneX Bangladesh provides security, networking, and IT solutions to help homes, businesses, and organizations build safer, more connected environments.' },
+    '/why-choose-us': { title: 'Why Choose CamneX Bangladesh | CamneX Bangladesh', description: 'Discover why residential, commercial, and organizational customers choose CamneX Bangladesh for security, surveillance, networking, and IT solutions.' },
+    '/certifications': { title: 'Certifications & Compliance | CamneX Bangladesh', description: 'Verified brand credentials including Hikvision Authorized Partner and ZKTeco Authorized Installer, warranty alignment, and operational compliance.' },
+    '/contact': { title: 'Contact Us | CamneX Bangladesh', description: 'Contact CamneX Bangladesh at Chandrima Model Town, Dhaka 1207. Phone: +880 1540-535150, Email: contact@camnexbd.com.' },
     '/services': { title: 'Installation & IT Services | CamneX Bangladesh', description: 'CCTV installation, Wi-Fi 6 deployment, biometric attendance configuration and on-site maintenance in Dhaka.' },
     '/solutions': { title: 'Engineering Solutions & Services | CamneX Bangladesh', description: 'Professional security engineering, structured cabling, and IT infrastructure in Dhaka.' },
     '/quote': { title: 'Request Quotation & Site Survey | CamneX Bangladesh', description: 'Request a physical site survey and get a bill of materials in Dhaka.' },
-    '/projects': { title: 'Deployments & Case Studies | CamneX Bangladesh', description: 'Documented security installations and network deployments in Dhaka.' },
+    '/projects': { title: 'Projects & Portfolio | CamneX Bangladesh', description: 'Explore security, surveillance, networking, access control, and IT infrastructure work by CamneX Bangladesh.' },
     '/testimonials': { title: 'Client Feedback | CamneX Bangladesh', description: 'Authentic testimonials and feedback from corporate and residential clients in Dhaka.' },
     '/blog': { title: 'Technical Security & IT Blog | CamneX Bangladesh', description: 'Articles on surveillance design, Wi-Fi standards, and access control engineering.' },
     '/faq': { title: 'Frequently Asked Questions | CamneX Bangladesh', description: 'Frequently asked questions regarding genuine serials, mobile viewing, and warranty.' },

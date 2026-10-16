@@ -22,6 +22,8 @@ const ContentPages = lazy(() => import('./pages/ContentPages').then(m => ({ defa
 const WishlistPage = lazy(() => import('./pages/WishlistPage').then(m => ({ default: m.WishlistPage })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const CompanyProfilePage = lazy(() => import('./pages/CompanyProfilePage').then(m => ({ default: m.CompanyProfilePage })));
+const WhyChooseUsPage = lazy(() => import('./pages/CompanyProfilePage').then(m => ({ default: m.WhyChooseUsPage })));
+const CertificationsCompliancePage = lazy(() => import('./pages/CompanyProfilePage').then(m => ({ default: m.CertificationsCompliancePage })));
 const BrandsPage = lazy(() => import('./pages/BrandsPage').then(m => ({ default: m.BrandsPage })));
 
 const PageLoadingFallback: React.FC = () => (
@@ -135,10 +137,17 @@ export default function App() {
         setCurrentRoute('faq');
       } else if (path === '/contact') {
         setCurrentRoute('contact');
+      } else if (path === '/certifications') {
+        setCurrentRoute('certifications');
+        setRouteParam(undefined);
       } else if (path === '/about' || path === '/company-profile' || path.startsWith('/company-profile')) {
-        setCurrentRoute('company_profile');
-        if (window.location.hash) {
-          setRouteParam(window.location.hash.replace('#', ''));
+        const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+        if (hash === 'certifications') {
+          setCurrentRoute('certifications');
+          setRouteParam(undefined);
+        } else {
+          setCurrentRoute('company_profile');
+          setRouteParam(hash || undefined);
         }
       } else if (path === '/why-choose-us') {
         setCurrentRoute('why_choose_us');
@@ -170,6 +179,14 @@ export default function App() {
   }, [loadCart, loadSettings]);
 
   const navigate = (route: string, param?: string) => {
+    if (route === 'company_profile' && param === 'certifications') {
+      setCurrentRoute('certifications');
+      setRouteParam(undefined);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.history.pushState({}, '', '/certifications');
+      return;
+    }
+
     setCurrentRoute(route);
     setRouteParam(param);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -199,6 +216,7 @@ export default function App() {
     else if (route === 'contact') newUrl = '/contact';
     else if (route === 'company_profile') newUrl = param ? `/company-profile#${param}` : '/company-profile';
     else if (route === 'why_choose_us') newUrl = '/why-choose-us';
+    else if (route === 'certifications') newUrl = '/certifications';
     else if (route === 'about') newUrl = '/company-profile';
     else if (route === 'warranty') newUrl = '/warranty';
     else if (route === 'terms') newUrl = '/terms';
@@ -247,7 +265,8 @@ export default function App() {
           {currentRoute === 'faq' && <ContentPages type="faq" onNavigate={navigate} />}
           {currentRoute === 'contact' && <ContentPages type="contact" onNavigate={navigate} />}
           {currentRoute === 'company_profile' && <CompanyProfilePage initialTab={routeParam} onNavigate={navigate} />}
-          {currentRoute === 'why_choose_us' && <CompanyProfilePage initialTab="overview" onNavigate={navigate} />}
+          {currentRoute === 'why_choose_us' && <WhyChooseUsPage onNavigate={navigate} />}
+          {currentRoute === 'certifications' && <CertificationsCompliancePage onNavigate={navigate} />}
           {currentRoute === 'about' && <CompanyProfilePage initialTab={routeParam} onNavigate={navigate} />}
           {currentRoute === 'warranty' && <ContentPages type="warranty" onNavigate={navigate} />}
           {currentRoute === 'terms' && <ContentPages type="terms" onNavigate={navigate} />}

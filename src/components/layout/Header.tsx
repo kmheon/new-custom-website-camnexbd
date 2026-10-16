@@ -666,53 +666,73 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               </div>
 
               {/* Company Dropdown */}
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseEnter={() => setActiveDropdown('company')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
                 <button
                   type="button"
+                  data-testid="nav-company-trigger"
+                  aria-expanded={activeDropdown === 'company'}
                   onClick={() => toggleDropdown('company')}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] transition-colors cursor-pointer ${
+                    ['company_profile', 'about', 'projects', 'why_choose_us', 'certifications', 'contact'].includes(currentRoute)
+                      ? 'text-[#F15A24] bg-orange-50/70'
+                      : 'text-[#111827] hover:text-[#F15A24]'
+                  }`}
                 >
                   <span>Company</span>
                   <ChevronDown className="w-3.5 h-3.5 text-[#5B6472]" />
                 </button>
 
                 {activeDropdown === 'company' && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2 z-50 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => { setActiveDropdown(null); onNavigate('company_profile'); }}
-                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                  <div className="absolute top-full left-0 pt-2 w-60 z-50">
+                    <div
+                      data-testid="nav-company-dropdown"
+                      className="bg-white rounded-2xl border border-[#EDE8E1] shadow-2xl p-2 text-xs space-y-0.5"
                     >
-                      Company Profile
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setActiveDropdown(null); onNavigate('projects'); }}
-                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
-                    >
-                      Projects & Portfolio
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setActiveDropdown(null); onNavigate('why_choose_us'); }}
-                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
-                    >
-                      Why Choose Us
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setActiveDropdown(null); onNavigate('company_profile', 'certifications'); }}
-                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
-                    >
-                      Certifications & Compliance
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setActiveDropdown(null); onNavigate('contact'); }}
-                      className="w-full p-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
-                    >
-                      Contact
-                    </button>
+                      <button
+                        type="button"
+                        data-testid="nav-company-profile"
+                        onClick={() => { setActiveDropdown(null); onNavigate('company_profile'); }}
+                        className="w-full p-2.5 text-left rounded-xl hover:bg-[#FAF7F2] font-bold text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                      >
+                        Company Profile
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="nav-company-projects"
+                        onClick={() => { setActiveDropdown(null); onNavigate('projects'); }}
+                        className="w-full p-2.5 text-left rounded-xl hover:bg-[#FAF7F2] font-bold text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                      >
+                        Projects & Portfolio
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="nav-company-why-choose-us"
+                        onClick={() => { setActiveDropdown(null); onNavigate('why_choose_us'); }}
+                        className="w-full p-2.5 text-left rounded-xl hover:bg-[#FAF7F2] font-bold text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                      >
+                        Why Choose Us
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="nav-company-certifications"
+                        onClick={() => { setActiveDropdown(null); onNavigate('certifications'); }}
+                        className="w-full p-2.5 text-left rounded-xl hover:bg-[#FAF7F2] font-bold text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                      >
+                        Certifications & Compliance
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="nav-company-contact"
+                        onClick={() => { setActiveDropdown(null); onNavigate('contact'); }}
+                        className="w-full p-2.5 text-left rounded-xl hover:bg-[#FAF7F2] font-bold text-[#111827] hover:text-[#F15A24] transition-colors cursor-pointer"
+                      >
+                        Contact
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -976,6 +996,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               <div>
                 <button
                   type="button"
+                  data-testid="mobile-nav-company-trigger"
                   onClick={() => toggleMobileAccordion('company')}
                   className="w-full flex items-center justify-between py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2]"
                 >
@@ -985,30 +1006,40 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 {mobileAccordion === 'company' && (
                   <div className="pl-4 py-1 space-y-1">
                     <button
+                      type="button"
+                      data-testid="mobile-nav-company-profile"
                       onClick={() => { setMobileMenuOpen(false); onNavigate('company_profile'); }}
                       className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
                     >
                       Company Profile
                     </button>
                     <button
+                      type="button"
+                      data-testid="mobile-nav-company-projects"
                       onClick={() => { setMobileMenuOpen(false); onNavigate('projects'); }}
                       className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
                     >
                       Projects & Portfolio
                     </button>
                     <button
+                      type="button"
+                      data-testid="mobile-nav-company-why-choose-us"
                       onClick={() => { setMobileMenuOpen(false); onNavigate('why_choose_us'); }}
                       className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
                     >
                       Why Choose Us
                     </button>
                     <button
-                      onClick={() => { setMobileMenuOpen(false); onNavigate('company_profile', 'certifications'); }}
+                      type="button"
+                      data-testid="mobile-nav-company-certifications"
+                      onClick={() => { setMobileMenuOpen(false); onNavigate('certifications'); }}
                       className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
                     >
                       Certifications & Compliance
                     </button>
                     <button
+                      type="button"
+                      data-testid="mobile-nav-company-contact"
                       onClick={() => { setMobileMenuOpen(false); onNavigate('contact'); }}
                       className="w-full text-left py-1.5 px-3 text-xs font-semibold text-[#5B6472] hover:text-[#F15A24]"
                     >
