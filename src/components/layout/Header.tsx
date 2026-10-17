@@ -4,7 +4,7 @@ import {
   ArrowRight, Wrench, MessageCircle, Layers, CheckCircle2, Building2, HelpCircle,
   Heart, Truck, LogOut, Package as PackageIcon, Headphones, ShieldCheck, Clock
 } from 'lucide-react';
-import { useCartStore, useSettingsStore, useWishlistStore, useCustomerAuthStore, useAdminAuthStore } from '../../store';
+import { useCartStore, useSettingsStore, useWishlistStore, useCompareStore, useCustomerAuthStore, useAdminAuthStore } from '../../store';
 import { categoryService, productService, brandService } from '../../services';
 import { Category, Product, Brand } from '../../types';
 import { SmartImage } from '../common/ImagePlaceholder';
@@ -38,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
 
   const totalCartCount = useCartStore((s) => s.totalCount());
   const wishlistCount = useWishlistStore((s) => s.count());
+  const compareCount = useCompareStore((s) => s.productIds.length);
   const loadWishlist = useWishlistStore((s) => s.loadWishlist);
   const { currentCustomer, isCustomerAuthenticated, checkCustomerAuth, logout: customerLogout } = useCustomerAuthStore();
   const { currentUser, isAdminAuthenticated, checkAuth: checkAdminAuth, logout: adminLogout } = useAdminAuthStore();
@@ -470,6 +471,25 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
             </button>
 
             <button
+              type="button"
+              data-testid="mobile-compare-button"
+              onClick={() => onNavigate('compare')}
+              className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:bg-[#FAF7F2] text-[#111827] flex items-center justify-center cursor-pointer"
+              aria-label="Compare Products"
+              title="Compare Products"
+            >
+              <Layers className={`w-4 h-4 ${compareCount > 0 ? 'text-[#F15A24]' : ''}`} />
+              {compareCount > 0 && (
+                <span
+                  data-testid="mobile-compare-count"
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-bold flex items-center justify-center"
+                >
+                  {compareCount}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => onNavigate('wishlist')}
               className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:bg-[#FAF7F2] text-[#111827] flex items-center justify-center cursor-pointer"
               aria-label="Wishlist"
@@ -740,6 +760,26 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
               <div className="h-5 w-px bg-[#EDE8E1]" />
 
               <div className="flex items-center gap-2">
+                {/* 0. Compare (layers icon + count badge) */}
+                <button
+                  type="button"
+                  data-testid="header-compare-button"
+                  onClick={() => onNavigate('compare')}
+                  className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:border-[#F15A24] hover:bg-orange-50/40 text-[#111827] flex items-center justify-center transition-all cursor-pointer group"
+                  aria-label="Compare Products"
+                  title={compareCount > 0 ? `Compare Products (${compareCount})` : 'Compare Products'}
+                >
+                  <Layers className={`w-4 h-4 transition-colors ${compareCount > 0 ? 'text-[#F15A24]' : 'group-hover:text-[#F15A24]'}`} />
+                  {compareCount > 0 && (
+                    <span
+                      data-testid="header-compare-count"
+                      className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-black flex items-center justify-center shadow-xs"
+                    >
+                      {compareCount}
+                    </span>
+                  )}
+                </button>
+
                 {/* 1. Wishlist (heart + count badge) */}
                 <button
                   type="button"
@@ -801,6 +841,14 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                             <Heart className="w-3.5 h-3.5 text-[#5B6472]" />
                             <span>Wishlist ({wishlistCount})</span>
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => { setAccountMenuOpen(false); onNavigate('compare'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                          >
+                            <Layers className="w-3.5 h-3.5 text-[#5B6472]" />
+                            <span>Compare Products ({compareCount})</span>
+                          </button>
                           {isAdminAuthenticated && (
                             <a
                               href="/admin"
@@ -839,6 +887,14 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                           >
                             <Heart className="w-3.5 h-3.5 text-[#5B6472]" />
                             <span>Wishlist ({wishlistCount})</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setAccountMenuOpen(false); onNavigate('compare'); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-[#FAF7F2] font-semibold text-[#111827]"
+                          >
+                            <Layers className="w-3.5 h-3.5 text-[#5B6472]" />
+                            <span>Compare Products ({compareCount})</span>
                           </button>
                           {isAdminAuthenticated && (
                             <a
@@ -1017,6 +1073,25 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                   </div>
                 )}
               </div>
+              <button
+                type="button"
+                data-testid="mobile-drawer-compare-button"
+                onClick={() => { setMobileMenuOpen(false); onNavigate('compare'); }}
+                className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2] flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#5B6472]" />
+                  <span>Compare Products</span>
+                </div>
+                {compareCount > 0 && (
+                  <span
+                    data-testid="mobile-drawer-compare-count"
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F15A24] text-white"
+                  >
+                    {compareCount}
+                  </span>
+                )}
+              </button>
               <button
                 onClick={() => { setMobileMenuOpen(false); onNavigate('wishlist'); }}
                 className="w-full text-left py-2 px-3 text-sm font-bold text-[#111827] rounded-xl hover:bg-[#FAF7F2] flex items-center justify-between"

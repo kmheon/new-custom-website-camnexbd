@@ -67,30 +67,109 @@ export const useCartStore = create<CartState>((set, get) => ({
 }));
 
 // ----------------------------------------------------------------------------
-// Compare Store
 // ----------------------------------------------------------------------------
+// Compare Store (Persistent localStorage + real-time toast notifications)
+// ----------------------------------------------------------------------------
+const COMPARE_STORAGE_KEY = 'camnex_compare_items';
+
+function getStoredCompare(): string[] {
+  try {
+    if (typeof window === 'undefined') return [];
+    const val = localStorage.getItem(COMPARE_STORAGE_KEY);
+    return val ? JSON.parse(val) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveStoredCompare(items: string[]): void {
+  try {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify(items));
+  } catch (_) {}
+}
+
+let compareToastTimer: any = null;
+
 interface CompareState {
   productIds: string[];
+  toastMessage: string | null;
   addProduct: (id: string) => boolean;
   removeProduct: (id: string) => void;
+  toggleProduct: (id: string) => boolean;
   clearCompare: () => void;
   hasProduct: (id: string) => boolean;
+  count: () => number;
+  clearToast: () => void;
+  showToast: (msg: string) => void;
 }
 
 export const useCompareStore = create<CompareState>((set, get) => ({
-  productIds: [],
+  productIds: getStoredCompare(),
+  toastMessage: null,
+
   addProduct: (id: string) => {
+    if (!id) return false;
     const current = get().productIds;
-    if (current.includes(id)) return true;
-    if (current.length >= 4) return false;
-    set({ productIds: [...current, id] });
+    if (current.includes(id)) {
+      get().showToast('Product is already in your comparison list.');
+      return true;
+    }
+    if (current.length >= 4) {
+      get().showToast('Comparison is limited to 4 products. Please remove one first.');
+      return false;
+    }
+    const updated = [...current, id];
+    saveStoredCompare(updated);
+    set({ productIds: updated });
+    get().showToast('Added to comparison.');
     return true;
   },
+
   removeProduct: (id: string) => {
-    set({ productIds: get().productIds.filter(i => i !== id) });
+    const updated = get().productIds.filter(i => i !== id);
+    saveStoredCompare(updated);
+    set({ productIds: updated });
+    get().showToast('Removed from comparison.');
   },
-  clearCompare: () => set({ productIds: [] }),
-  hasProduct: (id: string) => get().productIds.includes(id)
+
+  toggleProduct: (id: string) => {
+    if (!id) return false;
+    const current = get().productIds;
+    if (current.includes(id)) {
+      get().removeProduct(id);
+      return false;
+    } else {
+      return get().addProduct(id);
+    }
+  },
+
+  clearCompare: () => {
+    saveStoredCompare([]);
+    set({ productIds: [] });
+    get().showToast('Comparison list cleared.');
+  },
+
+  hasProduct: (id: string) => {
+    return get().productIds.includes(id);
+  },
+
+  count: () => {
+    return get().productIds.length;
+  },
+
+  clearToast: () => {
+    if (compareToastTimer) clearTimeout(compareToastTimer);
+    set({ toastMessage: null });
+  },
+
+  showToast: (msg: string) => {
+    if (compareToastTimer) clearTimeout(compareToastTimer);
+    set({ toastMessage: msg });
+    compareToastTimer = setTimeout(() => {
+      set({ toastMessage: null });
+    }, 3500);
+  }
 }));
 
 // ----------------------------------------------------------------------------

@@ -232,6 +232,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {/* Compare toggle: placed neatly above Demo tag or bottom-right when no demo */}
             <button
               type="button"
+              data-testid={`card-compare-${product.id}`}
               onClick={handleToggleCompare}
               title={inCompare ? 'Remove from compare' : 'Add to compare'}
               className={`absolute ${showSampleBadge && (product.isDemo || (product as any).sample) ? 'bottom-8 right-2.5' : 'bottom-2.5 right-2.5'} p-1.5 rounded-full border shadow-md transition-all cursor-pointer z-10 ${

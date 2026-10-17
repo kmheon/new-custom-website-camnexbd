@@ -6,7 +6,8 @@ import { CatalogPage } from './pages/CatalogPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { SEO } from './components/common/SEO';
 import { Button } from './components/common/UI';
-import { useCartStore, useSettingsStore } from './store';
+import { X } from 'lucide-react';
+import { useCartStore, useSettingsStore, useCompareStore } from './store';
 
 // Lazy-loaded routes for code splitting and performance optimization
 const PackagesPage = lazy(() => import('./pages/PackagesPage').then(m => ({ default: m.PackagesPage })));
@@ -283,7 +284,52 @@ export default function App() {
         </Suspense>
       </main>
 
+      {/* Subtle Product Comparison Confirmation Toast */}
+      {!isAdmin && <CompareToast onNavigate={navigate} />}
+
       {!isAdmin && <Footer onNavigate={navigate} />}
     </div>
   );
 }
+
+const CompareToast: React.FC<{ onNavigate: (route: string) => void }> = ({ onNavigate }) => {
+  const { toastMessage, clearToast, productIds } = useCompareStore();
+  if (!toastMessage) return null;
+
+  return (
+    <div
+      data-testid="compare-toast"
+      className="fixed bottom-6 right-6 z-50 max-w-sm bg-[#111827] text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center justify-between gap-3 text-xs"
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span className="w-2 h-2 rounded-full bg-[#F15A24] shrink-0 animate-pulse" />
+        <span className="font-semibold truncate">{toastMessage}</span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {productIds.length > 0 && (
+          <button
+            type="button"
+            data-testid="toast-view-compare"
+            onClick={() => {
+              clearToast();
+              onNavigate('compare');
+            }}
+            className="text-[#F15A24] hover:text-orange-400 font-bold hover:underline cursor-pointer"
+          >
+            View ({productIds.length})
+          </button>
+        )}
+        <button
+          type="button"
+          data-testid="toast-dismiss-compare"
+          onClick={clearToast}
+          className="text-slate-400 hover:text-white p-1 rounded cursor-pointer"
+          aria-label="Close notification"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+

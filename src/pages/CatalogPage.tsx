@@ -34,7 +34,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const addItemToCart = useCartStore((s) => s.addItem);
-  const { addProduct: addToCompare, hasProduct: isInCompare } = useCompareStore();
+  const { addProduct: addToCompare, removeProduct: removeFromCompare, hasProduct: isInCompare } = useCompareStore();
 
   useEffect(() => {
     categoryService.getCategories().then(setCategories);
@@ -458,18 +458,39 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                         </Button>
                       </div>
 
-                      {/* Compare Checkbox */}
+                      {/* Compare Checkbox / Action */}
                       <div className="pt-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addToCompare(prod.id);
-                            onNavigate('compare');
-                          }}
-                          className="text-[11px] font-semibold text-slate-400 hover:text-[#F15A24]"
-                        >
-                          {isInCompare(prod.id) ? '✓ Added to Compare' : '+ Compare Specs'}
-                        </button>
+                        <div className="inline-flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            data-testid={`catalog-compare-${prod.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCompare(prod.id);
+                            }}
+                            className={`text-[11px] font-semibold transition-colors cursor-pointer ${
+                              isInCompare(prod.id)
+                                ? 'text-emerald-600 font-bold'
+                                : 'text-slate-400 hover:text-[#F15A24]'
+                            }`}
+                          >
+                            {isInCompare(prod.id) ? '✓ Added to Compare' : '+ Compare Specs'}
+                          </button>
+                          {isInCompare(prod.id) && (
+                            <button
+                              type="button"
+                              data-testid={`catalog-remove-compare-${prod.id}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromCompare(prod.id);
+                              }}
+                              className="text-[10px] text-slate-400 hover:text-red-500 underline cursor-pointer"
+                              title="Remove from comparison"
+                            >
+                              (Remove)
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

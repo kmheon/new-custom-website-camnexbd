@@ -26,7 +26,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
   const [variants, setVariants] = useState<ProductVariantOption[]>([]);
 
   const addItemToCart = useCartStore((s) => s.addItem);
-  const { addProduct: addToCompare, hasProduct: isInCompare } = useCompareStore();
+  const { addProduct: addToCompare, removeProduct: removeFromCompare, hasProduct: isInCompare } = useCompareStore();
 
   useEffect(() => {
     productService.getProductById(productId).then(async (prod) => {
@@ -173,7 +173,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
           <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
             <div className="h-96 sm:h-[450px] rounded-xl overflow-hidden bg-slate-50 relative flex items-center justify-center">
               <img
-                src={product.images[activeImageIndex] || product.primaryImage}
+                src={(product.images && product.images[activeImageIndex]) || product.primaryImage || '/images/products/hikvision-dome.svg'}
                 alt={`${product.name} - View ${activeImageIndex + 1}`}
                 className="max-h-full max-w-full object-contain p-4"
               />
@@ -188,7 +188,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
             </div>
 
             {/* Thumbnails */}
-            {product.images.length > 1 && (
+            {Boolean(product.images && product.images.length > 1) && (
               <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
                 {product.images.map((img, idx) => (
                   <button
@@ -341,47 +341,67 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
 
             {/* Action Buttons */}
             <div className="space-y-3 pt-2">
-              {unitPrice ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleBuyNow}
-                    className="w-full"
-                  >
-                    Buy Now
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="md"
-                    onClick={handleAddToCart}
-                    className="w-full"
-                  >
-                    <ShoppingBag className="w-4 h-4 mr-1.5" />
-                    <span>Add to Cart</span>
-                  </Button>
-                </div>
-              ) : (
+              <div className="grid grid-cols-2 gap-3">
                 <Button
-                  size="lg"
-                  onClick={() => onNavigate('quote')}
+                  variant="primary"
+                  size="md"
+                  data-testid="buy-now-button"
+                  onClick={handleBuyNow}
                   className="w-full"
                 >
-                  Request Official Quotation
+                  Buy Now
+                </Button>
+                <Button
+                  variant="outline"
+                  size="md"
+                  data-testid="add-to-cart-button"
+                  onClick={handleAddToCart}
+                  className="w-full"
+                >
+                  <ShoppingBag className="w-4 h-4 mr-1.5" />
+                  <span>Add to Cart</span>
+                </Button>
+              </div>
+
+              {!unitPrice && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onNavigate('quote', product.id)}
+                  className="w-full text-xs font-semibold text-slate-600 border border-dashed border-slate-300 hover:bg-slate-50"
+                >
+                  Request Official Written Quotation
                 </Button>
               )}
 
               <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    addToCompare(product.id);
-                    onNavigate('compare');
-                  }}
-                  className="font-bold text-[#F15A24] hover:underline"
-                >
-                  {isInCompare(product.id) ? '✓ In Compare' : '+ Add to Spec Comparison'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-testid="detail-compare-button"
+                    onClick={() => {
+                      addToCompare(product.id);
+                    }}
+                    className={`font-bold transition-colors ${
+                      isInCompare(product.id)
+                        ? 'text-emerald-600 font-bold'
+                        : 'text-[#F15A24] hover:underline cursor-pointer'
+                    }`}
+                  >
+                    {isInCompare(product.id) ? '✓ Added to Compare' : '+ Add to Spec Comparison'}
+                  </button>
+                  {isInCompare(product.id) && (
+                    <button
+                      type="button"
+                      data-testid="detail-remove-compare-button"
+                      onClick={() => removeFromCompare(product.id)}
+                      className="text-[11px] text-slate-400 hover:text-red-500 underline ml-1 cursor-pointer"
+                      title="Remove from comparison"
+                    >
+                      (Remove)
+                    </button>
+                  )}
+                </div>
                 <span>Official Serial Verified</span>
               </div>
             </div>

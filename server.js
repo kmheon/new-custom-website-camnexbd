@@ -885,6 +885,16 @@ const CATALOG_PRODUCT_VARIANT_GROUPS = [
       { productId: 'prod-zkteco-k40', modelNumber: 'K40', distinguishingSpec: 'Fingerprint + RFID' },
       { productId: 'prod-zkteco-mb20', modelNumber: 'MB20', distinguishingSpec: 'Fingerprint + Face' }
     ]
+  },
+  {
+    id: 'grp-imou-ranger2pro',
+    seriesName: 'Imou Ranger 2 Pro Series',
+    distinguishingFeatureLabel: 'Resolution',
+    productIds: ['prod-wifi-imou-ranger2pro-3mp', 'prod-wifi-imou-ranger2pro-5mp'],
+    variants: [
+      { productId: 'prod-wifi-imou-ranger2pro-3mp', modelNumber: 'IPC-A32P-L', distinguishingSpec: '3MP (2K) Wi-Fi 6' },
+      { productId: 'prod-wifi-imou-ranger2pro-5mp', modelNumber: 'IPC-A52P-L', distinguishingSpec: '5MP (3K) Wi-Fi 6' }
+    ]
   }
 ];
 

@@ -3727,6 +3727,132 @@ export const INITIAL_PRODUCTS: Array<Product | any> = [
     "subcategorySlug": "wifi-cameras"
   },
   {
+    "id": "prod-wifi-imou-ranger2pro-3mp",
+    "name": "Imou Ranger 2 Pro 3MP Indoor Pan & Tilt Wi-Fi Camera",
+    "shortName": "Imou Ranger 2 Pro 3MP",
+    "modelNumber": "IPC-A32P-L",
+    "sku": "IMOU-RANGER2PRO-3MP",
+    "brandId": "brand-imou",
+    "brand": "Imou",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Indoor Pan & Tilt Cameras",
+    "subcategorySlug": "wifi-cameras",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "isPopular": true,
+    "isFeatured": true,
+    "primaryImage": "/images/products/hikvision-dome.svg",
+    "images": [
+      "/images/products/hikvision-dome.svg"
+    ],
+    "shortDescription": "3MP (2304 × 1296) 2K indoor smart pan & tilt Wi-Fi 6 camera featuring 355° pan, -5° to 80° tilt, two-way audio, and H.265 video compression.",
+    "description": "The Imou Ranger 2 Pro 3MP (IPC-A32P-L) delivers crystal-clear 2K indoor surveillance with 355° horizontal rotation and -5° to 80° vertical tilt. Powered by next-gen Dual-Band Wi-Fi 6 connectivity, it provides ultra-smooth video streaming, AI human detection, smart tracking, two-way audio, abnormal sound detection, and physical privacy shutter mode.",
+    "keyFeatures": [
+      "3MP 2K Resolution (2304 × 1296) with clear detail",
+      "355° Pan & -5° to 80° Tilt for complete 360° indoor coverage",
+      "Dual-Band Wi-Fi 6 (2.4GHz & 5GHz) for ultra-fast, stable streaming",
+      "Two-Way Audio with built-in microphone and high-fidelity speaker",
+      "Advanced AI Human Detection & Smart Motion Tracking",
+      "Physical Privacy Shield Mode to hide lens when at home",
+      "Abnormal Sound Alarm (baby crying, glass breaking alerts)",
+      "H.265 / H.264 Video Compression for optimized bandwidth and storage"
+    ],
+    "specifications": {
+      "resolution": "3MP (2304 × 1296)",
+      "pan_range": "0° to 355° Pan",
+      "tilt_range": "-5° to 80° Tilt",
+      "two_way_audio": "Built-in Mic & Speaker (Two-Way Audio)",
+      "wifi_connectivity": "Dual-Band Wi-Fi 6 (2.4GHz / 5GHz)",
+      "video_compression": "H.265 / H.264",
+      "night_vision": "Infrared Night Vision up to 10m (33ft)",
+      "lens": "3.6mm Fixed Lens",
+      "storage": "MicroSD Slot (up to 256GB), Imou Cloud, NVR",
+      "smart_detection": "AI Human Detection, Pet Detection, Motion Tracking",
+      "power_source": "DC 5V 1.5A USB Type-C",
+      "app_support": "Imou Life App (iOS / Android)"
+    },
+    "pricing": {
+      "regularPrice": null,
+      "salePrice": null,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "available": 0,
+      "status": "request_quote"
+    },
+    "unit": "Piece",
+    "warrantyMonths": 12,
+    "warrantyType": "official",
+    "warrantyText": "1-Year Official Manufacturer Warranty"
+  },
+  {
+    "id": "prod-wifi-imou-ranger2pro-5mp",
+    "name": "Imou Ranger 2 Pro 5MP Indoor Pan & Tilt Wi-Fi Camera",
+    "shortName": "Imou Ranger 2 Pro 5MP",
+    "modelNumber": "IPC-A52P-L",
+    "sku": "IMOU-RANGER2PRO-5MP",
+    "brandId": "brand-imou",
+    "brand": "Imou",
+    "categoryId": "cat-wifi",
+    "category": "Wi-Fi / Smart Devices",
+    "subcategoryId": "subcat-wifi-cameras",
+    "subcategory": "Indoor Pan & Tilt Cameras",
+    "subcategorySlug": "wifi-cameras",
+    "productType": "physical",
+    "status": "active",
+    "websiteVisible": true,
+    "posAvailable": true,
+    "isPopular": true,
+    "isFeatured": true,
+    "primaryImage": "/images/products/hikvision-dome.svg",
+    "images": [
+      "/images/products/hikvision-dome.svg"
+    ],
+    "shortDescription": "5MP (2880 × 1620) 3K indoor smart pan & tilt Wi-Fi 6 camera featuring 355° pan, -5° to 80° tilt, two-way audio, and H.265 video compression.",
+    "description": "The Imou Ranger 2 Pro 5MP (IPC-A52P-L) provides ultra-high 3K resolution surveillance with complete 360° coverage via 355° pan and -5° to 80° tilt. Equipped with Dual-Band Wi-Fi 6 technology, AI-driven human and pet detection, auto-motion tracking, two-way audio communication, abnormal sound alarm, and physical privacy shutter.",
+    "keyFeatures": [
+      "5MP 3K Resolution (2880 × 1620) with ultra-fine clarity",
+      "355° Pan & -5° to 80° Tilt for complete 360° indoor coverage",
+      "Dual-Band Wi-Fi 6 (2.4GHz & 5GHz) for lag-free high-bitrate streaming",
+      "Two-Way Audio with built-in microphone and high-fidelity speaker",
+      "Advanced AI Human Detection & Smart Motion Tracking",
+      "Physical Privacy Shield Mode to hide lens when at home",
+      "Abnormal Sound Alarm (baby crying, glass breaking alerts)",
+      "H.265 / H.264 Video Compression for optimized bandwidth and storage"
+    ],
+    "specifications": {
+      "resolution": "5MP (2880 × 1620)",
+      "pan_range": "0° to 355° Pan",
+      "tilt_range": "-5° to 80° Tilt",
+      "two_way_audio": "Built-in Mic & Speaker (Two-Way Audio)",
+      "wifi_connectivity": "Dual-Band Wi-Fi 6 (2.4GHz / 5GHz)",
+      "video_compression": "H.265 / H.264",
+      "night_vision": "Infrared Night Vision up to 10m (33ft)",
+      "lens": "3.6mm Fixed Lens",
+      "storage": "MicroSD Slot (up to 256GB), Imou Cloud, NVR",
+      "smart_detection": "AI Human Detection, Pet Detection, Motion Tracking",
+      "power_source": "DC 5V 1.5A USB Type-C",
+      "app_support": "Imou Life App (iOS / Android)"
+    },
+    "pricing": {
+      "regularPrice": null,
+      "salePrice": null,
+      "currency": "BDT"
+    },
+    "inventory": {
+      "available": 0,
+      "status": "request_quote"
+    },
+    "unit": "Piece",
+    "warrantyMonths": 12,
+    "warrantyType": "official",
+    "warrantyText": "1-Year Official Manufacturer Warranty"
+  },
+  {
     "id": "prod-wifi-imou-bullet",
     "name": "Imou Bullet 2C 4MP Weatherproof Outdoor Wi-Fi Camera",
     "modelNumber": "IPC-F42P",
