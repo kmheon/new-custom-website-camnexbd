@@ -253,6 +253,26 @@ export interface Product {
   showOnHomepage?: boolean;
 }
 
+export interface ProductVariantOption {
+  productId: string;
+  modelNumber: string;
+  name: string;
+  distinguishingSpec: string;
+  price?: number | null;
+  regularPrice?: number | null;
+  salePrice?: number | null;
+  inStock?: boolean;
+  primaryImage?: string;
+}
+
+export interface ProductVariantGroup {
+  id: string;
+  seriesName: string;
+  distinguishingFeatureLabel?: string;
+  productIds: string[];
+  variants: ProductVariantOption[];
+}
+
 // ----------------------------------------------------------------------------
 // Packages (Configurable Turnkey Bundles)
 // ----------------------------------------------------------------------------
@@ -501,7 +521,20 @@ export interface Order {
   internalStaffNotes?: string;
   courierName?: string;
   trackingNumber?: string;
-  estimatedDeliveryDate?: string;
+  shipmentStatus?: string;
+  courierTrackingUrl?: string | null;
+  estimatedDeliveryDate?: string | null;
+  deliveryInfo?: {
+    method?: string;
+    district?: string;
+    estimatedTime?: string | null;
+  };
+  itemCount?: number;
+  contactSupport?: {
+    phone?: string;
+    email?: string;
+    whatsapp?: string;
+  };
   createdAt: string;
   isDemo?: boolean;
 }

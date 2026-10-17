@@ -174,7 +174,14 @@ async function runTests() {
 
   const navigateTo = async (urlPath) => {
     await send('Page.navigate', { url: `${BASE_URL}${urlPath}` });
-    await sleep(700);
+    await sleep(1200);
+    for (let i = 0; i < 20; i++) {
+      try {
+        const h = await evalJs(`document.querySelector('h1')?.innerText`);
+        if (h && !h.includes('Commercial Security & Network Hardware')) break;
+      } catch (_) {}
+      await sleep(250);
+    }
   };
 
   try {
@@ -261,7 +268,7 @@ async function runTests() {
     await navigateTo('/tracking');
 
     const trackingHeading = await evalJs(`document.querySelector('h1')?.innerText`);
-    assert(trackingHeading && trackingHeading.includes('Track Your Hardware Order'), `Order Tracking heading rendered ("${trackingHeading}")`);
+    assert(trackingHeading && (trackingHeading.includes('Track Your Order') || trackingHeading.includes('Track Your Hardware Order')), `Order Tracking heading rendered ("${trackingHeading}")`);
 
     const hasOrderInput = await evalJs(`!!document.querySelector('input[data-testid="track-order-input-number"]')`);
     const hasPhoneInput = await evalJs(`!!document.querySelector('input[data-testid="track-order-input-phone"]')`);

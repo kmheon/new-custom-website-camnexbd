@@ -36,7 +36,8 @@ import {
   MediaItem,
   PackageSeries,
   PackageSystemType,
-  ServiceOffering
+  ServiceOffering,
+  ProductVariantOption
 } from '../types';
 
 import { apiFetch, getApiBase, getCsrfTokenFromCookie, fetchCsrfToken } from './apiClient';
@@ -103,6 +104,15 @@ export class RestProductService implements IProductService {
   async getCompatibleAccessories(productId: string): Promise<Product[]> {
     try {
       return await request<Product[]>(`/products/${encodeURIComponent(productId)}/accessories`);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getProductVariants(productId: string): Promise<ProductVariantOption[]> {
+    try {
+      const res = await request<{ seriesName: string | null; variants: ProductVariantOption[] }>(`/products/${encodeURIComponent(productId)}/variants`);
+      return res?.variants || [];
     } catch (e) {
       return [];
     }
@@ -521,12 +531,8 @@ export class RestOrderService implements IOrderService {
   }
 
   async getOrderByNumber(orderNumber: string, phone?: string): Promise<Order | null> {
-    try {
-      const q = phone && phone.trim() ? `?phone=${encodeURIComponent(phone.trim())}` : '';
-      return await request<Order>(`/orders/${encodeURIComponent(orderNumber)}${q}`);
-    } catch (e) {
-      return null;
-    }
+    const q = phone && phone.trim() ? `?phone=${encodeURIComponent(phone.trim())}` : '';
+    return await request<Order>(`/orders/${encodeURIComponent(orderNumber)}${q}`);
   }
 
   async getAllOrders(): Promise<Order[]> {

@@ -170,6 +170,12 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
       });
 
       setCreatedOrder(order);
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('camnex_last_checkout_order', order.orderNumber);
+          window.localStorage.setItem('camnex_last_checkout_phone', formData.phone);
+        }
+      } catch (_) {}
       await clearCart();
     } catch (err: any) {
       setFormError(err.message || 'Failed to place order. Please try again.');

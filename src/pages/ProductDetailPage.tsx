@@ -3,8 +3,9 @@ import { ShoppingBag, ShieldCheck, Download, Check, Wrench, Truck, ArrowRight, L
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge, Card, Alert } from '../components/common/UI';
 import { productService, categoryService, specTemplateService, packageService } from '../services';
-import { Product, SpecTemplate, SecurityPackage } from '../types';
+import { Product, SpecTemplate, SecurityPackage, ProductVariantOption } from '../types';
 import { useCartStore, useCompareStore } from '../store';
+import { getVariantGroupForProduct } from '../utils/productVariants';
 
 interface ProductDetailPageProps {
   productId: string;
@@ -22,7 +23,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
   const [packagesContaining, setPackagesContaining] = useState<SecurityPackage[]>([]);
   const [includeInstallation, setIncludeInstallation] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
-  const [selectedFormFactor, setSelectedFormFactor] = useState<string>('bullet');
+  const [variants, setVariants] = useState<ProductVariantOption[]>([]);
 
   const addItemToCart = useCartStore((s) => s.addItem);
   const { addProduct: addToCompare, hasProduct: isInCompare } = useCompareStore();
@@ -31,6 +32,26 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
     productService.getProductById(productId).then(async (prod) => {
       setProduct(prod);
       if (prod) {
+        // Load variants if this product belongs to a genuine catalog model family
+        const varGroup = getVariantGroupForProduct(prod.id);
+        if (varGroup && varGroup.variants.length > 1) {
+          productService.getProductVariants(prod.id).then((apiVars) => {
+            if (apiVars && apiVars.length > 1) {
+              setVariants(apiVars);
+            } else {
+              setVariants(varGroup.variants.map(v => ({
+                productId: v.productId,
+                modelNumber: v.modelNumber,
+                name: v.modelNumber,
+                distinguishingSpec: v.distinguishingSpec,
+                price: null
+              })));
+            }
+          });
+        } else {
+          setVariants([]);
+        }
+
         const cat = await categoryService.getCategories().then(cats =>
           cats.find(c => c.id === prod.categoryId || c.slug === prod.categoryId || c.name.toLowerCase() === prod.category.toLowerCase())
         );
@@ -55,12 +76,44 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
     );
   }
 
+  const handleSelectModel = async (targetId: string) => {
+    if (!targetId || targetId === product.id) return;
+    try {
+      const selectedProd = await productService.getProductById(targetId);
+      if (selectedProd) {
+        setProduct(selectedProd);
+        setActiveImageIndex(0);
+
+        // Update browser URL silently without full navigation flash
+        if (typeof window !== 'undefined' && window.history) {
+          window.history.replaceState(null, '', `/product/${selectedProd.id}`);
+        }
+
+        // If category template differs, update it
+        if (selectedProd.categoryId && selectedProd.categoryId !== product.categoryId) {
+          const cat = await categoryService.getCategories().then(cats =>
+            cats.find(c => c.id === selectedProd.categoryId || c.slug === selectedProd.categoryId || c.name.toLowerCase() === selectedProd.category.toLowerCase())
+          );
+          const resolvedSlug = cat?.slug || selectedProd.categoryId;
+          setCategorySlug(resolvedSlug);
+          specTemplateService.getTemplateByCategorySlug(resolvedSlug).then(setSpecTemplate);
+        }
+
+        // Update related and accessories for the selected model
+        productService.getRelatedProducts(selectedProd.id).then(setRelatedProducts);
+        productService.getCompatibleAccessories(selectedProd.id).then(setCompatibleAccessories);
+      }
+    } catch (err) {
+      console.error('Failed to select model variant:', err);
+    }
+  };
+
   const handleAddToCart = () => {
-    addItemToCart(product, quantity, selectedFormFactor);
+    addItemToCart(product, quantity);
   };
 
   const handleBuyNow = () => {
-    addItemToCart(product, quantity, selectedFormFactor);
+    addItemToCart(product, quantity);
     onNavigate('checkout');
   };
 
@@ -194,27 +247,56 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
                 </div>
               </div>
 
-              {/* Optional Form Factor (If Camera) */}
-              {product.specifications.form_factor && (
-                <div className="space-y-2 mb-4">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Select Housing Form Factor
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['bullet', 'dome', 'turret'].map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setSelectedFormFactor(f)}
-                        className={`py-2 text-xs font-bold rounded-lg border capitalize transition-all ${
-                          selectedFormFactor === f
-                            ? 'bg-[#0F172A] border-[#0F172A] text-white'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        {f}
-                      </button>
-                    ))}
+              {/* Compact Model / Variant Selector (Displayed only when genuine catalog variants exist) */}
+              {variants.length > 1 && (
+                <div data-testid="product-model-selector" className="space-y-2 mb-5">
+                  <div className="flex items-center justify-between text-xs">
+                    <label className="font-bold text-slate-700 uppercase tracking-wider block">
+                      Available Models
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      Active: <strong className="text-slate-800">{product.modelNumber}</strong>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {variants.map((v) => {
+                      const isSelected = v.productId === product.id;
+                      const displayPrice = v.price != null && v.price > 0
+                        ? `৳${v.price.toLocaleString()}`
+                        : (v.price === 0 || v.price === null ? 'Quote' : '');
+                      return (
+                        <button
+                          key={v.productId}
+                          type="button"
+                          data-testid={`model-selector-option-${v.modelNumber}`}
+                          onClick={() => handleSelectModel(v.productId)}
+                          className={`p-2.5 rounded-xl border text-left transition-all relative flex flex-col justify-between min-h-[58px] ${
+                            isSelected
+                              ? 'border-[#F15A24] bg-orange-50/40 text-[#111827] shadow-xs ring-1 ring-[#F15A24]/30'
+                              : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1 w-full">
+                            <span className={`text-xs font-bold font-mono truncate ${isSelected ? 'text-[#F15A24]' : 'text-[#111827]'}`}>
+                              {v.modelNumber}
+                            </span>
+                            {isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24] shrink-0" />
+                            )}
+                          </div>
+                          {v.distinguishingSpec && (
+                            <span className="text-[11px] text-slate-500 font-medium truncate block mt-0.5">
+                              {v.distinguishingSpec}
+                            </span>
+                          )}
+                          {displayPrice && (
+                            <div className={`text-[11px] font-bold mt-1 ${isSelected ? 'text-[#F15A24]' : 'text-slate-800'}`}>
+                              {displayPrice}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

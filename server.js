@@ -780,6 +780,155 @@ app.get('/api/products/:id/accessories', (req, res) => {
   }
 });
 
+const CATALOG_PRODUCT_VARIANT_GROUPS = [
+  {
+    id: 'grp-ruijie-es200',
+    seriesName: 'Ruijie Reyee RG-ES200 Series',
+    distinguishingFeatureLabel: 'Port & PoE Budget',
+    productIds: ['prod-ruijie-es205gc-p', 'prod-ruijie-es209gc-p', 'prod-ruijie-es224gc-p'],
+    variants: [
+      { productId: 'prod-ruijie-es205gc-p', modelNumber: 'RG-ES205GC-P', distinguishingSpec: '5-Port PoE (54W)' },
+      { productId: 'prod-ruijie-es209gc-p', modelNumber: 'RG-ES209GC-P', distinguishingSpec: '9-Port PoE (120W)' },
+      { productId: 'prod-ruijie-es224gc-p', modelNumber: 'RG-ES224GC-P', distinguishingSpec: '24-Port PoE (370W)' }
+    ]
+  },
+  {
+    id: 'grp-ruijie-rap',
+    seriesName: 'Ruijie Reyee Access Points',
+    distinguishingFeatureLabel: 'Speed & Mount',
+    productIds: ['prod-ruijie-rap1200f', 'prod-ruijie-rap2200e', 'prod-ruijie-rap2260g'],
+    variants: [
+      { productId: 'prod-ruijie-rap1200f', modelNumber: 'RG-RAP1200(F)', distinguishingSpec: 'In-Wall AC1200' },
+      { productId: 'prod-ruijie-rap2200e', modelNumber: 'RG-RAP2200(E)', distinguishingSpec: 'Ceiling AC1300' },
+      { productId: 'prod-ruijie-rap2260g', modelNumber: 'RG-RAP2260(G)', distinguishingSpec: 'Ceiling AX1800 Wi-Fi 6' }
+    ]
+  },
+  {
+    id: 'grp-hik-dvr-7200',
+    seriesName: 'Hikvision AcuSense HD DVR Series',
+    distinguishingFeatureLabel: 'Channels & Storage',
+    productIds: ['prod-hik-dvr-4ch', 'prod-hik-dvr-8ch', 'prod-hik-dvr-16ch', 'prod-hik-dvr-32ch'],
+    variants: [
+      { productId: 'prod-hik-dvr-4ch', modelNumber: 'iDS-7204HQHI-M1/S', distinguishingSpec: '4-Channel (1 SATA)' },
+      { productId: 'prod-hik-dvr-8ch', modelNumber: 'iDS-7208HQHI-M1/S', distinguishingSpec: '8-Channel (1 SATA)' },
+      { productId: 'prod-hik-dvr-16ch', modelNumber: 'iDS-7216HQHI-M2/S', distinguishingSpec: '16-Channel (2 SATA)' },
+      { productId: 'prod-hik-dvr-32ch', modelNumber: 'iDS-7232HQHI-M2/S', distinguishingSpec: '32-Channel (4 SATA)' }
+    ]
+  },
+  {
+    id: 'grp-dahua-xvr-5000',
+    seriesName: 'Dahua WizSense XVR Series',
+    distinguishingFeatureLabel: 'Channels & Storage',
+    productIds: ['prod-dahua-xvr-8ch', 'prod-dahua-xvr-16ch'],
+    variants: [
+      { productId: 'prod-dahua-xvr-8ch', modelNumber: 'DH-XVR5108HS-I3', distinguishingSpec: '8-Channel (1 SATA)' },
+      { productId: 'prod-dahua-xvr-16ch', modelNumber: 'DH-XVR5216AN-I3', distinguishingSpec: '16-Channel (2 SATA)' }
+    ]
+  },
+  {
+    id: 'grp-wd-purple',
+    seriesName: 'WD Purple Surveillance HDDs',
+    distinguishingFeatureLabel: 'Capacity',
+    productIds: ['prod-wd-purple-500gb', 'prod-wd-purple-1tb', 'prod-wd-purple-2tb'],
+    variants: [
+      { productId: 'prod-wd-purple-500gb', modelNumber: 'WD5000PURZ', distinguishingSpec: '500GB Storage' },
+      { productId: 'prod-wd-purple-1tb', modelNumber: 'WD10PURZ', distinguishingSpec: '1TB Storage' },
+      { productId: 'prod-wd-purple-2tb', modelNumber: 'WD20PURZ', distinguishingSpec: '2TB Storage' }
+    ]
+  },
+  {
+    id: 'grp-hik-2mp-audio',
+    seriesName: 'Hikvision 2MP Audio Series',
+    distinguishingFeatureLabel: 'Housing Form Factor',
+    productIds: ['prod-hik-irpf-2mp', 'prod-hik-dome-2mp'],
+    variants: [
+      { productId: 'prod-hik-irpf-2mp', modelNumber: 'DS-2CE16D0T-ITPFS', distinguishingSpec: 'Mini Bullet (Outdoor)' },
+      { productId: 'prod-hik-dome-2mp', modelNumber: 'DS-2CE76D0T-ITPFS', distinguishingSpec: 'Turret Dome (Indoor)' }
+    ]
+  },
+  {
+    id: 'grp-dahua-2mp-series',
+    seriesName: 'Dahua 2MP HDCVI Series',
+    distinguishingFeatureLabel: 'Housing & Night Vision',
+    productIds: ['prod-dahua-2mp-bullet', 'prod-dahua-dome-2mp'],
+    variants: [
+      { productId: 'prod-dahua-2mp-bullet', modelNumber: 'DH-HAC-HFW1200THP-I8', distinguishingSpec: 'Bullet (Weatherproof)' },
+      { productId: 'prod-dahua-dome-2mp', modelNumber: 'DH-HAC-HDW1200EMP-A', distinguishingSpec: 'Eyeball Dome (Audio)' }
+    ]
+  },
+  {
+    id: 'grp-ezviz-db',
+    seriesName: 'EZVIZ Smart Video Doorbells',
+    distinguishingFeatureLabel: 'Power & Resolution',
+    productIds: ['prod-wifi-db1c', 'prod-wifi-db2'],
+    variants: [
+      { productId: 'prod-wifi-db1c', modelNumber: 'CS-DB1C-A0-1E2W2FR', distinguishingSpec: '1080p Wired' },
+      { productId: 'prod-wifi-db2', modelNumber: 'CS-DB2-A0-2C5WF', distinguishingSpec: '2K Battery' }
+    ]
+  },
+  {
+    id: 'grp-ezviz-dl',
+    seriesName: 'EZVIZ Smart Door Locks',
+    distinguishingFeatureLabel: 'Mechanism & Entry',
+    productIds: ['prod-wifi-lock-dl01', 'prod-wifi-lock-dl05'],
+    variants: [
+      { productId: 'prod-wifi-lock-dl01', modelNumber: 'CS-DL01S', distinguishingSpec: 'Keyless Deadbolt' },
+      { productId: 'prod-wifi-lock-dl05', modelNumber: 'CS-DL05-PRO', distinguishingSpec: 'Biometric Handle' }
+    ]
+  },
+  {
+    id: 'grp-zkteco-attendance',
+    seriesName: 'ZKTeco Time Attendance',
+    distinguishingFeatureLabel: 'Biometric Verification',
+    productIds: ['prod-zkteco-k40', 'prod-zkteco-mb20'],
+    variants: [
+      { productId: 'prod-zkteco-k40', modelNumber: 'K40', distinguishingSpec: 'Fingerprint + RFID' },
+      { productId: 'prod-zkteco-mb20', modelNumber: 'MB20', distinguishingSpec: 'Fingerprint + Face' }
+    ]
+  }
+];
+
+app.get('/api/products/:id/variants', (req, res) => {
+  try {
+    const id = req.params.id;
+    const group = CATALOG_PRODUCT_VARIANT_GROUPS.find(g =>
+      g.productIds.some(pid => pid.toLowerCase() === id.toLowerCase())
+    );
+    if (!group) {
+      return res.json({ seriesName: null, variants: [] });
+    }
+
+    const placeholders = group.productIds.map(() => '?').join(',');
+    const rows = db.prepare(`SELECT id, data_json FROM products WHERE id IN (${placeholders})`).all(...group.productIds);
+    const prodMap = new Map();
+    rows.forEach(r => prodMap.set(r.id, JSON.parse(r.data_json)));
+
+    const variants = group.variants.map(v => {
+      const prod = prodMap.get(v.productId);
+      const unitPrice = prod ? (prod.pricing?.salePrice || prod.pricing?.regularPrice || null) : null;
+      return {
+        productId: v.productId,
+        modelNumber: prod ? (prod.modelNumber || v.modelNumber) : v.modelNumber,
+        name: prod ? prod.name : v.modelNumber,
+        distinguishingSpec: v.distinguishingSpec,
+        price: unitPrice,
+        regularPrice: prod?.pricing?.regularPrice || null,
+        salePrice: prod?.pricing?.salePrice || null,
+        inStock: prod ? (prod.inventory?.status !== 'out_of_stock') : true,
+        primaryImage: prod?.primaryImage || (prod?.images && prod?.images[0]) || null
+      };
+    });
+
+    res.json({
+      seriesName: group.seriesName,
+      distinguishingFeatureLabel: group.distinguishingFeatureLabel,
+      variants
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/products', requireAdmin, validateBody(schemas.product), (req, res) => {
   try {
     const p = req.body;
@@ -2296,8 +2445,16 @@ app.get('/api/orders', requireAdmin, (req, res) => {
 
 app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
   try {
-    const num = req.params.orderNumber;
-    const row = db.prepare('SELECT customer_phone, customer_email, data_json FROM orders WHERE order_number = ? OR id = ?').get(num, num);
+    const rawNum = (req.params.orderNumber || '').trim();
+    const cleanNum = rawNum.replace(/^#/, '').trim();
+    const row = db.prepare(`
+      SELECT customer_phone, customer_email, data_json 
+      FROM orders 
+      WHERE UPPER(TRIM(order_number)) = UPPER(?) 
+         OR UPPER(TRIM(id)) = UPPER(?) 
+         OR UPPER(TRIM(order_number)) = UPPER('CNX-ORD-' || ?)
+         OR UPPER(TRIM(order_number)) = UPPER('CNX-' || ?)
+    `).get(cleanNum, cleanNum, cleanNum, cleanNum);
 
     // 1. If administrator, full access is granted
     if (req.user && (req.user.role === 'admin' || req.user.permissions?.includes('orders.read'))) {
@@ -2305,19 +2462,24 @@ app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
       return res.json(JSON.parse(row.data_json));
     }
 
-    // 2. If logged-in customer, verify ownership
-    if (req.user && req.user.role === 'customer') {
-      if (!row) return res.status(404).json({ error: 'Order not found' });
+    // 2. If logged-in customer, check if they own this order
+    let isCustomerOwner = false;
+    if (req.user && req.user.role === 'customer' && row) {
       const cust = db.prepare('SELECT phone, email FROM customers WHERE id = ?').get(req.user.id);
-      const isOwner = (cust && cust.phone === row.customer_phone) ||
-                      (cust && cust.email && cust.email.toLowerCase() === (row.customer_email || '').toLowerCase());
-      if (!isOwner) {
-        return res.status(403).json({ error: 'Access denied: You do not have permission to view this order.' });
+      if (cust && (
+        (cust.phone && cust.phone === row.customer_phone) ||
+        (cust.email && cust.email.toLowerCase() === (row.customer_email || '').toLowerCase())
+      )) {
+        isCustomerOwner = true;
       }
+    }
+
+    // If verified customer owner, full order access is granted
+    if (isCustomerOwner) {
       return res.json(JSON.parse(row.data_json));
     }
 
-    // 3. For public/guest tracking: requires both orderNumber and matching customer phone
+    // 3. For public/guest tracking (or customer tracking with phone verification): requires both orderNumber and matching customer phone
     const verifyPhone = (req.query.phone || '').trim();
     if (!verifyPhone) {
       return res.status(400).json({ error: 'Phone number verification is required to view order tracking status.' });
@@ -2330,12 +2492,30 @@ app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
 
     const cleanVerify = verifyPhone.replace(/[^0-9]/g, '');
     const cleanOrderPhone = (row.customer_phone || '').replace(/[^0-9]/g, '');
-    if (!cleanVerify || !cleanOrderPhone.endsWith(cleanVerify.slice(-10))) {
+    const vDigits = cleanVerify.slice(-10);
+    const oDigits = cleanOrderPhone.slice(-10);
+    if (!cleanVerify || vDigits.length < 9 || vDigits !== oDigits) {
       return res.status(404).json({ error: 'No order found matching the provided reference number and phone number. Please verify your details.' });
     }
 
     // Return sanitized public tracking data (never exposing customer private address, phone, or raw payment secrets)
     const fullOrder = JSON.parse(row.data_json);
+    const orderTotal = fullOrder.total != null ? fullOrder.total :
+                       (row.total_amount != null ? row.total_amount :
+                        (fullOrder.items || []).reduce((sum, i) => sum + ((i.unitPrice || i.pricePerUnit || i.price || 0) * (i.quantity || 1)), 0));
+
+    const courierName = fullOrder.courierName || null;
+    const trackingNumber = fullOrder.trackingNumber || null;
+    let courierTrackingUrl = fullOrder.courierTrackingUrl || null;
+    if (!courierTrackingUrl && trackingNumber) {
+      const c = (courierName || '').toLowerCase();
+      if (c.includes('steadfast')) {
+        courierTrackingUrl = `https://steadfast.com.bd/t/${encodeURIComponent(trackingNumber.trim())}`;
+      } else if (c.includes('pathao')) {
+        courierTrackingUrl = `https://merchant.pathao.com/tracking?consignment_id=${encodeURIComponent(trackingNumber.trim())}`;
+      }
+    }
+
     const publicTrackingData = {
       orderNumber: fullOrder.orderNumber,
       createdAt: fullOrder.createdAt,
@@ -2343,14 +2523,22 @@ app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
       timeline: fullOrder.timeline || [],
       deliveryInfo: {
         method: fullOrder.deliveryMethod || 'Standard Courier / Installation',
-        district: fullOrder.customer?.district || 'Dhaka',
+        district: fullOrder.deliveryCity || fullOrder.customer?.district || 'Dhaka',
         estimatedTime: fullOrder.deliveryEstimatedTime || null
       },
+      courierName: courierName,
+      trackingNumber: trackingNumber,
+      shipmentStatus: fullOrder.shipmentStatus || (trackingNumber ? 'in_transit' : (fullOrder.status === 'dispatched' ? 'dispatched' : 'pending')),
+      estimatedDeliveryDate: fullOrder.estimatedDeliveryDate || null,
+      courierTrackingUrl: courierTrackingUrl,
       itemCount: Array.isArray(fullOrder.items) ? fullOrder.items.length : 0,
       items: (fullOrder.items || []).map(i => ({
-        name: i.name,
-        model: i.model || i.modelNumber || '',
-        quantity: i.quantity,
+        name: i.name || i.product?.name || 'Security Equipment',
+        model: i.model || i.modelNumber || i.product?.model || '',
+        quantity: i.quantity || 1,
+        unitPrice: i.unitPrice || i.pricePerUnit || i.price || i.product?.pricing?.regularPrice || 0,
+        totalPrice: i.totalPrice || ((i.unitPrice || i.pricePerUnit || i.price || i.product?.pricing?.regularPrice || 0) * (i.quantity || 1)),
+        image: i.image || i.product?.primaryImage || (i.product?.images && i.product.images[0]) || null,
         packageDetails: i.packageDetails || null
       })),
       paymentMethod: fullOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' :
@@ -2358,7 +2546,9 @@ app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
                      fullOrder.paymentMethod === 'nagad_manual' ? 'Nagad' :
                      fullOrder.paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Official Payment',
       paymentStatus: fullOrder.paymentStatus,
-      total: fullOrder.total,
+      total: orderTotal,
+      subtotal: fullOrder.subtotal != null ? fullOrder.subtotal : orderTotal,
+      deliveryCharge: fullOrder.deliveryFee != null ? fullOrder.deliveryFee : (fullOrder.deliveryCharge || 0),
       contactSupport: {
         phone: '+880 1540-535150',
         email: 'contact@camnexbd.com',
@@ -2506,7 +2696,7 @@ app.put('/api/orders/:id/payment', requireAdmin, (req, res) => {
 app.put('/api/orders/:id/details', requireAdmin, (req, res) => {
   try {
     const id = req.params.id;
-    const { internalStaffNotes, courierName, trackingNumber, estimatedDeliveryDate } = req.body;
+    const { internalStaffNotes, courierName, trackingNumber, estimatedDeliveryDate, shipmentStatus, courierTrackingUrl } = req.body;
 
     const row = db.prepare('SELECT data_json FROM orders WHERE id = ? OR order_number = ?').get(id, id);
     if (!row) return res.status(404).json({ error: 'Order not found' });
@@ -2516,6 +2706,8 @@ app.put('/api/orders/:id/details', requireAdmin, (req, res) => {
     if (courierName !== undefined) order.courierName = courierName;
     if (trackingNumber !== undefined) order.trackingNumber = trackingNumber;
     if (estimatedDeliveryDate !== undefined) order.estimatedDeliveryDate = estimatedDeliveryDate;
+    if (shipmentStatus !== undefined) order.shipmentStatus = shipmentStatus;
+    if (courierTrackingUrl !== undefined) order.courierTrackingUrl = courierTrackingUrl;
 
     db.prepare('UPDATE orders SET data_json = ? WHERE id = ? OR order_number = ?').run(JSON.stringify(order), id, id);
 
@@ -2526,7 +2718,7 @@ app.put('/api/orders/:id/details', requireAdmin, (req, res) => {
       actorId: req.user?.id,
       actorName: req.user?.name,
       surface: 'admin',
-      after: { courierName, trackingNumber }
+      after: { courierName, trackingNumber, shipmentStatus, courierTrackingUrl }
     });
 
     res.json(order);

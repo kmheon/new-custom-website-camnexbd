@@ -57,8 +57,8 @@ export const Button: React.FC<ButtonProps> = ({
 // ----------------------------------------------------------------------------
 // Badge
 // ----------------------------------------------------------------------------
-export interface BadgeProps {
-  variant?: 'orange' | 'dark' | 'success' | 'warning' | 'info' | 'gray' | 'danger' | 'yellow';
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  variant?: 'orange' | 'dark' | 'success' | 'warning' | 'info' | 'gray' | 'danger' | 'yellow' | 'primary';
   children: React.ReactNode;
   className?: string;
 }
@@ -66,9 +66,10 @@ export interface BadgeProps {
 export const Badge: React.FC<BadgeProps> = ({
   variant = 'gray',
   children,
-  className = ''
+  className = '',
+  ...props
 }) => {
-  const variants = {
+  const variants: Record<string, string> = {
     orange: 'bg-[#F15A24]/10 text-[#F15A24] border border-[#F15A24]/20',
     dark: 'bg-[#0F172A] text-white',
     success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
@@ -76,11 +77,12 @@ export const Badge: React.FC<BadgeProps> = ({
     info: 'bg-blue-50 text-blue-700 border border-blue-200',
     gray: 'bg-slate-100 text-slate-700 border border-slate-200',
     danger: 'bg-rose-50 text-rose-700 border border-rose-200',
-    yellow: 'bg-amber-50 text-amber-700 border border-amber-200'
+    yellow: 'bg-amber-50 text-amber-700 border border-amber-200',
+    primary: 'bg-blue-50 text-blue-700 border border-blue-200'
   };
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold ${variants[variant]} ${className}`}>
+    <span {...props} className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold ${variants[variant] || variants.gray} ${className}`}>
       {children}
     </span>
   );
