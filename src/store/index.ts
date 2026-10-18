@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { CartItem, Product, SiteSettings, User, Role, Customer } from '../types';
+import { CartItem, Product, SiteSettings, User, Role, Customer, Address } from '../types';
 import { cartService, cmsService } from '../services';
 import { apiFetch, fetchCsrfToken, setCachedCsrfToken } from '../services/apiClient';
 
@@ -270,6 +270,14 @@ interface CustomerAuthState {
   verifyEmailVerification: (code: string, email?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   fetchMyOrders: () => Promise<any[]>;
+  updateProfile: (data: { name?: string; companyName?: string }) => Promise<{ success: boolean; error?: string }>;
+  fetchAddresses: () => Promise<Address[]>;
+  addAddress: (address: Partial<Address>) => Promise<{ success: boolean; addresses?: Address[]; error?: string }>;
+  updateAddress: (addressId: string, address: Partial<Address>) => Promise<{ success: boolean; addresses?: Address[]; error?: string }>;
+  deleteAddress: (addressId: string) => Promise<{ success: boolean; addresses?: Address[]; error?: string }>;
+  setDefaultAddress: (addressId: string) => Promise<{ success: boolean; addresses?: Address[]; error?: string }>;
+  getSecurityInfo: () => Promise<{ hasPassword: boolean; googleLinked: boolean; googleEmail: string | null } | null>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
@@ -489,6 +497,157 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
 
   fetchMyOrders: async () => {
     return apiFetch<any[]>('/customer/orders');
+  },
+
+  updateProfile: async (data: { name?: string; companyName?: string }) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; customer: Customer }>('/customer/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      if (res && res.customer) {
+        const cur = get().currentCustomer;
+        if (cur) {
+          set({
+            currentCustomer: {
+              ...cur,
+              name: res.customer.name,
+              companyName: res.customer.companyName
+            }
+          });
+        }
+      }
+      set({ isLoading: false });
+      return { success: true };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
+    }
+  },
+
+  fetchAddresses: async () => {
+    try {
+      const addresses = await apiFetch<Address[]>('/customer/addresses');
+      const cur = get().currentCustomer;
+      if (cur) {
+        set({ currentCustomer: { ...cur, addresses } });
+      }
+      return addresses;
+    } catch (_) {
+      return get().currentCustomer?.addresses || [];
+    }
+  },
+
+  addAddress: async (addr: Partial<Address>) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; addresses: Address[] }>('/customer/addresses', {
+        method: 'POST',
+        body: JSON.stringify(addr)
+      });
+      if (res && res.addresses) {
+        const cur = get().currentCustomer;
+        if (cur) {
+          set({ currentCustomer: { ...cur, addresses: res.addresses } });
+        }
+      }
+      set({ isLoading: false });
+      return { success: true, addresses: res.addresses };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
+    }
+  },
+
+  updateAddress: async (addressId: string, addr: Partial<Address>) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; addresses: Address[] }>(`/customer/addresses/${addressId}`, {
+        method: 'PUT',
+        body: JSON.stringify(addr)
+      });
+      if (res && res.addresses) {
+        const cur = get().currentCustomer;
+        if (cur) {
+          set({ currentCustomer: { ...cur, addresses: res.addresses } });
+        }
+      }
+      set({ isLoading: false });
+      return { success: true, addresses: res.addresses };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
+    }
+  },
+
+  deleteAddress: async (addressId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; addresses: Address[] }>(`/customer/addresses/${addressId}`, {
+        method: 'DELETE'
+      });
+      if (res && res.addresses) {
+        const cur = get().currentCustomer;
+        if (cur) {
+          set({ currentCustomer: { ...cur, addresses: res.addresses } });
+        }
+      }
+      set({ isLoading: false });
+      return { success: true, addresses: res.addresses };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
+    }
+  },
+
+  setDefaultAddress: async (addressId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; addresses: Address[] }>(`/customer/addresses/${addressId}/default`, {
+        method: 'POST'
+      });
+      if (res && res.addresses) {
+        const cur = get().currentCustomer;
+        if (cur) {
+          set({ currentCustomer: { ...cur, addresses: res.addresses } });
+        }
+      }
+      set({ isLoading: false });
+      return { success: true, addresses: res.addresses };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
+    }
+  },
+
+  getSecurityInfo: async () => {
+    try {
+      return await apiFetch<{ hasPassword: boolean; googleLinked: boolean; googleEmail: string | null }>('/customer/security');
+    } catch (_) {
+      return null;
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      await apiFetch<{ success: boolean; message?: string }>('/customer/password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      set({ isLoading: false });
+      return { success: true };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
+    }
   }
 }));
 

@@ -37,11 +37,14 @@ export interface Customer {
 export interface Address {
   id: string;
   label: string; // e.g. "Office", "Home", "Warehouse"
+  recipientName?: string;
+  recipientPhone?: string;
   addressLine: string;
-  area: string;
-  city: string;
+  area?: string;
+  city?: string;
   district?: string;
   thana?: string;
+  postalCode?: string;
   isDefault?: boolean;
 }
 

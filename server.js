@@ -786,12 +786,301 @@ app.get('/api/customer/orders', requireCustomer, (req, res) => {
     const email = (custRow && custRow.email) || req.user.email || '';
 
     const rows = db.prepare(`
-      SELECT data_json FROM orders
-      WHERE customer_phone = ? OR (customer_email IS NOT NULL AND customer_email != '' AND customer_email = ?)
-      ORDER BY created_at DESC
-    `).all(phone, email);
+      SELECT o.id, o.data_json, s.provider_id as courier_provider, s.consignment_id, s.tracking_code, s.tracking_url as shipment_tracking_url, s.status as shipment_status
+      FROM orders o
+      LEFT JOIN shipments s ON s.order_id = o.id
+      WHERE (o.customer_phone = ? AND ? != '')
+         OR (o.customer_email IS NOT NULL AND o.customer_email != '' AND o.customer_email = ?)
+         OR json_extract(o.data_json, '$.customerId') = ?
+      ORDER BY o.created_at DESC
+    `).all(phone, phone, email, req.user.id);
 
-    res.json(rows.map(r => JSON.parse(r.data_json)));
+    const orders = rows.map(r => {
+      const order = JSON.parse(r.data_json);
+      if (r.consignment_id && !order.trackingNumber) {
+        order.trackingNumber = r.consignment_id;
+      }
+      if (r.courier_provider && !order.courierName) {
+        order.courierName = r.courier_provider === 'steadfast' ? 'Steadfast Courier' : (r.courier_provider === 'pathao' ? 'Pathao Logistics' : r.courier_provider);
+      }
+      if (r.shipment_tracking_url && !order.courierTrackingUrl) {
+        order.courierTrackingUrl = r.shipment_tracking_url;
+      }
+      if (r.shipment_status && !order.shipmentStatus) {
+        order.shipmentStatus = r.shipment_status;
+      }
+      return order;
+    });
+
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Customer Profile Endpoint (Read & Update)
+app.get('/api/customer/profile', requireCustomer, (req, res) => {
+  try {
+    const custRow = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) {
+      return res.status(404).json({ error: 'Customer account not found.' });
+    }
+    const custData = JSON.parse(custRow.data_json);
+    custData.email_verified = custRow.email_verified === 1;
+    custData.phone_verified = custRow.phone_verified === 1;
+    custData.emailVerified = custRow.email_verified === 1;
+    custData.phoneVerified = custRow.phone_verified === 1;
+
+    // Fetch linked social accounts
+    const oauthRows = db.prepare('SELECT provider, email, created_at FROM oauth_accounts WHERE customer_id = ?').all(req.user.id);
+
+    res.json({
+      customer: custData,
+      linkedAccounts: oauthRows
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/customer/profile', requireCustomer, csrfProtection, (req, res) => {
+  try {
+    const { name, companyName } = req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required.' });
+    }
+
+    const custRow = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) {
+      return res.status(404).json({ error: 'Customer account not found.' });
+    }
+
+    const custData = JSON.parse(custRow.data_json);
+    custData.name = name.trim();
+    if (companyName !== undefined) {
+      custData.companyName = typeof companyName === 'string' ? companyName.trim() : '';
+    }
+
+    custData.email_verified = custRow.email_verified === 1;
+    custData.phone_verified = custRow.phone_verified === 1;
+    custData.emailVerified = custRow.email_verified === 1;
+    custData.phoneVerified = custRow.phone_verified === 1;
+
+    db.prepare('UPDATE customers SET name = ?, company_name = ?, data_json = ? WHERE id = ?')
+      .run(custData.name, custData.companyName || null, JSON.stringify(custData), req.user.id);
+
+    res.json({
+      success: true,
+      customer: custData
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Customer Saved Addresses Endpoints
+app.get('/api/customer/addresses', requireCustomer, (req, res) => {
+  try {
+    const custRow = db.prepare('SELECT data_json FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) return res.status(404).json({ error: 'Customer not found.' });
+    const custData = JSON.parse(custRow.data_json);
+    res.json(custData.addresses || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/customer/addresses', requireCustomer, csrfProtection, (req, res) => {
+  try {
+    const { label, recipientName, recipientPhone, addressLine, district, thana, area, city, postalCode, isDefault } = req.body;
+    if (!addressLine || !addressLine.trim()) {
+      return res.status(400).json({ error: 'Street address line is required.' });
+    }
+    if (!district || !district.trim()) {
+      return res.status(400).json({ error: 'District is required.' });
+    }
+
+    const custRow = db.prepare('SELECT data_json, name, phone FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) return res.status(404).json({ error: 'Customer not found.' });
+    const custData = JSON.parse(custRow.data_json);
+    if (!Array.isArray(custData.addresses)) {
+      custData.addresses = [];
+    }
+
+    const shouldBeDefault = Boolean(isDefault) || custData.addresses.length === 0;
+    if (shouldBeDefault) {
+      custData.addresses.forEach(a => { a.isDefault = false; });
+    }
+
+    const newAddress = {
+      id: `addr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      label: label && typeof label === 'string' && label.trim() ? label.trim() : 'Home',
+      recipientName: recipientName && typeof recipientName === 'string' && recipientName.trim() ? recipientName.trim() : (custData.name || custRow.name),
+      recipientPhone: recipientPhone && typeof recipientPhone === 'string' && recipientPhone.trim() ? recipientPhone.trim() : (custData.phone || custRow.phone || ''),
+      addressLine: addressLine.trim(),
+      district: district.trim(),
+      thana: thana && typeof thana === 'string' ? thana.trim() : '',
+      area: area && typeof area === 'string' ? area.trim() : '',
+      city: city && typeof city === 'string' && city.trim() ? city.trim() : district.trim(),
+      postalCode: postalCode && typeof postalCode === 'string' ? postalCode.trim() : '',
+      isDefault: shouldBeDefault
+    };
+
+    custData.addresses.push(newAddress);
+    db.prepare('UPDATE customers SET data_json = ? WHERE id = ?').run(JSON.stringify(custData), req.user.id);
+
+    res.json({
+      success: true,
+      address: newAddress,
+      addresses: custData.addresses
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/customer/addresses/:addressId', requireCustomer, csrfProtection, (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const { label, recipientName, recipientPhone, addressLine, district, thana, area, city, postalCode, isDefault } = req.body;
+
+    const custRow = db.prepare('SELECT data_json FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) return res.status(404).json({ error: 'Customer not found.' });
+    const custData = JSON.parse(custRow.data_json);
+    if (!Array.isArray(custData.addresses)) custData.addresses = [];
+
+    const targetIdx = custData.addresses.findIndex(a => a.id === addressId);
+    if (targetIdx === -1) {
+      return res.status(404).json({ error: 'Address not found.' });
+    }
+
+    if (isDefault) {
+      custData.addresses.forEach(a => { a.isDefault = false; });
+    }
+
+    const existing = custData.addresses[targetIdx];
+    custData.addresses[targetIdx] = {
+      ...existing,
+      label: label !== undefined ? String(label).trim() : existing.label,
+      recipientName: recipientName !== undefined ? String(recipientName).trim() : existing.recipientName,
+      recipientPhone: recipientPhone !== undefined ? String(recipientPhone).trim() : existing.recipientPhone,
+      addressLine: addressLine !== undefined ? String(addressLine).trim() : existing.addressLine,
+      district: district !== undefined ? String(district).trim() : existing.district,
+      thana: thana !== undefined ? String(thana).trim() : existing.thana,
+      area: area !== undefined ? String(area).trim() : existing.area,
+      city: city !== undefined ? String(city).trim() : existing.city,
+      postalCode: postalCode !== undefined ? String(postalCode).trim() : existing.postalCode,
+      isDefault: isDefault !== undefined ? Boolean(isDefault) : existing.isDefault
+    };
+
+    db.prepare('UPDATE customers SET data_json = ? WHERE id = ?').run(JSON.stringify(custData), req.user.id);
+
+    res.json({
+      success: true,
+      address: custData.addresses[targetIdx],
+      addresses: custData.addresses
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/customer/addresses/:addressId', requireCustomer, csrfProtection, (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const custRow = db.prepare('SELECT data_json FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) return res.status(404).json({ error: 'Customer not found.' });
+    const custData = JSON.parse(custRow.data_json);
+    if (!Array.isArray(custData.addresses)) custData.addresses = [];
+
+    const wasDefault = custData.addresses.some(a => a.id === addressId && a.isDefault);
+    custData.addresses = custData.addresses.filter(a => a.id !== addressId);
+
+    if (wasDefault && custData.addresses.length > 0) {
+      custData.addresses[0].isDefault = true;
+    }
+
+    db.prepare('UPDATE customers SET data_json = ? WHERE id = ?').run(JSON.stringify(custData), req.user.id);
+
+    res.json({
+      success: true,
+      addresses: custData.addresses
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/customer/addresses/:addressId/default', requireCustomer, csrfProtection, (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const custRow = db.prepare('SELECT data_json FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) return res.status(404).json({ error: 'Customer not found.' });
+    const custData = JSON.parse(custRow.data_json);
+    if (!Array.isArray(custData.addresses)) custData.addresses = [];
+
+    const target = custData.addresses.find(a => a.id === addressId);
+    if (!target) {
+      return res.status(404).json({ error: 'Address not found.' });
+    }
+
+    custData.addresses.forEach(a => {
+      a.isDefault = a.id === addressId;
+    });
+
+    db.prepare('UPDATE customers SET data_json = ? WHERE id = ?').run(JSON.stringify(custData), req.user.id);
+
+    res.json({
+      success: true,
+      addresses: custData.addresses
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Customer Security & Password Management
+app.get('/api/customer/security', requireCustomer, (req, res) => {
+  try {
+    const custRow = db.prepare('SELECT password_hash FROM customers WHERE id = ?').get(req.user.id);
+    const oauthGoogle = db.prepare("SELECT email, created_at FROM oauth_accounts WHERE customer_id = ? AND provider = 'google'").get(req.user.id);
+    res.json({
+      hasPassword: Boolean(custRow && custRow.password_hash),
+      googleLinked: Boolean(oauthGoogle),
+      googleEmail: oauthGoogle ? oauthGoogle.email : null
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/customer/password', requireCustomer, csrfProtection, loginLimiter, (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    const custRow = db.prepare('SELECT password_hash FROM customers WHERE id = ?').get(req.user.id);
+    if (!custRow) {
+      return res.status(404).json({ error: 'Customer not found.' });
+    }
+
+    // If customer already has a password, verify current password
+    if (custRow.password_hash) {
+      if (!currentPassword || !bcrypt.compareSync(currentPassword, custRow.password_hash)) {
+        return res.status(400).json({ error: 'Current password is incorrect.' });
+      }
+    }
+
+    const newHash = bcrypt.hashSync(newPassword, 10);
+    db.prepare('UPDATE customers SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully.'
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
