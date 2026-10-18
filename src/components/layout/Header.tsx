@@ -589,6 +589,20 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 )}
               </div>
 
+              {/* Shop Link */}
+              <button
+                type="button"
+                data-testid="nav-shop-link"
+                onClick={() => onNavigate('catalog')}
+                className={`px-3 py-1.5 rounded-full hover:bg-[#FAF7F2] transition-colors cursor-pointer ${
+                  currentRoute === 'catalog'
+                    ? 'text-[#F15A24] bg-orange-50/70 font-bold'
+                    : 'text-[#111827] hover:text-[#F15A24]'
+                }`}
+              >
+                Shop
+              </button>
+
               {/* Solutions */}
               <button
                 type="button"
@@ -980,6 +994,20 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                   </div>
                 )}
               </div>
+
+              {/* Shop Link */}
+              <button
+                type="button"
+                data-testid="mobile-nav-shop-link"
+                onClick={() => { setMobileMenuOpen(false); onNavigate('catalog'); }}
+                className={`w-full text-left py-2 px-3 text-sm font-bold rounded-xl transition-colors cursor-pointer ${
+                  currentRoute === 'catalog'
+                    ? 'text-[#F15A24] bg-orange-50/70'
+                    : 'text-[#111827] hover:bg-[#FAF7F2]'
+                }`}
+              >
+                Shop
+              </button>
 
               <button
                 onClick={() => { setMobileMenuOpen(false); onNavigate('solutions'); }}

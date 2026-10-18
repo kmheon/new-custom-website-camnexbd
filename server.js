@@ -1047,7 +1047,8 @@ app.get('/api/customer/security', requireCustomer, (req, res) => {
     res.json({
       hasPassword: Boolean(custRow && custRow.password_hash),
       googleLinked: Boolean(oauthGoogle),
-      googleEmail: oauthGoogle ? oauthGoogle.email : null
+      googleEmail: oauthGoogle ? oauthGoogle.email : null,
+      appleSupported: false
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -6119,7 +6120,7 @@ function resolveRouteMetadata(reqPath) {
     return defaultMeta;
   }
 
-  if (reqPath === '/catalog') {
+  if (reqPath === '/catalog' || reqPath === '/shop') {
     return {
       ...defaultMeta,
       title: 'Hardware Catalog | CamneX Bangladesh',
@@ -6272,6 +6273,7 @@ function resolveRouteMetadata(reqPath) {
     '/package-builder': { title: 'Custom CCTV Package Builder & Estimator | CamneX Bangladesh', description: 'Design and configure your security camera system online with transparent engineering rules and genuine hardware.' },
     '/package-maker': { title: 'Custom CCTV Package Builder & Estimator | CamneX Bangladesh', description: 'Design and configure your security camera system online with transparent engineering rules and genuine hardware.' },
     '/account': { title: 'Customer Account | CamneX Bangladesh', description: 'Customer account and order history.' },
+    '/shop': { title: 'Hardware Catalog & Shop | CamneX Bangladesh', description: 'Explore genuine surveillance cameras, Turbo HD DVRs, Dahua security devices, and biometric access control.' },
     '/admin': { title: 'Admin Console | CamneX Bangladesh', description: 'CamneX administration dashboard.' }
   };
 

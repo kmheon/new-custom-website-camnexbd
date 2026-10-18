@@ -78,7 +78,7 @@ export default function App() {
       if (path === '/' || path === '') {
         setCurrentRoute('home');
         setRouteParam(undefined);
-      } else if (path === '/catalog') {
+      } else if (path === '/catalog' || path === '/shop') {
         setCurrentRoute('catalog');
         setRouteParam(undefined);
       } else if (path === '/brands' || path === '/brands/') {
@@ -199,7 +199,7 @@ export default function App() {
 
     let newUrl = '/';
     if (route === 'home') newUrl = '/';
-    else if (route === 'catalog') newUrl = '/catalog';
+    else if (route === 'catalog' || route === 'shop') newUrl = '/catalog';
     else if (route === 'brands') newUrl = '/brands';
     else if (route === 'category' && param) newUrl = `/category/${param}`;
     else if (route === 'brand' && param) newUrl = `/brand/${param}`;
