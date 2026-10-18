@@ -1183,13 +1183,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             {/* Adaptive 3-col desktop, 2-col tablet, 1-col mobile grid with row-fill */}
             {(() => {
               const total = scenarios.length;
-              // Columns by viewport: 3 at >= 1024px, 2 at 640-1023px, 1 below 640px
+              // Columns on desktop (lg): 3
               const c = total < 3 ? Math.max(1, total) : 3;
               const r = total % c;
               const fullRowsCount = Math.floor(total / c);
 
               return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-7">
                   {scenarios.map((scenario, idx) => {
                     // Compute adaptive span on desktop for last row items
                     const isInLastRow = r > 0 && idx >= fullRowsCount * c;
@@ -1198,15 +1198,21 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     const baseSpan = Math.floor(c / r);
                     const colSpan = isInLastRow ? (lastRowIdx < extraCols ? baseSpan + 1 : baseSpan) : 1;
 
+                    // On tablet (sm:grid-cols-2), if odd number of items, last item spans 2 cols
+                    const isLastOnOddTablet = total % 2 !== 0 && idx === total - 1;
+
+                    const spanClass = colSpan === 2
+                      ? (isLastOnOddTablet ? 'sm:col-span-2 lg:col-span-2' : 'lg:col-span-2')
+                      : colSpan === 3
+                      ? 'sm:col-span-2 lg:col-span-3'
+                      : (isLastOnOddTablet ? 'sm:col-span-2 lg:col-span-1' : '');
+
                     return (
                       <div
                         key={scenario.id}
                         onClick={() => onNavigate('solutions', scenario.slug)}
-                        style={{
-                          gridColumn: colSpan > 1 ? `span ${colSpan} / span ${colSpan}` : undefined
-                        }}
                         data-solution-id={scenario.id}
-                        className="bg-white rounded-[20px] border border-[#EDE8E1] p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer group group/scenario flex items-start gap-4 min-h-[112px]"
+                        className={`bg-white rounded-[20px] border border-[#EDE8E1] p-4 sm:p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer group group/scenario flex items-start gap-3.5 sm:gap-4 min-h-[112px] ${spanClass}`}
                       >
                         {/* 48px Tinted Icon Container on Left with built-in contrast and hover */}
                         <IconTile size="xl" rounded="rounded-2xl" className="group-hover:scale-105 shrink-0">
@@ -1216,10 +1222,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                         {/* Right: 17px Bold Title (up to 2 lines), Description (up to 2 lines), Learn more link */}
                         <div className="min-w-0 flex-1 flex flex-col justify-between h-full">
                           <div>
-                            <h3 className="font-heading font-bold text-[17px] text-[#111827] group-hover:text-[#F15A24] transition-colors line-clamp-2 leading-snug mb-1 min-w-0 [overflow-wrap:anywhere] break-words">
+                            <h3 className="font-heading font-bold text-base sm:text-[17px] text-[#111827] group-hover:text-[#F15A24] transition-colors line-clamp-2 leading-snug mb-1 min-w-0 [overflow-wrap:anywhere] break-words">
                               {scenario.title}
                             </h3>
-                            <p className="text-sm text-[#5B6472] line-clamp-2 leading-relaxed min-w-0 [overflow-wrap:anywhere] break-words">
+                            <p className="text-xs sm:text-sm text-[#5B6472] line-clamp-2 leading-relaxed min-w-0 [overflow-wrap:anywhere] break-words">
                               {scenario.description || ''}
                             </p>
                           </div>
