@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Trash2, ArrowRight, CheckCircle2, ShieldCheck, Truck, Wrench, CreditCard, Smartphone, Building2, Check, Banknote, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Trash2, ArrowRight, CheckCircle2, ShieldCheck, ShieldAlert, Truck, Wrench, CreditCard, Smartphone, Building2, Check, Banknote, AlertCircle } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Input, Select, Badge, Card, Alert, Modal } from '../components/common/UI';
-import { useCartStore } from '../store';
+import { useCartStore, useCustomerAuthStore } from '../store';
 import { cartService, orderService, cmsService } from '../services';
 import { DeliveryMethod, PaymentMethod, Order, PaymentDetails, SiteSettings } from '../types';
+import { CustomerVerificationModal } from '../components/common/CustomerVerificationModal';
+import { TurnstileWidget } from '../components/common/TurnstileWidget';
 
 interface CartAndCheckoutPageProps {
   onNavigate: (route: string, param?: string) => void;
@@ -37,6 +39,46 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [formError, setFormError] = useState('');
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+
+  // Customer Authentication & Verification States
+  const { currentCustomer, isCustomerAuthenticated, checkCustomerAuth } = useCustomerAuthStore();
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false);
+  const [verificationData, setVerificationData] = useState<any>(null);
+  const [checkoutCaptchaToken, setCheckoutCaptchaToken] = useState('');
+
+  const fetchVerifStatus = async () => {
+    try {
+      const res = await fetch('/api/auth/verification/status');
+      const d = await res.json();
+      setVerificationData(d);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    checkCustomerAuth();
+    fetchVerifStatus();
+  }, []);
+
+  // Pre-fill customer contact fields if authenticated
+  useEffect(() => {
+    if (currentCustomer) {
+      if (currentCustomer.name && !customerName) setCustomerName(currentCustomer.name);
+      if (currentCustomer.phone && !customerPhone) setCustomerPhone(currentCustomer.phone);
+      if (currentCustomer.email && !customerEmail) setCustomerEmail(currentCustomer.email);
+    }
+  }, [currentCustomer]);
+
+  const cleanPhoneInput = customerPhone.replace(/[\s\-\(\)]/g, '').replace(/^\+88/, '');
+  const cleanEmailInput = customerEmail.trim().toLowerCase();
+
+  const isCustomerVerified = Boolean(
+    (currentCustomer && (currentCustomer.email_verified || currentCustomer.phone_verified || currentCustomer.emailVerified || currentCustomer.phoneVerified)) ||
+    (verificationData?.customer && (verificationData.customer.email_verified || verificationData.customer.phone_verified)) ||
+    (verificationData?.guest && verificationData.guest.isVerified && (
+      (verificationData.guest.verifiedPhone && cleanPhoneInput && (verificationData.guest.verifiedPhone === cleanPhoneInput || `0${verificationData.guest.verifiedPhone}` === cleanPhoneInput)) ||
+      (verificationData.guest.verifiedEmail && cleanEmailInput && verificationData.guest.verifiedEmail === cleanEmailInput)
+    ))
+  );
 
   useEffect(() => {
     cmsService.getSiteSettings().then(setSiteSettings).catch(() => {});
@@ -123,6 +165,12 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
       return;
     }
 
+    if (!isCustomerVerified) {
+      setFormError('Customer verification required: Please verify your mobile phone or email address before placing your order.');
+      setVerificationModalOpen(true);
+      return;
+    }
+
     setFormError('');
     setIsSubmitting(true);
 
@@ -153,6 +201,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
         paymentMethod,
         paymentStatus: isManualMfsOrBank ? 'unverified' : 'unpaid',
         paymentDetails,
+        captchaToken: checkoutCaptchaToken || undefined,
         items: items.map(i => ({
           productId: i.productId,
           name: i.product.name,
@@ -173,7 +222,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
       try {
         if (typeof window !== 'undefined' && window.localStorage) {
           window.localStorage.setItem('camnex_last_checkout_order', order.orderNumber);
-          window.localStorage.setItem('camnex_last_checkout_phone', formData.phone);
+          window.localStorage.setItem('camnex_last_checkout_phone', customerPhone);
         }
       } catch (_) {}
       await clearCart();
@@ -758,17 +807,85 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
 
                   </div>
 
+                  {/* Customer Verification Status Banner at Checkout */}
+                  {isCustomerVerified ? (
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 mt-4" data-testid="checkout-verified-banner">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <div>
+                          <span className="font-bold">Verified Contact</span>
+                          <span className="text-emerald-700 ml-1.5 hidden sm:inline">Eligible for instant order dispatch.</span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">✓ Verified</span>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2.5 text-xs text-amber-900 mt-4" data-testid="checkout-verification-required-card">
+                      <div className="flex items-start gap-2.5">
+                        <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-bold text-amber-950 text-sm">Customer Verification Required</div>
+                          <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
+                            Please verify your mobile number or email address before finalizing your order. Your entered delivery address and cart will remain completely intact.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-1 flex items-center justify-between">
+                        <span className="text-[11px] text-amber-700 font-medium">Quick 6-digit code verification</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setVerificationModalOpen(true)}
+                          className="border-amber-300 text-amber-950 bg-white hover:bg-amber-100/50 font-bold text-xs"
+                          data-testid="checkout-verify-btn"
+                        >
+                          Verify Contact Now
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lightweight CAPTCHA / Bot Protection */}
+                  <div className="mt-4">
+                    <TurnstileWidget
+                      action="checkout"
+                      onVerify={(token) => setCheckoutCaptchaToken(token)}
+                      onError={() => setCheckoutCaptchaToken('')}
+                      onExpire={() => setCheckoutCaptchaToken('')}
+                    />
+                  </div>
+
                   <Button
                     size="lg"
                     type="submit"
                     isLoading={isSubmitting}
                     disabled={isSubmitting || !hasAnyPaymentMethod}
+                    data-testid="place-order-submit-btn"
                     className="w-full mt-4"
                   >
                     {!hasAnyPaymentMethod
                       ? "Checkout Unavailable (Payments Not Configured)"
+                      : !isCustomerVerified
+                      ? `Verify Contact to Place Order (৳${summary.total.toLocaleString()})`
                       : `Confirm & Place Order (৳${summary.total.toLocaleString()})`}
                   </Button>
+
+                  {/* Customer Verification Modal */}
+                  <CustomerVerificationModal
+                    isOpen={verificationModalOpen}
+                    onClose={() => setVerificationModalOpen(false)}
+                    onSuccess={async () => {
+                      await checkCustomerAuth();
+                      await fetchVerifStatus();
+                      setFormError('');
+                    }}
+                    initialMethod={customerPhone ? 'phone' : 'email'}
+                    defaultPhone={customerPhone}
+                    defaultEmail={customerEmail}
+                    title="Verify Contact Before Order Placement"
+                    subtitle="Verify your phone or email to finalize your order. Your cart and checkout fields remain saved."
+                  />
 
                 </form>
               )}

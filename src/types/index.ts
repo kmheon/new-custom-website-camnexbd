@@ -27,6 +27,10 @@ export interface Customer {
   addresses: Address[];
   internalStaffNotes?: string;
   isArchived?: boolean;
+  email_verified?: boolean;
+  phone_verified?: boolean;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
   createdAt: string;
 }
 
@@ -537,6 +541,7 @@ export interface Order {
   };
   createdAt: string;
   isDemo?: boolean;
+  captchaToken?: string;
 }
 
 // ----------------------------------------------------------------------------

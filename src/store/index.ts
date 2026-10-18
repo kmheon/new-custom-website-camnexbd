@@ -247,37 +247,76 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
 // ----------------------------------------------------------------------------
 // Customer Auth Store (Private Order History)
 // ----------------------------------------------------------------------------
+export interface AuthProvidersStatus {
+  google: { configured: boolean; clientId: string | null };
+  apple: { configured: boolean; clientId: string | null };
+  smsOtp: { configured: boolean; provider: string | null };
+}
+
 interface CustomerAuthState {
   currentCustomer: Customer | null;
   isCustomerAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  providersStatus: AuthProvidersStatus | null;
   checkCustomerAuth: () => Promise<boolean>;
+  getProvidersStatus: () => Promise<AuthProvidersStatus>;
   login: (identifier: string, password: string) => Promise<boolean>;
-  register: (name: string, phone: string, password: string, email?: string) => Promise<boolean>;
+  register: (name: string, phone: string, password: string, email?: string, captchaToken?: string) => Promise<boolean>;
+  sendOtp: (phone: string) => Promise<{ success: boolean; configured: boolean; message?: string; error?: string }>;
+  verifyOtp: (phone: string, code: string) => Promise<boolean>;
+  getVerificationStatus: () => Promise<any>;
+  sendEmailVerification: (email?: string, captchaToken?: string) => Promise<{ success: boolean; configured?: boolean; message?: string; error?: string }>;
+  verifyEmailVerification: (code: string, email?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   fetchMyOrders: () => Promise<any[]>;
 }
 
-export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
+export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
   currentCustomer: null,
   isCustomerAuthenticated: false,
   isLoading: false,
   error: null,
+  providersStatus: null,
+
+  getProvidersStatus: async () => {
+    try {
+      const data = await apiFetch<AuthProvidersStatus>('/auth/providers');
+      set({ providersStatus: data });
+      return data;
+    } catch (_) {
+      const fallback: AuthProvidersStatus = {
+        google: { configured: false, clientId: null },
+        apple: { configured: false, clientId: null },
+        smsOtp: { configured: false, provider: null }
+      };
+      set({ providersStatus: fallback });
+      return fallback;
+    }
+  },
 
   checkCustomerAuth: async () => {
     try {
       const data = await apiFetch<{ authenticated: boolean; user: any }>('/auth/me');
       if (data && data.authenticated && data.user && data.user.role === 'customer') {
+        const u = data.user;
+        const emailVerified = Boolean(u.email_verified || u.emailVerified);
+        const phoneVerified = Boolean(u.phone_verified || u.phoneVerified);
+
         set({
           currentCustomer: {
-            id: data.user.id,
-            name: data.user.name,
-            phone: '',
-            email: data.user.email,
-            customerType: 'individual',
-            addresses: [],
-            createdAt: ''
+            id: u.id,
+            name: u.name,
+            phone: u.phone || '',
+            email: u.email || '',
+            companyName: u.companyName,
+            customerType: u.customerType || 'individual',
+            addresses: u.addresses || [],
+            email_verified: emailVerified,
+            phone_verified: phoneVerified,
+            emailVerified,
+            phoneVerified,
+            createdAt: u.createdAt || ''
           },
           isCustomerAuthenticated: true,
           error: null
@@ -333,6 +372,109 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
       return false;
+    }
+  },
+
+  sendOtp: async (phone: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; configured?: boolean; message?: string; error?: string }>('/auth/otp/send', {
+        method: 'POST',
+        body: JSON.stringify({ phone })
+      });
+      set({ isLoading: false });
+      return { success: true, configured: true, message: res.message };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, configured: false, error: err.message };
+    }
+  },
+
+  verifyOtp: async (phone: string, code: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const data = await apiFetch<{ success: boolean; customer: Customer; csrfToken?: string }>('/auth/otp/verify', {
+        method: 'POST',
+        body: JSON.stringify({ phone, code })
+      });
+      if (data && data.csrfToken) {
+        setCachedCsrfToken(data.csrfToken);
+      }
+      set({ currentCustomer: data.customer, isCustomerAuthenticated: true, isLoading: false, error: null });
+      useWishlistStore.getState().mergeGuestWishlist();
+      return true;
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      return false;
+    }
+  },
+
+  getVerificationStatus: async () => {
+    try {
+      const data = await apiFetch<any>('/auth/verification/status');
+      if (data && data.customer) {
+        const cur = get().currentCustomer;
+        if (cur) {
+          set({
+            currentCustomer: {
+              ...cur,
+              email_verified: data.customer.email_verified,
+              phone_verified: data.customer.phone_verified,
+              emailVerified: data.customer.email_verified,
+              phoneVerified: data.customer.phone_verified
+            }
+          });
+        }
+      }
+      return data;
+    } catch (err: any) {
+      return null;
+    }
+  },
+
+  sendEmailVerification: async (email?: string, captchaToken?: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; configured?: boolean; message?: string; error?: string }>('/auth/verification/email/send', {
+        method: 'POST',
+        body: JSON.stringify({ email, captchaToken })
+      });
+      set({ isLoading: false });
+      return { success: true, configured: res.configured !== false, message: res.message };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, configured: false, error: err.message };
+    }
+  },
+
+  verifyEmailVerification: async (code: string, email?: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetchCsrfToken();
+      const res = await apiFetch<{ success: boolean; error?: string; email_verified?: boolean }>('/auth/verification/email/verify', {
+        method: 'POST',
+        body: JSON.stringify({ code, email })
+      });
+      if (res && res.success) {
+        const cur = get().currentCustomer;
+        if (cur) {
+          set({
+            currentCustomer: {
+              ...cur,
+              email_verified: true,
+              emailVerified: true
+            }
+          });
+        }
+      }
+      set({ isLoading: false });
+      return { success: true };
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
     }
   },
 

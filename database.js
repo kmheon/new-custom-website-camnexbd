@@ -183,7 +183,7 @@ function initDb() {
     CREATE TABLE IF NOT EXISTS customers (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      phone TEXT UNIQUE NOT NULL,
+      phone TEXT UNIQUE,
       email TEXT,
       company_name TEXT,
       customer_type TEXT DEFAULT 'individual',
@@ -192,6 +192,65 @@ function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  // 9e. OAuth Social Accounts (Google, Apple, etc.)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS oauth_accounts (
+      id TEXT PRIMARY KEY,
+      customer_id TEXT NOT NULL,
+      provider TEXT NOT NULL,
+      provider_user_id TEXT NOT NULL,
+      email TEXT,
+      email_verified INTEGER DEFAULT 0,
+      data_json TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(provider, provider_user_id),
+      FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_oauth_customer ON oauth_accounts(customer_id)`).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_oauth_provider ON oauth_accounts(provider, provider_user_id)`).run();
+
+  // 9f. Phone OTP Verification Sessions
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS phone_otps (
+      id TEXT PRIMARY KEY,
+      phone TEXT NOT NULL,
+      code_hash TEXT NOT NULL,
+      attempts INTEGER DEFAULT 0,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_phone_otps_phone ON phone_otps(phone)`).run();
+
+  // 9g. OAuth CSRF State Nonces
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS oauth_states (
+      state TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      nonce TEXT,
+      redirect_url TEXT,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at)`).run();
+
+  // 9h. Email Verification Sessions & Tokens
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      code_hash TEXT NOT NULL,
+      token TEXT UNIQUE,
+      attempts INTEGER DEFAULT 0,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)`).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_email_verif_token ON email_verifications(token)`).run();
 
   // 9b. Customer Wishlists
   db.prepare(`
@@ -705,6 +764,44 @@ function migratePlatformTables(targetDb) {
   }
   if (!custCols.includes('archived_at')) {
     try { targetDb.prepare(`ALTER TABLE customers ADD COLUMN archived_at DATETIME`).run(); } catch (_) {}
+  }
+  if (!custCols.includes('email_verified')) {
+    try { targetDb.prepare(`ALTER TABLE customers ADD COLUMN email_verified INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+  if (!custCols.includes('phone_verified')) {
+    try { targetDb.prepare(`ALTER TABLE customers ADD COLUMN phone_verified INTEGER DEFAULT 0`).run(); } catch (_) {}
+  }
+
+  // Ensure customers.phone allows NULL for social OAuth sign-ins without initial phone
+  try {
+    const custTableCols = targetDb.prepare('PRAGMA table_info(customers)').all();
+    const phoneCol = custTableCols.find(c => c.name === 'phone');
+    if (phoneCol && phoneCol.notnull === 1) {
+      targetDb.pragma('foreign_keys = OFF');
+      targetDb.exec(`
+        CREATE TABLE IF NOT EXISTS customers_oauth_migration (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          phone TEXT UNIQUE,
+          email TEXT,
+          company_name TEXT,
+          customer_type TEXT DEFAULT 'individual',
+          password_hash TEXT,
+          data_json TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          is_archived INTEGER DEFAULT 0,
+          archived_at DATETIME
+        );
+        INSERT INTO customers_oauth_migration SELECT id, name, phone, email, company_name, customer_type, password_hash, data_json, created_at, is_archived, archived_at FROM customers;
+        DROP TABLE customers;
+        ALTER TABLE customers_oauth_migration RENAME TO customers;
+        CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
+        CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+      `);
+      targetDb.pragma('foreign_keys = ON');
+    }
+  } catch (err) {
+    console.error('Customer phone nullability migration error:', err);
   }
 
   // Seed system roles & permissions

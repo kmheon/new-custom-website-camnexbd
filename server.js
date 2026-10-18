@@ -36,6 +36,26 @@ const { encrypt, decrypt, maskSecret } = require('./server/shared/cryptoHelper')
 const apiV1Router = require('./server/routes/api.v1');
 const { logAudit } = require('./server/middleware/auditLogger');
 const { hasPermission, PERMISSIONS } = require('./server/shared/permissions');
+const {
+  getProvidersStatus,
+  initiateGoogleAuth,
+  handleGoogleCallback,
+  initiateAppleAuth,
+  handleAppleCallback,
+  sendPhoneOtp,
+  verifyPhoneOtp,
+  linkOrRegisterOAuthCustomer
+} = require('./server/auth/socialAuth');
+const {
+  getVerificationConfig,
+  verifyTurnstileToken,
+  sendEmailVerification,
+  verifyEmailCode,
+  verifyEmailToken,
+  updateCustomerVerification,
+  getCustomerVerificationProfile,
+  validateOrderVerification
+} = require('./server/auth/verificationService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -212,6 +232,7 @@ app.use((req, res, next) => {
 
 app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(configureCors());
 app.use(authenticate);
 
@@ -363,6 +384,33 @@ app.get('/api/auth/me', (req, res) => {
   if (!req.user) {
     return res.json({ authenticated: false, user: null });
   }
+
+  // If user is a customer, return full up-to-date verification statuses from DB
+  if (req.user.role === 'customer') {
+    const custRow = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.user.id);
+    if (custRow) {
+      let custData = {};
+      try { custData = JSON.parse(custRow.data_json); } catch (_) {}
+      const emailVerified = custRow.email_verified === 1;
+      const phoneVerified = custRow.phone_verified === 1;
+
+      custData.email_verified = emailVerified;
+      custData.emailVerified = emailVerified;
+      custData.phone_verified = phoneVerified;
+      custData.phoneVerified = phoneVerified;
+
+      return res.json({
+        authenticated: true,
+        user: {
+          ...req.user,
+          ...custData,
+          email_verified: emailVerified,
+          phone_verified: phoneVerified
+        }
+      });
+    }
+  }
+
   res.json({ authenticated: true, user: req.user });
 });
 
@@ -378,13 +426,35 @@ app.post('/api/auth/admin/login', loginLimiter, validateBody(schemas.adminLogin)
   }
 });
 
-app.post('/api/auth/customer/register', registerLimiter, validateBody(schemas.customerRegister), (req, res) => {
+app.post('/api/auth/customer/register', registerLimiter, validateBody(schemas.customerRegister), async (req, res) => {
   try {
-    const { name, phone, password, email } = req.body;
-    const cleanPhone = phone.trim();
-    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const { name, phone, password, email, captchaToken } = req.body;
+    const cleanPhone = phone && phone.trim().length > 0 ? phone.trim() : null;
+    const cleanEmail = email && email.trim().length > 0 ? email.trim().toLowerCase() : null;
 
-    const existing = db.prepare("SELECT id FROM customers WHERE phone = ? OR (email IS NOT NULL AND email != '' AND LOWER(email) = ?)").get(cleanPhone, cleanEmail);
+    // Lightweight CAPTCHA / Bot Protection verification
+    const captchaTokenValue = captchaToken || req.headers['x-turnstile-token'];
+    const captchaResult = await verifyTurnstileToken(captchaTokenValue, req.ip);
+    if (!captchaResult.success) {
+      return res.status(400).json({
+        error: captchaResult.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
+        code: 'CAPTCHA_FAILED'
+      });
+    }
+
+    if (!cleanPhone && !cleanEmail) {
+      return res.status(400).json({ error: 'Please provide either a mobile phone number or an email address.' });
+    }
+
+    let existing = null;
+    if (cleanPhone && cleanEmail) {
+      existing = db.prepare("SELECT id FROM customers WHERE phone = ? OR (email IS NOT NULL AND email != '' AND LOWER(email) = ?)").get(cleanPhone, cleanEmail);
+    } else if (cleanPhone) {
+      existing = db.prepare("SELECT id FROM customers WHERE phone = ?").get(cleanPhone);
+    } else if (cleanEmail) {
+      existing = db.prepare("SELECT id FROM customers WHERE email IS NOT NULL AND email != '' AND LOWER(email) = ?").get(cleanEmail);
+    }
+
     if (existing) {
       return res.status(400).json({ error: 'An account with this phone number or email address already exists.' });
     }
@@ -394,19 +464,23 @@ app.post('/api/auth/customer/register', registerLimiter, validateBody(schemas.cu
     const custData = {
       id,
       name: name.trim(),
-      phone: cleanPhone,
+      phone: cleanPhone || undefined,
       email: cleanEmail || undefined,
       customerType: 'individual',
       addresses: [],
+      email_verified: false,
+      emailVerified: false,
+      phone_verified: false,
+      phoneVerified: false,
       createdAt: new Date().toISOString()
     };
 
     db.prepare(`
-      INSERT INTO customers (id, name, phone, email, password_hash, customer_type, data_json, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, custData.name, custData.phone, cleanEmail, hash, 'individual', JSON.stringify(custData), custData.createdAt);
+      INSERT INTO customers (id, name, phone, email, password_hash, customer_type, email_verified, phone_verified, data_json, created_at)
+      VALUES (?, ?, ?, ?, ?, 'individual', 0, 0, ?, ?)
+    `).run(id, custData.name, cleanPhone, cleanEmail, hash, JSON.stringify(custData), custData.createdAt);
 
-    const { csrfToken } = createSession(id, 'customer', cleanEmail, custData.name, res);
+    const { csrfToken } = createSession(id, 'customer', cleanEmail || '', custData.name, res);
     res.json({
       success: true,
       customer: custData,
@@ -432,6 +506,11 @@ app.post('/api/auth/customer/login', loginLimiter, validateBody(schemas.customer
     }
 
     const customer = JSON.parse(customerRow.data_json);
+    customer.email_verified = customerRow.email_verified === 1;
+    customer.emailVerified = customerRow.email_verified === 1;
+    customer.phone_verified = customerRow.phone_verified === 1;
+    customer.phoneVerified = customerRow.phone_verified === 1;
+
     const { csrfToken } = createSession(customerRow.id, 'customer', customer.email || '', customer.name, res);
     res.json({
       success: true,
@@ -447,6 +526,240 @@ app.post(['/api/auth/logout', '/api/auth/customer/logout', '/api/auth/admin/logo
   destroySession(req.cookies?.camnex_session, res);
   res.json({ success: true, message: 'Logged out successfully.' });
 });
+
+// External Authentication & Social OAuth Providers Status
+app.get('/api/auth/providers', (req, res) => {
+  res.json(getProvidersStatus());
+});
+
+// Google OAuth
+app.get('/api/auth/oauth/google', (req, res) => {
+  initiateGoogleAuth(req, res);
+});
+app.get('/api/auth/oauth/google/callback', (req, res) => {
+  handleGoogleCallback(req, res);
+});
+
+// Apple Sign-In
+app.get('/api/auth/oauth/apple', (req, res) => {
+  initiateAppleAuth(req, res);
+});
+app.post('/api/auth/oauth/apple/callback', (req, res) => {
+  handleAppleCallback(req, res);
+});
+
+// Phone Number OTP Sign-In
+app.post('/api/auth/otp/send', loginLimiter, (req, res) => {
+  sendPhoneOtp(req, res);
+});
+app.post('/api/auth/otp/verify', loginLimiter, (req, res) => {
+  verifyPhoneOtp(req, res);
+});
+
+// Lightweight CAPTCHA Config (Turnstile)
+app.get('/api/auth/captcha/config', (req, res) => {
+  const cfg = getVerificationConfig();
+  res.json(cfg.turnstile);
+});
+
+// Customer Verification Status (Profile & Checkout)
+app.get('/api/auth/verification/status', (req, res) => {
+  try {
+    const customerId = req.user?.role === 'customer' ? req.user.id : null;
+    const profile = getCustomerVerificationProfile(customerId);
+    const config = getVerificationConfig();
+
+    const guestVerifiedPhone = req.cookies?.camnex_verified_phone || null;
+    const guestVerifiedEmail = req.cookies?.camnex_verified_email || null;
+
+    res.json({
+      authenticated: !!customerId,
+      customer: profile,
+      guest: {
+        verifiedPhone: guestVerifiedPhone,
+        verifiedEmail: guestVerifiedEmail,
+        isVerified: !!(guestVerifiedPhone || guestVerifiedEmail)
+      },
+      isVerified: profile ? profile.isVerified : !!(guestVerifiedPhone || guestVerifiedEmail),
+      config
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Email Verification Send (with Rate Limiting & CAPTCHA validation)
+app.post('/api/auth/verification/email/send', loginLimiter, async (req, res) => {
+  try {
+    const customerId = req.user?.role === 'customer' ? req.user.id : null;
+    let targetEmail = req.body.email;
+
+    if (!targetEmail && customerId) {
+      const cust = db.prepare('SELECT email FROM customers WHERE id = ?').get(customerId);
+      if (cust && cust.email) targetEmail = cust.email;
+    }
+
+    if (!targetEmail) {
+      return res.status(400).json({ error: 'Please provide a valid email address to verify.' });
+    }
+
+    // CAPTCHA verification if token provided
+    const captchaToken = req.body.captchaToken || req.headers['x-turnstile-token'];
+    if (captchaToken) {
+      const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+      if (!captchaRes.success) {
+        return res.status(400).json({ error: captchaRes.error || 'CAPTCHA verification failed.', code: 'CAPTCHA_FAILED' });
+      }
+    }
+
+    const result = await sendEmailVerification({ email: targetEmail, customerId });
+    if (!result.success) {
+      return res.status(result.configured === false ? 503 : 400).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Email Verification Code Check
+app.post('/api/auth/verification/email/verify', loginLimiter, (req, res) => {
+  try {
+    const customerId = req.user?.role === 'customer' ? req.user.id : null;
+    let targetEmail = req.body.email;
+    const code = req.body.code;
+
+    if (!targetEmail && customerId) {
+      const cust = db.prepare('SELECT email FROM customers WHERE id = ?').get(customerId);
+      if (cust && cust.email) targetEmail = cust.email;
+    }
+
+    const result = verifyEmailCode({ email: targetEmail, code, customerId });
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    // Set cookie for guest checkout session
+    res.cookie('camnex_verified_email', result.verifiedEmail, {
+      maxAge: 2 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/'
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Email Verification Link Click Handler
+app.get('/api/auth/verification/email/confirm', (req, res) => {
+  const token = req.query.token;
+  const result = verifyEmailToken(token);
+  if (result.success) {
+    res.cookie('camnex_verified_email', result.verifiedEmail, {
+      maxAge: 2 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/'
+    });
+    return res.redirect('/account?email_verified=1');
+  }
+  return res.redirect('/account?error=email_verification_invalid');
+});
+
+// Phone Verification Send
+app.post('/api/auth/verification/phone/send', loginLimiter, async (req, res) => {
+  // CAPTCHA verification if token provided
+  const captchaToken = req.body.captchaToken || req.headers['x-turnstile-token'];
+  if (captchaToken) {
+    const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+    if (!captchaRes.success) {
+      return res.status(400).json({ error: captchaRes.error || 'CAPTCHA verification failed.', code: 'CAPTCHA_FAILED' });
+    }
+  }
+  sendPhoneOtp(req, res);
+});
+
+// Phone Verification Check
+app.post('/api/auth/verification/phone/verify', loginLimiter, (req, res) => {
+  const oldJson = res.json.bind(res);
+  res.json = (data) => {
+    if (data && data.success && (data.customer?.phone || req.body.phone)) {
+      const phone = data.customer?.phone || req.body.phone;
+      res.cookie('camnex_verified_phone', phone, {
+        maxAge: 2 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/'
+      });
+    }
+    return oldJson(data);
+  };
+  verifyPhoneOtp(req, res);
+});
+
+// Test Simulation Endpoint for automated QA of OAuth account linking & duplicate prevention
+if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_AUTH === 'true') {
+  app.post('/api/auth/oauth/test-simulate', (req, res) => {
+    try {
+      const { provider, providerUserId, email, name, emailVerified } = req.body;
+      if (!emailVerified) {
+        return res.status(400).json({ error: 'Cannot authenticate unverified email' });
+      }
+      const customer = linkOrRegisterOAuthCustomer({
+        provider: provider || 'google',
+        providerUserId: providerUserId || `test-${Date.now()}`,
+        email: email.toLowerCase(),
+        name: name || 'Test User',
+        emailVerified: 1,
+        rawData: { sub: providerUserId, email }
+      });
+      const { csrfToken } = createSession(customer.id, 'customer', customer.email || '', customer.name, res);
+      res.json({ success: true, customer, csrfToken });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // QA Test Helper: simulate customer verification status
+  app.post('/api/auth/test/simulate-verify-customer', (req, res) => {
+    try {
+      const { customerId, email_verified, phone_verified } = req.body;
+      const updated = updateCustomerVerification({
+        customerId,
+        emailVerified: email_verified !== undefined ? (email_verified ? 1 : 0) : undefined,
+        phoneVerified: phone_verified !== undefined ? (phone_verified ? 1 : 0) : undefined
+      });
+      res.json({ success: true, customer: updated });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // QA Test Helper: simulate guest contact verification
+  app.post('/api/auth/test/simulate-guest-verify', (req, res) => {
+    const { phone, email } = req.body;
+    if (phone) {
+      res.cookie('camnex_verified_phone', phone.trim(), {
+        maxAge: 2 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/'
+      });
+    }
+    if (email) {
+      res.cookie('camnex_verified_email', email.trim().toLowerCase(), {
+        maxAge: 2 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/'
+      });
+    }
+    res.json({ success: true, verifiedPhone: phone, verifiedEmail: email });
+  });
+}
 
 app.get('/api/customer/orders', requireCustomer, (req, res) => {
   try {
@@ -2572,9 +2885,41 @@ app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
   }
 });
 
-app.post(['/api/orders', '/api/cart/checkout'], submissionLimiter, validateBody(schemas.order), (req, res) => {
+app.post(['/api/orders', '/api/cart/checkout'], submissionLimiter, validateBody(schemas.order), async (req, res) => {
   try {
     const orderData = req.body;
+
+    // 1. Lightweight CAPTCHA / Bot Protection verification
+    const captchaToken = orderData.captchaToken || req.headers['x-turnstile-token'];
+    const captchaResult = await verifyTurnstileToken(captchaToken, req.ip);
+    if (!captchaResult.success) {
+      return res.status(400).json({
+        error: captchaResult.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
+        code: 'CAPTCHA_FAILED'
+      });
+    }
+
+    // 2. Enforce Customer / Contact Verification before order placement
+    const customerId = req.user && req.user.role === 'customer' ? req.user.id : null;
+    const sessionData = {
+      verified_phone: req.cookies?.camnex_verified_phone,
+      verified_email: req.cookies?.camnex_verified_email
+    };
+
+    const verCheck = validateOrderVerification({
+      customerId,
+      sessionData,
+      orderCustomerPhone: orderData.customerPhone,
+      orderCustomerEmail: orderData.customerEmail
+    });
+
+    if (!verCheck.allowed) {
+      return res.status(403).json({
+        error: verCheck.error,
+        code: verCheck.code || 'VERIFICATION_REQUIRED',
+        unverified: true
+      });
+    }
 
     // Verify configured payment methods from site settings
     const settingsRow = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();

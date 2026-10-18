@@ -167,6 +167,9 @@ export default function App() {
       } else if (path.startsWith('/blog/')) {
         setCurrentRoute('blog_post');
         setRouteParam(path.replace('/blog/', ''));
+      } else if (path === '/account' || path === '/login' || path === '/register') {
+        setCurrentRoute('account');
+        setRouteParam(undefined);
       } else if (path.startsWith('/admin')) {
         setCurrentRoute('admin');
       } else {

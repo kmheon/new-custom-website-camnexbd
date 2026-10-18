@@ -206,9 +206,16 @@ const schemas = {
 
   customerRegister: z.object({
     name: z.string().min(2, 'Name must be at least 2 characters').max(80, 'Name cannot exceed 80 characters'),
-    phone: z.string().min(11, 'Phone must be at least 11 digits'),
+    phone: z.string().optional().or(z.literal('')),
     password: z.string().min(6, 'Password must be at least 6 characters'),
-    email: z.string().email('Invalid email address').optional().or(z.literal(''))
+    email: z.string().email('Invalid email address').optional().or(z.literal('')),
+    captchaToken: z.string().optional()
+  }).refine(data => {
+    const hasPhone = Boolean(data.phone && data.phone.trim().length >= 11);
+    const hasEmail = Boolean(data.email && data.email.trim().length > 0);
+    return hasPhone || hasEmail;
+  }, {
+    message: 'Please provide either a valid phone number or an email address.'
   }),
 
   customerLogin: z.object({
