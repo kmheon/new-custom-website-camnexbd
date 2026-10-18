@@ -894,9 +894,9 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => setAddCourierModalOpen(true)}
-                  className="text-xs self-start sm:self-auto border-slate-700 hover:border-[#F15A24]"
+                  className="text-xs self-start sm:self-auto"
                 >
-                  <Plus className="w-3.5 h-3.5 mr-1 text-[#F15A24]" />
+                  <Plus className="w-3.5 h-3.5 mr-1" />
                   Add Courier Provider
                 </Button>
               </div>
@@ -985,7 +985,7 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                         variant="outline"
                         onClick={() => handleTestCourier('steadfast')}
                         disabled={testingCourier === 'steadfast'}
-                        className="text-[11px] py-1 h-7 border-slate-700 hover:bg-slate-800"
+                        className="text-[11px] py-1 h-7"
                       >
                         {testingCourier === 'steadfast' ? (
                           <>
@@ -1118,7 +1118,7 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                         variant="outline"
                         onClick={() => handleTestCourier('pathao')}
                         disabled={testingCourier === 'pathao'}
-                        className="text-[11px] py-1 h-7 border-slate-700 hover:bg-slate-800"
+                        className="text-[11px] py-1 h-7"
                       >
                         {testingCourier === 'pathao' ? (
                           <>
@@ -2144,7 +2144,6 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={() => setAddCourierModalOpen(false)}
-                className="border-slate-700 text-slate-300"
               >
                 Close
               </Button>

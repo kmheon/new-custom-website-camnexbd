@@ -24,30 +24,35 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const isBusy = isLoading || loading;
-  const base = 'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const base = 'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F15A24] focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none select-none';
 
   const variants = {
-    primary: 'bg-[#F15A24] hover:bg-[#D94D1C] text-white shadow-md shadow-orange-600/20 focus:ring-[#F15A24]',
-    secondary: 'bg-[#0F172A] hover:bg-slate-800 text-white shadow-sm focus:ring-[#0F172A]',
-    outline: 'border-2 border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white focus:ring-[#0F172A]',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
-    ghost: 'text-slate-700 hover:bg-slate-100 hover:text-[#F15A24] focus:ring-slate-300'
+    primary: 'bg-[#F15A24] hover:bg-[#D94D1C] active:bg-[#C2410C] text-white shadow-md shadow-orange-600/20 focus-visible:ring-[#F15A24]',
+    secondary: 'btn-secondary-variant shadow-sm focus-visible:ring-[#F15A24]',
+    outline: 'btn-outline-variant shadow-xs focus-visible:ring-[#F15A24]',
+    danger: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white shadow-sm focus-visible:ring-red-500',
+    ghost: 'btn-ghost-variant focus-visible:ring-[#F15A24]'
   };
 
   const sizes = {
-    sm: 'text-xs px-3.5 py-2 gap-1.5',
-    md: 'text-sm px-5 py-2.5 gap-2',
-    lg: 'text-base px-6 py-3.5 gap-2.5'
+    sm: 'text-xs px-3.5 py-1.5 gap-1.5 min-h-[32px]',
+    md: 'text-sm px-5 py-2.5 gap-2 min-h-[40px]',
+    lg: 'text-base px-6 py-3.5 gap-2.5 min-h-[48px]'
   };
 
   return (
     <button
       className={`${base} ${fullWidth ? 'w-full' : ''} ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={disabled || isBusy}
+      aria-busy={isBusy ? 'true' : undefined}
+      aria-disabled={disabled || isBusy ? 'true' : undefined}
       {...props}
     >
       {isBusy && (
-        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        <span
+          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0"
+          aria-hidden="true"
+        />
       )}
       {children}
     </button>

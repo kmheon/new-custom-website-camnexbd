@@ -891,7 +891,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
 
   if (!isAdminAuthenticated || !currentUser || !canAccessWebsite) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
+      <div className="admin-theme dark min-h-screen bg-slate-950 flex flex-col justify-between">
         <header className="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#F15A24]"></span>
@@ -1147,7 +1147,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
     : { label: 'Store Activity', color: 'bg-emerald-400' };
 
   return (
-    <div className="bg-slate-900 min-h-screen text-slate-100 flex flex-col">
+    <div className="admin-theme dark bg-slate-900 min-h-screen text-slate-100 flex flex-col">
       <SEO title="Website Manager | CamneX Business Platform" description="Website administration portal." noIndex={true} />
 
       {/* Admin Top Navigation */}

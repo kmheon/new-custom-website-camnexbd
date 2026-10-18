@@ -98,3 +98,118 @@ img, svg, video, canvas, audio, iframe, embed, object {
   width: 100%;
 }
 
+/* ==========================================================================
+   Shared Button Color Tokens & Visual State Classes
+   WCAG AA compliant contrast for light and dark admin surfaces
+   ========================================================================== */
+:root {
+  --btn-outline-border: #0F172A;
+  --btn-outline-text: #0F172A;
+  --btn-outline-hover-bg: #0F172A;
+  --btn-outline-hover-text: #FFFFFF;
+  --btn-outline-hover-border: #0F172A;
+
+  --btn-secondary-bg: #0F172A;
+  --btn-secondary-border: transparent;
+  --btn-secondary-text: #FFFFFF;
+  --btn-secondary-hover-bg: #1E293B;
+  --btn-secondary-hover-border: transparent;
+
+  --btn-ghost-text: #334155;
+  --btn-ghost-hover-bg: #F1F5F9;
+  --btn-ghost-hover-text: #F15A24;
+}
+
+/* Dark surfaces: Admin Dashboard, dark cards, dark panels */
+.admin-theme,
+.dark,
+[data-theme="dark"],
+.bg-slate-900,
+.bg-slate-950 {
+  --btn-outline-border: #64748B;        /* slate-500: contrast ratio > 3.6:1 */
+  --btn-outline-text: #F8FAFC;          /* slate-50: contrast ratio > 17:1 */
+  --btn-outline-hover-bg: #1E293B;      /* slate-800 */
+  --btn-outline-hover-text: #FFFFFF;
+  --btn-outline-hover-border: #94A3B8;  /* slate-400: contrast ratio > 6:1 */
+
+  --btn-secondary-bg: #1E293B;          /* slate-800 */
+  --btn-secondary-border: #475569;      /* slate-600 */
+  --btn-secondary-text: #F8FAFC;
+  --btn-secondary-hover-bg: #334155;    /* slate-700 */
+  --btn-secondary-hover-border: #64748B;/* slate-500 */
+
+  --btn-ghost-text: #E2E8F0;            /* slate-200: contrast ratio > 11:1 */
+  --btn-ghost-hover-bg: #1E293B;        /* slate-800 */
+  --btn-ghost-hover-text: #F15A24;
+}
+
+/* Light nested containers inside dark theme (e.g., ConfirmDialog, Modal, light alerts) */
+.admin-theme .bg-white,
+.admin-theme .bg-slate-50,
+.admin-theme [data-theme="light"],
+.dark .bg-white,
+.dark .bg-slate-50,
+.dark [data-theme="light"] {
+  --btn-outline-border: #CBD5E1;        /* slate-300 */
+  --btn-outline-text: #0F172A;          /* slate-900 */
+  --btn-outline-hover-bg: #F1F5F9;      /* slate-100 */
+  --btn-outline-hover-text: #0F172A;
+  --btn-outline-hover-border: #94A3B8;  /* slate-400 */
+
+  --btn-secondary-bg: #0F172A;
+  --btn-secondary-border: transparent;
+  --btn-secondary-text: #FFFFFF;
+  --btn-secondary-hover-bg: #1E293B;
+  --btn-secondary-hover-border: transparent;
+
+  --btn-ghost-text: #334155;
+  --btn-ghost-hover-bg: #F1F5F9;
+  --btn-ghost-hover-text: #F15A24;
+}
+
+@layer components {
+  .btn-outline-variant {
+    border-width: 1.5px;
+    border-style: solid;
+    border-color: var(--btn-outline-border);
+    color: var(--btn-outline-text);
+    background-color: transparent;
+  }
+  .btn-outline-variant:hover:not(:disabled) {
+    background-color: var(--btn-outline-hover-bg);
+    color: var(--btn-outline-hover-text);
+    border-color: var(--btn-outline-hover-border);
+  }
+  .btn-outline-variant:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .btn-secondary-variant {
+    background-color: var(--btn-secondary-bg);
+    border-width: 1.5px;
+    border-style: solid;
+    border-color: var(--btn-secondary-border);
+    color: var(--btn-secondary-text);
+  }
+  .btn-secondary-variant:hover:not(:disabled) {
+    background-color: var(--btn-secondary-hover-bg);
+    border-color: var(--btn-secondary-hover-border);
+  }
+  .btn-secondary-variant:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .btn-ghost-variant {
+    color: var(--btn-ghost-text);
+    background-color: transparent;
+    border: 1.5px solid transparent;
+  }
+  .btn-ghost-variant:hover:not(:disabled) {
+    background-color: var(--btn-ghost-hover-bg);
+    color: var(--btn-ghost-hover-text);
+  }
+  .btn-ghost-variant:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
