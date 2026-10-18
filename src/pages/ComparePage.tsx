@@ -1,10 +1,104 @@
 import React, { useState, useEffect } from 'react';
-import { X, ShoppingBag, ArrowRight, Layers, AlertCircle, Trash2, ArrowLeft } from 'lucide-react';
+import { X, ShoppingBag, ArrowRight, Layers, AlertCircle, Trash2, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge } from '../components/common/UI';
 import { useCompareStore, useCartStore } from '../store';
 import { productService, specTemplateService } from '../services';
 import { Product, SpecTemplate } from '../types';
+
+// Fields that already appear in comparison header cards or should not be duplicated in the matrix
+export const IGNORED_SPEC_KEYS = new Set([
+  'id',
+  'name',
+  'title',
+  'brand',
+  'model',
+  'modelnumber',
+  'model_number',
+  'sku',
+  'price',
+  'regularprice',
+  'regular_price',
+  'saleprice',
+  'sale_price',
+  'images',
+  'primaryimage',
+  'primary_image',
+  'description',
+  'shortdescription',
+  'short_description',
+  'category',
+  'categoryid',
+  'category_id',
+  'stock',
+  'inventory',
+  'createdat',
+  'created_at',
+  'updatedat',
+  'updated_at'
+]);
+
+/**
+ * Normalizes specification values for precise catalog comparisons.
+ * Normalizes units (e.g. "3 MP" vs "3MP"), boolean values ("Yes" vs true),
+ * whitespace, delimiters, degrees, and handles missing/empty values consistently.
+ */
+export function normalizeSpecValue(val: any, unit?: string): string {
+  if (val === null || val === undefined) return '__EMPTY__';
+  if (typeof val === 'boolean') return val ? 'true' : 'false';
+
+  let str = String(val).trim();
+  if (!str || str === '—' || str === '-' || str.toLowerCase() === 'n/a' || str.toLowerCase() === 'none') {
+    return '__EMPTY__';
+  }
+
+  // Boolean-like text normalization
+  const lower = str.toLowerCase();
+  if (lower === 'yes' || lower === 'true' || lower === 'supported' || lower === 'enabled') return 'true';
+  if (lower === 'no' || lower === 'false' || lower === 'not supported' || lower === 'disabled') return 'false';
+
+  // If unit is provided and not already included in val
+  if (unit && !str.toLowerCase().includes(unit.toLowerCase().trim())) {
+    str = `${str} ${unit}`;
+  }
+
+  str = str.toLowerCase();
+
+  // Normalize Wi-Fi variations
+  str = str.replace(/wi[- ]?fi/g, 'wifi');
+
+  // Normalize degrees (355° vs 355 deg vs 355 degree vs 355 degrees)
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(?:°|deg(?:ree(?:s)?)?)\b/g, '$1°');
+
+  // Normalize common separators: / , & +
+  str = str.replace(/\s*([\/,&+])\s*/g, '/');
+  str = str.replace(/\s*([:x×\-])\s*/g, '$1');
+
+  // Normalize trailing .0 in numbers: 3.0 -> 3
+  str = str.replace(/(\d+)\.0+(\b|\D)/g, '$1$2');
+
+  // Normalize units (case-insensitive, strip space between number and unit)
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(mp|megapixel|megapixels)\b/g, '$1mp');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(gb|tb|mb|kb)\b/g, '$1$2');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(ghz|mhz|fps)\b/g, '$1$2');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(mm)\b/g, '$1mm');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(m|meter|meters)\b/g, '$1m');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(v|volt|volts)\b/g, '$1v');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(w|watt|watts)\b/g, '$1w');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(port|ports)\b/g, '$1ports');
+  str = str.replace(/(\d+(?:\.\d+)?)\s*(ch|channel|channels)\b/g, '$1ch');
+
+  // Normalize warranty representations
+  str = str.replace(/1\s*(?:yr|year|years)\b/g, '12 months');
+  str = str.replace(/2\s*(?:yrs|years)\b/g, '24 months');
+  str = str.replace(/3\s*(?:yrs|years)\b/g, '36 months');
+  str = str.replace(/\b(?:official|brand|manufacturer)\s+warranty\b/g, 'warranty');
+
+  // Collapse multiple whitespace
+  str = str.replace(/\s+/g, ' ').trim();
+
+  return str;
+}
 
 interface ComparePageProps {
   onNavigate: (route: string, param?: string) => void;
@@ -15,6 +109,7 @@ export const ComparePage: React.FC<ComparePageProps> = ({ onNavigate }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [specTemplate, setSpecTemplate] = useState<SpecTemplate | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showOnlyDifferences, setShowOnlyDifferences] = useState<boolean>(false);
 
   const addItemToCart = useCartStore((s) => s.addItem);
 
@@ -40,6 +135,78 @@ export const ComparePage: React.FC<ComparePageProps> = ({ onNavigate }) => {
       setIsLoading(false);
     }
   }, [productIds]);
+
+  // Generate comparison rows
+  // 1. Template fields first (if category template available)
+  const templateRows = (specTemplate?.fields || [])
+    .filter((f) => !IGNORED_SPEC_KEYS.has(f.key.toLowerCase().replace(/[-_]/g, '')))
+    .map((f) => ({
+      key: f.key,
+      name: f.name || f.label || f.key.replace(/_/g, ' '),
+      unit: f.unit
+    }));
+
+  const templateKeys = new Set(templateRows.map((r) => r.key.toLowerCase()));
+
+  // 2. Additional product spec keys not in template
+  const extraKeys = Array.from(
+    new Set(products.flatMap((p) => Object.keys(p.specifications || {})))
+  ).filter((k) => {
+    const normKey = k.toLowerCase().replace(/[-_]/g, '');
+    return !IGNORED_SPEC_KEYS.has(normKey) && !templateKeys.has(k.toLowerCase());
+  });
+
+  const extraRows = extraKeys.map((k) => ({
+    key: k,
+    name: k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    unit: undefined
+  }));
+
+  const allRowDefs = [...templateRows, ...extraRows];
+
+  // 3. Calculate values, display strings, normalized values, and difference flag
+  const calculatedSpecRows = allRowDefs.map((def) => {
+    const values = products.map((p) => {
+      const val = p.specifications ? p.specifications[def.key] : undefined;
+      const normalized = normalizeSpecValue(val, def.unit);
+      const display = val === true
+        ? 'Yes'
+        : val === false
+        ? 'No'
+        : val !== undefined && val !== null && String(val).trim() !== ''
+        ? (def.unit && !String(val).toLowerCase().includes(def.unit.toLowerCase()) ? `${val} ${def.unit}` : String(val))
+        : '—';
+      return { raw: val, display, normalized };
+    });
+
+    const isDifferent = products.length >= 2 && !values.every((v) => v.normalized === values[0]?.normalized);
+
+    return {
+      key: def.key,
+      name: def.name,
+      unit: def.unit,
+      values,
+      isDifferent
+    };
+  });
+
+  // Warranty difference calculation
+  const warrantyValues = products.map((p) => {
+    const text = p.warrantyText || `${p.warrantyMonths || 12} Months Official Warranty`;
+    return {
+      display: text,
+      normalized: normalizeSpecValue(text)
+    };
+  });
+  const isWarrantyDifferent = products.length >= 2 && !warrantyValues.every((w) => w.normalized === warrantyValues[0]?.normalized);
+
+  const visibleSpecRows = showOnlyDifferences
+    ? calculatedSpecRows.filter((r) => r.isDifferent)
+    : calculatedSpecRows;
+
+  const showWarrantyRow = showOnlyDifferences ? isWarrantyDifferent : true;
+  const totalDifferencesCount = calculatedSpecRows.filter((r) => r.isDifferent).length + (isWarrantyDifferent ? 1 : 0);
+  const hasNoDifferencesToDisplay = showOnlyDifferences && visibleSpecRows.length === 0 && !showWarrantyRow;
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen py-6 sm:py-10">
@@ -149,6 +316,38 @@ export const ComparePage: React.FC<ComparePageProps> = ({ onNavigate }) => {
               </div>
             )}
 
+            {/* Comparison Controls Bar (Show Only Differences Toggle) */}
+            <div className="mb-4 bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <label
+                  htmlFor="show-differences-toggle"
+                  className="inline-flex items-center gap-2.5 cursor-pointer select-none text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#F15A24] transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    id="show-differences-toggle"
+                    data-testid="show-differences-toggle"
+                    checked={showOnlyDifferences}
+                    onChange={(e) => setShowOnlyDifferences(e.target.checked)}
+                    className="w-4 h-4 text-[#F15A24] bg-white border-slate-300 rounded focus:ring-[#F15A24] focus:ring-2 cursor-pointer accent-[#F15A24]"
+                  />
+                  <span>Show only differences</span>
+                </label>
+
+                {showOnlyDifferences && (
+                  <Badge variant="outline" className="text-[11px] font-mono text-orange-600 border-orange-200 bg-orange-50 font-bold">
+                    {totalDifferencesCount} {totalDifferencesCount === 1 ? 'difference' : 'differences'}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="text-[11px] sm:text-xs text-slate-500 font-medium">
+                {showOnlyDifferences
+                  ? `Displaying ${visibleSpecRows.length + (showWarrantyRow ? 1 : 0)} differing specifications`
+                  : `Showing all ${calculatedSpecRows.length + 1} specifications`}
+              </div>
+            </div>
+
             {/* Comparison Matrix Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[650px]">
@@ -227,58 +426,87 @@ export const ComparePage: React.FC<ComparePageProps> = ({ onNavigate }) => {
 
                 {/* Specification Rows */}
                 <tbody className="divide-y divide-slate-100">
-                  <tr className="bg-slate-50/80">
-                    <td colSpan={products.length + 1} className="p-3 font-bold text-xs text-slate-700 uppercase tracking-wider">
-                      Core Specifications {products[0]?.category ? `(${products[0]?.category})` : ''}
-                    </td>
-                  </tr>
-
-                  {specTemplate ? (
-                    specTemplate.fields.map((field) => (
-                      <tr key={field.id} className="hover:bg-slate-50/50">
-                        <td className="p-4 font-bold text-slate-700">{field.name}</td>
-                        {products.map((p) => {
-                          const val = p.specifications ? p.specifications[field.key] : undefined;
-                          const displayVal = val === true ? 'Yes' : val === false ? 'No' : val !== undefined && val !== null ? `${val}${field.unit ? ' ' + field.unit : ''}` : '—';
-                          return (
-                            <td key={p.id} className="p-4 text-slate-900 font-medium">
-                              {displayVal}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))
-                  ) : (
-                    Array.from(new Set(products.flatMap(p => Object.keys(p.specifications || {})))).map((specKey) => (
-                      <tr key={specKey} className="hover:bg-slate-50/50">
-                        <td className="p-4 font-bold text-slate-700 capitalize">{specKey.replace(/_/g, ' ')}</td>
-                        {products.map((p) => {
-                          const val = p.specifications ? p.specifications[specKey] : undefined;
-                          const displayVal = val === true ? 'Yes' : val === false ? 'No' : val !== undefined && val !== null ? String(val) : '—';
-                          return (
-                            <td key={p.id} className="p-4 text-slate-900 font-medium">
-                              {displayVal}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))
-                  )}
-
-                  <tr className="bg-slate-50/80">
-                    <td colSpan={products.length + 1} className="p-3 font-bold text-xs text-slate-700 uppercase tracking-wider">
-                      Warranty & Service
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="p-4 font-bold text-slate-700">Warranty</td>
-                    {products.map((p) => (
-                      <td key={p.id} className="p-4 text-emerald-700 font-semibold text-xs">
-                        {p.warrantyText || `${p.warrantyMonths || 12} Months Official Warranty`}
+                  {hasNoDifferencesToDisplay ? (
+                    <tr>
+                      <td colSpan={products.length + 1} className="py-12 px-6 text-center bg-slate-50/60">
+                        <div className="max-w-md mx-auto space-y-3">
+                          <div className="w-12 h-12 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto text-[#F15A24]">
+                            <SlidersHorizontal className="w-6 h-6" />
+                          </div>
+                          <h3 className="text-base font-bold text-slate-800" data-testid="no-differences-message">
+                            These products have no differing specifications to display.
+                          </h3>
+                          <p className="text-xs text-slate-500 leading-relaxed">
+                            All compared technical specifications and warranty terms for the selected products are identical.
+                          </p>
+                          <div className="pt-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              data-testid="show-all-specs-button"
+                              onClick={() => setShowOnlyDifferences(false)}
+                              className="bg-white hover:bg-slate-50 border-slate-300 text-slate-700 shadow-xs"
+                            >
+                              Show all specifications
+                            </Button>
+                          </div>
+                        </div>
                       </td>
-                    ))}
-                  </tr>
+                    </tr>
+                  ) : (
+                    <>
+                      {visibleSpecRows.length > 0 && (
+                        <tr className="bg-slate-50/80">
+                          <td colSpan={products.length + 1} className="p-3 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                            Core Specifications {products[0]?.category ? `(${products[0]?.category})` : ''}
+                          </td>
+                        </tr>
+                      )}
+
+                      {visibleSpecRows.map((row) => (
+                        <tr key={row.key} className="hover:bg-slate-50/50">
+                          <td className="p-4 font-bold text-slate-700">
+                            <div className="flex items-center gap-1.5">
+                              <span>{row.name}</span>
+                              {row.isDifferent && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24] inline-block" title="Differs across products" />
+                              )}
+                            </div>
+                          </td>
+                          {row.values.map((v, idx) => (
+                            <td key={products[idx].id} className="p-4 text-slate-900 font-medium">
+                              {v.display}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+
+                      {showWarrantyRow && (
+                        <>
+                          <tr className="bg-slate-50/80">
+                            <td colSpan={products.length + 1} className="p-3 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                              Warranty & Service
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-slate-50/50">
+                            <td className="p-4 font-bold text-slate-700">
+                              <div className="flex items-center gap-1.5">
+                                <span>Warranty</span>
+                                {isWarrantyDifferent && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#F15A24] inline-block" title="Differs across products" />
+                                )}
+                              </div>
+                            </td>
+                            {warrantyValues.map((w, idx) => (
+                              <td key={products[idx].id} className="p-4 text-emerald-700 font-semibold text-xs">
+                                {w.display}
+                              </td>
+                            ))}
+                          </tr>
+                        </>
+                      )}
+                    </>
+                  )}
 
                   {/* Bottom Action Footer Row */}
                   <tr className="bg-slate-50/40 border-t border-slate-200">
