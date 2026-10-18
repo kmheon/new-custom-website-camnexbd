@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Phone,
   Mail,
@@ -8,7 +8,8 @@ import {
   ChevronDown,
   Shield,
   MessageCircle,
-  Lock
+  Lock,
+  X
 } from 'lucide-react';
 import { useSettingsStore } from '../../store';
 import { FooterLinkItem } from '../../types';
@@ -23,6 +24,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const [emailError, setEmailError] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [stickyBarHeight, setStickyBarHeight] = useState<number>(0);
+  const [waExpanded, setWaExpanded] = useState<boolean>(false);
+  const waContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +36,59 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Dynamically observe the mobile sticky purchase bar height
+  useEffect(() => {
+    const updateBarHeight = () => {
+      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+        setStickyBarHeight(0);
+        return;
+      }
+      const productBar = document.querySelector('[data-testid="product-sticky-bar"], #product-sticky-bar');
+      if (productBar) {
+        const rect = productBar.getBoundingClientRect();
+        setStickyBarHeight(Math.round(rect.height));
+        return;
+      }
+      const headerBar = document.querySelector('#mobile-service-bar, [data-testid="mobile-service-bar"], header div[class*="bottom-0"]');
+      if (headerBar) {
+        const rect = headerBar.getBoundingClientRect();
+        setStickyBarHeight(Math.round(rect.height));
+        return;
+      }
+      setStickyBarHeight(0);
+    };
+
+    updateBarHeight();
+    window.addEventListener('resize', updateBarHeight);
+    const observer = new MutationObserver(updateBarHeight);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      window.removeEventListener('resize', updateBarHeight);
+      observer.disconnect();
+    };
+  }, []);
+
+  // Close WhatsApp popover on click outside or escape key
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (waContainerRef.current && !waContainerRef.current.contains(e.target as Node)) {
+        setWaExpanded(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setWaExpanded(false);
+    };
+    if (waExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [waExpanded]);
 
   // Mobile accordion state
   const [openAccordions, setOpenAccordions] = useState<{ [key: string]: boolean }>({
@@ -374,30 +431,95 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
       </footer>
 
       {/* FLOATING ACTION BUTTONS */}
-      {/* 1. WHATSAPP (56px green circle, bottom-right; on mobile sits above 64px sticky bottom bar) */}
-      <a
-        id="floating-whatsapp"
-        href={waUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chat on WhatsApp"
-        className="fixed z-40 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20ba59] text-white shadow-2xl flex items-center justify-center transition-all transform hover:scale-105 bottom-[76px] right-4 md:bottom-8 md:right-8"
-      >
-        <MessageCircle className="w-6 h-6 fill-white text-[#25D366]" />
-      </a>
+      {/* 1. WHATSAPP (Compact floating control on mobile positioned above sticky purchase bar; full circle on desktop) */}
+      {(() => {
+        const mobileBottomOffset = stickyBarHeight > 0 ? stickyBarHeight + 12 : 76;
+        const mobileStyle = { bottom: `calc(${mobileBottomOffset}px + env(safe-area-inset-bottom, 0px))` };
 
-      {/* 2. BACK TO TOP (Stacked directly ABOVE WhatsApp with 12px gap, appears only after scrolling 400px) */}
-      {showScrollTop && (
-        <button
-          id="floating-back-to-top"
-          type="button"
-          onClick={scrollToTop}
-          aria-label="Back to top"
-          className="fixed z-40 w-11 h-11 rounded-full bg-[#0F172A] hover:bg-[#F15A24] border border-white/20 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none bottom-[144px] right-[22px] md:bottom-[100px] md:right-[38px]"
-        >
-          <ArrowUp className="w-4 h-4" />
-        </button>
-      )}
+        return (
+          <>
+            <div
+              ref={waContainerRef}
+              data-testid="floating-whatsapp-container"
+              className="fixed z-40 right-3.5 md:right-8 transition-all duration-200 md:bottom-8"
+              style={typeof window !== 'undefined' && window.innerWidth < 768 ? mobileStyle : undefined}
+            >
+              {/* Expanded Popover Card on Mobile */}
+              {waExpanded && (
+                <div
+                  id="wa-expanded-popover"
+                  data-testid="wa-expanded-popover"
+                  className="md:hidden absolute bottom-full right-0 mb-2.5 w-64 max-w-[calc(100vw-28px)] bg-white rounded-2xl shadow-2xl border border-slate-200 p-3.5 z-50 text-slate-800"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-bold text-slate-800 font-heading">CamneX Support</span>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="wa-close-popover-btn"
+                      onClick={() => setWaExpanded(false)}
+                      className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+                      aria-label="Close WhatsApp popover"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-600 my-2 leading-relaxed">
+                    Connect directly with our engineering desk in Dhaka for hardware inquiries and project pricing.
+                  </p>
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="wa-direct-chat-btn"
+                    onClick={() => setWaExpanded(false)}
+                    className="w-full py-2 px-3 bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-white text-[#25D366]" />
+                    <span>Open WhatsApp Chat</span>
+                  </a>
+                </div>
+              )}
+
+              <a
+                id="floating-whatsapp"
+                data-testid="floating-whatsapp"
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (window.innerWidth < 768) {
+                    e.preventDefault();
+                    setWaExpanded((prev) => !prev);
+                  }
+                }}
+                aria-expanded={waExpanded ? 'true' : 'false'}
+                aria-label="Chat on WhatsApp"
+                className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white shadow-2xl flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer"
+              >
+                <MessageCircle className="w-5 h-5 md:w-6 md:h-6 fill-white text-[#25D366]" />
+              </a>
+            </div>
+
+            {/* 2. BACK TO TOP (Positioned on the left side on mobile, stacked above WhatsApp on desktop) */}
+            {showScrollTop && (
+              <button
+                id="floating-back-to-top"
+                data-testid="floating-back-to-top"
+                type="button"
+                onClick={scrollToTop}
+                aria-label="Back to top"
+                style={typeof window !== 'undefined' && window.innerWidth < 768 ? mobileStyle : undefined}
+                className="fixed z-40 left-3.5 md:left-auto md:right-[38px] w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#0F172A] hover:bg-[#F15A24] border border-white/20 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 focus:outline-none md:bottom-[100px]"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+            )}
+          </>
+        );
+      })()}
     </>
   );
 };

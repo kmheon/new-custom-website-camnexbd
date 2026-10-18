@@ -1152,6 +1152,111 @@ app.post('/api/wishlist/merge', requireCustomer, csrfProtection, validateBody(sc
   }
 });
 
+// --- Helpers for Dynamic Specifications & Filter Faceting ---
+const KNOWN_SPEC_LABELS = {
+  resolution: 'Resolution',
+  form_factor: 'Camera Form Factor',
+  night_vision: 'Night Vision',
+  lens: 'Lens',
+  ip_rating: 'Ingress Protection / Weatherproof',
+  audio_support: 'Audio Support',
+  ports: 'Port Count',
+  poe_support: 'PoE Support',
+  poe_budget: 'PoE Power Budget',
+  switching_capacity: 'Switching Capacity',
+  managed: 'Management',
+  channels: 'Channel Count',
+  compression: 'Video Compression',
+  max_resolution: 'Max Recording Resolution',
+  hdd_slots: 'SATA Storage Slots',
+  wifi_standard: 'Wi-Fi Standard',
+  max_speed: 'Max Wireless Speed',
+  capacity: 'Storage Capacity',
+  interface: 'Interface',
+  user_capacity: 'User Capacity',
+  fingerprint_capacity: 'Fingerprint Capacity',
+  face_capacity: 'Face Capacity',
+  verification_methods: 'Verification Methods',
+  connectivity: 'Connectivity',
+  battery_backup: 'Battery Backup',
+  wifi_band: 'Wi-Fi Frequency Band',
+  power_source: 'Power Source',
+  storage: 'Storage / MicroSD Support',
+  two_way_audio: 'Two-Way Audio',
+  app_support: 'Mobile App Support',
+  cable_type: 'Cable Type',
+  length: 'Cable Length'
+};
+
+function normalizeSpecKey(k) {
+  return String(k || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function normalizeSpecVal(v) {
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  let s = String(v ?? '').trim();
+  s = s.replace(/(\d+)\s*-?\s*ports?/i, '$1 ports');
+  s = s.replace(/(\d+)\s*([a-zA-Z]+)/g, '$1 $2').toLowerCase();
+  return s;
+}
+
+function matchProductSpec(pVal, targetVal, key) {
+  if (pVal === undefined || pVal === null || pVal === '') return false;
+
+  const isTargetBool = typeof targetVal === 'boolean' || targetVal === 'true' || targetVal === 'false' ||
+    String(targetVal).toLowerCase() === 'yes' || String(targetVal).toLowerCase() === 'no' ||
+    String(targetVal).toLowerCase().includes('supported') || String(targetVal).toLowerCase().includes('managed') ||
+    String(targetVal).toLowerCase().includes('included') || String(targetVal).toLowerCase().includes('audio');
+
+  if (typeof pVal === 'boolean' || isTargetBool) {
+    const pb = (pVal === true || pVal === 'true' || String(pVal).toLowerCase() === 'yes' || String(pVal).toLowerCase().includes('built-in'));
+    const tLower = String(targetVal).toLowerCase();
+    let tb = (targetVal === true || tLower === 'true' || tLower === 'yes' ||
+              tLower.includes('supported') || tLower.includes('included') ||
+              tLower.includes('managed') || tLower.includes('built-in'));
+    if (tLower.startsWith('non-') || tLower.startsWith('unmanaged') || tLower === 'no' || tLower === 'false' || tLower.includes('no audio')) {
+      tb = false;
+    }
+    return pb === tb;
+  }
+
+  const np = normalizeSpecVal(pVal);
+  const nt = normalizeSpecVal(targetVal);
+
+  if (np === nt) return true;
+  if (np.includes(nt) || nt.includes(np)) return true;
+  return false;
+}
+
+function extractProductSpecsMap(p) {
+  const result = {};
+  if (p.specifications) {
+    if (Array.isArray(p.specifications)) {
+      p.specifications.forEach(item => {
+        if (item.key && item.value !== undefined && item.value !== null && item.value !== '') {
+          result[normalizeSpecKey(item.key)] = item.value;
+        }
+      });
+    } else if (typeof p.specifications === 'object') {
+      Object.entries(p.specifications).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') {
+          result[normalizeSpecKey(k)] = v;
+        }
+      });
+    }
+  }
+  if (p.specs && typeof p.specs === 'object') {
+    Object.entries(p.specs).forEach(([k, v]) => {
+      const val = v?.value !== undefined ? v.value : v;
+      if (val !== undefined && val !== null && val !== '') {
+        const nk = normalizeSpecKey(k);
+        if (result[nk] === undefined) result[nk] = val;
+      }
+    });
+  }
+  return result;
+}
+
 // ============================================================================
 // 1. PRODUCTS REST APIs
 // ============================================================================
@@ -1183,11 +1288,25 @@ app.get('/api/products', (req, res) => {
     }
 
     if (catTarget) {
-      if (catTarget === 'wifi-smart-devices' || catTarget === 'wifi-cameras' || catTarget === 'cat-wifi') {
-        query += " AND (category_slug IN ('wifi-smart-devices', 'wifi-cameras') OR category_id = 'cat-wifi' OR json_extract(data_json, '$.categoryId') = 'cat-wifi')";
+      const normCat = String(catTarget).toLowerCase().trim();
+      if (normCat === 'wifi-smart-devices' || normCat === 'wi-fi-smart-devices' || normCat === 'wifi-cameras' || normCat === 'cat-wifi') {
+        query += " AND (category_slug IN ('wifi-smart-devices', 'wi-fi-smart-devices', 'wifi-cameras') OR category_id = 'cat-wifi' OR json_extract(data_json, '$.categoryId') = 'cat-wifi')";
+      } else if (normCat === 'dvr' || normCat === 'recorders' || normCat === 'cat-dvr' || normCat === 'cat-recorders') {
+        query += " AND (category_slug IN ('recorders', 'dvr') OR category_id IN ('cat-recorders', 'cat-dvr'))";
+      } else if (normCat === 'access-points-wifi' || normCat === 'access-points-wi-fi' || normCat === 'cat-access-points') {
+        query += " AND (category_slug IN ('access-points-wifi', 'access-points-wi-fi') OR category_id = 'cat-access-points')";
+      } else if (normCat === 'biometrics-access-control' || normCat === 'access-control-biometrics' || normCat === 'cat-access') {
+        query += " AND (category_slug IN ('biometrics-access-control', 'access-control-biometrics') OR category_id = 'cat-access')";
+      } else if (normCat === 'surveillance-storage' || normCat === 'cat-storage') {
+        query += " AND (category_slug = 'surveillance-storage' OR category_id = 'cat-storage')";
       } else {
-        query += ' AND (category_slug = ? OR category_id = ?)';
-        params.push(catTarget, catTarget);
+        let matchedCatId = normCat;
+        try {
+          const cRow = db.prepare('SELECT id, slug FROM categories WHERE slug = ? OR id = ?').get(normCat, normCat);
+          if (cRow) matchedCatId = cRow.id;
+        } catch (_) {}
+        query += ' AND (category_slug = ? OR category_id = ? OR category_id = ?)';
+        params.push(normCat, normCat, matchedCatId);
       }
     }
 
@@ -1271,7 +1390,7 @@ app.get('/api/products', (req, res) => {
       });
     }
 
-    // Client-level or JSON spec filters matching
+    // Client-level or JSON spec filters matching with AND/OR logic
     if (specFilters) {
       let filters = {};
       try {
@@ -1280,13 +1399,26 @@ app.get('/api/products', (req, res) => {
         filters = {};
       }
 
-      if (Object.keys(filters).length > 0) {
+      if (typeof filters === 'object' && filters !== null && Object.keys(filters).length > 0) {
         items = items.filter(p => {
+          const pSpecs = extractProductSpecsMap(p);
           for (const [key, filterVal] of Object.entries(filters)) {
-            if (!filterVal) continue;
-            const pVal = p.specifications?.[key];
-            if (pVal === undefined) return false;
-            if (String(pVal).toLowerCase() !== String(filterVal).toLowerCase()) {
+            if (filterVal === undefined || filterVal === null || filterVal === '') continue;
+            const targets = Array.isArray(filterVal) ? filterVal : [filterVal];
+            if (targets.length === 0) continue;
+
+            const normKey = normalizeSpecKey(key);
+            let pVal = pSpecs[normKey];
+            if (pVal === undefined && p[key] !== undefined) {
+              pVal = p[key];
+            }
+
+            if (pVal === undefined || pVal === null || pVal === '') {
+              return false;
+            }
+
+            const matchesAny = targets.some(target => matchProductSpec(pVal, target, normKey));
+            if (!matchesAny) {
               return false;
             }
           }
@@ -1337,29 +1469,118 @@ app.get('/api/products/featured', (req, res) => {
 app.get('/api/products/spec-filters/:categorySlug', (req, res) => {
   try {
     const { categorySlug } = req.params;
-    const tplRow = db.prepare('SELECT data_json FROM spec_templates WHERE category_slug = ? OR id = ?').get(categorySlug, categorySlug);
-    if (!tplRow) return res.json({});
+    const subcategory = req.query.subcategory || req.query.subcategoryId || req.query.subcat;
+    const normCat = String(categorySlug || '').toLowerCase().trim();
 
-    const tpl = JSON.parse(tplRow.data_json);
-    const prodRows = db.prepare('SELECT data_json FROM products WHERE category_slug = ? OR category_id = ?').all(categorySlug, categorySlug);
+    let query = 'SELECT data_json FROM products WHERE (is_archived IS NULL OR is_archived = 0)';
+    const params = [];
+
+    if (normCat === 'wifi-smart-devices' || normCat === 'wi-fi-smart-devices' || normCat === 'wifi-cameras' || normCat === 'cat-wifi') {
+      query += " AND (category_slug IN ('wifi-smart-devices', 'wi-fi-smart-devices', 'wifi-cameras') OR category_id = 'cat-wifi' OR json_extract(data_json, '$.categoryId') = 'cat-wifi')";
+    } else if (normCat === 'dvr' || normCat === 'recorders' || normCat === 'cat-dvr' || normCat === 'cat-recorders') {
+      query += " AND (category_slug IN ('recorders', 'dvr') OR category_id IN ('cat-recorders', 'cat-dvr'))";
+    } else if (normCat === 'access-points-wifi' || normCat === 'access-points-wi-fi' || normCat === 'cat-access-points') {
+      query += " AND (category_slug IN ('access-points-wifi', 'access-points-wi-fi') OR category_id = 'cat-access-points')";
+    } else if (normCat === 'biometrics-access-control' || normCat === 'access-control-biometrics' || normCat === 'cat-access') {
+      query += " AND (category_slug IN ('biometrics-access-control', 'access-control-biometrics') OR category_id = 'cat-access')";
+    } else if (normCat === 'surveillance-storage' || normCat === 'cat-storage') {
+      query += " AND (category_slug = 'surveillance-storage' OR category_id = 'cat-storage')";
+    } else if (normCat && normCat !== 'all' && normCat !== 'catalog') {
+      let matchedCatId = normCat;
+      try {
+        const cRow = db.prepare('SELECT id, slug FROM categories WHERE slug = ? OR id = ?').get(normCat, normCat);
+        if (cRow) matchedCatId = cRow.id;
+      } catch (_) {}
+      query += ' AND (category_slug = ? OR category_id = ? OR category_id = ?)';
+      params.push(normCat, normCat, matchedCatId);
+    }
+
+    if (subcategory && subcategory !== 'all') {
+      query += ` AND (
+        json_extract(data_json, '$.subcategoryId') = ? OR
+        json_extract(data_json, '$.subcategorySlug') = ? OR
+        json_extract(data_json, '$.subcategory') = ? OR
+        json_extract(data_json, '$.subcategoryId') LIKE ? OR
+        json_extract(data_json, '$.subcategorySlug') LIKE ?
+      )`;
+      params.push(subcategory, subcategory, subcategory, `%${subcategory}%`, `%${subcategory}%`);
+    }
+
+    const prodRows = db.prepare(query).all(...params);
     const products = prodRows.map(r => JSON.parse(r.data_json));
 
-    const result = {};
-    for (const field of tpl.fields || []) {
-      if (field.filterable) {
-        const uniqueVals = new Set();
-        products.forEach(p => {
-          const val = p.specifications?.[field.key];
-          if (val !== undefined && val !== null && val !== '') {
-            uniqueVals.add(String(val));
+    const facetMap = {};
+    products.forEach(p => {
+      const specs = extractProductSpecsMap(p);
+      for (const [k, v] of Object.entries(specs)) {
+        if (!facetMap[k]) facetMap[k] = new Map();
+        let optVal = String(v).trim();
+        let optLabel = optVal;
+
+        if (typeof v === 'boolean' || optVal === 'true' || optVal === 'false') {
+          const boolVal = v === true || optVal === 'true';
+          if (k === 'poe_support') {
+            optVal = boolVal ? 'true' : 'false';
+            optLabel = boolVal ? 'PoE Supported' : 'Non-PoE';
+          } else if (k === 'audio_support') {
+            optVal = boolVal ? 'true' : 'false';
+            optLabel = boolVal ? 'Built-in Audio' : 'No Audio';
+          } else if (k === 'managed') {
+            optVal = boolVal ? 'true' : 'false';
+            optLabel = boolVal ? 'Cloud Managed' : 'Unmanaged';
+          } else if (k === 'battery_backup') {
+            optVal = boolVal ? 'true' : 'false';
+            optLabel = boolVal ? 'Battery Included' : 'No Battery';
+          } else if (k === 'two_way_audio') {
+            optVal = boolVal ? 'true' : 'false';
+            optLabel = boolVal ? 'Two-Way Audio' : 'One-Way Audio';
+          } else {
+            optVal = boolVal ? 'true' : 'false';
+            optLabel = boolVal ? 'Yes' : 'No';
           }
-        });
-        if (uniqueVals.size > 0) {
-          result[field.key] = Array.from(uniqueVals);
         }
+
+        const existing = facetMap[k].get(optVal) || { value: optVal, label: optLabel, count: 0 };
+        existing.count++;
+        facetMap[k].set(optVal, existing);
       }
+    });
+
+    const facets = [];
+    const rawFilters = {};
+
+    for (const [k, map] of Object.entries(facetMap)) {
+      const options = Array.from(map.values());
+      if (options.length === 0) continue;
+      options.sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+
+      const label = KNOWN_SPEC_LABELS[k] || k.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      facets.push({
+        key: k,
+        label,
+        options
+      });
+      rawFilters[k] = options.map(o => o.value);
     }
-    res.json(result);
+
+    facets.sort((a, b) => {
+      const orderA = Object.keys(KNOWN_SPEC_LABELS).indexOf(a.key);
+      const orderB = Object.keys(KNOWN_SPEC_LABELS).indexOf(b.key);
+      if (orderA !== -1 && orderB !== -1) return orderA - orderB;
+      if (orderA !== -1) return -1;
+      if (orderB !== -1) return 1;
+      return a.label.localeCompare(b.label);
+    });
+
+    const responsePayload = {
+      ...rawFilters,
+      category: categorySlug,
+      totalProducts: products.length,
+      facets,
+      rawFilters
+    };
+
+    res.json(responsePayload);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

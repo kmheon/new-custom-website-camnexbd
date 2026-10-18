@@ -133,6 +133,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
   }, [settings?.topBarHighlights]);
 
   const [mobileHighlightIndex, setMobileHighlightIndex] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     if (highlights.length <= 1) return;
@@ -145,10 +146,19 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
     return () => clearInterval(interval);
   }, [highlights.length]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 15);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-white">
-      {/* 1. FULL-WIDTH SLIM TOP BAR (36px, surface-dark, 13px text) */}
-      <div className="w-full bg-[#0F172A] text-[#A0A8B4] text-[13px] border-b border-white/10 h-9 relative z-50">
+    <>
+      {/* 1. FULL-WIDTH SLIM TOP BAR (36px, surface-dark, 13px text) - Non-sticky utility bar */}
+      <div id="top-utility-bar" data-testid="top-utility-bar" className="w-full bg-[#0F172A] text-[#A0A8B4] text-[13px] border-b border-white/10 h-9 relative z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
           {/* Left: Tap-to-call phone, email, thin divider, then TRACK ORDER highlighted */}
           <div className="flex items-center gap-3 sm:gap-4 md:gap-5 flex-shrink-0">
@@ -247,7 +257,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
 
       {/* Mobile Rotating Highlights Banner under Top Bar (one item rotates in a single line) */}
       {highlights.length > 0 && (
-        <div className="md:hidden w-full bg-[#162032] text-slate-300 text-[11px] py-1 px-4 border-b border-white/5 overflow-hidden text-center transition-all">
+        <div id="mobile-top-highlights" data-testid="mobile-top-highlights" className="md:hidden w-full bg-[#162032] text-slate-300 text-[11px] py-1 px-4 border-b border-white/5 overflow-hidden text-center transition-all relative z-30">
           <div key={mobileHighlightIndex} className="animate-in fade-in duration-500 font-medium truncate flex items-center justify-center gap-1.5">
             {highlights[mobileHighlightIndex].icon === 'shield-check' && <ShieldCheck className="w-3 h-3 text-[#F15A24] shrink-0" />}
             {highlights[mobileHighlightIndex].icon === 'shield' && <Shield className="w-3 h-3 text-[#F15A24] shrink-0" />}
@@ -260,8 +270,14 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
         </div>
       )}
 
-      {/* 2. FULL-WIDTH WHITE HEADER ROW */}
-      <div className="w-full bg-white border-b border-[#EDE8E1] shadow-xs">
+      {/* 2. FULL-WIDTH MAIN NAVIGATION HEADER (Sticky at top of viewport) */}
+      <header
+        id="main-navigation-header"
+        data-testid="main-navigation-header"
+        className={`sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#EDE8E1] transition-shadow duration-200 ${
+          isScrolled ? 'shadow-md' : 'shadow-xs'
+        }`}
+      >
         {/* ROW 1: Logo + EXTENDED Search Bar + Get Quote */}
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-4 lg:gap-8">
           {/* Logo */}
@@ -928,6 +944,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 {/* 3. Cart (bag + count badge) */}
                 <button
                   type="button"
+                  data-testid="header-cart-btn"
                   onClick={() => onNavigate('cart')}
                   className="relative w-10 h-10 rounded-full border border-[#EDE8E1] hover:border-[#F15A24] hover:bg-orange-50/40 text-[#111827] flex items-center justify-center transition-all cursor-pointer group"
                   aria-label="Shopping Cart"
@@ -935,7 +952,10 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
                 >
                   <ShoppingBag className="w-4 h-4 text-[#111827] group-hover:text-[#F15A24] transition-colors" />
                   {totalCartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+                    <span
+                      data-testid="header-cart-count"
+                      className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F15A24] text-white text-[10px] font-black flex items-center justify-center shadow-xs"
+                    >
                       {totalCartCount}
                     </span>
                   )}
@@ -944,7 +964,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* MOBILE DRAWER SHEET */}
       {mobileMenuOpen && (
@@ -1180,24 +1200,30 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentRoute }) => {
         </div>
       )}
 
-      {/* MOBILE STICKY BOTTOM BAR (Call for Service & Get Quote / Pricing) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EDE8E1] px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg md:hidden">
-        <a
-          href={`tel:${phone.replace(/\s+/g, '')}`}
-          className="flex-1 min-h-[44px] px-4 py-2 bg-white border border-[#EDE8E1] hover:bg-slate-50 text-[#111827] font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors"
+      {/* MOBILE STICKY BOTTOM BAR (Call for Service & Get Quote / Pricing) - Hidden on product detail page where sticky purchase bar takes precedence */}
+      {currentRoute !== 'product' && (
+        <div
+          id="mobile-service-bar"
+          data-testid="mobile-service-bar"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EDE8E1] px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg md:hidden"
         >
-          <Phone className="w-4 h-4 text-[#F15A24]" />
-          <span>Call for Service</span>
-        </a>
-        <button
-          type="button"
-          onClick={() => onNavigate('quote')}
-          className="flex-1 min-h-[44px] px-4 py-2 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
-        >
-          <span>Get Quote</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </header>
+          <a
+            href={`tel:${phone.replace(/\s+/g, '')}`}
+            className="flex-1 min-h-[44px] px-4 py-2 bg-white border border-[#EDE8E1] hover:bg-slate-50 text-[#111827] font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors"
+          >
+            <Phone className="w-4 h-4 text-[#F15A24]" />
+            <span>Call for Service</span>
+          </a>
+          <button
+            type="button"
+            onClick={() => onNavigate('quote')}
+            className="flex-1 min-h-[44px] px-4 py-2 bg-[#F15A24] hover:bg-[#D94D1C] text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+          >
+            <span>Get Quote</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+    </>
   );
 };

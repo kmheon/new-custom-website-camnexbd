@@ -541,19 +541,23 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ productId,
       </div>
 
       {/* Sticky Buy Bar on Mobile (< 768px) */}
-      <div className="md:hidden fixed bottom-14 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 shadow-2xl">
+      <div
+        id="product-sticky-bar"
+        data-testid="product-sticky-bar"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-2xl"
+      >
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[10px] text-slate-500 font-mono line-clamp-1">{product.modelNumber}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] text-slate-500 font-mono truncate">{product.modelNumber}</div>
             <div className="text-base font-black text-[#F15A24] font-heading">
               {unitPrice ? `৳${unitPrice.toLocaleString()}` : 'Quote'}
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={handleAddToCart}>
+          <div className="flex gap-2 shrink-0">
+            <Button size="sm" variant="outline" data-testid="mobile-sticky-cart-btn" onClick={handleAddToCart}>
               Cart
             </Button>
-            <Button size="sm" onClick={handleBuyNow}>
+            <Button size="sm" data-testid="mobile-sticky-buy-btn" onClick={handleBuyNow}>
               Buy Now
             </Button>
           </div>

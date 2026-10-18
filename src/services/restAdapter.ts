@@ -54,6 +54,7 @@ export class RestProductService implements IProductService {
     const q = new URLSearchParams();
     if (params?.categorySlug) q.set('categorySlug', params.categorySlug);
     if (params?.brandSlug) q.set('brandSlug', params.brandSlug);
+    if (params?.subcategory || params?.subcat) q.set('subcat', params.subcategory || params.subcat || '');
     if (params?.search) q.set('search', params.search);
     if (params?.minPrice !== undefined) q.set('minPrice', String(params.minPrice));
     if (params?.maxPrice !== undefined) q.set('maxPrice', String(params.maxPrice));
@@ -195,9 +196,29 @@ export class RestProductService implements IProductService {
 
   async getAvailableSpecFiltersForCategory(categorySlug: string): Promise<Record<string, string[]>> {
     try {
-      return await request<Record<string, string[]>>(`/products/spec-filters/${encodeURIComponent(categorySlug)}`);
+      const res = await request<any>(`/products/spec-filters/${encodeURIComponent(categorySlug)}`);
+      return res?.rawFilters || res || {};
     } catch (e) {
       return {};
+    }
+  }
+
+  async getCategoryFacets(categorySlug: string, subcategory?: string): Promise<import('../types').CategoryFacetsResponse> {
+    try {
+      const q = new URLSearchParams();
+      if (subcategory) q.set('subcategory', subcategory);
+      const qs = q.toString();
+      const res = await request<any>(`/products/spec-filters/${encodeURIComponent(categorySlug)}${qs ? '?' + qs : ''}`);
+      if (res && res.facets) {
+        return res as import('../types').CategoryFacetsResponse;
+      }
+      return {
+        category: categorySlug,
+        totalProducts: 0,
+        facets: []
+      };
+    } catch (e) {
+      return { category: categorySlug, totalProducts: 0, facets: [] };
     }
   }
 }

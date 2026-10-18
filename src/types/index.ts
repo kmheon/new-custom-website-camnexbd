@@ -76,6 +76,28 @@ export interface SpecTemplate {
   fields: SpecFieldDefinition[];
 }
 
+export interface SpecFacetOption {
+  value: string;
+  label: string;
+  count: number;
+}
+
+export interface SpecFacetGroup {
+  key: string;
+  label: string;
+  type?: 'text' | 'number' | 'boolean' | 'enum' | 'unit' | string;
+  unit?: string;
+  options: SpecFacetOption[];
+}
+
+export interface CategoryFacetsResponse {
+  category: string;
+  categoryName?: string;
+  totalProducts: number;
+  facets: SpecFacetGroup[];
+  rawFilters?: Record<string, string[]>;
+}
+
 export type ProductSpecValues = Record<string, any>;
 
 // ----------------------------------------------------------------------------

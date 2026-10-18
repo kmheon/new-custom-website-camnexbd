@@ -8,6 +8,7 @@ import { FormattedSpecResult, formatSpecValue } from '../../utils/specUtils';
 import { ImagePlaceholder } from './ImagePlaceholder';
 import { Term } from './Term';
 import { UI_STRINGS } from '../../content/strings';
+import { hasProductVariants } from '../../utils/productVariants';
 
 interface ProductCardProps {
   product: Product;
@@ -68,6 +69,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    const isOutOfStock = Boolean(
+      (product.inventory && (product.inventory.available <= 0 || product.inventory.status === 'out_of_stock')) ||
+      (product.stock_quantity !== undefined && product.stock_quantity <= 0)
+    );
+    if (isOutOfStock) return;
+    if (hasProductVariants(product.id)) {
+      onNavigate('product', product.id);
+      return;
+    }
     await addItemToCart(product, 1);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1800);

@@ -21,17 +21,21 @@ import {
   HeroSlide,
   PackageSeries,
   PackageSystemType,
-  ServiceOffering
+  ServiceOffering,
+  CategoryFacetsResponse,
+  SpecFacetGroup
 } from '../types';
 
 export interface ProductFilterParams {
   categorySlug?: string;
   category?: string;
   brandSlug?: string;
+  subcategory?: string;
+  subcat?: string;
   minPrice?: number;
   maxPrice?: number;
   search?: string;
-  specFilters?: Record<string, string | number | boolean>;
+  specFilters?: Record<string, string | string[] | number | boolean>;
   sortBy?: 'price_asc' | 'price_desc' | 'name_asc' | 'popular' | 'newest' | 'created_at';
   sortOrder?: 'asc' | 'desc';
   page?: number;
@@ -69,6 +73,7 @@ export interface IProductService {
   bulkDeleteProducts?(productIds: string[]): Promise<import('../types').BulkOperationResult>;
   bulkArchiveProducts?(productIds: string[], reason?: string): Promise<import('../types').BulkOperationResult>;
   getAvailableSpecFiltersForCategory(categorySlug: string): Promise<Record<string, string[]>>;
+  getCategoryFacets?(categorySlug: string, subcategory?: string): Promise<CategoryFacetsResponse>;
 }
 
 export interface ICategoryService {
