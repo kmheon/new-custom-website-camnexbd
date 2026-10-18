@@ -21,7 +21,10 @@ import {
   DollarSign,
   Clock,
   Globe,
-  FileText
+  FileText,
+  ExternalLink,
+  X,
+  Radio
 } from 'lucide-react';
 import { ImagePickerField } from './ImagePickerField';
 import { useSettingsStore, useAdminAuthStore } from '../../store';
@@ -86,6 +89,110 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
   const [quickOfferProductId, setQuickOfferProductId] = useState('');
   const [quickOfferSalePrice, setQuickOfferSalePrice] = useState('');
   const [quickOfferError, setQuickOfferError] = useState('');
+
+  // Extensible Courier State & Testing
+  const [testingCourier, setTestingCourier] = useState<string | null>(null);
+  const [courierTestResults, setCourierTestResults] = useState<Record<string, { success: boolean; message: string; details?: any } | null>>({});
+  const [addCourierModalOpen, setAddCourierModalOpen] = useState(false);
+  const [courierCatalog, setCourierCatalog] = useState<any[]>([
+    {
+      id: 'steadfast',
+      name: 'Steadfast Courier',
+      status: 'integrated',
+      description: 'Nationwide next-day parcel delivery and COD across all 64 districts of Bangladesh.',
+      website: 'https://steadfast.com.bd',
+      trackingUrlPattern: 'https://steadfast.com.bd/t/{consignment_id}',
+      fields: [
+        { key: 'apiKey', label: 'API Key', type: 'text', secret: false, required: true },
+        { key: 'secretKey', label: 'Secret Key', type: 'password', secret: true, required: true },
+        { key: 'testMode', label: 'Sandbox / Test Mode', type: 'boolean', defaultValue: true }
+      ]
+    },
+    {
+      id: 'pathao',
+      name: 'Pathao Logistics',
+      status: 'integrated',
+      description: 'Express door-to-door deliveries, fast intra-Dhaka transit, and automated consignment tracking.',
+      website: 'https://merchant.pathao.com',
+      trackingUrlPattern: 'https://merchant.pathao.com/tracking?consignment_id={consignment_id}',
+      fields: [
+        { key: 'clientId', label: 'Client ID', type: 'text', secret: false, required: true },
+        { key: 'clientSecret', label: 'Client Secret', type: 'password', secret: true, required: true },
+        { key: 'storeId', label: 'Store ID', type: 'text', secret: false, required: false },
+        { key: 'testMode', label: 'Sandbox / Test Mode', type: 'boolean', defaultValue: true }
+      ]
+    },
+    {
+      id: 'redx',
+      name: 'RedX Logistics',
+      status: 'development_required',
+      description: 'Doorstep parcel pickup, sub-district coverage, and reverse logistics in Bangladesh.',
+      website: 'https://redx.com.bd',
+      trackingUrlPattern: 'https://redx.com.bd/track/{consignment_id}',
+      fields: [
+        { key: 'apiKey', label: 'API Token', type: 'password', secret: true, required: true },
+        { key: 'storeId', label: 'Pickup Store ID', type: 'text', secret: false, required: false },
+        { key: 'testMode', label: 'Sandbox / Test Mode', type: 'boolean', defaultValue: true }
+      ],
+      devNotes: 'Requires implementing server/modules/courier/adapters/redx.adapter.js using RedX Open API v1.0.0.'
+    },
+    {
+      id: 'paperfly',
+      name: 'Paperfly Delivery Network',
+      status: 'development_required',
+      description: 'Extensive doorstep delivery network with coverage for non-metropolitan thana and upazilas.',
+      website: 'https://paperfly.com.bd',
+      trackingUrlPattern: 'https://paperfly.com.bd/tracking?tracking_id={consignment_id}',
+      fields: [
+        { key: 'username', label: 'API Username', type: 'text', secret: false, required: true },
+        { key: 'password', label: 'API Password', type: 'password', secret: true, required: true },
+        { key: 'paperflyKey', label: 'Paperfly Key', type: 'password', secret: true, required: true },
+        { key: 'testMode', label: 'Sandbox / Test Mode', type: 'boolean', defaultValue: true }
+      ],
+      devNotes: 'Requires implementing server/modules/courier/adapters/paperfly.adapter.js using Wings API.'
+    },
+    {
+      id: 'ecourier',
+      name: 'eCourier',
+      status: 'development_required',
+      description: 'Full-service logistics provider with tech-enabled tracking and air/surface options.',
+      website: 'https://ecourier.com.bd',
+      trackingUrlPattern: 'https://ecourier.com.bd/tracking/?tracking_id={consignment_id}',
+      fields: [
+        { key: 'apiKey', label: 'API Key', type: 'text', secret: false, required: true },
+        { key: 'apiSecret', label: 'API Secret', type: 'password', secret: true, required: true },
+        { key: 'userId', label: 'User ID', type: 'text', secret: false, required: true },
+        { key: 'testMode', label: 'Sandbox / Test Mode', type: 'boolean', defaultValue: true }
+      ],
+      devNotes: 'Requires implementing server/modules/courier/adapters/ecourier.adapter.js.'
+    },
+    {
+      id: 'sundarban',
+      name: 'Sundarban Courier Service',
+      status: 'development_required',
+      description: 'Largest traditional courier network in Bangladesh with extensive regional branch offices.',
+      website: 'https://sundarbancourierltd.com',
+      trackingUrlPattern: 'https://sundarbancourierltd.com/track/{consignment_id}',
+      fields: [
+        { key: 'corporateCode', label: 'Corporate Client Code', type: 'text', secret: false, required: true },
+        { key: 'apiKey', label: 'Branch / API Key', type: 'password', secret: true, required: true }
+      ],
+      devNotes: 'Requires implementing Sundarban corporate dispatch adapter.'
+    },
+    {
+      id: 'custom',
+      name: 'Custom Logistics / Dedicated Fleet',
+      status: 'development_required',
+      description: 'Connect internal delivery vans or third-party freight API via customized webhook endpoint.',
+      website: '',
+      trackingUrlPattern: '',
+      fields: [
+        { key: 'webhookUrl', label: 'Webhook / Dispatch URL', type: 'text', secret: false, required: true },
+        { key: 'authHeader', label: 'Authorization Header', type: 'password', secret: true, required: false }
+      ],
+      devNotes: 'Custom fleet adapter can be configured to push dispatch webhooks to internal fleet tracking.'
+    }
+  ]);
 
   // Default values helper
   useEffect(() => {
@@ -174,6 +281,48 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
       setHasChanges(false);
     }
   }, [settings]);
+
+  useEffect(() => {
+    // Load dynamic courier providers from backend
+    apiFetch('/api/admin/couriers')
+      .then((res: any) => {
+        if (res?.providers && Array.isArray(res.providers)) {
+          setCourierCatalog(res.providers);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleTestCourier = async (providerId: string) => {
+    setTestingCourier(providerId);
+    setCourierTestResults(prev => ({ ...prev, [providerId]: null }));
+    try {
+      const providerConfig = formData.courierIntegrations?.[providerId] || {};
+      const res: any = await apiFetch(`/api/admin/couriers/${providerId}/test-connection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(providerConfig)
+      });
+      setCourierTestResults(prev => ({
+        ...prev,
+        [providerId]: {
+          success: Boolean(res?.success),
+          message: res?.message || (res?.success ? 'Connection verified successfully.' : 'Connection test failed.'),
+          details: res?.details
+        }
+      }));
+    } catch (err: any) {
+      setCourierTestResults(prev => ({
+        ...prev,
+        [providerId]: {
+          success: false,
+          message: err?.message || 'Failed to connect to courier API.'
+        }
+      }));
+    } finally {
+      setTestingCourier(null);
+    }
+  };
 
   const updateField = (field: keyof SiteSettings, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -729,23 +878,44 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
               </div>
             </div>
 
-            {/* Courier Integration Slots (Steadfast & Pathao) */}
+            {/* Courier Integration Slots & Extensible Logistics Catalog */}
             <div className="pt-4 border-t border-slate-800 space-y-4">
-              <div>
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider">Courier API Integrations (Disabled Adapters)</h4>
-                <p className="text-xs text-slate-400">Credentials are stored encrypted with AES-256-GCM. Adapters remain in disabled / test sandbox mode until activated.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-[#F15A24]" />
+                    <span>Courier API Integrations & Logistics Pipeline</span>
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    AES-256-GCM encrypted credentials. Steadfast and Pathao adapters are production-ready. Additional providers can be configured with clear developer status.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAddCourierModalOpen(true)}
+                  className="text-xs self-start sm:self-auto border-slate-700 hover:border-[#F15A24]"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1 text-[#F15A24]" />
+                  Add Courier Provider
+                </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Steadfast Courier Slot */}
+                {/* 1. Steadfast Courier Slot (Integrated) */}
                 <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-xs flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-amber-400" />
-                      Steadfast Courier Adapter
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-xs flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-amber-400" />
+                        Steadfast Courier
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
+                        Integrated
+                      </span>
+                    </div>
                     <Badge variant={formData.courierIntegrations?.steadfast?.enabled ? 'success' : 'gray'}>
-                      {formData.courierIntegrations?.steadfast?.enabled ? 'Active' : 'Disabled Slot'}
+                      {formData.courierIntegrations?.steadfast?.enabled ? 'Active at Dispatch' : 'Disabled'}
                     </Badge>
                   </div>
 
@@ -806,18 +976,63 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                         <span className="text-[11px] text-white font-bold">Enable Adapter</span>
                       </label>
                     </div>
+
+                    {/* Test Connection Button */}
+                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-500">Endpoint: portal.steadfast.com.bd</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleTestCourier('steadfast')}
+                        disabled={testingCourier === 'steadfast'}
+                        className="text-[11px] py-1 h-7 border-slate-700 hover:bg-slate-800"
+                      >
+                        {testingCourier === 'steadfast' ? (
+                          <>
+                            <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                            Testing...
+                          </>
+                        ) : (
+                          <>
+                            <Radio className="w-3 h-3 mr-1 text-[#F15A24]" />
+                            Test Connection
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Test Result Message */}
+                    {courierTestResults['steadfast'] && (
+                      <div className={`p-2 rounded text-xs flex items-start gap-2 ${
+                        courierTestResults['steadfast']?.success
+                          ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300'
+                          : 'bg-rose-950/60 border border-rose-800 text-rose-300'
+                      }`}>
+                        {courierTestResults['steadfast']?.success ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-400 mt-0.5 shrink-0" />
+                        )}
+                        <span className="leading-tight">{courierTestResults['steadfast']?.message}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Pathao Courier Slot */}
+                {/* 2. Pathao Logistics Slot (Integrated) */}
                 <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-xs flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-amber-400" />
-                      Pathao Logistics Adapter
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-xs flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-amber-400" />
+                        Pathao Logistics
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
+                        Integrated
+                      </span>
+                    </div>
                     <Badge variant={formData.courierIntegrations?.pathao?.enabled ? 'success' : 'gray'}>
-                      {formData.courierIntegrations?.pathao?.enabled ? 'Active' : 'Disabled Slot'}
+                      {formData.courierIntegrations?.pathao?.enabled ? 'Active at Dispatch' : 'Disabled'}
                     </Badge>
                   </div>
 
@@ -894,8 +1109,142 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                         <span className="text-[11px] text-white font-bold">Enable Adapter</span>
                       </label>
                     </div>
+
+                    {/* Test Connection Button */}
+                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-500">OAuth: courier-api-sandbox.pathao.com</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleTestCourier('pathao')}
+                        disabled={testingCourier === 'pathao'}
+                        className="text-[11px] py-1 h-7 border-slate-700 hover:bg-slate-800"
+                      >
+                        {testingCourier === 'pathao' ? (
+                          <>
+                            <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                            Testing...
+                          </>
+                        ) : (
+                          <>
+                            <Radio className="w-3 h-3 mr-1 text-[#F15A24]" />
+                            Test Connection
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Test Result Message */}
+                    {courierTestResults['pathao'] && (
+                      <div className={`p-2 rounded text-xs flex items-start gap-2 ${
+                        courierTestResults['pathao']?.success
+                          ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300'
+                          : 'bg-rose-950/60 border border-rose-800 text-rose-300'
+                      }`}>
+                        {courierTestResults['pathao']?.success ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-400 mt-0.5 shrink-0" />
+                        )}
+                        <span className="leading-tight">{courierTestResults['pathao']?.message}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Additional Configured Courier Providers (Dynamic Extensibility) */}
+                {Object.entries(formData.courierIntegrations || {})
+                  .filter(([k]) => k !== 'steadfast' && k !== 'pathao')
+                  .map(([provKey, provVal]: [string, any]) => {
+                    const catalogItem = courierCatalog.find(c => c.id === provKey);
+                    const isIntegrated = catalogItem?.status === 'integrated';
+
+                    return (
+                      <div key={provKey} className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white text-xs flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5 text-amber-400" />
+                              {catalogItem?.name || provKey.toUpperCase()}
+                            </span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold border ${
+                              isIntegrated
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            }`}>
+                              {isIntegrated ? 'Integrated' : 'Adapter Dev Required'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const c = { ...(formData.courierIntegrations || {}) };
+                              delete c[provKey];
+                              updateField('courierIntegrations', c);
+                            }}
+                            className="text-slate-500 hover:text-rose-400 text-xs p-1"
+                            title="Remove courier slot"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {!isIntegrated && (
+                          <div className="p-2 bg-amber-950/40 border border-amber-800/60 rounded text-[11px] text-amber-300/90 leading-relaxed">
+                            <strong>Adapter Development Required:</strong> Saved credentials will be encrypted and stored safely. Automatic booking and live tracking require implementing <code className="text-amber-200">server/modules/courier/adapters/{provKey}.adapter.js</code>.
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          {(catalogItem?.fields || [{ key: 'apiKey', label: 'API Key / Secret', type: 'password' }]).map((field: any) => (
+                            <div key={field.key}>
+                              <label className="text-[10px] text-slate-400 block mb-0.5">{field.label}</label>
+                              <input
+                                type={field.type || 'text'}
+                                value={provVal[field.key] || ''}
+                                onChange={(e) => {
+                                  const c = { ...(formData.courierIntegrations || {}) };
+                                  c[provKey] = { ...(c[provKey] || {}), [field.key]: e.target.value };
+                                  updateField('courierIntegrations', c);
+                                }}
+                                placeholder={field.secret ? '••••••••••••••••' : `Enter ${field.label}`}
+                                className="w-full bg-slate-950 border border-slate-700 text-white p-2 rounded text-xs font-mono"
+                              />
+                            </div>
+                          ))}
+
+                          <div className="flex items-center justify-between pt-1">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={provVal.testMode !== false}
+                                onChange={(e) => {
+                                  const c = { ...(formData.courierIntegrations || {}) };
+                                  c[provKey] = { ...(c[provKey] || {}), testMode: e.target.checked };
+                                  updateField('courierIntegrations', c);
+                                }}
+                                className="rounded text-[#F15A24] focus:ring-[#F15A24] w-3.5 h-3.5"
+                              />
+                              <span className="text-[11px] text-slate-300">Sandbox Mode</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(provVal.enabled)}
+                                onChange={(e) => {
+                                  const c = { ...(formData.courierIntegrations || {}) };
+                                  c[provKey] = { ...(c[provKey] || {}), enabled: e.target.checked };
+                                  updateField('courierIntegrations', c);
+                                }}
+                                className="rounded text-[#F15A24] focus:ring-[#F15A24] w-3.5 h-3.5"
+                              />
+                              <span className="text-[11px] text-white font-bold">Enable Slot</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           </div>
@@ -1690,6 +2039,114 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
               >
                 {testSending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                 Enqueue Test Dispatch
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD COURIER PROVIDER MODAL */}
+      {addCourierModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-5 max-h-[85vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-[#F15A24]" />
+                  <span>Add Courier Provider Integration</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Expand CamneX logistics capabilities. Choose from supported adapters or configure roadmap slots.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAddCourierModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto space-y-3 pr-1 divide-y divide-slate-800/60">
+              {courierCatalog.map((prov) => {
+                const isConfigured = Boolean(formData.courierIntegrations?.[prov.id]);
+                const isIntegrated = prov.status === 'integrated';
+
+                return (
+                  <div key={prov.id} className="pt-3 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1 max-w-md">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white text-xs">{prov.name}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
+                          isIntegrated
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        }`}>
+                          {isIntegrated ? 'Integrated & Available' : 'Adapter Development Required'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-snug">{prov.description}</p>
+                      {prov.devNotes && (
+                        <div className="text-[10px] text-amber-300/80 bg-amber-950/30 p-1.5 rounded border border-amber-900/40">
+                          {prov.devNotes}
+                        </div>
+                      )}
+                      {prov.website && (
+                        <a
+                          href={prov.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] text-[#F15A24] hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Partner Portal</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="shrink-0">
+                      {isConfigured ? (
+                        <span className="text-xs text-slate-500 font-bold px-3 py-1.5 rounded bg-slate-800/80 border border-slate-700 block text-center">
+                          ✓ Configured
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const c = { ...(formData.courierIntegrations || {}) };
+                            c[prov.id] = {
+                              provider: prov.id,
+                              enabled: false,
+                              testMode: true
+                            };
+                            updateField('courierIntegrations', c);
+                            setAddCourierModalOpen(false);
+                          }}
+                          className={`text-xs ${
+                            isIntegrated
+                              ? 'bg-[#F15A24] hover:bg-[#D94D1C] text-white'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                          }`}
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" />
+                          <span>Add Slot</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setAddCourierModalOpen(false)}
+                className="border-slate-700 text-slate-300"
+              >
+                Close
               </Button>
             </div>
           </div>

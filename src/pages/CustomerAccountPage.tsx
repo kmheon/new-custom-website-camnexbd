@@ -86,6 +86,7 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
   const [registerCaptchaToken, setRegisterCaptchaToken] = useState('');
+  const [otpCaptchaToken, setOtpCaptchaToken] = useState('');
 
   const isCustomerVerified = Boolean(
     currentCustomer?.email_verified ||
@@ -261,7 +262,7 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
     if (!otpPhone.trim()) return;
     setOtpFeedback(null);
 
-    const res = await sendOtp(otpPhone.trim());
+    const res = await sendOtp(otpPhone.trim(), otpCaptchaToken);
     if (res.success) {
       setOtpSent(true);
       setOtpCountdown(60);
@@ -513,6 +514,15 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
                       </span>
                     </div>
 
+                    {/* Bot Shield / CAPTCHA */}
+                    <TurnstileWidget
+                      action="otp-login"
+                      onVerify={(token) => setOtpCaptchaToken(token)}
+                      onError={() => setOtpCaptchaToken('')}
+                      onExpire={() => setOtpCaptchaToken('')}
+                      className="py-1"
+                    />
+
                     <Button
                       type="submit"
                       variant="primary"
@@ -569,6 +579,15 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
                         )}
                       </div>
                     </div>
+
+                    {/* Bot protection for OTP resend */}
+                    <TurnstileWidget
+                      action="otp-resend"
+                      onVerify={(token) => setOtpCaptchaToken(token)}
+                      onError={() => setOtpCaptchaToken('')}
+                      onExpire={() => setOtpCaptchaToken('')}
+                      className="py-1"
+                    />
 
                     <Button
                       type="submit"

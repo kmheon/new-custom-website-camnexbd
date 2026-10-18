@@ -56,6 +56,9 @@ const {
   getCustomerVerificationProfile,
   validateOrderVerification
 } = require('./server/auth/verificationService');
+const courierRouter = require('./server/modules/courier/courier.router');
+const { courierRegistry } = require('./server/modules/courier/courier.registry');
+const { courierService } = require('./server/modules/courier/courier.service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -160,7 +163,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: [
-        "'self'"
+        "'self'",
+        "https://challenges.cloudflare.com"
       ],
       styleSrc: [
         "'self'",
@@ -187,9 +191,13 @@ app.use(helmet({
         "'self'",
         "http://127.0.0.1:3000",
         "http://localhost:3000",
-        "https://camnexbd.com"
+        "https://camnexbd.com",
+        "https://challenges.cloudflare.com"
       ],
-      frameSrc: ["'none'"],
+      frameSrc: [
+        "'self'",
+        "https://challenges.cloudflare.com"
+      ],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"]
@@ -438,7 +446,7 @@ app.post('/api/auth/customer/register', registerLimiter, validateBody(schemas.cu
     if (!captchaResult.success) {
       return res.status(400).json({
         error: captchaResult.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
-        code: 'CAPTCHA_FAILED'
+        code: captchaResult.code || 'CAPTCHA_FAILED'
       });
     }
 
@@ -549,7 +557,15 @@ app.post('/api/auth/oauth/apple/callback', (req, res) => {
 });
 
 // Phone Number OTP Sign-In
-app.post('/api/auth/otp/send', loginLimiter, (req, res) => {
+app.post('/api/auth/otp/send', loginLimiter, async (req, res) => {
+  const captchaToken = req.body.captchaToken || req.headers['x-turnstile-token'];
+  const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+  if (!captchaRes.success) {
+    return res.status(400).json({
+      error: captchaRes.error || 'CAPTCHA verification failed. Please complete the security challenge.',
+      code: captchaRes.code || 'CAPTCHA_FAILED'
+    });
+  }
   sendPhoneOtp(req, res);
 });
 app.post('/api/auth/otp/verify', loginLimiter, (req, res) => {
@@ -603,13 +619,14 @@ app.post('/api/auth/verification/email/send', loginLimiter, async (req, res) => 
       return res.status(400).json({ error: 'Please provide a valid email address to verify.' });
     }
 
-    // CAPTCHA verification if token provided
+    // CAPTCHA verification
     const captchaToken = req.body.captchaToken || req.headers['x-turnstile-token'];
-    if (captchaToken) {
-      const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
-      if (!captchaRes.success) {
-        return res.status(400).json({ error: captchaRes.error || 'CAPTCHA verification failed.', code: 'CAPTCHA_FAILED' });
-      }
+    const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+    if (!captchaRes.success) {
+      return res.status(400).json({
+        error: captchaRes.error || 'CAPTCHA verification failed.',
+        code: captchaRes.code || 'CAPTCHA_FAILED'
+      });
     }
 
     const result = await sendEmailVerification({ email: targetEmail, customerId });
@@ -671,13 +688,14 @@ app.get('/api/auth/verification/email/confirm', (req, res) => {
 
 // Phone Verification Send
 app.post('/api/auth/verification/phone/send', loginLimiter, async (req, res) => {
-  // CAPTCHA verification if token provided
+  // CAPTCHA verification
   const captchaToken = req.body.captchaToken || req.headers['x-turnstile-token'];
-  if (captchaToken) {
-    const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
-    if (!captchaRes.success) {
-      return res.status(400).json({ error: captchaRes.error || 'CAPTCHA verification failed.', code: 'CAPTCHA_FAILED' });
-    }
+  const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+  if (!captchaRes.success) {
+    return res.status(400).json({
+      error: captchaRes.error || 'CAPTCHA verification failed.',
+      code: captchaRes.code || 'CAPTCHA_FAILED'
+    });
   }
   sendPhoneOtp(req, res);
 });
@@ -2831,11 +2849,14 @@ app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
     const trackingNumber = fullOrder.trackingNumber || null;
     let courierTrackingUrl = fullOrder.courierTrackingUrl || null;
     if (!courierTrackingUrl && trackingNumber) {
-      const c = (courierName || '').toLowerCase();
-      if (c.includes('steadfast')) {
-        courierTrackingUrl = `https://steadfast.com.bd/t/${encodeURIComponent(trackingNumber.trim())}`;
-      } else if (c.includes('pathao')) {
-        courierTrackingUrl = `https://merchant.pathao.com/tracking?consignment_id=${encodeURIComponent(trackingNumber.trim())}`;
+      courierTrackingUrl = courierRegistry.getTrackingUrl(courierName, trackingNumber);
+      if (!courierTrackingUrl) {
+        const c = (courierName || '').toLowerCase();
+        if (c.includes('steadfast')) {
+          courierTrackingUrl = `https://steadfast.com.bd/t/${encodeURIComponent(trackingNumber.trim())}`;
+        } else if (c.includes('pathao')) {
+          courierTrackingUrl = `https://merchant.pathao.com/tracking?consignment_id=${encodeURIComponent(trackingNumber.trim())}`;
+        }
       }
     }
 
@@ -2895,7 +2916,7 @@ app.post(['/api/orders', '/api/cart/checkout'], submissionLimiter, validateBody(
     if (!captchaResult.success) {
       return res.status(400).json({
         error: captchaResult.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
-        code: 'CAPTCHA_FAILED'
+        code: captchaResult.code || 'CAPTCHA_FAILED'
       });
     }
 
@@ -3079,6 +3100,45 @@ app.put('/api/orders/:id/details', requireAdmin, (req, res) => {
     res.json(order);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
+// 6b. COURIER INTEGRATION & DISPATCH REST APIs
+// ============================================================================
+
+app.use('/api/admin/couriers', requireAdmin, courierRouter);
+
+app.post(['/api/admin/orders/:id/dispatch-courier', '/api/orders/:id/dispatch-courier'], requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { providerId, instructions, weight, itemType, cityId, zoneId } = req.body;
+
+  try {
+    const result = await courierService.dispatchOrder(id, {
+      providerId,
+      instructions,
+      weight,
+      itemType,
+      cityId,
+      zoneId
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get(['/api/admin/orders/:id/courier-tracking', '/api/orders/:id/courier-tracking'], requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await courierService.getLiveOrderTracking(id);
+    if (result.success) {
+      return res.json(result);
+    }
+    return res.status(400).json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -3979,14 +4039,16 @@ app.delete('/api/admin/glossary/:id', requireAdmin, (req, res) => {
 function maskSettingsSecrets(settings) {
   if (!settings) return {};
   const copy = JSON.parse(JSON.stringify(settings));
-  if (copy.courierIntegrations) {
-    if (copy.courierIntegrations.steadfast) {
-      if (copy.courierIntegrations.steadfast.apiKey) copy.courierIntegrations.steadfast.apiKey = maskSecret(copy.courierIntegrations.steadfast.apiKey);
-      if (copy.courierIntegrations.steadfast.secretKey) copy.courierIntegrations.steadfast.secretKey = maskSecret(copy.courierIntegrations.steadfast.secretKey);
-    }
-    if (copy.courierIntegrations.pathao) {
-      if (copy.courierIntegrations.pathao.clientSecret) copy.courierIntegrations.pathao.clientSecret = maskSecret(copy.courierIntegrations.pathao.clientSecret);
-      if (copy.courierIntegrations.pathao.password) copy.courierIntegrations.pathao.password = maskSecret(copy.courierIntegrations.pathao.password);
+  if (copy.courierIntegrations && typeof copy.courierIntegrations === 'object') {
+    const sensitiveKeys = ['apiKey', 'secretKey', 'clientSecret', 'password', 'token', 'apiSecret', 'authHeader', 'paperflyKey'];
+    for (const [providerKey, providerObj] of Object.entries(copy.courierIntegrations)) {
+      if (providerObj && typeof providerObj === 'object') {
+        for (const secretKey of sensitiveKeys) {
+          if (providerObj[secretKey]) {
+            providerObj[secretKey] = maskSecret(providerObj[secretKey]);
+          }
+        }
+      }
     }
   }
   return copy;
@@ -4018,24 +4080,25 @@ app.put('/api/settings', requireAdmin, validateBody(schemas.settings), (req, res
     const existing = current ? JSON.parse(current.value) : {};
     const payload = { ...req.body };
 
-    // Safely encrypt courier credentials while preserving existing values if masked
-    if (payload.courierIntegrations) {
-      payload.courierIntegrations = { ...existing.courierIntegrations, ...payload.courierIntegrations };
-      if (payload.courierIntegrations.steadfast) {
-        const sf = payload.courierIntegrations.steadfast;
-        const exSf = existing.courierIntegrations?.steadfast || {};
-        if (sf.apiKey && sf.apiKey.startsWith('••••')) sf.apiKey = exSf.apiKey;
-        else if (sf.apiKey) sf.apiKey = encrypt(sf.apiKey);
-        if (sf.secretKey && sf.secretKey.startsWith('••••')) sf.secretKey = exSf.secretKey;
-        else if (sf.secretKey) sf.secretKey = encrypt(sf.secretKey);
-      }
-      if (payload.courierIntegrations.pathao) {
-        const pt = payload.courierIntegrations.pathao;
-        const exPt = existing.courierIntegrations?.pathao || {};
-        if (pt.clientSecret && pt.clientSecret.startsWith('••••')) pt.clientSecret = exPt.clientSecret;
-        else if (pt.clientSecret) pt.clientSecret = encrypt(pt.clientSecret);
-        if (pt.password && pt.password.startsWith('••••')) pt.password = exPt.password;
-        else if (pt.password) pt.password = encrypt(pt.password);
+    // Safely encrypt courier credentials across any provider while preserving existing values if masked
+    if (payload.courierIntegrations && typeof payload.courierIntegrations === 'object') {
+      payload.courierIntegrations = { ...(existing.courierIntegrations || {}), ...payload.courierIntegrations };
+      const sensitiveKeys = ['apiKey', 'secretKey', 'clientSecret', 'password', 'token', 'apiSecret', 'authHeader', 'paperflyKey'];
+      for (const [providerKey, providerObj] of Object.entries(payload.courierIntegrations)) {
+        if (providerObj && typeof providerObj === 'object') {
+          const existingProv = existing.courierIntegrations?.[providerKey] || {};
+          for (const secretKey of sensitiveKeys) {
+            if (providerObj[secretKey] !== undefined) {
+              if (typeof providerObj[secretKey] === 'string' && providerObj[secretKey].startsWith('••••')) {
+                // Preserve existing encrypted value
+                providerObj[secretKey] = existingProv[secretKey] || '';
+              } else if (providerObj[secretKey]) {
+                // Encrypt new plaintext value
+                providerObj[secretKey] = encrypt(providerObj[secretKey]);
+              }
+            }
+          }
+        }
       }
     }
 

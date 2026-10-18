@@ -353,13 +353,13 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
     }
   },
 
-  register: async (name, phone, password, email) => {
+  register: async (name, phone, password, email, captchaToken) => {
     set({ isLoading: true, error: null });
     try {
       await fetchCsrfToken();
       const data = await apiFetch<{ success: boolean; customer: Customer; csrfToken?: string }>('/auth/customer/register', {
         method: 'POST',
-        body: JSON.stringify({ name, phone, password, email })
+        body: JSON.stringify({ name, phone, password, email, captchaToken })
       });
 
       if (data && data.csrfToken) {
@@ -375,13 +375,13 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
     }
   },
 
-  sendOtp: async (phone: string) => {
+  sendOtp: async (phone: string, captchaToken?: string) => {
     set({ isLoading: true, error: null });
     try {
       await fetchCsrfToken();
       const res = await apiFetch<{ success: boolean; configured?: boolean; message?: string; error?: string }>('/auth/otp/send', {
         method: 'POST',
-        body: JSON.stringify({ phone })
+        body: JSON.stringify({ phone, captchaToken })
       });
       set({ isLoading: false });
       return { success: true, configured: true, message: res.message };

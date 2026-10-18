@@ -148,12 +148,25 @@ export const OrderTrackingPage: React.FC<OrderTrackingPageProps> = ({ initialOrd
   const getCourierUrl = (order: Order): string | null => {
     if (order.courierTrackingUrl) return order.courierTrackingUrl;
     if (!order.trackingNumber) return null;
+    const cleanNum = encodeURIComponent(order.trackingNumber.trim());
     const c = (order.courierName || '').toLowerCase();
     if (c.includes('steadfast')) {
-      return `https://steadfast.com.bd/t/${encodeURIComponent(order.trackingNumber.trim())}`;
+      return `https://steadfast.com.bd/t/${cleanNum}`;
     }
     if (c.includes('pathao')) {
-      return `https://merchant.pathao.com/tracking?consignment_id=${encodeURIComponent(order.trackingNumber.trim())}`;
+      return `https://merchant.pathao.com/tracking?consignment_id=${cleanNum}`;
+    }
+    if (c.includes('redx')) {
+      return `https://redx.com.bd/track/${cleanNum}`;
+    }
+    if (c.includes('paperfly')) {
+      return `https://paperfly.com.bd/tracking?tracking_id=${cleanNum}`;
+    }
+    if (c.includes('ecourier')) {
+      return `https://ecourier.com.bd/tracking/?tracking_id=${cleanNum}`;
+    }
+    if (c.includes('sundarban')) {
+      return `https://sundarbancourierltd.com/track/${cleanNum}`;
     }
     return null;
   };

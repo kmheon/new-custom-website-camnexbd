@@ -56,41 +56,93 @@ function normalizeBdPhone(phone) {
   return null;
 }
 
+// In-memory cache of successfully consumed tokens to prevent immediate replay
+const consumedTurnstileTokens = new Map();
+
+// Periodic prune of consumed tokens older than 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [tok, ts] of consumedTurnstileTokens.entries()) {
+    if (now - ts > 10 * 60 * 1000) {
+      consumedTurnstileTokens.delete(tok);
+    }
+  }
+}, 5 * 60 * 1000).unref();
+
 /**
  * Verifies Cloudflare Turnstile CAPTCHA token
+ * Rejects invalid, expired, missing, or reused tokens.
  */
 async function verifyTurnstileToken(token, remoteIp) {
   const secretKey = process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
 
-  // Cloudflare standard test tokens
-  if (token === '1x00000000000000000000AA' || token === 'XXXX.DUMMY.TOKEN.XXXX') {
-    return { success: true, isTest: true };
-  }
-  if (token === '2x00000000000000000000AB' || token === 'FAIL.DUMMY.TOKEN.FAIL') {
-    return { success: false, error: 'Challenge validation failed (test fail token).' };
-  }
-
-  // In test / dev environments when no secret is configured
-  if (!secretKey) {
-    if (process.env.NODE_ENV === 'test' || process.env.ENABLE_TEST_AUTH === 'true') {
-      return { success: true, unconfiguredBypass: true };
-    }
-    // If unconfigured in other environments, log clear notice
+  // 1. Missing token rejection
+  if (!token || typeof token !== 'string' || !token.trim()) {
     return {
-      success: true,
-      unconfiguredNotice: 'Turnstile secret key is not configured in .env'
+      success: false,
+      error: 'Security verification token is missing. Please complete the CAPTCHA challenge.',
+      code: 'CAPTCHA_REQUIRED'
     };
   }
 
-  if (!token) {
-    return { success: false, error: 'Security verification token is missing.' };
+  const cleanToken = token.trim();
+
+  // 2. Token reuse rejection (prevent replay attacks)
+  if (consumedTurnstileTokens.has(cleanToken)) {
+    return {
+      success: false,
+      error: 'Security challenge token has already been used. Please refresh the challenge.',
+      code: 'CAPTCHA_REUSED'
+    };
   }
 
+  // 3. Cloudflare standard test tokens
+  // Test failure token (always fails)
+  if (cleanToken === '2x00000000000000000000AB' || cleanToken === 'FAIL.DUMMY.TOKEN.FAIL') {
+    return {
+      success: false,
+      error: 'Security challenge verification failed (test rejection token).',
+      code: 'CAPTCHA_FAILED'
+    };
+  }
+
+  // Test timeout/expired token (always fails as expired/spent)
+  if (cleanToken === '3x00000000000000000000AC') {
+    return {
+      success: false,
+      error: 'Security verification token expired or was already used.',
+      code: 'CAPTCHA_EXPIRED'
+    };
+  }
+
+  // Test pass token (for automated integration test runner in non-production environments)
+  const isTestOrDev = process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_AUTH === 'true';
+  const isTestKey = secretKey === '1x0000000000000000000000000000000AA';
+  if ((cleanToken === '1x00000000000000000000AA' || cleanToken.startsWith('test_valid_') || cleanToken === 'XXXX.DUMMY.TOKEN.XXXX') && (isTestOrDev || isTestKey)) {
+    consumedTurnstileTokens.set(cleanToken, Date.now());
+    return { success: true, isTest: true };
+  }
+
+  // If secret key is not configured
+  if (!secretKey) {
+    if (isTestEnv) {
+      return { success: true, unconfiguredBypass: true };
+    }
+    return {
+      success: false,
+      error: 'Cloudflare Turnstile is unconfigured on the server. Site administrator must provide TURNSTILE_SECRET_KEY in .env.',
+      code: 'CAPTCHA_CONFIG_ERROR'
+    };
+  }
+
+  // 4. Validate with Cloudflare Siteverify API
   try {
     const formData = new URLSearchParams();
     formData.append('secret', secretKey);
-    formData.append('response', token);
-    if (remoteIp) {
+    formData.append('response', cleanToken);
+
+    // Only attach remoteip if it is a real non-local IP (avoids localhost loopback issues)
+    if (remoteIp && remoteIp !== '127.0.0.1' && remoteIp !== '::1' && remoteIp !== '::ffff:127.0.0.1' && remoteIp !== 'localhost') {
       formData.append('remoteip', remoteIp);
     }
 
@@ -100,17 +152,59 @@ async function verifyTurnstileToken(token, remoteIp) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
-    const data = await res.json();
-    if (data.success) {
-      return { success: true };
+    if (!res.ok) {
+      console.error(`[TURNSTILE API HTTP ${res.status}]`, await res.text());
+      return {
+        success: false,
+        error: 'Security verification service is temporarily unavailable. Please retry in a moment.',
+        code: 'CAPTCHA_PROVIDER_ERROR'
+      };
     }
+
+    const data = await res.json();
+
+    if (data.success) {
+      // Record consumed token to enforce single-use / prevent replay
+      consumedTurnstileTokens.set(cleanToken, Date.now());
+      return {
+        success: true,
+        challengeTs: data.challenge_ts,
+        hostname: data.hostname,
+        action: data.action
+      };
+    }
+
+    const errorCodes = Array.isArray(data['error-codes']) ? data['error-codes'] : [];
+    let errorMessage = 'Security challenge verification failed. Please try again.';
+    let errorCode = 'CAPTCHA_FAILED';
+
+    if (errorCodes.includes('timeout-or-duplicate')) {
+      errorMessage = 'Security verification token expired or was already used. Please refresh the challenge.';
+      errorCode = 'CAPTCHA_EXPIRED';
+    } else if (errorCodes.includes('invalid-input-response')) {
+      errorMessage = 'Invalid or expired security token. Please complete the challenge again.';
+      errorCode = 'CAPTCHA_INVALID';
+    } else if (errorCodes.includes('missing-input-response')) {
+      errorMessage = 'Security verification token is missing.';
+      errorCode = 'CAPTCHA_REQUIRED';
+    } else if (errorCodes.includes('invalid-input-secret') || errorCodes.includes('missing-input-secret')) {
+      errorMessage = 'Server CAPTCHA configuration error.';
+      errorCode = 'CAPTCHA_CONFIG_ERROR';
+    }
+
     return {
       success: false,
-      error: (data['error-codes'] && data['error-codes'].join(', ')) || 'CAPTCHA challenge failed'
+      error: errorMessage,
+      code: errorCode,
+      errorCodes
     };
   } catch (err) {
-    console.error('Turnstile verification error:', err.message);
-    return { success: false, error: 'Unable to verify security challenge at this time.' };
+    console.error('[TURNSTILE FETCH ERROR]', err.message);
+    return {
+      success: false,
+      error: 'Unable to verify security challenge at this time. Please check your connection and retry.',
+      code: 'CAPTCHA_PROVIDER_ERROR'
+    };
   }
 }
 

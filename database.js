@@ -178,6 +178,26 @@ function initDb() {
     )
   `).run();
 
+  // 8b. Shipments & Courier Logistics
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS shipments (
+      id TEXT PRIMARY KEY,
+      order_id TEXT NOT NULL,
+      provider_id TEXT NOT NULL,
+      consignment_id TEXT,
+      tracking_code TEXT,
+      tracking_url TEXT,
+      status TEXT DEFAULT 'pending',
+      provider_status TEXT,
+      raw_response_json TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    )
+  `).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_shipments_order ON shipments(order_id)`).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_shipments_consignment ON shipments(consignment_id)`).run();
+
   // 9. Customers
   db.prepare(`
     CREATE TABLE IF NOT EXISTS customers (

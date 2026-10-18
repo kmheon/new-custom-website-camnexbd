@@ -13,6 +13,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { Button, Input, Modal, Badge } from './UI';
+import { TurnstileWidget } from './TurnstileWidget';
 import { useCustomerAuthStore } from '../../store';
 
 interface CustomerVerificationModalProps {
@@ -49,6 +50,7 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
   const [phone, setPhone] = useState(defaultPhone || currentCustomer?.phone || '');
   const [email, setEmail] = useState(defaultEmail || currentCustomer?.email || '');
   const [code, setCode] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
 
   const [isSent, setIsSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -67,6 +69,7 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
       }
       setIsSent(false);
       setCode('');
+      setCaptchaToken('');
       setFeedback(null);
       setUnconfiguredNotice(null);
     }
@@ -97,7 +100,7 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
           return;
         }
 
-        const res = await sendOtp(cleanPhone);
+        const res = await sendOtp(cleanPhone, captchaToken);
         if (res.success) {
           setIsSent(true);
           setCountdown(60);
@@ -120,7 +123,7 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
           return;
         }
 
-        const res = await sendEmailVerification(cleanEmail);
+        const res = await sendEmailVerification(cleanEmail, captchaToken);
         if (res.success) {
           setIsSent(true);
           setCountdown(60);
@@ -217,6 +220,7 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
                 setActiveMethod('phone');
                 setIsSent(false);
                 setCode('');
+                setCaptchaToken('');
                 setFeedback(null);
                 setUnconfiguredNotice(null);
               }}
@@ -236,6 +240,7 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
                 setActiveMethod('email');
                 setIsSent(false);
                 setCode('');
+                setCaptchaToken('');
                 setFeedback(null);
                 setUnconfiguredNotice(null);
               }}
@@ -335,6 +340,15 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
                 </div>
               )}
 
+              {/* Security verification / Turnstile */}
+              <TurnstileWidget
+                action="verification"
+                onVerify={(token) => setCaptchaToken(token)}
+                onError={() => setCaptchaToken('')}
+                onExpire={() => setCaptchaToken('')}
+                className="py-1"
+              />
+
               <Button
                 type="button"
                 variant="primary"
@@ -396,6 +410,15 @@ export const CustomerVerificationModal: React.FC<CustomerVerificationModalProps>
                   Change {activeMethod === 'phone' ? 'phone' : 'email'}
                 </button>
               </div>
+
+              {/* Bot protection for code resend */}
+              <TurnstileWidget
+                action="verification-resend"
+                onVerify={(token) => setCaptchaToken(token)}
+                onError={() => setCaptchaToken('')}
+                onExpire={() => setCaptchaToken('')}
+                className="py-1"
+              />
 
               <Button
                 type="submit"
