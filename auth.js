@@ -107,7 +107,7 @@ function issueCsrfCookie(res) {
 // ============================================================================
 // 3. AUTHENTICATION & RBAC MIDDLEWARES
 // ============================================================================
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   const token = req.cookies?.camnex_session || req.cookies?.camnex_admin_session || req.cookies?.camnex_staff_session;
   if (!token) {
     req.user = null;
@@ -115,7 +115,7 @@ function authenticate(req, res, next) {
   }
 
   try {
-    const session = db.prepare(`
+    const session = await db.prepare(`
       SELECT * FROM sessions WHERE id = ? AND expires_at > datetime('now')
     `).get(token);
 

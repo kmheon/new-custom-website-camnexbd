@@ -14,6 +14,149 @@ interface CatalogPageProps {
   brandSlug?: string;
 }
 
+interface ExpandableFilterListProps {
+  groupKey: string;
+  options: { label: string; value: string; count?: number }[];
+  selectedValues: string[];
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onToggleOption: (value: string) => void;
+  testIdPrefix: string;
+  isMobile?: boolean;
+}
+
+export const ExpandableFilterList: React.FC<ExpandableFilterListProps> = ({
+  groupKey,
+  options,
+  selectedValues,
+  isExpanded,
+  onToggleExpand,
+  onToggleOption,
+  testIdPrefix,
+  isMobile = false
+}) => {
+  const visibleOptions = useMemo(() => {
+    if (options.length <= 5 || isExpanded) {
+      return options;
+    }
+    // First 5 options, plus any selected options beyond the first 5
+    return options.filter((opt, idx) => idx < 5 || selectedValues.includes(opt.value));
+  }, [options, isExpanded, selectedValues]);
+
+  const hasMore = options.length > 5;
+  const remainingCount = options.length - 5;
+
+  if (isMobile) {
+    return (
+      <div className="space-y-1.5 pt-1.5" data-testid={`expandable-filter-list-${groupKey}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {visibleOptions.map((opt) => {
+            const isChecked = selectedValues.includes(opt.value);
+            return (
+              <button
+                key={`m-${groupKey}-${opt.value}`}
+                type="button"
+                data-testid={`mobile-${testIdPrefix}-${opt.value}`}
+                onClick={() => onToggleOption(opt.value)}
+                className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between border transition-colors cursor-pointer ${
+                  isChecked
+                    ? 'bg-orange-50 border-[#F15A24] text-[#F15A24] font-bold'
+                    : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div
+                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                      isChecked
+                        ? 'bg-[#F15A24] border-[#F15A24] text-white'
+                        : 'border-slate-300 bg-white'
+                    }`}
+                  >
+                    {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                  </div>
+                  <span className="truncate">{opt.label}</span>
+                </div>
+                {typeof opt.count === 'number' && (
+                  <span className={`text-[10px] font-mono shrink-0 ml-1 ${isChecked ? 'text-[#F15A24]' : 'text-slate-400'}`}>
+                    ({opt.count})
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {hasMore && (
+          <button
+            type="button"
+            data-testid={isExpanded ? `mobile-show-less-btn-${groupKey}` : `mobile-show-more-btn-${groupKey}`}
+            onClick={onToggleExpand}
+            className="w-full text-center py-1.5 px-3 rounded-lg text-xs font-bold text-[#F15A24] hover:bg-orange-50 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+          >
+            {isExpanded ? (
+              <span>Show less</span>
+            ) : (
+              <span>Show more ({remainingCount})</span>
+            )}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1 pt-1.5" data-testid={`expandable-filter-list-${groupKey}`}>
+      {visibleOptions.map((opt) => {
+        const isChecked = selectedValues.includes(opt.value);
+        return (
+          <button
+            key={`${groupKey}-${opt.value}`}
+            type="button"
+            data-testid={`${testIdPrefix}-${opt.value}`}
+            onClick={() => onToggleOption(opt.value)}
+            className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+              isChecked
+                ? 'bg-orange-50 text-[#F15A24] font-bold'
+                : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div
+                className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                  isChecked
+                    ? 'bg-[#F15A24] border-[#F15A24] text-white'
+                    : 'border-slate-300 bg-white'
+                }`}
+              >
+                {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+              </div>
+              <span className="truncate">{opt.label}</span>
+            </div>
+            {typeof opt.count === 'number' && (
+              <span className={`text-[11px] font-mono shrink-0 ml-1.5 ${isChecked ? 'text-[#F15A24]' : 'text-slate-400'}`}>
+                ({opt.count})
+              </span>
+            )}
+          </button>
+        );
+      })}
+      {hasMore && (
+        <button
+          type="button"
+          data-testid={isExpanded ? `show-less-btn-${groupKey}` : `show-more-btn-${groupKey}`}
+          onClick={onToggleExpand}
+          className="text-xs font-bold text-[#F15A24] hover:underline flex items-center gap-1 px-2 pt-1 cursor-pointer"
+        >
+          {isExpanded ? (
+            <span>Show less</span>
+          ) : (
+            <span>Show more ({remainingCount})</span>
+          )}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export const CatalogPage: React.FC<CatalogPageProps> = ({
   onNavigate,
   categorySlug,
@@ -34,8 +177,20 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const gridTopRef = useRef<HTMLDivElement>(null);
 
   // Filter States
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(() => {
+    if (brandSlug) return [brandSlug];
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const brandsParam = urlParams.get('brands');
+      if (brandsParam) return brandsParam.split(',').map(s => s.trim()).filter(Boolean);
+      const brandParam = urlParams.get('brand');
+      if (brandParam) return [brandParam.trim()];
+    } catch (_) {}
+    return [];
+  });
   const [selectedSpecs, setSelectedSpecs] = useState<Record<string, string[]>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'name_asc'>('popular');
   const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({});
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -58,6 +213,15 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   }, []);
 
   useEffect(() => {
+    if (brandSlug) {
+      setSelectedBrands(prev => (prev.includes(brandSlug) ? prev : [...prev, brandSlug]));
+      brandService.getBrandBySlug(brandSlug).then(setCurrentBrand);
+    } else {
+      setCurrentBrand(null);
+    }
+  }, [brandSlug]);
+
+  useEffect(() => {
     setSelectedSpecs({});
     setCurrentPage(1);
     const cleanCategorySlug = (categorySlug || '').split('?')[0];
@@ -77,13 +241,19 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
       setCurrentCategory(null);
       setSpecFacets([]);
     }
+  }, [categorySlug]);
 
-    if (brandSlug) {
-      brandService.getBrandBySlug(brandSlug).then(setCurrentBrand);
-    } else {
-      setCurrentBrand(null);
-    }
-  }, [categorySlug, brandSlug]);
+  const toggleExpandGroup = (key: string) => {
+    setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleBrandToggle = (slug: string) => {
+    setCurrentPage(1);
+    setSelectedBrands(prev => {
+      const exists = prev.includes(slug);
+      return exists ? prev.filter(s => s !== slug) : [...prev, slug];
+    });
+  };
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -93,7 +263,8 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
       const limitParam = pageSize === 'all' ? 1000 : pageSize;
       const res = await productService.getProducts({
         categorySlug: cleanCategorySlug,
-        brandSlug,
+        brandSlug: selectedBrands.length === 1 ? selectedBrands[0] : (selectedBrands.length === 0 ? brandSlug : undefined),
+        brands: selectedBrands.length > 0 ? selectedBrands : (brandSlug ? [brandSlug] : undefined),
         subcat: subcatParam && subcatParam !== 'all' ? subcatParam : undefined,
         subcategory: subcatParam && subcatParam !== 'all' ? subcatParam : undefined,
         specFilters: selectedSpecs,
@@ -124,7 +295,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [categorySlug, brandSlug, selectedSpecs, sortBy, priceRange, currentPage, pageSize]);
+  }, [categorySlug, brandSlug, selectedBrands, selectedSpecs, sortBy, priceRange, currentPage, pageSize]);
 
   useEffect(() => {
     fetchProducts();
@@ -226,6 +397,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   };
 
   const clearAllFilters = () => {
+    setSelectedBrands([]);
     setSelectedSpecs({});
     setPriceRange({});
     setCurrentPage(1);
@@ -235,6 +407,14 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
       onNavigate('catalog');
     }
   };
+
+  const brandOptions = useMemo(() => {
+    return brands.map(b => ({
+      label: b.name,
+      value: b.slug,
+      count: b.productCount
+    }));
+  }, [brands]);
 
   const pageNumbers = useMemo(() => {
     if (totalPages <= 7) {
@@ -262,7 +442,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   }, [currentPage, totalPages]);
 
   const activeSpecFilterCount = Object.values(selectedSpecs).reduce((acc, arr) => acc + arr.length, 0);
-  const hasActiveFilters = activeSpecFilterCount > 0 || priceRange.min !== undefined || priceRange.max !== undefined;
+  const hasActiveFilters = selectedBrands.length > 0 || activeSpecFilterCount > 0 || priceRange.min !== undefined || priceRange.max !== undefined;
 
   const pageTitle = currentCategory
     ? `${currentCategory.name} | CamneX Bangladesh`
@@ -418,40 +598,47 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               </div>
 
               {/* Brands Filter List */}
-              <div className="pt-4 border-t border-slate-100">
+              <div className="pt-4 border-t border-slate-100" data-testid="filter-group-brand">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-700 uppercase">
-                    Manufacturers
+                  <span className="text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5" data-testid="filter-group-header-brand">
+                    <span>Manufacturers</span>
+                    {selectedBrands.length > 0 && (
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F15A24] text-white text-[10px] font-black">
+                        {selectedBrands.length}
+                      </span>
+                    )}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('brands')}
-                    className="text-[11px] font-bold text-[#F15A24] hover:underline"
-                  >
-                    Directory →
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => onNavigate('catalog')}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      !brandSlug ? 'bg-orange-50 text-[#F15A24] font-bold' : 'text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    All Manufacturers
-                  </button>
-                  {brands.map((b) => (
+                  <div className="flex items-center gap-2">
+                    {selectedBrands.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedBrands([]); setCurrentPage(1); }}
+                        className="text-[11px] font-bold text-slate-400 hover:text-[#F15A24] cursor-pointer"
+                        title="Clear brand selections"
+                      >
+                        Reset
+                      </button>
+                    )}
                     <button
-                      key={b.id}
-                      onClick={() => onNavigate('brand', b.slug)}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        brandSlug === b.slug ? 'bg-orange-50 text-[#F15A24] font-bold' : 'text-slate-600 hover:bg-slate-50'
-                      }`}
+                      type="button"
+                      onClick={() => onNavigate('brands')}
+                      className="text-[11px] font-bold text-[#F15A24] hover:underline"
                     >
-                      {b.name}
+                      Directory →
                     </button>
-                  ))}
+                  </div>
                 </div>
+
+                <ExpandableFilterList
+                  groupKey="brand"
+                  options={brandOptions}
+                  selectedValues={selectedBrands}
+                  isExpanded={Boolean(expandedGroups['brand'])}
+                  onToggleExpand={() => toggleExpandGroup('brand')}
+                  onToggleOption={handleBrandToggle}
+                  testIdPrefix="facet-brand"
+                  isMobile={false}
+                />
               </div>
 
               {/* Dynamic Category-Specific Specification Filters */}
@@ -471,13 +658,13 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                     const selectedInGroup = selectedSpecs[facet.key] || [];
 
                     return (
-                      <div key={facet.key} className="pt-3 border-t border-slate-100 first:pt-0 first:border-t-0">
+                      <div key={facet.key} className="pt-3 border-t border-slate-100 first:pt-0 first:border-t-0" data-testid={`filter-group-${facet.key}`}>
                         <button
                           type="button"
                           onClick={() => toggleGroupCollapse(facet.key)}
                           className="w-full flex items-center justify-between py-1 text-left group cursor-pointer"
                         >
-                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 group-hover:text-[#F15A24] transition-colors">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 group-hover:text-[#F15A24] transition-colors" data-testid={`filter-group-header-${facet.key}`}>
                             <span>{facet.label}</span>
                             {selectedInGroup.length > 0 && (
                               <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F15A24] text-white text-[10px] font-black">
@@ -489,40 +676,16 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                         </button>
 
                         {!isCollapsed && (
-                          <div className="space-y-1 pt-1.5">
-                            {facet.options.map((opt) => {
-                              const isChecked = selectedInGroup.includes(opt.value);
-                              return (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  data-testid={`facet-${facet.key}-${opt.value}`}
-                                  onClick={() => handleSpecToggle(facet.key, opt.value)}
-                                  className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                                    isChecked
-                                      ? 'bg-orange-50 text-[#F15A24] font-bold'
-                                      : 'text-slate-600 hover:bg-slate-50'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <div
-                                      className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                                        isChecked
-                                          ? 'bg-[#F15A24] border-[#F15A24] text-white'
-                                          : 'border-slate-300 bg-white'
-                                      }`}
-                                    >
-                                      {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                                    </div>
-                                    <span className="truncate">{opt.label}</span>
-                                  </div>
-                                  <span className={`text-[11px] font-mono shrink-0 ml-1.5 ${isChecked ? 'text-[#F15A24]' : 'text-slate-400'}`}>
-                                    ({opt.count})
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                          <ExpandableFilterList
+                            groupKey={facet.key}
+                            options={facet.options}
+                            selectedValues={selectedInGroup}
+                            isExpanded={Boolean(expandedGroups[facet.key])}
+                            onToggleExpand={() => toggleExpandGroup(facet.key)}
+                            onToggleOption={(val) => handleSpecToggle(facet.key, val)}
+                            testIdPrefix={`facet-${facet.key}`}
+                            isMobile={false}
+                          />
                         )}
                       </div>
                     );
@@ -648,23 +811,29 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                   <span>Active Filters:</span>
                 </span>
 
-                {/* Brand chip if filtered */}
-                {currentBrand && (
-                  <span
-                    data-testid="active-chip-brand"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-orange-50 text-[#F15A24] border border-orange-200"
-                  >
-                    <span>Brand: {currentBrand.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate(currentCategory ? 'category' : 'catalog', currentCategory?.slug)}
-                      className="hover:text-red-600 ml-1 cursor-pointer"
-                      title="Remove Brand filter"
+                {/* Brand chips if filtered */}
+                {selectedBrands.map((bSlug) => {
+                  const bObj = brands.find((b) => b.slug === bSlug || b.id === bSlug);
+                  const bName = bObj?.name || (currentBrand?.slug === bSlug ? currentBrand.name : bSlug);
+                  return (
+                    <span
+                      key={`active-brand-${bSlug}`}
+                      data-testid={`active-chip-brand active-chip-brand-${bSlug}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-orange-50 text-[#F15A24] border border-orange-200"
                     >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </span>
-                )}
+                      <span>Brand: {bName}</span>
+                      <button
+                        type="button"
+                        data-testid={`remove-brand-chip-${bSlug}`}
+                        onClick={() => handleBrandToggle(bSlug)}
+                        className="hover:text-red-600 ml-1 cursor-pointer"
+                        title={`Remove Brand ${bName}`}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  );
+                })}
 
                 {/* Dynamic spec chips */}
                 {Object.entries(selectedSpecs).map(([key, vals]) => {
@@ -1178,6 +1347,39 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               </div>
             </div>
 
+            {/* Mobile Brands */}
+            <div className="space-y-2 pt-3 border-t border-slate-100" data-testid="mobile-filter-group-brand">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5" data-testid="mobile-filter-group-header-brand">
+                  <span>Manufacturers</span>
+                  {selectedBrands.length > 0 && (
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F15A24] text-white text-[10px] font-black">
+                      {selectedBrands.length}
+                    </span>
+                  )}
+                </span>
+                {selectedBrands.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedBrands([]); setCurrentPage(1); }}
+                    className="text-[11px] font-bold text-[#F15A24] hover:underline"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+              <ExpandableFilterList
+                groupKey="brand"
+                options={brandOptions}
+                selectedValues={selectedBrands}
+                isExpanded={Boolean(expandedGroups['mobile-brand'])}
+                onToggleExpand={() => toggleExpandGroup('mobile-brand')}
+                onToggleOption={handleBrandToggle}
+                testIdPrefix="facet-brand"
+                isMobile={true}
+              />
+            </div>
+
             {/* Mobile Dynamic Specification Filters */}
             {specFacets.length > 0 && (
               <div className="pt-4 border-t border-slate-100 space-y-4">
@@ -1190,13 +1392,13 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                   const isCollapsed = Boolean(collapsedGroups[`mobile-${facet.key}`]);
 
                   return (
-                    <div key={`m-${facet.key}`} className="pt-3 border-t border-slate-100 first:pt-0 first:border-t-0">
+                    <div key={`m-${facet.key}`} className="pt-3 border-t border-slate-100 first:pt-0 first:border-t-0" data-testid={`mobile-filter-group-${facet.key}`}>
                       <button
                         type="button"
                         onClick={() => setCollapsedGroups(prev => ({ ...prev, [`mobile-${facet.key}`]: !prev[`mobile-${facet.key}`] }))}
                         className="w-full flex items-center justify-between py-1 text-left"
                       >
-                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5" data-testid={`mobile-filter-group-header-${facet.key}`}>
                           <span>{facet.label}</span>
                           {selectedInGroup.length > 0 && (
                             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F15A24] text-white text-[10px] font-black">
@@ -1208,40 +1410,16 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                       </button>
 
                       {!isCollapsed && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2">
-                          {facet.options.map(opt => {
-                            const isChecked = selectedInGroup.includes(opt.value);
-                            return (
-                              <button
-                                key={`m-${opt.value}`}
-                                type="button"
-                                data-testid={`mobile-facet-${facet.key}-${opt.value}`}
-                                onClick={() => handleSpecToggle(facet.key, opt.value)}
-                                className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between border transition-colors ${
-                                  isChecked
-                                    ? 'bg-orange-50 border-[#F15A24] text-[#F15A24] font-bold'
-                                    : 'border-slate-200 text-slate-700 bg-white'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <div
-                                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                                      isChecked
-                                        ? 'bg-[#F15A24] border-[#F15A24] text-white'
-                                        : 'border-slate-300 bg-white'
-                                    }`}
-                                  >
-                                    {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                                  </div>
-                                  <span className="truncate">{opt.label}</span>
-                                </div>
-                                <span className={`text-[10px] font-mono shrink-0 ml-1 ${isChecked ? 'text-[#F15A24]' : 'text-slate-400'}`}>
-                                  ({opt.count})
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <ExpandableFilterList
+                          groupKey={facet.key}
+                          options={facet.options}
+                          selectedValues={selectedInGroup}
+                          isExpanded={Boolean(expandedGroups[`mobile-${facet.key}`])}
+                          onToggleExpand={() => toggleExpandGroup(`mobile-${facet.key}`)}
+                          onToggleOption={(val) => handleSpecToggle(facet.key, val)}
+                          testIdPrefix={`facet-${facet.key}`}
+                          isMobile={true}
+                        />
                       )}
                     </div>
                   );

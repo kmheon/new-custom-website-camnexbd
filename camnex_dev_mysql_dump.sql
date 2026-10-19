@@ -1,0 +1,1170 @@
+-- =============================================================================
+-- CamneX Platform: Standalone MySQL Development Database Dump
+-- Generated on: 2026-10-18T23:59:47.155Z
+-- Source: camnex_dev.db (Anonymized Catalog Copy)
+-- Character Set: utf8mb4 | Engine: InnoDB
+-- =============================================================================
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+
+-- =============================================================================
+-- CamneX Platform: Full MySQL Schema DDL
+-- Generated from camnex_dev.db (56 Tables)
+-- Character Set: utf8mb4 | Collation: utf8mb4_unicode_ci | Engine: InnoDB
+-- =============================================================================
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+  `id` VARCHAR(128) NOT NULL,
+  `user_id` VARCHAR(128) NULL,
+  `user_name` VARCHAR(255) NULL,
+  `user_email` VARCHAR(191) NULL,
+  `surface` VARCHAR(64) NOT NULL,
+  `entity_type` VARCHAR(64) NOT NULL,
+  `entity_id` VARCHAR(128) NOT NULL,
+  `action` VARCHAR(64) NOT NULL,
+  `before_data` LONGTEXT NULL,
+  `after_data` LONGTEXT NULL,
+  `diff` LONGTEXT NULL,
+  `ip_address` LONGTEXT NULL,
+  `user_agent` LONGTEXT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_user` (`user_id`),
+  KEY `idx_audit_entity` (`entity_type`, `entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `background_jobs` (
+  `id` VARCHAR(128) NOT NULL,
+  `type` LONGTEXT NOT NULL,
+  `payload_json` JSON NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'pending',
+  `attempts` INT NULL DEFAULT 0,
+  `max_attempts` INT NULL DEFAULT 3,
+  `result_json` JSON NULL,
+  `last_error` LONGTEXT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `completed_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_jobs_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `blog_posts` (
+  `id` VARCHAR(128) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_blog_posts_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `brands` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `logo` LONGTEXT NULL,
+  `description` LONGTEXT NULL,
+  `website` LONGTEXT NULL,
+  `featured` INT NULL DEFAULT 0,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_brands_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `categories` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `description` LONGTEXT NULL,
+  `image` LONGTEXT NULL,
+  `parent_id` VARCHAR(128) NULL,
+  `spec_template_id` VARCHAR(128) NULL,
+  `display_order` INT NULL DEFAULT 1,
+  `status` VARCHAR(64) NULL DEFAULT 'active',
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_categories_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `cms_pages` (
+  `id` VARCHAR(128) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_cms_pages_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `company_profile` (
+  `id` VARCHAR(128) NOT NULL,
+  `data_json` JSON NOT NULL,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `coupons` (
+  `id` VARCHAR(128) NOT NULL,
+  `code` VARCHAR(128) NOT NULL,
+  `discount_type` LONGTEXT NOT NULL,
+  `discount_value` DECIMAL(12, 2) NOT NULL,
+  `min_order_amount` DECIMAL(12, 2) NULL DEFAULT 0,
+  `max_discount_amount` DECIMAL(12, 2) NULL,
+  `scope_type` LONGTEXT NULL DEFAULT 'all',
+  `scope_id` VARCHAR(128) NULL,
+  `start_date` DATETIME NULL,
+  `end_date` DATETIME NULL,
+  `usage_limit` INT NULL,
+  `usage_count` INT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_coupons_code` (`code`),
+  UNIQUE KEY `uq_coupons_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `customer_groups` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `code` VARCHAR(128) NOT NULL,
+  `discount_percent` DECIMAL(12, 2) NULL DEFAULT 0,
+  `price_list_id` VARCHAR(128) NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_customer_groups_code` (`code`),
+  CONSTRAINT `fk_customer_groups_price_list_id_price_lists` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `customer_notes` (
+  `id` VARCHAR(128) NOT NULL,
+  `customer_id` VARCHAR(128) NOT NULL,
+  `author_id` VARCHAR(128) NULL,
+  `author_name` VARCHAR(255) NULL,
+  `note_text` LONGTEXT NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_customer_notes_customer` (`customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `customers` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(191) NULL,
+  `email` VARCHAR(191) NULL,
+  `company_name` VARCHAR(255) NULL,
+  `customer_type` LONGTEXT NULL DEFAULT 'individual',
+  `password_hash` VARCHAR(255) NULL,
+  `data_json` JSON NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `email_verified` TINYINT(1) NULL DEFAULT 0,
+  `phone_verified` TINYINT(1) NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_customers_email` (`email`),
+  KEY `idx_customers_phone` (`phone`),
+  UNIQUE KEY `uq_customers_phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `documents` (
+  `id` VARCHAR(128) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `doc_type` VARCHAR(64) NOT NULL,
+  `category_id` VARCHAR(128) NULL,
+  `product_id` VARCHAR(128) NULL,
+  `file_url` VARCHAR(2048) NOT NULL,
+  `file_size` LONGTEXT NULL,
+  `mime_type` LONGTEXT NULL,
+  `download_count` INT NULL DEFAULT 0,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_documents_type` (`doc_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `domain_events` (
+  `id` VARCHAR(128) NOT NULL,
+  `event_type` LONGTEXT NOT NULL,
+  `aggregate_type` LONGTEXT NOT NULL,
+  `aggregate_id` VARCHAR(128) NOT NULL,
+  `payload` LONGTEXT NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'pending',
+  `attempts` INT NULL DEFAULT 0,
+  `last_error` LONGTEXT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `processed_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_events_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `email_verifications` (
+  `id` VARCHAR(128) NOT NULL,
+  `email` VARCHAR(191) NOT NULL,
+  `code_hash` VARCHAR(255) NOT NULL,
+  `token` VARCHAR(128) NULL,
+  `attempts` INT NULL DEFAULT 0,
+  `expires_at` DATETIME NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_email_verif_token` (`token`),
+  KEY `idx_email_verif_email` (`email`),
+  UNIQUE KEY `uq_email_verifications_token` (`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `faqs` (
+  `id` VARCHAR(128) NOT NULL,
+  `question` LONGTEXT NOT NULL,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `glossary_terms` (
+  `id` VARCHAR(128) NOT NULL,
+  `term` LONGTEXT NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `short_meaning` LONGTEXT NOT NULL,
+  `long_meaning` LONGTEXT NULL,
+  `display_order` INT NULL DEFAULT 1,
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_glossary_terms_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `hero_slides` (
+  `id` VARCHAR(128) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `enabled` TINYINT(1) NULL DEFAULT 1,
+  `display_order` INT NULL DEFAULT 1,
+  `start_date` LONGTEXT NULL,
+  `end_date` LONGTEXT NULL,
+  `source_mode` LONGTEXT NULL DEFAULT 'manual',
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `homepage_sections` (
+  `id` VARCHAR(128) NOT NULL,
+  `section_type` LONGTEXT NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `enabled` TINYINT(1) NULL DEFAULT 1,
+  `display_order` INT NULL DEFAULT 1,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `inventory_batches` (
+  `id` VARCHAR(128) NOT NULL,
+  `warehouse_id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `variant_id` VARCHAR(128) NULL,
+  `batch_number` VARCHAR(128) NOT NULL,
+  `cost_per_unit` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `quantity_received` INT NOT NULL,
+  `quantity_remaining` INT NOT NULL,
+  `supplier_invoice_ref` LONGTEXT NULL,
+  `received_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `expiry_date` DATETIME NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_inventory_batches_product` (`product_id`, `batch_number`),
+  CONSTRAINT `fk_inventory_batches_product_id_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_inventory_batches_warehouse_id_warehouses` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `inventory_items` (
+  `id` VARCHAR(128) NOT NULL,
+  `warehouse_id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `variant_id` VARCHAR(128) NULL,
+  `quantity_on_hand` INT NULL DEFAULT 0,
+  `quantity_reserved` INT NULL DEFAULT 0,
+  `reorder_point` INT NULL DEFAULT 5,
+  `bin_location` LONGTEXT NULL,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_inventory_lookup` (`warehouse_id`, `product_id`),
+  UNIQUE KEY `uq_inventory_items_warehouse_id_product_id_variant_id` (`warehouse_id`, `product_id`, `variant_id`),
+  CONSTRAINT `fk_inventory_items_variant_id_product_variants` FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_inventory_items_product_id_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_inventory_items_warehouse_id_warehouses` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `inventory_serials` (
+  `id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `variant_id` VARCHAR(128) NULL,
+  `warehouse_id` VARCHAR(128) NOT NULL,
+  `batch_id` VARCHAR(128) NULL,
+  `serial_number` VARCHAR(128) NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'in_stock',
+  `order_id` VARCHAR(128) NULL,
+  `notes` LONGTEXT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_inventory_serials_code` (`serial_number`),
+  KEY `idx_inventory_serials_lookup` (`product_id`, `status`),
+  UNIQUE KEY `uq_inventory_serials_serial_number` (`serial_number`),
+  CONSTRAINT `fk_inventory_serials_order_id_orders` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_inventory_serials_batch_id_inventory_batches` FOREIGN KEY (`batch_id`) REFERENCES `inventory_batches` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_inventory_serials_warehouse_id_warehouses` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_inventory_serials_product_id_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `media` (
+  `id` VARCHAR(128) NOT NULL,
+  `filename` VARCHAR(255) NOT NULL,
+  `original_name` VARCHAR(255) NULL,
+  `url` VARCHAR(2048) NOT NULL,
+  `mime_type` LONGTEXT NULL,
+  `size` INT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `webp_url` VARCHAR(2048) NULL,
+  `thumb_url` VARCHAR(2048) NULL,
+  `alt_text` LONGTEXT NULL,
+  `folder` LONGTEXT NULL DEFAULT 'general',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `newsletter_subscribers` (
+  `id` VARCHAR(128) NOT NULL,
+  `email` VARCHAR(191) NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'active',
+  `source` VARCHAR(64) NULL DEFAULT 'footer_form',
+  `ip_address` LONGTEXT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `unsubscribed_at` DATETIME NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_newsletter_email` (`email`),
+  UNIQUE KEY `uq_newsletter_subscribers_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `oauth_accounts` (
+  `id` VARCHAR(128) NOT NULL,
+  `customer_id` VARCHAR(128) NOT NULL,
+  `provider` VARCHAR(64) NOT NULL,
+  `provider_user_id` VARCHAR(128) NOT NULL,
+  `email` VARCHAR(191) NULL,
+  `email_verified` TINYINT(1) NULL DEFAULT 0,
+  `data_json` JSON NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_oauth_provider` (`provider`, `provider_user_id`),
+  KEY `idx_oauth_customer` (`customer_id`),
+  UNIQUE KEY `uq_oauth_accounts_provider_provider_user_id` (`provider`, `provider_user_id`),
+  CONSTRAINT `fk_oauth_accounts_customer_id_customers` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `oauth_states` (
+  `state` VARCHAR(128) NOT NULL,
+  `provider` VARCHAR(64) NOT NULL,
+  `nonce` VARCHAR(128) NULL,
+  `redirect_url` VARCHAR(2048) NULL,
+  `expires_at` DATETIME NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`state`),
+  KEY `idx_oauth_states_expires` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `orders` (
+  `id` VARCHAR(128) NOT NULL,
+  `order_number` VARCHAR(128) NOT NULL,
+  `customer_name` VARCHAR(255) NOT NULL,
+  `customer_phone` VARCHAR(191) NOT NULL,
+  `customer_email` VARCHAR(191) NULL,
+  `total_amount` DECIMAL(12, 2) NOT NULL,
+  `payment_method` VARCHAR(64) NULL,
+  `payment_status` VARCHAR(64) NULL DEFAULT 'pending',
+  `order_status` LONGTEXT NULL DEFAULT 'pending',
+  `data_json` JSON NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_orders_number` (`order_number`),
+  KEY `idx_orders_phone` (`customer_phone`),
+  UNIQUE KEY `uq_orders_order_number` (`order_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `package_series` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `enabled` TINYINT(1) NULL DEFAULT 1,
+  `display_order` INT NULL DEFAULT 1,
+  `data_json` JSON NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_package_series_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `package_system_types` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `description` LONGTEXT NULL,
+  `icon` LONGTEXT NULL,
+  `display_order` INT NULL DEFAULT 1,
+  `enabled` TINYINT(1) NULL DEFAULT 1,
+  `data_json` JSON NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_package_system_types_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `packages` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `description` LONGTEXT NULL,
+  `camera_count` INT NOT NULL,
+  `base_price` DECIMAL(12, 2) NOT NULL,
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_packages_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `phone_otps` (
+  `id` VARCHAR(128) NOT NULL,
+  `phone` VARCHAR(191) NOT NULL,
+  `code_hash` VARCHAR(255) NOT NULL,
+  `attempts` INT NULL DEFAULT 0,
+  `expires_at` DATETIME NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_phone_otps_phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `price_list_items` (
+  `id` VARCHAR(128) NOT NULL,
+  `price_list_id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `variant_id` VARCHAR(128) NULL,
+  `min_quantity` INT NULL DEFAULT 1,
+  `price` DECIMAL(12, 2) NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_price_list_items_lookup` (`price_list_id`, `product_id`, `min_quantity`),
+  CONSTRAINT `fk_price_list_items_variant_id_product_variants` FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_price_list_items_product_id_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_price_list_items_price_list_id_price_lists` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `price_lists` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `code` VARCHAR(128) NOT NULL,
+  `currency` VARCHAR(64) NULL DEFAULT 'BDT',
+  `description` LONGTEXT NULL,
+  `is_default` TINYINT(1) NULL DEFAULT 0,
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_price_lists_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `product_variants` (
+  `id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `sku` VARCHAR(191) NOT NULL,
+  `barcode` VARCHAR(128) NULL,
+  `name` VARCHAR(255) NULL,
+  `attributes_json` JSON NULL DEFAULT '{}',
+  `regular_price` DECIMAL(12, 2) NULL,
+  `sale_price` DECIMAL(12, 2) NULL,
+  `cost_price` DECIMAL(12, 2) NULL,
+  `weight_kg` DOUBLE NULL,
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_product_variants_barcode` (`barcode`),
+  KEY `idx_product_variants_sku` (`sku`),
+  KEY `idx_product_variants_product_id` (`product_id`),
+  UNIQUE KEY `uq_product_variants_sku` (`sku`),
+  CONSTRAINT `fk_product_variants_product_id_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `products` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `model_number` VARCHAR(191) NOT NULL,
+  `sku` VARCHAR(191) NOT NULL,
+  `brand_id` VARCHAR(128) NULL,
+  `brand_name` VARCHAR(255) NULL,
+  `category_id` VARCHAR(128) NULL,
+  `category_slug` VARCHAR(191) NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'active',
+  `price` DECIMAL(12, 2) NULL,
+  `compare_price` DECIMAL(12, 2) NULL,
+  `stock_quantity` INT NULL DEFAULT 10,
+  `is_featured` TINYINT(1) NULL DEFAULT 0,
+  `is_popular` TINYINT(1) NULL DEFAULT 0,
+  `is_demo` TINYINT(1) NULL DEFAULT 0,
+  `data_json` JSON NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_products_status` (`status`),
+  KEY `idx_products_brand` (`brand_id`),
+  KEY `idx_products_category` (`category_slug`),
+  UNIQUE KEY `uq_products_sku` (`sku`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `projects` (
+  `id` VARCHAR(128) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_projects_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `quotes` (
+  `id` VARCHAR(128) NOT NULL,
+  `reference_number` VARCHAR(128) NOT NULL,
+  `customer_name` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(191) NOT NULL,
+  `service_type` LONGTEXT NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'pending',
+  `data_json` JSON NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_quotes_reference_number` (`reference_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `redirects` (
+  `id` VARCHAR(128) NOT NULL,
+  `from_path` VARCHAR(191) NOT NULL,
+  `to_path` VARCHAR(191) NOT NULL,
+  `status_code` INT NULL DEFAULT 301,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_redirects_from` (`from_path`),
+  UNIQUE KEY `uq_redirects_from_path` (`from_path`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `role_permissions` (
+  `role_id` VARCHAR(128) NOT NULL,
+  `permission_key` VARCHAR(128) NOT NULL,
+  PRIMARY KEY (`role_id`, `permission_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `roles` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `description` LONGTEXT NULL,
+  `is_system` TINYINT(1) NULL DEFAULT 0,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `schema_migrations` (
+  `version` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `applied_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `service_requests` (
+  `id` VARCHAR(128) NOT NULL,
+  `request_number` VARCHAR(128) NOT NULL,
+  `customer_name` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(191) NOT NULL,
+  `service_type` LONGTEXT NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'pending',
+  `data_json` JSON NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `service_id` VARCHAR(128) NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_service_requests_request_number` (`request_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `services` (
+  `id` VARCHAR(128) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `short_label` LONGTEXT NOT NULL,
+  `enabled` TINYINT(1) NULL DEFAULT 1,
+  `display_order` INT NULL DEFAULT 1,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `sessions` (
+  `id` VARCHAR(128) NOT NULL,
+  `user_id` VARCHAR(128) NOT NULL,
+  `role` VARCHAR(64) NOT NULL,
+  `email` VARCHAR(191) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `app` LONGTEXT NULL DEFAULT 'storefront',
+  PRIMARY KEY (`id`),
+  KEY `idx_sessions_expires` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `settings` (
+  `key` VARCHAR(128) NOT NULL,
+  `value` LONGTEXT NOT NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `shipments` (
+  `id` VARCHAR(128) NOT NULL,
+  `order_id` VARCHAR(128) NOT NULL,
+  `provider_id` VARCHAR(128) NOT NULL,
+  `consignment_id` VARCHAR(128) NULL,
+  `tracking_code` LONGTEXT NULL,
+  `tracking_url` VARCHAR(2048) NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'pending',
+  `provider_status` LONGTEXT NULL,
+  `raw_response_json` JSON NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_shipments_consignment` (`consignment_id`),
+  KEY `idx_shipments_order` (`order_id`),
+  CONSTRAINT `fk_shipments_order_id_orders` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `spec_templates` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `category_slug` VARCHAR(191) NOT NULL,
+  `data_json` JSON NOT NULL,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `stock_movements` (
+  `id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `quantity_change` DOUBLE NOT NULL,
+  `balance_after` DOUBLE NOT NULL,
+  `movement_type` LONGTEXT NOT NULL,
+  `reason` LONGTEXT NOT NULL,
+  `reference_id` VARCHAR(128) NULL,
+  `user_id` VARCHAR(128) NULL,
+  `user_name` VARCHAR(255) NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_stock_movements_prod` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `stock_reservations` (
+  `id` VARCHAR(128) NOT NULL,
+  `order_id` VARCHAR(128) NOT NULL,
+  `warehouse_id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `variant_id` VARCHAR(128) NULL,
+  `quantity` INT NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'active',
+  `expires_at` DATETIME NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_stock_reservations_order` (`order_id`, `status`),
+  CONSTRAINT `fk_stock_reservations_product_id_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_stock_reservations_warehouse_id_warehouses` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_stock_reservations_order_id_orders` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tax_classes` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `code` VARCHAR(128) NOT NULL,
+  `rate_percent` DECIMAL(12, 2) NOT NULL DEFAULT 5.0,
+  `is_default` TINYINT(1) NULL DEFAULT 0,
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_tax_classes_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `testimonials` (
+  `id` VARCHAR(128) NOT NULL,
+  `client_name` VARCHAR(255) NOT NULL,
+  `company` LONGTEXT NULL,
+  `role` VARCHAR(64) NULL,
+  `rating` INT NULL DEFAULT 5,
+  `content` LONGTEXT NOT NULL,
+  `image` LONGTEXT NULL,
+  `verified` TINYINT(1) NULL DEFAULT 1,
+  `display_order` INT NULL DEFAULT 1,
+  `data_json` JSON NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` TINYINT(1) NULL DEFAULT 0,
+  `archived_at` DATETIME NULL,
+  `archived_by` LONGTEXT NULL,
+  `version` VARCHAR(128) NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_roles` (
+  `user_id` VARCHAR(128) NOT NULL,
+  `role_id` VARCHAR(128) NOT NULL,
+  PRIMARY KEY (`user_id`, `role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(191) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `role` VARCHAR(64) NULL DEFAULT 'admin',
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` VARCHAR(64) NULL DEFAULT 'active',
+  `must_change_password` TINYINT(1) NULL DEFAULT 0,
+  `branch_id` VARCHAR(128) NULL,
+  `warehouse_id` VARCHAR(128) NULL,
+  `last_login` DATETIME NULL,
+  `totp_secret` LONGTEXT NULL,
+  `totp_enabled` TINYINT(1) NULL DEFAULT 0,
+  `failed_login_attempts` INT NULL DEFAULT 0,
+  `locked_until` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_users_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `warehouses` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `code` VARCHAR(128) NOT NULL,
+  `address_line1` LONGTEXT NULL,
+  `city` LONGTEXT NULL DEFAULT 'Dhaka',
+  `district` LONGTEXT NULL DEFAULT 'Dhaka',
+  `contact_person` LONGTEXT NULL,
+  `contact_phone` VARCHAR(191) NULL,
+  `is_default` TINYINT(1) NULL DEFAULT 0,
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_warehouses_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `webhook_deliveries` (
+  `id` VARCHAR(128) NOT NULL,
+  `subscription_id` VARCHAR(128) NOT NULL,
+  `event_type` LONGTEXT NOT NULL,
+  `payload_json` JSON NOT NULL,
+  `status` VARCHAR(64) NULL DEFAULT 'pending',
+  `response_code` INT NULL,
+  `response_body` LONGTEXT NULL,
+  `attempts` INT NULL DEFAULT 0,
+  `max_attempts` INT NULL DEFAULT 5,
+  `last_error` LONGTEXT NULL,
+  `delivered_at` DATETIME NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_webhook_deliveries_status` (`status`, `attempts`),
+  CONSTRAINT `fk_webhook_deliveries_subscription_id_webhook_subscriptions` FOREIGN KEY (`subscription_id`) REFERENCES `webhook_subscriptions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `webhook_subscriptions` (
+  `id` VARCHAR(128) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `target_url` VARCHAR(2048) NOT NULL,
+  `secret` LONGTEXT NOT NULL,
+  `events_json` JSON NULL DEFAULT '["*"]',
+  `is_active` TINYINT(1) NULL DEFAULT 1,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `wishlists` (
+  `customer_id` VARCHAR(128) NOT NULL,
+  `product_id` VARCHAR(128) NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`customer_id`, `product_id`),
+  KEY `idx_wishlist_customer` (`customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- =============================================================================
+-- DATA INSERT STATEMENTS
+-- =============================================================================
+
+-- Table: blog_posts (1 rows)
+INSERT IGNORE INTO `blog_posts` (`id`, `title`, `slug`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('post-1', 'How to Choose Between Analog HD and IP Surveillance in Bangladesh', 'analog-hd-vs-ip-surveillance-bangladesh', '{"id":"post-1","title":"How to Choose Between Analog HD and IP Surveillance in Bangladesh","slug":"analog-hd-vs-ip-surveillance-bangladesh","author":"CamneX Technical Team","publishedAt":"2026-02-10","excerpt":"An objective engineering breakdown comparing cost, cable distance, image clarity, and long-term expandability.","content":"<p>When planning a surveillance setup in Dhaka, property owners frequently balance budget constraints against technical longevity. Analog HD (Turbo HD / HD-TVI) remains cost-effective for 2 to 8 camera residential layouts, whereas IP PoE solutions provide unmatched scalability and analytics for multi-story corporate facilities...</p>","featuredImage":"/images/products/hikvision-bullet.svg","tags":["CCTV","Hikvision","Installation Guide"],"readTime":"4 min read","isDemo":true}', 0, NULL, NULL, 1);
+
+-- Table: brands (13 rows)
+INSERT IGNORE INTO `brands` (`id`, `name`, `slug`, `logo`, `description`, `website`, `featured`, `data_json`, `is_archived`, `archived_at`) VALUES
+('b-hikvision', 'Hikvision', 'hikvision', '/images/brands/hikvision.svg', 'World-leading provider of security products and solutions.', 'https://www.hikvision.com', 1, '{"id":"b-hikvision","name":"Hikvision","slug":"hikvision","logo":"/images/brands/hikvision.svg","description":"World-leading provider of security products and solutions.","website":"https://www.hikvision.com","featured":true,"badgeText":"Authorized Support Partner","showBadge":true,"showInBrandStrip":true,"order":1}', 0, NULL),
+('b-dahua', 'Dahua Technology', 'dahua', '/images/brands/dahua.svg', 'Video-centric smart IoT solution and service provider.', 'https://www.dahuasecurity.com', 1, '{"id":"b-dahua","name":"Dahua Technology","slug":"dahua","logo":"/images/brands/dahua.svg","description":"Video-centric smart IoT solution and service provider.","website":"https://www.dahuasecurity.com","featured":true,"badgeText":"Authorized Support Partner","showBadge":true,"showInBrandStrip":true,"order":2}', 0, NULL),
+('b-zkteco', 'ZKTeco', 'zkteco', '/images/brands/zkteco.svg', 'Biometric verification and smart access control solutions.', 'https://www.zkteco.com', 1, '{"id":"b-zkteco","name":"ZKTeco","slug":"zkteco","logo":"/images/brands/zkteco.svg","description":"Biometric verification and smart access control solutions.","website":"https://www.zkteco.com","featured":true,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":3}', 0, NULL),
+('b-ruijie', 'Ruijie Reyee', 'ruijie-reyee', '/images/brands/ruijie.svg', 'Enterprise networking, cloud-managed switches and commercial Wi-Fi 6 solutions.', 'https://www.ruijienetworks.com', 1, '{"id":"b-ruijie","name":"Ruijie Reyee","slug":"ruijie-reyee","logo":"/images/brands/ruijie.svg","description":"Enterprise networking, cloud-managed switches and commercial Wi-Fi 6 solutions.","website":"https://www.ruijienetworks.com","featured":true,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":4}', 0, NULL),
+('b-wd', 'Western Digital', 'western-digital', '/images/brands/western-digital.svg', 'Surveillance-grade continuous write hard disk drives.', 'https://www.westerndigital.com', 0, '{"id":"b-wd","name":"Western Digital","slug":"western-digital","logo":"/images/brands/western-digital.svg","description":"Surveillance-grade continuous write hard disk drives.","website":"https://www.westerndigital.com","featured":false,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":5}', 0, NULL),
+('b-seagate', 'Seagate', 'seagate', '', 'SkyHawk surveillance storage solutions.', 'https://www.seagate.com', 0, '{"id":"b-seagate","name":"Seagate","slug":"seagate","logo":"","description":"SkyHawk surveillance storage solutions.","website":"https://www.seagate.com","featured":false,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":6}', 0, NULL),
+('b-tplink', 'TP-Link', 'tp-link', '', 'VIGI security and Omada enterprise networking solutions.', 'https://www.tp-link.com', 0, '{"id":"b-tplink","name":"TP-Link","slug":"tp-link","logo":"","description":"VIGI security and Omada enterprise networking solutions.","website":"https://www.tp-link.com","featured":false,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":7}', 0, NULL),
+('b-uniview', 'Uniview', 'uniview', '', 'Pioneer and leader of IP video surveillance technology.', 'https://www.uniview.com', 0, '{"id":"b-uniview","name":"Uniview","slug":"uniview","logo":"","description":"Pioneer and leader of IP video surveillance technology.","website":"https://www.uniview.com","featured":false,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":8}', 0, NULL),
+('b-cisco', 'Cisco', 'cisco', '', 'Commercial networking and enterprise IT infrastructure.', 'https://www.cisco.com', 0, '{"id":"b-cisco","name":"Cisco","slug":"cisco","logo":"","description":"Commercial networking and enterprise IT infrastructure.","website":"https://www.cisco.com","featured":false,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":9}', 0, NULL),
+('b-honeywell', 'Honeywell', 'honeywell', '', 'Commercial security, sensors and building automation.', 'https://www.honeywell.com', 0, '{"id":"b-honeywell","name":"Honeywell","slug":"honeywell","logo":"","description":"Commercial security, sensors and building automation.","website":"https://www.honeywell.com","featured":false,"badgeText":"","showBadge":false,"showInBrandStrip":true,"order":10}', 0, NULL),
+('brand-imou', 'Imou', 'imou', '/images/brands/dahua.svg', 'Smart IoT indoor and outdoor Wi-Fi security cameras by Dahua.', 'https://www.imou.com', 1, '{"id":"brand-imou","name":"Imou","slug":"imou","logo":"/images/brands/dahua.svg","description":"Smart IoT indoor and outdoor Wi-Fi security cameras by Dahua.","website":"https://www.imou.com","featured":true}', 0, NULL),
+('brand-ezviz', 'EZVIZ', 'ezviz', '', 'Smart home Wi-Fi security cameras, 360° pan-tilt outdoor cameras, and video doorbells.', 'https://www.ezviz.com', 0, '{"id":"brand-ezviz","name":"EZVIZ","slug":"ezviz","logo":"","description":"Smart home Wi-Fi security cameras, 360° pan-tilt outdoor cameras, and video doorbells.","website":"https://www.ezviz.com","featured":false,"showBadge":false,"badgeText":"","showInBrandStrip":false,"order":11}', 0, NULL),
+('b-dlink', 'D-Link', 'd-link', '', 'Structured network cabling, Cat6 UTP copper cable boxes, patch cords, and networking hardware.', 'https://www.dlink.com', 0, '{"id":"b-dlink","name":"D-Link","slug":"d-link","logo":"","description":"Structured network cabling, Cat6 UTP copper cable boxes, patch cords, and networking hardware.","website":"https://www.dlink.com","featured":false,"showBadge":false,"badgeText":"","showInBrandStrip":false,"order":12}', 0, NULL);
+
+-- Table: categories (11 rows)
+INSERT IGNORE INTO `categories` (`id`, `name`, `slug`, `description`, `image`, `parent_id`, `spec_template_id`, `display_order`, `status`, `data_json`, `is_archived`, `archived_at`) VALUES
+('cat-cctv', 'CCTV Cameras', 'cctv-cameras', 'High-definition bullet, dome and turret cameras for residential and commercial security.', '/images/products/hikvision-bullet.svg', NULL, 'tpl-cctv', 1, 'active', '{"id":"cat-cctv","name":"CCTV Cameras","slug":"cctv-cameras","description":"High-definition bullet, dome and turret cameras for residential and commercial security.","image":"/images/products/hikvision-bullet.svg","specTemplateId":"tpl-cctv","featured":true,"showOnHomepage":true,"displayOrder":1,"order":1}', 0, NULL),
+('cat-dvr', 'DVR', 'dvr', 'Turbo HD digital video recorders with H.265+ smart stream compression.', '/images/products/hikvision-dvr.svg', NULL, 'tpl-dvr', 2, 'active', '{"id":"cat-dvr","name":"DVR","slug":"dvr","description":"Turbo HD digital video recorders with H.265+ smart stream compression.","image":"/images/products/hikvision-dvr.svg","specTemplateId":"tpl-dvr","featured":true,"showOnHomepage":true,"displayOrder":2,"order":2}', 0, NULL),
+('cat-recorders', 'Recorders', 'recorders', 'Digital Video Recorders and Network Video Recorders with cloud app support.', '/images/products/hikvision-dvr.svg', NULL, 'tpl-dvr', 3, 'active', '{"id":"cat-recorders","name":"Recorders","slug":"recorders","description":"Digital Video Recorders and Network Video Recorders with cloud app support.","image":"/images/products/hikvision-dvr.svg","specTemplateId":"tpl-dvr","featured":true,"showOnHomepage":true,"displayOrder":3,"order":3}', 0, NULL),
+('cat-access', 'Access Control & Biometrics', 'biometrics-access-control', 'ZKTeco facial recognition terminals, fingerprint time-attendance, and door locks.', '/images/products/zkteco-biometric.svg', NULL, 'tpl-biometric', 4, 'active', '{"id":"cat-access","name":"Access Control & Biometrics","slug":"biometrics-access-control","description":"ZKTeco facial recognition terminals, fingerprint time-attendance, and door locks.","image":"/images/products/zkteco-biometric.svg","specTemplateId":"tpl-biometric","featured":true,"showOnHomepage":true,"displayOrder":4,"order":4}', 0, NULL),
+('cat-networking', 'Network Switches', 'network-switches', 'PoE surveillance switches and gigabit enterprise managed distribution switches.', '/images/products/ruijie-switch.svg', NULL, 'tpl-switch', 5, 'active', '{"id":"cat-networking","name":"Network Switches","slug":"network-switches","description":"PoE surveillance switches and gigabit enterprise managed distribution switches.","image":"/images/products/ruijie-switch.svg","specTemplateId":"tpl-switch","featured":true,"showOnHomepage":true,"displayOrder":5,"order":5}', 0, NULL),
+('cat-wifi', 'Wi-Fi / Smart Devices', 'wifi-smart-devices', 'Cameras, doorbells, lights and more you control from a phone app', '/images/hero/hikvision-bullet.png', NULL, 'tpl-wifi', 6, 'active', '{"id":"cat-wifi","name":"Wi-Fi / Smart Devices","slug":"wifi-smart-devices","description":"Cameras, doorbells, lights and more you control from a phone app","image":"/images/hero/hikvision-bullet.png","specTemplateId":"tpl-wifi","featured":true,"showOnHomepage":false,"displayOrder":6,"order":6,"showAsHomepageRow":true,"promoTile":{"enabled":true,"headline":"Smart Wi-Fi Series","subtext":"Control cameras, lights & locks from your phone","buttonText":"Explore Wi-Fi Series","link":"/category/wifi-smart-devices","bgStyle":"orange","image":"/images/hero/hikvision-bullet.png"},"subcategories":[{"id":"subcat-wifi-cameras","name":"Wi-Fi Cameras","slug":"wifi-cameras","order":1,"enabled":true},{"id":"subcat-video-doorbells","name":"Video Doorbells","slug":"video-doorbells","order":2,"enabled":true},{"id":"subcat-smart-lights","name":"Smart Lights","slug":"smart-lights","order":3,"enabled":true},{"id":"subcat-smart-plugs","name":"Smart Plugs & Switches","slug":"smart-plugs-switches","order":4,"enabled":true},{"id":"subcat-smart-locks","name":"Smart Locks","slug":"smart-locks","order":5,"enabled":true},{"id":"subcat-sensors-alarms","name":"Sensors & Alarms","slug":"sensors-alarms","order":6,"enabled":true}]}', 0, NULL),
+('cat-storage', 'Surveillance Storage', 'surveillance-storage', 'Western Digital Purple and Seagate SkyHawk continuous recording surveillance hard drives.', '/images/products/surveillance-hdd.svg', NULL, 'tpl-generic', 7, 'active', '{"id":"cat-storage","name":"Surveillance Storage","slug":"surveillance-storage","description":"Western Digital Purple and Seagate SkyHawk continuous recording surveillance hard drives.","image":"/images/products/surveillance-hdd.svg","specTemplateId":"tpl-generic","featured":true,"showOnHomepage":true,"isAccessoryCategory":true,"displayOrder":7,"order":7}', 0, NULL),
+('cat-cables', 'Cables & Accessories', 'cables-accessories', 'Cat6 pure copper cables, waterproof junction boxes, and video baluns.', '/images/products/hardware-accessory.svg', NULL, 'tpl-generic', 8, 'active', '{"id":"cat-cables","name":"Cables & Accessories","slug":"cables-accessories","description":"Cat6 pure copper cables, waterproof junction boxes, and video baluns.","image":"/images/products/hardware-accessory.svg","specTemplateId":"tpl-generic","featured":true,"showOnHomepage":true,"isAccessoryCategory":true,"displayOrder":8,"order":8}', 0, NULL),
+('cat-intercom', 'IP Video Intercoms', 'ip-video-intercoms', 'Touchscreen multi-apartment indoor stations and door entry intercoms.', '/images/products/hikvision-dome.svg', NULL, 'tpl-generic', 9, 'active', '{"id":"cat-intercom","name":"IP Video Intercoms","slug":"ip-video-intercoms","description":"Touchscreen multi-apartment indoor stations and door entry intercoms.","image":"/images/products/hikvision-dome.svg","specTemplateId":"tpl-generic","featured":true,"showOnHomepage":true,"displayOrder":9,"order":9}', 0, NULL),
+('cat-power', 'Power & Backup Units', 'power-backup-units', 'Centralized 12V DC CCTV power supplies, online UPS, and surge protectors.', '/images/products/hardware-accessory.svg', NULL, 'tpl-generic', 10, 'active', '{"id":"cat-power","name":"Power & Backup Units","slug":"power-backup-units","description":"Centralized 12V DC CCTV power supplies, online UPS, and surge protectors.","image":"/images/products/hardware-accessory.svg","specTemplateId":"tpl-generic","featured":true,"showOnHomepage":true,"isAccessoryCategory":true,"displayOrder":10,"order":10}', 0, NULL),
+('cat-access-points', 'Access Points & Wi-Fi', 'access-points-wifi', 'Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.', '/images/products/ruijie-wifi.svg', NULL, 'tpl-wifi', 11, 'active', '{"id":"cat-access-points","name":"Access Points & Wi-Fi","slug":"access-points-wifi","description":"Ceiling and outdoor enterprise Wi-Fi 6 access points with seamless roaming.","image":"/images/products/ruijie-wifi.svg","specTemplateId":"tpl-wifi","featured":true,"showOnHomepage":false,"displayOrder":11,"order":11,"showAsHomepageRow":false,"promoTile":{"enabled":true,"headline":"Enterprise Cloud Wi-Fi","subtext":"Seamless roaming & Gigabit speeds","buttonText":"View Access Points","link":"/category/access-points-wifi","bgStyle":"dark","image":"/images/products/ruijie-wifi.svg"}}', 0, NULL);
+
+-- Table: cms_pages (1 rows)
+INSERT IGNORE INTO `cms_pages` (`id`, `title`, `slug`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('page-1791974402020', 'Policy Page 1791974402019', 'policy-page-1791974402019', '{"title":"Policy Page 1791974402019","slug":"policy-page-1791974402019","content":"<p>Custom policy content</p>","id":"page-1791974402020","updatedAt":"2026-10-14T10:40:02.020Z","is_archived":false,"archived_at":null,"archived_by":null,"version":2,"name":"Policy Page 1791974402019 (Edited)"}', 0, NULL, NULL, 4);
+
+-- Table: faqs (3 rows)
+INSERT IGNORE INTO `faqs` (`id`, `question`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('faq-1', 'Are all Hikvision and ZKTeco products 100% genuine?', '{"id":"faq-1","question":"Are all Hikvision and ZKTeco products 100% genuine?","answer":"Yes. Every device supplied by CamneX Bangladesh carries an authentic factory serial number verifiable through official manufacturer partner verification channels, accompanied by warranty documentation.","category":"Hardware & Authenticity"}', 0, NULL, NULL, 1),
+('faq-2', 'Can I view surveillance streams on my smartphone outside Bangladesh?', '{"id":"faq-2","question":"Can I view surveillance streams on my smartphone outside Bangladesh?","answer":"Yes. We configure encrypted cloud P2P (Hik-Connect / DMSS) on your smartphones and laptops, allowing live streaming and playback review globally without static IP requirements.","category":"App & Remote Access"}', 0, NULL, NULL, 1),
+('faq-3', 'Can you visit my location in Dhaka before installation?', '{"id":"faq-3","question":"Can you visit my location in Dhaka before installation?","answer":"Yes. A technician can inspect your premises in Dhaka to assess cable routes and prepare a bill of materials.","category":"Installation & Survey"}', 0, NULL, NULL, 1);
+
+-- Table: glossary_terms (15 rows)
+INSERT IGNORE INTO `glossary_terms` (`id`, `term`, `slug`, `short_meaning`, `long_meaning`, `display_order`, `is_active`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('term-ip-camera', 'IP camera', 'ip-camera', 'Digital camera that connects to a computer network', 'Sends and receives video data over an Ethernet network cable without separate coaxial lines.', 1, 1, '{"id":"term-ip-camera","term":"IP camera","slug":"ip-camera","shortMeaning":"Digital camera that connects to a computer network","longMeaning":"Sends and receives video data over an Ethernet network cable without separate coaxial lines.","order":1}', 0, NULL, NULL, 1),
+('term-analogue-camera', 'Analogue camera', 'analogue-camera', 'Camera that sends video over coaxial cable', 'Standard surveillance camera connected directly to a DVR recorder using coaxial video cable.', 2, 1, '{"id":"term-analogue-camera","term":"Analogue camera","slug":"analogue-camera","shortMeaning":"Camera that sends video over coaxial cable","longMeaning":"Standard surveillance camera connected directly to a DVR recorder using coaxial video cable.","order":2}', 0, NULL, NULL, 1),
+('term-dvr', 'DVR', 'dvr', 'The box that records video from analogue cameras', 'Digital Video Recorder that connects to coaxial cameras and stores footage on hard drives.', 3, 1, '{"id":"term-dvr","term":"DVR","slug":"dvr","shortMeaning":"The box that records video from analogue cameras","longMeaning":"Digital Video Recorder that connects to coaxial cameras and stores footage on hard drives.","order":3}', 0, NULL, NULL, 1),
+('term-nvr', 'NVR', 'nvr', 'The box that records video from network IP cameras', 'Network Video Recorder that connects to IP cameras over network switches or built-in PoE ports.', 4, 1, '{"id":"term-nvr","term":"NVR","slug":"nvr","shortMeaning":"The box that records video from network IP cameras","longMeaning":"Network Video Recorder that connects to IP cameras over network switches or built-in PoE ports.","order":4}', 0, NULL, NULL, 1),
+('term-poe', 'PoE', 'poe', 'Power sent through the network cable', 'Power over Ethernet technology that sends both electrical power and data over one network cable.', 5, 1, '{"id":"term-poe","term":"PoE","slug":"poe","shortMeaning":"Power sent through the network cable","longMeaning":"Power over Ethernet technology that sends both electrical power and data over one network cable.","order":5}', 0, NULL, NULL, 1),
+('term-ir', 'IR (infrared)', 'ir-infrared', 'Black-and-white picture in the dark', 'Uses invisible infrared light LEDs to illuminate the scene in black and white at night.', 6, 1, '{"id":"term-ir","term":"IR (infrared)","slug":"ir-infrared","shortMeaning":"Black-and-white picture in the dark","longMeaning":"Uses invisible infrared light LEDs to illuminate the scene in black and white at night.","order":6}', 0, NULL, NULL, 1),
+('term-ptz', 'PTZ', 'ptz', 'A camera you can turn and zoom by remote', 'Pan-Tilt-Zoom camera that can rotate horizontally, tilt vertically, and zoom optically via app or joystick.', 7, 1, '{"id":"term-ptz","term":"PTZ","slug":"ptz","shortMeaning":"A camera you can turn and zoom by remote","longMeaning":"Pan-Tilt-Zoom camera that can rotate horizontally, tilt vertically, and zoom optically via app or joystick.","order":7}', 0, NULL, NULL, 1),
+('term-hybrid-light', 'Hybrid Light', 'hybrid-light', 'Infrared in the dark, plus a white light that gives a color picture when motion is detected', 'Stays discreet with infrared night vision, then switches to a soft white light for color video when a person or vehicle is detected.', 8, 1, '{"id":"term-hybrid-light","term":"Hybrid Light","slug":"hybrid-light","shortMeaning":"Infrared in the dark, plus a white light that gives a color picture when motion is detected","longMeaning":"Stays discreet with infrared night vision, then switches to a soft white light for color video when a person or vehicle is detected.","order":8}', 0, NULL, NULL, 1),
+('term-full-color', 'Full-Color', 'full-color', 'Color picture at night', 'Uses large lens apertures and sensitive sensors to deliver vibrant color video even in very dark conditions.', 9, 1, '{"id":"term-full-color","term":"Full-Color","slug":"full-color","shortMeaning":"Color picture at night","longMeaning":"Uses large lens apertures and sensitive sensors to deliver vibrant color video even in very dark conditions.","order":9}', 0, NULL, NULL, 1),
+('term-wifi-camera', 'Wi-Fi camera', 'wifi-camera', 'Camera that connects wirelessly to your router', 'Standalone security camera that streams and records video directly through your home or office Wi-Fi network.', 10, 1, '{"id":"term-wifi-camera","term":"Wi-Fi camera","slug":"wifi-camera","shortMeaning":"Camera that connects wirelessly to your router","longMeaning":"Standalone security camera that streams and records video directly through your home or office Wi-Fi network.","order":10}', 0, NULL, NULL, 1),
+('term-microsd', 'MicroSD', 'microsd', 'Small memory card inside the camera for recordings', 'Local onboard flash memory storage card inserted into the camera so it records without an NVR.', 11, 1, '{"id":"term-microsd","term":"MicroSD","slug":"microsd","shortMeaning":"Small memory card inside the camera for recordings","longMeaning":"Local onboard flash memory storage card inserted into the camera so it records without an NVR.","order":11}', 0, NULL, NULL, 1),
+('term-bullet', 'Bullet', 'bullet', 'Cylinder-shaped camera with visible pointing direction', 'Elongated cylindrical camera body with sunshield, easy to aim and mount on walls or poles.', 12, 1, '{"id":"term-bullet","term":"Bullet","slug":"bullet","shortMeaning":"Cylinder-shaped camera with visible pointing direction","longMeaning":"Elongated cylindrical camera body with sunshield, easy to aim and mount on walls or poles.","order":12}', 0, NULL, NULL, 1),
+('term-dome', 'Dome', 'dome', 'Circular dome-shaped camera mounted flat to ceilings or walls', 'Compact circular dome camera with transparent casing, ideal for clean indoor ceilings and discreet monitoring.', 13, 1, '{"id":"term-dome","term":"Dome","slug":"dome","shortMeaning":"Circular dome-shaped camera mounted flat to ceilings or walls","longMeaning":"Compact circular dome camera with transparent casing, ideal for clean indoor ceilings and discreet monitoring.","order":13}', 0, NULL, NULL, 1),
+('term-turret', 'Turret', 'turret', 'Ball-and-socket camera with no glass dome reflection', 'Eyeball design that prevents infrared light glare and dust buildup commonly seen on glass domes.', 14, 1, '{"id":"term-turret","term":"Turret","slug":"turret","shortMeaning":"Ball-and-socket camera with no glass dome reflection","longMeaning":"Eyeball design that prevents infrared light glare and dust buildup commonly seen on glass domes.","order":14}', 0, NULL, NULL, 1),
+('term-mp', 'MP (resolution)', 'mp-resolution', 'Millions of pixels measuring picture sharpness', 'Megapixels indicate image detail: 2MP is 1080p Full HD, 4MP is 2K Quad HD, and 8MP is 4K Ultra HD.', 15, 1, '{"id":"term-mp","term":"MP (resolution)","slug":"mp-resolution","shortMeaning":"Millions of pixels measuring picture sharpness","longMeaning":"Megapixels indicate image detail: 2MP is 1080p Full HD, 4MP is 2K Quad HD, and 8MP is 4K Ultra HD.","order":15}', 0, NULL, NULL, 1);
+
+-- Table: hero_slides (3 rows)
+INSERT IGNORE INTO `hero_slides` (`id`, `title`, `enabled`, `display_order`, `start_date`, `end_date`, `source_mode`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('slide-1', 'Hikvision 4K Smart Hybrid Bullet (Mode 1 - Manual Demo)', 1, 1, NULL, NULL, 'manual', '{"id":"slide-1","title":"Hikvision 4K Smart Hybrid Bullet (Mode 1 - Manual Demo)","enabled":true,"order":1,"sourceMode":"manual","badge":"New","headline":"Hikvision Smart Hybrid Light 4K Bullet","description":"Enterprise 4K Ultra HD surveillance featuring dual smart lighting, AcuSense AI vehicle classification, and IP67 weather-sealed all-metal housing.","image":"/images/hero/hikvision-bullet.png","priceText":"৳4,850","buttonText":"View Product","buttonLink":"/product/prod-hik-irpf-2mp","secondaryText":"Request quotation","secondaryLink":"/quote","highlights":[{"icon":"camera","value":"4K Ultra HD","label":"Resolution"},{"icon":"eye","value":"40m Dual-Light","label":"Smart Hybrid IR"},{"icon":"shield","value":"IP67 Rating","label":"Weatherproof"},{"icon":"cpu","value":"AcuSense AI","label":"Human & Vehicle"}]}', 0, NULL, NULL, 1),
+('slide-2', 'Ruijie Wi-Fi 6 AP (Mode 2 - Live Product Demo)', 1, 2, NULL, NULL, 'product', '{"id":"slide-2","title":"Ruijie Wi-Fi 6 AP (Mode 2 - Live Product Demo)","enabled":true,"order":2,"sourceMode":"product","productId":"prod-ruijie-rap2200e","badge":"Featured","image":"/images/hero/ruijie-wifi6.png","buttonText":"View Product","buttonLink":"/product/prod-rui-rap2200e","secondaryText":"Add to cart","secondaryLink":"/cart"}', 0, NULL, NULL, 1),
+('slide-3', 'Enterprise Hardware Collection (Mode 3 - Auto Collection Demo)', 1, 3, NULL, NULL, 'collection', '{"id":"slide-3","title":"Enterprise Hardware Collection (Mode 3 - Auto Collection Demo)","enabled":true,"order":3,"sourceMode":"collection","collectionRule":"featured","collectionCount":3,"image":"/images/hero/zkteco-biometric.png"}', 0, NULL, NULL, 1);
+
+-- Table: homepage_sections (9 rows)
+INSERT IGNORE INTO `homepage_sections` (`id`, `section_type`, `title`, `enabled`, `display_order`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('sec-hero', 'hero', 'Enterprise Hero Banner', 1, 1, '{"id":"sec-hero","type":"hero","title":"Enterprise Hero Banner","enabled":true,"order":1}', 0, NULL, NULL, 1),
+('sec-cred', 'credentials', 'Official Partner Credentials', 1, 2, '{"id":"sec-cred","type":"credentials","title":"Official Partner Credentials","enabled":true,"order":2}', 0, NULL, NULL, 1),
+('sec-cats', 'categories', 'Shop by Engineering Category', 1, 3, '{"id":"sec-cats","type":"categories","title":"Shop by Engineering Category","enabled":true,"order":3}', 0, NULL, NULL, 1),
+('sec-feat', 'featured_products', 'Featured Surveillance & IT Hardware', 1, 4, '{"id":"sec-feat","type":"featured_products","title":"Featured Surveillance & IT Hardware","enabled":true,"order":4}', 0, NULL, NULL, 1),
+('sec-pkgs', 'packages', 'ready-made CCTV Security Packages', 1, 5, '{"id":"sec-pkgs","type":"packages","title":"ready-made CCTV Security Packages","enabled":true,"order":5}', 0, NULL, NULL, 1),
+('sec-wifi', 'wifi_series', 'Wi-Fi Series', 1, 6, '{"id":"sec-wifi","type":"wifi_series","title":"Wi-Fi Series","subtitle":"Cameras, doorbells, lights and more you control from a phone app","enabled":true,"order":6,"itemLimit":8,"eyebrow":"Wi-Fi products","showChipRow":true}', 0, NULL, NULL, 1),
+('sec-brands', 'brands', 'Authorized Manufacturer Brands', 1, 7, '{"id":"sec-brands","type":"brands","title":"Authorized Manufacturer Brands","enabled":true,"order":7}', 0, NULL, NULL, 1),
+('sec-sol', 'solutions', 'Engineering & setup Solutions', 1, 8, '{"id":"sec-sol","type":"solutions","title":"Engineering & setup Solutions","enabled":true,"order":8}', 0, NULL, NULL, 1),
+('sec-cta', 'quote_cta', 'Need Help Choosing the Right Security Solution?', 1, 9, '{"id":"sec-cta","type":"quote_cta","title":"Need Help Choosing the Right Security Solution?","enabled":true,"order":9,"ctaData":{"eyebrow":"Ready to get started","heading":"Need Help Choosing the Right Security Solution?","subtext":"Our specialists are ready to help you choose the perfect CCTV, networking, access control or smart security solution for your home or business.","cards":[{"id":"cta-wa","type":"whatsapp","title":"WhatsApp Us","description":"Chat directly with our Dhaka engineering support desk","actionUrl":"https://wa.me/8801540535150?text=Hello%20CamneX%20Bangladesh,%20I%20would%20like%20to%20discuss%20a%20security%20solution"},{"id":"cta-call","type":"call","title":"Call Now","phoneDisplay":"+880 1540-535150","description":"Speak directly with a qualified security consultant","actionUrl":"tel:+8801540535150"},{"id":"cta-survey","type":"survey","title":"Schedule Site Visit","description":"Request an on-site premise survey and cable audit","actionUrl":"/quote"}],"reassurances":[]}}', 0, NULL, NULL, 1);
+
+-- Table: package_series (4 rows)
+INSERT IGNORE INTO `package_series` (`id`, `name`, `slug`, `enabled`, `display_order`, `data_json`) VALUES
+('series-ir', 'Night Vision (IR)', 'night-vision-ir', 1, 1, '{"id":"series-ir","name":"Night Vision (IR)","slug":"night-vision-ir","description":"Infrared surveillance using IRPF series cameras with smart EXIR night vision up to 20m. No artificial white lighting.","order":1,"enabled":true,"illustration":"night-vision","ruleSet":{"hasStorageRule":true,"storageMap":{"2":"500GB","4":"1TB","8":"2TB","16":"4TB"},"hasCableRule":true,"cableMetersPerCam":20,"hasRecorderRule":true,"recorderChannels":4,"allowPtz":false,"allowPoESwitch":false}}'),
+('series-hybrid', 'Hybrid Light', 'hybrid-light', 1, 2, '{"id":"series-hybrid","name":"Hybrid Light","slug":"hybrid-light","description":"Smart dual-light surveillance that operates in discreet IR mode until human or vehicle motion triggers warm supplemental light.","order":2,"enabled":true,"illustration":"hybrid","ruleSet":{"hasStorageRule":true,"storageMap":{"4":"1TB","8":"2TB","16":"4TB"},"hasCableRule":true,"cableMetersPerCam":20,"hasRecorderRule":true,"recorderChannels":4,"allowPtz":false,"allowPoESwitch":false}}'),
+('series-color', 'Full-Color', 'full-color', 1, 3, '{"id":"series-color","name":"Full-Color","slug":"full-color","description":"Continuous full-color video capture with F1.0 super-aperture lenses and warm illumination in zero ambient light.","order":3,"enabled":true,"illustration":"full-color","ruleSet":{"hasStorageRule":true,"storageMap":{"4":"1TB","8":"2TB","16":"4TB"},"hasCableRule":true,"cableMetersPerCam":20,"hasRecorderRule":true,"recorderChannels":4,"allowPtz":false,"allowPoESwitch":false}}'),
+('series-enterprise', 'Enterprise & PTZ', 'enterprise-ptz', 1, 4, '{"id":"series-enterprise","name":"Enterprise & PTZ","slug":"enterprise-ptz","description":"High-density IP surveillance systems with 360° PTZ tracking cameras, Gigabit PoE switches, and rackmount NVR arrays.","order":4,"enabled":true,"illustration":"ptz-enterprise","ruleSet":{"hasStorageRule":true,"storageMap":{"16":"6TB","32":"12TB","64":"24TB"},"hasCableRule":true,"cableMetersPerCam":30,"hasRecorderRule":true,"recorderChannels":32,"allowPtz":true,"allowPoESwitch":true}}');
+
+-- Table: package_system_types (3 rows)
+INSERT IGNORE INTO `package_system_types` (`id`, `name`, `slug`, `description`, `icon`, `display_order`, `enabled`, `data_json`) VALUES
+('systype-ip', 'IP / Network cameras (NVR, PoE)', 'ip', 'Network IP cameras with Power over Ethernet (PoE) delivery through NVR or Gigabit switch.', 'Network', 1, 1, '{"id":"systype-ip","name":"IP / Network cameras (NVR, PoE)","slug":"ip","shortLabel":"IP","description":"Network IP cameras with Power over Ethernet (PoE) delivery through NVR or Gigabit switch.","icon":"Network","order":1,"enabled":true,"ruleSet":{"recorderType":"nvr","cableType":"cat6_utp","cableMetersPerCam":30,"powerSupplyType":"poe_switch","storageType":"surveillance_hdd","storageMap":{"4":"1TB","8":"2TB","16":"6TB","32":"12TB","64":"24TB"},"hasBaluns":false,"descriptionSummary":"NVR, PoE through NVR or switch, Cat6 network cable per camera"}}'),
+('systype-analogue', 'Analogue / HD coaxial cameras (DVR)', 'analogue', 'Coaxial video cable with centralized 12V DC power supply and Turbo HD digital video recorder (DVR).', 'Radio', 2, 1, '{"id":"systype-analogue","name":"Analogue / HD coaxial cameras (DVR)","slug":"analogue","shortLabel":"Analogue","description":"Coaxial video cable with centralized 12V DC power supply and Turbo HD digital video recorder (DVR).","icon":"Radio","order":2,"enabled":true,"ruleSet":{"recorderType":"dvr","cableType":"coaxial_dc","cableMetersPerCam":20,"powerSupplyType":"centralized_12v","storageType":"surveillance_hdd","storageMap":{"2":"500GB","4":"1TB","8":"2TB","16":"4TB"},"hasBaluns":true,"descriptionSummary":"DVR, video and power cable per camera, centralized 12V power supply"}}'),
+('systype-wireless', 'Wireless / Wi-Fi cameras', 'wireless', 'Standalone smart Wi-Fi cameras with mobile app monitoring, local storage, or wireless NVR kit.', 'Wifi', 3, 1, '{"id":"systype-wireless","name":"Wireless / Wi-Fi cameras","slug":"wireless","shortLabel":"Wi-Fi","description":"Standalone smart Wi-Fi cameras with mobile app monitoring, local storage, or wireless NVR kit.","icon":"Wifi","order":3,"enabled":true,"ruleSet":{"recorderType":"none","cableType":"none","cableMetersPerCam":0,"powerSupplyType":"individual_adapters","storageType":"microsd_or_nvr_hdd","storageMap":{"2":"128GB MicroSD","4":"256GB MicroSD / 1TB HDD"},"hasBaluns":false,"descriptionSummary":"No recorder, no cable; cameras, microSD storage or a wireless NVR kit, power adapters"}}');
+
+-- Table: packages (13 rows)
+INSERT IGNORE INTO `packages` (`id`, `name`, `slug`, `description`, `camera_count`, `base_price`, `is_active`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('pkg-ir-2', '2-Camera Night Vision CCTV Package', '2-camera-night-vision-package', 'Complete 2-camera 1080p surveillance with infrared night vision up to 20m, 4-channel DVR, and pre-terminated video cabling.', 2, 14600, 1, '{"id":"pkg-ir-2","name":"2-Camera Night Vision CCTV Package","slug":"2-camera-night-vision-package","seriesId":"series-ir","seriesName":"Night Vision (IR)","technologyLabel":"Hikvision EXIR IR","badge":"Affordable","description":"Complete 2-camera 1080p surveillance with infrared night vision up to 20m, 4-channel DVR, and pre-terminated video cabling.","cameraCount":2,"cameraCountsSupported":[2],"isNightVisionIrOnly":true,"basePrice":14600,"isActive":true,"isFeatured":false,"isDemo":true,"inclusions":["2x Hikvision 2MP IRPF Fixed Bullet Cameras","1x Hikvision 4-Channel Turbo HD DVR","1x Western Digital Purple 500GB HDD","40m High-Shield Coaxial Video Cable","1x 12V 5A Centralized Regulated Power Supply","Complete BNC and DC Video Connectors"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-ir","nightViewName":"Night Vision (IR)","components":[{"name":"Hikvision 2MP IRPF Fixed Bullet Camera","sku":"prod-hik-irpf-2mp","qty":2,"unitPrice":2400,"lineTotal":4800},{"name":"Hikvision 4-Channel Turbo HD DVR","sku":"prod-hik-dvr-4ch","qty":1,"unitPrice":4500,"lineTotal":4500},{"name":"Western Digital Purple 500GB Surveillance HDD","sku":"prod-wd-purple-500gb","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":40,"unitPrice":30,"lineTotal":1200},{"name":"12V 5A Centralized Regulated Power Supply","sku":"acc-power","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":2,"unitPrice":250,"lineTotal":500}]}', 0, NULL, NULL, 1),
+('pkg-ir-4', '4-Camera Night Vision CCTV Package', '4-camera-night-vision-package', 'Complete 4-camera 1080p surveillance with smart EXIR infrared, 4-channel DVR, 1TB storage, and power distribution.', 4, 24100, 1, '{"id":"pkg-ir-4","name":"4-Camera Night Vision CCTV Package","slug":"4-camera-night-vision-package","seriesId":"series-ir","seriesName":"Night Vision (IR)","technologyLabel":"Hikvision EXIR IR","badge":"Most Popular","description":"Complete 4-camera 1080p surveillance with smart EXIR infrared, 4-channel DVR, 1TB storage, and power distribution.","cameraCount":4,"cameraCountsSupported":[4],"isNightVisionIrOnly":true,"basePrice":24100,"isActive":true,"isFeatured":true,"featuredOnHomepage":true,"isDemo":true,"inclusions":["4x Hikvision 2MP IRPF Cameras","1x Hikvision 4-Channel Turbo HD DVR","1x Western Digital Purple 1TB Surveillance HDD","80m High-Shield Coaxial Video Cable","1x 12V 5A Centralized Regulated Power Supply","Complete BNC and DC Connectors"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-ir","nightViewName":"Night Vision (IR)","components":[{"name":"Hikvision 2MP IRPF Fixed Bullet Camera","sku":"prod-hik-irpf-2mp","qty":4,"unitPrice":2400,"lineTotal":9600},{"name":"Hikvision 4-Channel Turbo HD DVR","sku":"prod-hik-dvr-4ch","qty":1,"unitPrice":4500,"lineTotal":4500},{"name":"Western Digital Purple 1TB Surveillance HDD","sku":"prod-wd-purple-1tb","qty":1,"unitPrice":4800,"lineTotal":4800},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":80,"unitPrice":30,"lineTotal":2400},{"name":"12V 5A Centralized Regulated Power Supply","sku":"acc-power","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":4,"unitPrice":250,"lineTotal":1000}]}', 0, NULL, NULL, 1),
+('pkg-ir-8', '8-Camera Night Vision CCTV Package', '8-camera-night-vision-package', '8-channel infrared security system covering exterior perimeter and interior hallways with 2TB storage.', 8, 41500, 1, '{"id":"pkg-ir-8","name":"8-Camera Night Vision CCTV Package","slug":"8-camera-night-vision-package","seriesId":"series-ir","seriesName":"Night Vision (IR)","technologyLabel":"Hikvision EXIR IR","description":"8-channel infrared security system covering exterior perimeter and interior hallways with 2TB storage.","cameraCount":8,"cameraCountsSupported":[8],"isNightVisionIrOnly":true,"basePrice":41500,"isActive":true,"isFeatured":true,"isDemo":true,"inclusions":["8x Hikvision 2MP IRPF Cameras","1x Hikvision 8-Channel Turbo HD DVR","1x Western Digital Purple 2TB Surveillance HDD","160m High-Shield Video Cable","1x 12V 10A Heavy-Duty Power Supply","BNC & DC Power Connectors"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-ir","nightViewName":"Night Vision (IR)","components":[{"name":"Hikvision 2MP IRPF Fixed Bullet Camera","sku":"prod-hik-irpf-2mp","qty":8,"unitPrice":2400,"lineTotal":19200},{"name":"Hikvision 8-Channel Turbo HD DVR","sku":"prod-hik-dvr-8ch","qty":1,"unitPrice":6800,"lineTotal":6800},{"name":"Western Digital Purple 2TB Surveillance HDD","sku":"prod-wd-purple-2tb","qty":1,"unitPrice":6900,"lineTotal":6900},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":160,"unitPrice":30,"lineTotal":4800},{"name":"12V 10A Heavy-Duty Power Supply","sku":"acc-power","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":8,"unitPrice":250,"lineTotal":2000}]}', 0, NULL, NULL, 1),
+('pkg-ir-16', '16-Camera Night Vision CCTV Package', '16-camera-night-vision-package', 'Comprehensive 16-channel infrared surveillance system for retail stores and multi-floor commercial facilities.', 16, 78900, 1, '{"id":"pkg-ir-16","name":"16-Camera Night Vision CCTV Package","slug":"16-camera-night-vision-package","seriesId":"series-ir","seriesName":"Night Vision (IR)","technologyLabel":"Hikvision EXIR IR","description":"Comprehensive 16-channel infrared surveillance system for retail stores and multi-floor commercial facilities.","cameraCount":16,"cameraCountsSupported":[16],"isNightVisionIrOnly":true,"basePrice":78900,"isActive":true,"isFeatured":false,"isDemo":true,"inclusions":["16x Hikvision 2MP IRPF Cameras","1x Hikvision 16-Channel DVR Recorder","1x Western Digital Purple 4TB Surveillance HDD","320m High-Shield Video Cable","1x 12V 20A Industrial Power Supply","Connectors & Distribution Box"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-ir","nightViewName":"Night Vision (IR)","components":[{"name":"Hikvision 2MP IRPF Fixed Bullet Camera","sku":"prod-hik-irpf-2mp","qty":16,"unitPrice":2400,"lineTotal":38400},{"name":"Hikvision 16-Channel Turbo HD DVR","sku":"prod-hik-dvr-16ch","qty":1,"unitPrice":12500,"lineTotal":12500},{"name":"Seagate SkyHawk 4TB Surveillance HDD","sku":"prod-st-skyhawk-4tb","qty":1,"unitPrice":11200,"lineTotal":11200},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":320,"unitPrice":30,"lineTotal":9600},{"name":"12V 20A Industrial Power Supply","sku":"acc-power-20a","qty":1,"unitPrice":3200,"lineTotal":3200},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":16,"unitPrice":250,"lineTotal":4000}]}', 0, NULL, NULL, 1),
+('pkg-hybrid-4', '4-Camera Smart Hybrid Light CCTV Package', '4-camera-hybrid-light-package', 'Intelligent dual-light security cameras that operate in infrared mode and switch to bright illumination upon motion.', 4, 27300, 1, '{"id":"pkg-hybrid-4","name":"4-Camera Smart Hybrid Light CCTV Package","slug":"4-camera-hybrid-light-package","seriesId":"series-hybrid","seriesName":"Hybrid Light","technologyLabel":"Smart Hybrid Light","description":"Intelligent dual-light security cameras that operate in infrared mode and switch to bright illumination upon motion.","cameraCount":4,"cameraCountsSupported":[4],"basePrice":27300,"isActive":true,"isFeatured":true,"isDemo":true,"inclusions":["4x 2MP Smart Hybrid Light Cameras","1x 4-Channel AcuSense DVR Recorder","1x Western Digital Purple 1TB HDD","80m Video Cable with Connectors","1x 12V 5A Central Power Supply","Mobile App P2P Configuration"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-hybrid","nightViewName":"Hybrid Light","components":[{"name":"Dahua 2MP HDCVI Smart Hybrid Light Camera","sku":"prod-dahua-2mp-bullet","qty":4,"unitPrice":3200,"lineTotal":12800},{"name":"Hikvision 4-Channel Turbo HD DVR","sku":"prod-hik-dvr-4ch","qty":1,"unitPrice":4500,"lineTotal":4500},{"name":"Western Digital Purple 1TB Surveillance HDD","sku":"prod-wd-purple-1tb","qty":1,"unitPrice":4800,"lineTotal":4800},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":80,"unitPrice":30,"lineTotal":2400},{"name":"12V 5A Centralized Regulated Power Supply","sku":"acc-power","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":4,"unitPrice":250,"lineTotal":1000}]}', 0, NULL, NULL, 1),
+('pkg-hybrid-8', '8-Camera Smart Hybrid Light CCTV Package', '8-camera-hybrid-light-package', '8-channel smart dual-light surveillance system with AcuSense motion classification and color deterrence.', 8, 47900, 1, '{"id":"pkg-hybrid-8","name":"8-Camera Smart Hybrid Light CCTV Package","slug":"8-camera-hybrid-light-package","seriesId":"series-hybrid","seriesName":"Hybrid Light","technologyLabel":"Smart Hybrid Light","description":"8-channel smart dual-light surveillance system with AcuSense motion classification and color deterrence.","cameraCount":8,"cameraCountsSupported":[8],"basePrice":47900,"isActive":true,"isFeatured":false,"isDemo":true,"inclusions":["8x 2MP Smart Hybrid Light Cameras","1x 8-Channel AcuSense DVR Recorder","1x Western Digital Purple 2TB HDD","160m Video Cable with Connectors","1x 12V 10A Central Power Supply","Full Site Configuration Setup"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-hybrid","nightViewName":"Hybrid Light","components":[{"name":"Dahua 2MP HDCVI Smart Hybrid Light Camera","sku":"prod-dahua-2mp-bullet","qty":8,"unitPrice":3200,"lineTotal":25600},{"name":"Hikvision 8-Channel Turbo HD DVR","sku":"prod-hik-dvr-8ch","qty":1,"unitPrice":6800,"lineTotal":6800},{"name":"Western Digital Purple 2TB Surveillance HDD","sku":"prod-wd-purple-2tb","qty":1,"unitPrice":6900,"lineTotal":6900},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":160,"unitPrice":30,"lineTotal":4800},{"name":"12V 10A Central Power Supply","sku":"acc-power","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":8,"unitPrice":250,"lineTotal":2000}]}', 0, NULL, NULL, 1),
+('pkg-color-4', '4-Camera Full-Color CCTV Package', '4-camera-color-ready-made-package', 'ColorVu technology delivers round-the-clock vivid color imaging even in pitch darkness with F1.0 super-apertures.', 4, 29700, 1, '{"id":"pkg-color-4","name":"4-Camera Full-Color CCTV Package","slug":"4-camera-color-ready-made-package","seriesId":"series-color","seriesName":"Full-Color","technologyLabel":"Hikvision ColorVu","description":"ColorVu technology delivers round-the-clock vivid color imaging even in pitch darkness with F1.0 super-apertures.","cameraCount":4,"cameraCountsSupported":[4],"basePrice":29700,"isActive":true,"isFeatured":true,"isDemo":true,"inclusions":["4x Hikvision 2MP ColorVu Cameras","1x 4-Channel AcuSense DVR","1x Western Digital Purple 1TB HDD","80m High-Shield Coaxial Cable","1x 12V 5A Centralized Power Supply","BNC & DC Power Connectors"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-color","nightViewName":"Full-Color","components":[{"name":"Hikvision 2MP ColorVu Audio Bullet Camera","sku":"prod-hik-color-2mp","qty":4,"unitPrice":3800,"lineTotal":15200},{"name":"Hikvision 4-Channel Turbo HD DVR","sku":"prod-hik-dvr-4ch","qty":1,"unitPrice":4500,"lineTotal":4500},{"name":"Western Digital Purple 1TB Surveillance HDD","sku":"prod-wd-purple-1tb","qty":1,"unitPrice":4800,"lineTotal":4800},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":80,"unitPrice":30,"lineTotal":2400},{"name":"12V 5A Centralized Regulated Power Supply","sku":"acc-power","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":4,"unitPrice":250,"lineTotal":1000}]}', 0, NULL, NULL, 1),
+('pkg-color-8', '8-Camera Full-Color CCTV Package', '8-camera-color-ready-made-package', 'Comprehensive 8-camera ColorVu setup providing clear daytime-like color surveillance all night long.', 8, 52700, 1, '{"id":"pkg-color-8","name":"8-Camera Full-Color CCTV Package","slug":"8-camera-color-ready-made-package","seriesId":"series-color","seriesName":"Full-Color","technologyLabel":"Hikvision ColorVu","badge":"Best Value","description":"Comprehensive 8-camera ColorVu setup providing clear daytime-like color surveillance all night long.","cameraCount":8,"cameraCountsSupported":[8],"basePrice":52700,"isActive":true,"isFeatured":false,"isDemo":true,"inclusions":["8x Hikvision 2MP ColorVu Cameras","1x 8-Channel AcuSense DVR","1x Western Digital Purple 2TB HDD","160m Video Cable with Connectors","1x 12V 10A Central Power Supply","Mounting Brackets & Setup"],"systemTypeId":"systype-analogue","systemTypeSlug":"analogue","systemTypeName":"Analogue / HD coaxial cameras (DVR)","nightViewId":"series-color","nightViewName":"Full-Color","components":[{"name":"Hikvision 2MP ColorVu Audio Bullet Camera","sku":"prod-hik-color-2mp","qty":8,"unitPrice":3800,"lineTotal":30400},{"name":"Hikvision 8-Channel Turbo HD DVR","sku":"prod-hik-dvr-8ch","qty":1,"unitPrice":6800,"lineTotal":6800},{"name":"Western Digital Purple 2TB Surveillance HDD","sku":"prod-wd-purple-2tb","qty":1,"unitPrice":6900,"lineTotal":6900},{"name":"High-Shield Coaxial Video Cable (meters)","sku":"cable-coaxial","qty":160,"unitPrice":30,"lineTotal":4800},{"name":"12V 10A Central Power Supply","sku":"acc-power","qty":1,"unitPrice":1800,"lineTotal":1800},{"name":"HD Video Baluns & DC Connectors","sku":"acc-balun","qty":8,"unitPrice":250,"lineTotal":2000}]}', 0, NULL, NULL, 1),
+('pkg-wifi-2', '2-Camera Wireless Smart Security Package', '2-camera-wireless-package', 'Clean Wi-Fi security system with two-way voice communication, cloud/microSD local storage, and instant mobile alerts.', 2, 11500, 1, '{"id":"pkg-wifi-2","name":"2-Camera Wireless Smart Security Package","slug":"2-camera-wireless-package","seriesId":"series-ir","seriesName":"Night Vision (IR)","technologyLabel":"Dual-Band Wi-Fi","description":"Clean Wi-Fi security system with two-way voice communication, cloud/microSD local storage, and instant mobile alerts.","cameraCount":2,"cameraCountsSupported":[2],"basePrice":11500,"isActive":true,"isFeatured":true,"featuredOnHomepage":true,"isDemo":true,"inclusions":["2x 3MP Wireless Smart Cameras","2x 128GB High-Endurance MicroSD Cards","2x 12V 2A Regulated Power Adapters","Mobile Phone App Sync & Setup"],"systemTypeId":"systype-wireless","systemTypeSlug":"wireless","systemTypeName":"Wireless / Wi-Fi cameras","nightViewId":"series-ir","nightViewName":"Night Vision (IR)","components":[{"name":"EZVIZ C6N 3MP Pan & Tilt Smart Wi-Fi Camera","sku":"prod-wifi-c6n","qty":2,"unitPrice":4200,"lineTotal":8400},{"name":"High-Endurance 128GB MicroSD Card","sku":"acc-microsd-128gb","qty":2,"unitPrice":1200,"lineTotal":2400},{"name":"12V 2A Regulated DC Power Adapter","sku":"acc-power-adapter","qty":2,"unitPrice":350,"lineTotal":700}]}', 0, NULL, NULL, 1),
+('pkg-wifi-4', '4-Camera Wireless Smart Security Kit', '4-camera-wireless-smart-kit', '4-camera wireless surveillance kit featuring dedicated wireless receiver with pre-installed 1TB storage.', 4, 39050, 1, '{"id":"pkg-wifi-4","name":"4-Camera Wireless Smart Security Kit","slug":"4-camera-wireless-smart-kit","seriesId":"series-ir","seriesName":"Night Vision (IR)","technologyLabel":"Wi-Fi 6 Wireless Kit","description":"4-camera wireless surveillance kit featuring dedicated wireless receiver with pre-installed 1TB storage.","cameraCount":4,"cameraCountsSupported":[4],"basePrice":39050,"isActive":true,"isFeatured":false,"isDemo":true,"inclusions":["4x 3MP Weatherproof Wi-Fi Cameras","1x 4-Channel Wireless Smart Base Station","1x Western Digital Purple 1TB Surveillance Storage","4x 12V DC Camera Power Adapters","1x Base Station Power Adapter & HDMI Display Link"],"systemTypeId":"systype-wireless","systemTypeSlug":"wireless","systemTypeName":"Wireless / Wi-Fi cameras","nightViewId":"series-ir","nightViewName":"Night Vision (IR)","components":[{"name":"EZVIZ H3c 2K Color Night Vision Outdoor Wi-Fi Camera","sku":"prod-wifi-h3c","qty":4,"unitPrice":6500,"lineTotal":26000},{"name":"4-Channel Wireless Smart Base Station","sku":"prod-wifi-base","qty":1,"unitPrice":6500,"lineTotal":6500},{"name":"Western Digital Purple 1TB Surveillance Storage","sku":"prod-wd-purple-1tb","qty":1,"unitPrice":4800,"lineTotal":4800},{"name":"12V DC Camera Power Adapter","sku":"acc-power-adapter","qty":4,"unitPrice":350,"lineTotal":1400},{"name":"Base Station Power Adapter & HDMI Display Link","sku":"acc-power-adapter","qty":1,"unitPrice":350,"lineTotal":350}]}', 0, NULL, NULL, 1),
+('pkg-ptz-16', '16-Camera Enterprise PTZ Complete Solution', '16-camera-enterprise-ptz-package', 'Integrated 16-camera enterprise IP surveillance featuring a 360° optical zoom PTZ camera and Gigabit PoE switching.', 16, 0, 1, '{"id":"pkg-ptz-16","name":"16-Camera Enterprise PTZ Complete Solution","slug":"16-camera-enterprise-ptz-package","seriesId":"series-enterprise","seriesName":"Enterprise & PTZ","technologyLabel":"Speed Dome PTZ & PoE","badge":"Top Tier","description":"Integrated 16-camera enterprise IP surveillance featuring a 360° optical zoom PTZ camera and Gigabit PoE switching.","cameraCount":16,"cameraCountsSupported":[16],"basePrice":null,"isActive":true,"isFeatured":true,"featuredOnHomepage":true,"isDemo":true,"inclusions":["1x 4MP 25x Optical Zoom Speed Dome PTZ","15x 4K IP Fixed Turret Cameras","1x 16-Channel 4K Network Video Recorder (NVR)","1x 24-Port Gigabit PoE Switch","1x 6TB Enterprise Surveillance HDD","Cat6 Structured Network Cabling"],"systemTypeId":"systype-ip","systemTypeSlug":"ip","systemTypeName":"IP / Network cameras (NVR, PoE)","nightViewId":"series-enterprise","nightViewName":"Enterprise & PTZ","components":[{"name":"Hikvision 2MP 4-Inch Speed Dome Mini PTZ Camera","sku":"prod-hik-ptz-2mp","qty":1,"unitPrice":28500,"lineTotal":28500},{"name":"Hikvision 8MP 4K Ultra HD Outdoor IR Bullet Camera","sku":"prod-hik-4k-bullet","qty":15,"unitPrice":8500,"lineTotal":127500},{"name":"Hikvision 16-Channel 4K NVR","sku":"prod-hik-nvr-16ch","qty":1,"unitPrice":18500,"lineTotal":18500},{"name":"Ruijie Reyee 24-Port Gigabit Smart Cloud PoE Switch","sku":"prod-ruijie-es224gc-p","qty":1,"unitPrice":24500,"lineTotal":24500},{"name":"6TB Enterprise Surveillance HDD","sku":"prod-hdd-6tb","qty":1,"unitPrice":null,"lineTotal":null},{"name":"Cat6 Structured Network Cabling","sku":"cable-cat6-struct","qty":1,"unitPrice":null,"lineTotal":null}],"isQuoteOnly":true}', 0, NULL, NULL, 1),
+('pkg-ent-32', '32-Camera Enterprise Campus Security Setup', '32-camera-enterprise-campus-setup', 'High-density 32-camera IP surveillance infrastructure designed for commercial buildings, factories, and campuses.', 32, 0, 1, '{"id":"pkg-ent-32","name":"32-Camera Enterprise Campus Security Setup","slug":"32-camera-enterprise-campus-setup","seriesId":"series-enterprise","seriesName":"Enterprise & PTZ","technologyLabel":"Multi-NVR High Capacity","description":"High-density 32-camera IP surveillance infrastructure designed for commercial buildings, factories, and campuses.","cameraCount":32,"cameraCountsSupported":[32],"isQuoteOnly":true,"isActive":true,"isFeatured":false,"isDemo":true,"inclusions":["32x 4K AI Enterprise IP Cameras","1x 32-Channel Enterprise NVR Array","2x 16-Port Gigabit Managed PoE Switches","2x 6TB Enterprise Surveillance HDDs","Cat6 STP Shielded Cabling Infrastructure","Rackmount Cabinet & PDU System"],"systemTypeId":"systype-ip","systemTypeSlug":"ip","systemTypeName":"IP / Network cameras (NVR, PoE)","nightViewId":"series-enterprise","nightViewName":"Enterprise & PTZ","basePrice":null,"components":[{"name":"4K AI Enterprise IP Camera","sku":"prod-ip-4k-ai","qty":32,"unitPrice":null,"lineTotal":null},{"name":"32-Channel Enterprise NVR Array","sku":"prod-nvr-32ch-arr","qty":1,"unitPrice":null,"lineTotal":null},{"name":"16-Port Gigabit Managed PoE Switch","sku":"prod-sw-16p-poe","qty":2,"unitPrice":null,"lineTotal":null},{"name":"6TB Enterprise Surveillance HDD","sku":"prod-hdd-6tb","qty":2,"unitPrice":null,"lineTotal":null},{"name":"Cat6 STP Shielded Cabling Infrastructure","sku":"cable-cat6-stp","qty":1,"unitPrice":null,"lineTotal":null},{"name":"Rackmount Cabinet & PDU System","sku":"acc-rack-pdu","qty":1,"unitPrice":null,"lineTotal":null}]}', 0, NULL, NULL, 1),
+('pkg-ent-64', '64-Camera High-Density Facility Surveillance', '64-camera-high-density-facility', 'Enterprise 64-camera security setup with multi-server NVR redundancy and optical fiber backbone.', 64, 0, 1, '{"id":"pkg-ent-64","name":"64-Camera High-Density Facility Surveillance","slug":"64-camera-high-density-facility","seriesId":"series-enterprise","seriesName":"Enterprise & PTZ","technologyLabel":"Multi-Server NVR Cluster","description":"Enterprise 64-camera security setup with multi-server NVR redundancy and optical fiber backbone.","cameraCount":64,"cameraCountsSupported":[64],"isQuoteOnly":true,"isActive":true,"isFeatured":false,"isDemo":true,"inclusions":["64x 4K AI Enterprise IP Cameras","2x 32-Channel Redundant Enterprise NVRs","4x 24-Port Managed Gigabit PoE Switches","4x 6TB Enterprise Surveillance HDDs","Optical Fiber Backbone Transceivers","Centralized Monitoring Console Rack"],"systemTypeId":"systype-ip","systemTypeSlug":"ip","systemTypeName":"IP / Network cameras (NVR, PoE)","nightViewId":"series-enterprise","nightViewName":"Enterprise & PTZ","basePrice":null,"components":[{"name":"4K AI Enterprise IP Camera","sku":"prod-ip-4k-ai","qty":64,"unitPrice":null,"lineTotal":null},{"name":"32-Channel Redundant Enterprise NVR","sku":"prod-nvr-32ch-arr","qty":2,"unitPrice":null,"lineTotal":null},{"name":"24-Port Managed Gigabit PoE Switch","sku":"prod-sw-24p-poe","qty":4,"unitPrice":null,"lineTotal":null},{"name":"6TB Enterprise Surveillance HDD","sku":"prod-hdd-6tb","qty":4,"unitPrice":null,"lineTotal":null},{"name":"Optical Fiber Backbone Transceiver","sku":"acc-fiber-tx","qty":1,"unitPrice":null,"lineTotal":null},{"name":"Centralized Monitoring Console Rack","sku":"acc-console-rack","qty":1,"unitPrice":null,"lineTotal":null}]}', 0, NULL, NULL, 1);
+
+-- Table: products (59 rows)
+INSERT IGNORE INTO `products` (`id`, `name`, `model_number`, `sku`, `brand_id`, `brand_name`, `category_id`, `category_slug`, `status`, `price`, `compare_price`, `stock_quantity`, `is_featured`, `is_popular`, `is_demo`, `data_json`, `created_at`, `updated_at`, `is_archived`, `archived_at`) VALUES
+('prod-hik-irpf-2mp', 'Hikvision 2MP Audio Fixed Mini Bullet Camera', 'DS-2CE16D0T-ITPFS', 'HIK-2MP-IRPF', 'b-hikvision', 'Hikvision', 'cat-cctv', 'cctv-cameras', 'active', 2400, 2150, 50, 0, 0, 1, '{"id":"prod-hik-irpf-2mp","name":"Hikvision 2MP Audio Fixed Mini Bullet Camera","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"DS-2CE16D0T-ITPFS","sku":"HIK-2MP-IRPF","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/hikvision-bullet.png"],"primaryImage":"/images/hero/hikvision-bullet.png","shortDescription":"High performance 2MP bullet camera with built-in microphone and 20m Smart IR night vision.","description":"Crisp 1080p surveillance video with audio over coaxial cable. IP67 weatherproof housing for indoor and outdoor commercial setups.","keyFeatures":["2.0 Megapixel high-performance CMOS","Built-in audio over coaxial cable","20m Smart IR night vision","IP67 weatherproof housing"],"specifications":{"resolution":"2MP (1080p)","night_vision":"IR Night Vision (up to 20m)","lens":"3.6mm (Standard)","ip_rating":"IP67 Weatherproof","form_factor":"Bullet","audio_support":true},"specs":{"resolution":{"label":"Resolution","value":"2MP (1080p)","highlightValue":"2 MP","showInHighlights":true},"night_vision":{"label":"Night Vision","value":"IR Night Vision (up to 20m)","highlightValue":"20m IR","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP67 Weatherproof","highlightValue":"IP67","showInHighlights":true}},"pricing":{"regularPrice":2400,"salePrice":2150,"currency":"BDT"},"inventory":{"available":50,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-10T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-dome-2mp', 'Hikvision 2MP Indoor Audio Turret Dome Camera', 'DS-2CE76D0T-ITPFS', 'HIK-2MP-DOME', 'b-hikvision', 'Hikvision', 'cat-cctv', 'cctv-cameras', 'active', 2350, 0, 45, 1, 1, 1, '{"id":"prod-hik-dome-2mp","name":"Hikvision 2MP Indoor Audio Turret Dome Camera","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"DS-2CE76D0T-ITPFS","sku":"HIK-2MP-DOME","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dome.svg"],"primaryImage":"/images/products/hikvision-dome.svg","shortDescription":"Discreet 2MP ceiling dome camera with integrated microphone and wide-angle 2.8mm lens.","description":"Ideal for indoor offices, retail stores, and banking counters requiring discreet audio and video capture.","keyFeatures":["2 Megapixel resolution (1920 x 1080)","Wide angle 2.8mm focal lens","Smart IR up to 20m","Built-in microphone with coaxial transmission"],"specifications":{"resolution":"2MP (1080p)","night_vision":"IR Night Vision (up to 20m)","lens":"2.8mm (Wide Angle)","form_factor":"Dome","audio_support":true},"specs":{"resolution":{"label":"Resolution","value":"2MP (1080p)","highlightValue":"2 MP","showInHighlights":true},"night_vision":{"label":"Night Vision","value":"IR Night Vision (up to 20m)","highlightValue":"20m IR","showInHighlights":true},"form_factor":{"label":"Form Factor","value":"Dome","highlightValue":"Dome","showInHighlights":true}},"pricing":{"regularPrice":2350,"currency":"BDT"},"inventory":{"available":45,"status":"in_stock"},"unit":"Piece","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"createdAt":"2026-01-12T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-color-2mp', 'Hikvision 2MP ColorVu Full-Color Audio Bullet Camera', 'DS-2CE10DF0T-FS', 'HIK-2MP-COLORVU', 'b-hikvision', 'Hikvision', 'cat-cctv', 'cctv-cameras', 'active', 3800, 3450, 30, 0, 0, 1, '{"id":"prod-hik-color-2mp","name":"Hikvision 2MP ColorVu Full-Color Audio Bullet Camera","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"DS-2CE10DF0T-FS","sku":"HIK-2MP-COLORVU","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/hikvision-bullet.png"],"primaryImage":"/images/hero/hikvision-bullet.png","shortDescription":"Full-color surveillance camera with F1.0 super aperture and warm supplemental lighting.","description":"Vivid color imagery in complete darkness. Features high fidelity audio over coax and rugged weatherproof build.","keyFeatures":["Full-Color imaging with F1.0 aperture","2.8mm wide angle fixed lens","Up to 20m warm light distance","Water and dust resistant (IP67)"],"specifications":{"resolution":"2MP (1080p)","night_vision":"ColorVu Full Color","lens":"2.8mm (Wide Angle)","ip_rating":"IP67 Weatherproof","form_factor":"Bullet","audio_support":true},"specs":{"resolution":{"label":"Resolution","value":"2MP (1080p)","highlightValue":"2 MP","showInHighlights":true},"night_vision":{"label":"Night Vision","value":"ColorVu Full Color","highlightValue":"ColorVu","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP67 Weatherproof","highlightValue":"IP67","showInHighlights":true}},"pricing":{"regularPrice":3800,"salePrice":3450,"currency":"BDT"},"inventory":{"available":30,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-10T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-4k-bullet', 'Hikvision 8MP 4K Ultra HD Outdoor IR Bullet Camera', 'DS-2CE16U1T-ITF', 'HIK-8MP-4K', 'b-hikvision', 'Hikvision', 'cat-cctv', 'cctv-cameras', 'active', 8500, 0, 20, 0, 0, 1, '{"id":"prod-hik-4k-bullet","name":"Hikvision 8MP 4K Ultra HD Outdoor IR Bullet Camera","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"DS-2CE16U1T-ITF","sku":"HIK-8MP-4K","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/hikvision-bullet.png"],"primaryImage":"/images/hero/hikvision-bullet.png","shortDescription":"True 4K 8.29 megapixel resolution with EXIR 2.0 smart IR up to 30m distance.","description":"Enterprise grade perimeter security camera capturing license plates and wide outdoor lots in ultra-crisp detail.","keyFeatures":["8.29 MP high performance CMOS","3840 x 2160 ultra high resolution","EXIR 2.0 Smart IR up to 30m","4 in 1 video output switchable"],"specifications":{"resolution":"8MP (4K)","night_vision":"IR Night Vision (up to 40m)","lens":"3.6mm (Standard)","ip_rating":"IP67 Weatherproof","form_factor":"Bullet","audio_support":false},"specs":{"resolution":{"label":"Resolution","value":"8MP (4K)","highlightValue":"4K","showInHighlights":true},"night_vision":{"label":"Night Vision","value":"IR Night Vision (up to 40m)","highlightValue":"40m IR","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP67 Weatherproof","highlightValue":"IP67","showInHighlights":true}},"pricing":{"regularPrice":8500,"currency":"BDT"},"inventory":{"available":20,"status":"in_stock"},"unit":"Piece","isPopular":false,"isNew":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-dahua-2mp-bullet', 'Dahua 2MP HDCVI Weatherproof IR Bullet Camera', 'DH-HAC-HFW1200THP-I8', 'DH-2MP-BULLET', 'b-dahua', 'Dahua', 'cat-cctv', 'cctv-cameras', 'active', 3200, 0, 25, 0, 0, 1, '{"id":"prod-dahua-2mp-bullet","name":"Dahua 2MP HDCVI Weatherproof IR Bullet Camera","brand":"Dahua","brandId":"b-dahua","modelNumber":"DH-HAC-HFW1200THP-I8","sku":"DH-2MP-BULLET","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/hikvision-bullet.png"],"primaryImage":"/images/hero/hikvision-bullet.png","shortDescription":"Long-range outdoor security camera with powerful 80m IR illumination and IP67 rating.","description":"Designed for factory perimeters, highways, and large warehouse yards needing dependable night monitoring.","keyFeatures":["2MP resolution with starlight technology","Max 30fps at 1080P","80m long-distance Smart IR","IP67 ingress protection rating"],"specifications":{"resolution":"2MP (1080p)","night_vision":"IR Night Vision (up to 40m)","lens":"3.6mm (Standard)","ip_rating":"IP67 Weatherproof","form_factor":"Bullet","audio_support":false},"specs":{"resolution":{"label":"Resolution","value":"2MP (1080p)","highlightValue":"2 MP","showInHighlights":true},"night_vision":{"label":"Night Vision","value":"IR Night Vision (up to 40m)","highlightValue":"80m IR","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP67 Weatherproof","highlightValue":"IP67","showInHighlights":true}},"pricing":{"regularPrice":3200,"currency":"BDT"},"inventory":{"available":25,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-15T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-dahua-eyeball-2mp', 'Dahua 2MP Full-color Starlight HDCVI Eyeball Camera', 'DH-HAC-HDW1239TLQP-LED', 'DH-2MP-EYEBALL', 'b-dahua', 'Dahua', 'cat-cctv', 'cctv-cameras', 'active', 2950, 0, 35, 0, 0, 1, '{"id":"prod-dahua-eyeball-2mp","name":"Dahua 2MP Full-color Starlight HDCVI Eyeball Camera","brand":"Dahua","brandId":"b-dahua","modelNumber":"DH-HAC-HDW1239TLQP-LED","sku":"DH-2MP-EYEBALL","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dome.svg"],"primaryImage":"/images/products/hikvision-dome.svg","shortDescription":"Compact full-color turret eyeball camera with warm white LED up to 20m distance.","description":"Provides vivid full-color images with high aperture lens and starlight sensor.","keyFeatures":["2MP full-color starlight HDCVI","20m LED distance","Built-in mic","IP67 weather resistant"],"specifications":{"resolution":"2MP (1080p)","night_vision":"ColorVu Full Color","lens":"2.8mm (Wide Angle)","ip_rating":"IP67 Weatherproof","form_factor":"Turret","audio_support":true},"specs":{"resolution":{"label":"Resolution","value":"2MP (1080p)","highlightValue":"2 MP","showInHighlights":true},"night_vision":{"label":"Night Vision","value":"ColorVu Full Color","highlightValue":"Full-Color","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP67 Weatherproof","highlightValue":"IP67","showInHighlights":true}},"pricing":{"regularPrice":2950,"currency":"BDT"},"inventory":{"available":35,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-08T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-dvr-4ch', 'Hikvision 4-Channel 1080p AcuSense HD DVR', 'iDS-7204HQHI-M1/S', 'HIK-DVR-4CH', 'b-hikvision', 'Hikvision', 'cat-recorders', 'recorders', 'active', 4500, 3950, 20, 0, 0, 1, '{"id":"prod-hik-dvr-4ch","name":"Hikvision 4-Channel 1080p AcuSense HD DVR","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"iDS-7204HQHI-M1/S","sku":"HIK-DVR-4CH","category":"Recorders","categoryId":"cat-recorders","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dvr.svg"],"primaryImage":"/images/products/hikvision-dvr.svg","shortDescription":"4-channel smart AI DVR with deep learning human and vehicle motion detection.","description":"Reduces false alarms with AcuSense motion classification. Supports up to 6 IP cameras in hybrid mode and 10TB SATA storage.","keyFeatures":["4 channels and 1 HDD 1U AcuSense DVR","False alarm reduction through human and vehicle target classification","Efficient H.265 pro+ compression technology","Encoding capability up to 3K/5MP Lite at 12 fps"],"specifications":{"channels":"4 CH","compression":"H.265 Pro+","max_resolution":"5MP Lite","hdd_slots":"1 SATA Slot"},"specs":{"channels":{"label":"Channels","value":"4 CH","highlightValue":"4 CH","showInHighlights":true},"compression":{"label":"Compression","value":"H.265 Pro+","highlightValue":"H.265+","showInHighlights":true}},"pricing":{"regularPrice":4500,"salePrice":3950,"currency":"BDT"},"inventory":{"available":20,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-10T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-dvr-8ch', 'Hikvision 8-Channel 1080p AcuSense HD DVR', 'iDS-7208HQHI-M1/S', 'HIK-DVR-8CH', 'b-hikvision', 'Hikvision', 'cat-recorders', 'recorders', 'active', 6800, 0, 15, 1, 1, 1, '{"id":"prod-hik-dvr-8ch","name":"Hikvision 8-Channel 1080p AcuSense HD DVR","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"iDS-7208HQHI-M1/S","sku":"HIK-DVR-8CH","category":"Recorders","categoryId":"cat-recorders","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dvr.svg"],"primaryImage":"/images/products/hikvision-dvr.svg","shortDescription":"8-channel enterprise AcuSense digital video recorder supporting human/vehicle classification.","description":"High throughput AI DVR supporting 8 analog BNC cameras plus up to 4 network IP cameras. H.265 Pro+ encoding saves bandwidth.","keyFeatures":["8 channels analog + 4 IP channels","AcuSense AI motion filtering","H.265 Pro+ ultra bandwidth efficiency","Audio over coaxial support across all channels"],"specifications":{"channels":"8 CH","compression":"H.265 Pro+","max_resolution":"5MP Lite","hdd_slots":"1 SATA Slot"},"specs":{"channels":{"label":"Channels","value":"8 CH","highlightValue":"8 CH","showInHighlights":true},"compression":{"label":"Compression","value":"H.265 Pro+","highlightValue":"H.265+","showInHighlights":true}},"pricing":{"regularPrice":6800,"currency":"BDT"},"inventory":{"available":15,"status":"in_stock"},"unit":"Unit","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"createdAt":"2026-01-12T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-dvr-16ch', 'Hikvision 16-Channel 1080p AcuSense HD DVR', 'iDS-7216HQHI-M2/S', 'HIK-DVR-16CH', 'b-hikvision', 'Hikvision', 'cat-recorders', 'recorders', 'active', 12500, 0, 10, 0, 0, 1, '{"id":"prod-hik-dvr-16ch","name":"Hikvision 16-Channel 1080p AcuSense HD DVR","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"iDS-7216HQHI-M2/S","sku":"HIK-DVR-16CH","category":"Recorders","categoryId":"cat-recorders","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dvr.svg"],"primaryImage":"/images/products/hikvision-dvr.svg","shortDescription":"16-channel rackmount AcuSense DVR with dual SATA bays supporting up to 20TB total storage.","description":"Designed for corporate offices, multi-storey commercial buildings, and factories needing high camera counts and AI tracking.","keyFeatures":["16 analog channels + 8 IP channels","Dual SATA interfaces up to 10TB per disk","Advanced perimeter protection","HDMI 4K output port"],"specifications":{"channels":"16 CH","compression":"H.265 Pro+","max_resolution":"5MP Lite","hdd_slots":"2 SATA Slots"},"specs":{"channels":{"label":"Channels","value":"16 CH","highlightValue":"16 CH","showInHighlights":true},"compression":{"label":"Compression","value":"H.265 Pro+","highlightValue":"H.265+","showInHighlights":true}},"pricing":{"regularPrice":12500,"currency":"BDT"},"inventory":{"available":10,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-dahua-xvr-8ch', 'Dahua 8-Channel WizSense 5-in-1 Compact 1U XVR', 'DH-XVR5108HS-I3', 'DH-XVR-8CH', 'b-dahua', 'Dahua', 'cat-recorders', 'recorders', 'active', 7200, 0, 12, 0, 0, 1, '{"id":"prod-dahua-xvr-8ch","name":"Dahua 8-Channel WizSense 5-in-1 Compact 1U XVR","brand":"Dahua","brandId":"b-dahua","modelNumber":"DH-XVR5108HS-I3","sku":"DH-XVR-8CH","category":"Recorders","categoryId":"cat-recorders","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dvr.svg"],"primaryImage":"/images/products/hikvision-dvr.svg","shortDescription":"8-channel AI digital video recorder with smart dual-stream and face recognition search.","description":"Full-channel AI Coding reduces bandwidth by 50%. Compatible with HDCVI, AHD, TVI, CVBS, and IP cameras.","keyFeatures":["8 channels SMD Plus human/vehicle detection","H.265+/H.265 dual-stream video compression","Supports HDCVI/AHD/TVI/CVBS/IP video inputs","Up to 16TB SATA hard disk capacity"],"specifications":{"channels":"8 CH","compression":"AI Coding (H.265+)","max_resolution":"5MP","hdd_slots":"1 SATA Slot"},"specs":{"channels":{"label":"Channels","value":"8 CH","highlightValue":"8 CH","showInHighlights":true},"compression":{"label":"Compression","value":"AI Coding (H.265+)","highlightValue":"AI Coding","showInHighlights":true}},"pricing":{"regularPrice":7200,"currency":"BDT"},"inventory":{"available":12,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-15T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-nvr-8ch-poe', 'Hikvision 8-Channel 4K Embedded PoE Network Video Recorder', 'DS-7608NI-Q1/8P', 'HIK-NVR-8CH-POE', 'b-hikvision', 'Hikvision', 'cat-recorders', 'recorders', 'active', 14800, 0, 10, 0, 0, 1, '{"id":"prod-hik-nvr-8ch-poe","name":"Hikvision 8-Channel 4K Embedded PoE Network Video Recorder","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"DS-7608NI-Q1/8P","sku":"HIK-NVR-8CH-POE","category":"Recorders","categoryId":"cat-recorders","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dvr.svg"],"primaryImage":"/images/products/hikvision-dvr.svg","shortDescription":"Plug-and-play 4K NVR with 8 independent PoE network interfaces up to 80W power.","description":"Connects IP cameras directly over ethernet cable. Decodes up to 8MP resolution with 4K HDMI video output.","keyFeatures":["8 independent PoE network ports","Up to 80 Mbps incoming bandwidth","Up to 8MP resolution recording and display","H.265+/H.265 video format decoding"],"specifications":{"channels":"8 CH","compression":"H.265+","max_resolution":"8MP (4K)","hdd_slots":"1 SATA Slot"},"specs":{"channels":{"label":"Channels","value":"8 CH","highlightValue":"8 CH","showInHighlights":true},"compression":{"label":"Compression","value":"H.265+","highlightValue":"4K PoE","showInHighlights":true}},"pricing":{"regularPrice":14800,"currency":"BDT"},"inventory":{"available":10,"status":"in_stock"},"unit":"Unit","isPopular":false,"isNew":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-zkteco-mb20', 'ZKTeco MB20 Multi-Biometric Time Attendance & Access Terminal', 'MB20', 'ZK-MB20', 'b-zkteco', 'ZKTeco', 'cat-access', 'access-control-biometrics', 'active', 8500, 0, 18, 0, 0, 1, '{"id":"prod-zkteco-mb20","name":"ZKTeco MB20 Multi-Biometric Time Attendance & Access Terminal","brand":"ZKTeco","brandId":"b-zkteco","modelNumber":"MB20","sku":"ZK-MB20","category":"Access Control & Biometrics","categoryId":"cat-access","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/zkteco-biometric.png"],"primaryImage":"/images/hero/zkteco-biometric.png","shortDescription":"Hybrid facial recognition and fingerprint attendance terminal with 2.8-inch TFT screen.","description":"High-speed biometric verification under 0.5 seconds. Built-in relay for electric magnetic door lock integration.","keyFeatures":["Multi-biometric verification: Face, Fingerprint, Password, RFID","High speed verification under 0.5 seconds","TCP/IP and USB-Host data communication","Access control interface for 3rd party electric lock"],"specifications":{"user_capacity":"1000 Users","fingerprint_capacity":"500 Prints","face_capacity":"200 Faces","verification_methods":"Face / Fingerprint / Card","connectivity":"TCP/IP & USB"},"specs":{"user_capacity":{"label":"Capacity","value":"1000 Users","highlightValue":"1000 Users","showInHighlights":true},"verification_methods":{"label":"Verification","value":"Face / Fingerprint / Card","highlightValue":"Face & Finger","showInHighlights":true},"connectivity":{"label":"Network","value":"TCP/IP & USB","highlightValue":"TCP/IP","showInHighlights":true}},"pricing":{"regularPrice":8500,"currency":"BDT"},"inventory":{"available":18,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-10T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-zkteco-k40', 'ZKTeco K40 Fingerprint Time Attendance & Access Terminal', 'K40', 'ZK-K40', 'b-zkteco', 'ZKTeco', 'cat-access', 'access-control-biometrics', 'active', 6500, 0, 25, 1, 1, 1, '{"id":"prod-zkteco-k40","name":"ZKTeco K40 Fingerprint Time Attendance & Access Terminal","brand":"ZKTeco","brandId":"b-zkteco","modelNumber":"K40","sku":"ZK-K40","category":"Access Control & Biometrics","categoryId":"cat-access","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/zkteco-biometric.png"],"primaryImage":"/images/hero/zkteco-biometric.png","shortDescription":"Reliable standalone fingerprint terminal with built-in battery backup and door lock relay.","description":"Standard workhorse attendance terminal widely deployed across retail shops, small offices, and schools.","keyFeatures":["1,000 fingerprint templates capacity","80,000 transaction record capacity","Built-in battery backup for power cuts","Door lock relay and exit button interface"],"specifications":{"user_capacity":"1000 Users","fingerprint_capacity":"1000 Prints","battery_backup":true,"verification_methods":"Fingerprint & RFID Card","connectivity":"TCP/IP & USB"},"specs":{"user_capacity":{"label":"Capacity","value":"1000 Users","highlightValue":"1000 Users","showInHighlights":true},"verification_methods":{"label":"Verification","value":"Fingerprint & RFID Card","highlightValue":"Finger & RFID","showInHighlights":true},"battery_backup":{"label":"Backup Battery","value":true,"highlightValue":"Battery Backup","showInHighlights":true}},"pricing":{"regularPrice":6500,"currency":"BDT"},"inventory":{"available":25,"status":"in_stock"},"unit":"Unit","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"createdAt":"2026-01-12T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-zkteco-speedface-v5l', 'ZKTeco SpeedFace-V5L Visible Light Facial Recognition Terminal', 'SpeedFace-V5L', 'ZK-SPEEDFACE-V5L', 'b-zkteco', 'ZKTeco', 'cat-access', 'access-control-biometrics', 'active', 26500, 0, 8, 0, 0, 1, '{"id":"prod-zkteco-speedface-v5l","name":"ZKTeco SpeedFace-V5L Visible Light Facial Recognition Terminal","brand":"ZKTeco","brandId":"b-zkteco","modelNumber":"SpeedFace-V5L","sku":"ZK-SPEEDFACE-V5L","category":"Access Control & Biometrics","categoryId":"cat-access","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/zkteco-biometric.png"],"primaryImage":"/images/hero/zkteco-biometric.png","shortDescription":"AI-driven visible light facial recognition with anti-spoofing algorithm and mask detection.","description":"Enterprise touchless access control terminal recognizing moving subjects from 0.3m to 3m away in 0.3s.","keyFeatures":["6,000 facial templates capacity","0.3 second recognition speed","Deep learning anti-spoofing algorithm","5-inch touch LCD display"],"specifications":{"user_capacity":"10000 Users","face_capacity":"6000 Faces","verification_methods":"Visible Light Face / Palm / Card","connectivity":"TCP/IP & Wiegand"},"specs":{"user_capacity":{"label":"Capacity","value":"10000 Users","highlightValue":"10K Users","showInHighlights":true},"face_capacity":{"label":"Face Templates","value":"6000 Faces","highlightValue":"6000 Faces","showInHighlights":true},"verification_methods":{"label":"Verification","value":"Visible Light Face / Palm / Card","highlightValue":"Touchless Face","showInHighlights":true}},"pricing":{"regularPrice":26500,"currency":"BDT"},"inventory":{"available":8,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-15T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-zkteco-em-lock', 'ZKTeco 280KG (600 lbs) Magnetic Lock with LED Feedback', 'AL-280LED', 'ZK-LOCK-280', 'b-zkteco', 'ZKTeco', 'cat-access', 'access-control-biometrics', 'active', 3200, 0, 40, 0, 0, 1, '{"id":"prod-zkteco-em-lock","name":"ZKTeco 280KG (600 lbs) Magnetic Lock with LED Feedback","brand":"ZKTeco","brandId":"b-zkteco","modelNumber":"AL-280LED","sku":"ZK-LOCK-280","category":"Access Control & Biometrics","categoryId":"cat-access","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"Fail-safe electromagnetic lock with 280kg holding force for wooden, glass, and metal doors.","description":"Equipped with dry contact status signal output and dual-color LED lock indicator. Zero residual magnetism.","keyFeatures":["280kg (600 lbs) static holding force","Dual voltage 12V/24V DC selectable","Built-in reverse current protection MOV","LED lock status indicator"],"specifications":{"holding_force":"280 kg (600 lbs)","voltage":"12V / 24V DC","led_feedback":true},"specs":{"holding_force":{"label":"Holding Force","value":"280 kg (600 lbs)","highlightValue":"280 kg","showInHighlights":true},"led_feedback":{"label":"LED Feedback","value":true,"highlightValue":"LED Feedback","showInHighlights":true}},"pricing":{"regularPrice":3200,"currency":"BDT"},"inventory":{"available":40,"status":"in_stock"},"unit":"Set","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-zkteco-inbio260', 'ZKTeco InBio260 2-Door IP Biometric Access Control Panel', 'inBio260', 'ZK-INBIO-260', 'b-zkteco', 'ZKTeco', 'cat-access', 'access-control-biometrics', 'active', 18500, 0, 6, 0, 0, 1, '{"id":"prod-zkteco-inbio260","name":"ZKTeco InBio260 2-Door IP Biometric Access Control Panel","brand":"ZKTeco","brandId":"b-zkteco","modelNumber":"inBio260","sku":"ZK-INBIO-260","category":"Access Control & Biometrics","categoryId":"cat-access","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"Multi-door access controller carrying out fingerprint matching on internal hardware.","description":"Supports 2 doors with 4 readers (2 inside and 2 outside). Full anti-passback and interlock features.","keyFeatures":["2 doors access management","3,000 fingerprint templates stored in controller","30,000 card capacity","TCP/IP communication with SSL encryption"],"specifications":{"doors_supported":"2 Doors","user_capacity":"30000 Users","fingerprint_capacity":"3000 Prints","communication":"TCP/IP & RS485"},"specs":{"doors_supported":{"label":"Doors","value":"2 Doors","highlightValue":"2 Doors","showInHighlights":true},"communication":{"label":"Interface","value":"TCP/IP & RS485","highlightValue":"TCP/IP","showInHighlights":true}},"pricing":{"regularPrice":18500,"currency":"BDT"},"inventory":{"available":6,"status":"in_stock"},"unit":"Unit","isPopular":false,"isNew":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-es205gc-p', 'Ruijie Reyee RG-ES205GC-P 5-Port Gigabit Smart Cloud PoE Switch', 'RG-ES205GC-P', 'RG-ES205GC-P', 'b-ruijie', 'Ruijie Networks', 'cat-networking', 'network-switches', 'active', 4800, 0, 30, 0, 0, 1, '{"id":"prod-ruijie-es205gc-p","name":"Ruijie Reyee RG-ES205GC-P 5-Port Gigabit Smart Cloud PoE Switch","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-ES205GC-P","sku":"RG-ES205GC-P","category":"Network Switches","categoryId":"cat-networking","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/ruijie-switch.svg"],"primaryImage":"/images/products/ruijie-switch.svg","shortDescription":"Cloud-managed 5-port gigabit switch with 4 PoE+ ports and 54W power budget.","description":"Compact steel desktop casing Designed for small CCTV setups and office IP phones. Ruijie Cloud platform management included.","keyFeatures":["5 x 10/100/1000 Mbps RJ45 ports","4 ports 802.3af/at PoE+ with 54W total budget","Ruijie Cloud app remote management and reboot","IP camera recognition and CCTV loop prevention"],"specifications":{"ports":"5 Ports","poe_budget":"54 W","poe_support":true,"switching_capacity":"10 Gbps","managed":true},"specs":{"ports":{"label":"Ports","value":"5 Ports","highlightValue":"5 Ports","showInHighlights":true},"poe_budget":{"label":"PoE Budget","value":54,"highlightValue":"54 W","showInHighlights":true},"poe_support":{"label":"PoE Support","value":true,"highlightValue":"PoE+","showInHighlights":true}},"pricing":{"regularPrice":4800,"currency":"BDT"},"inventory":{"available":30,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-es209gc-p', 'Ruijie Reyee RG-ES209GC-P 9-Port Gigabit Smart Cloud PoE Switch', 'RG-ES209GC-P', 'RG-ES209GC-P', 'b-ruijie', 'Ruijie Networks', 'cat-networking', 'network-switches', 'active', 7500, 0, 20, 1, 1, 1, '{"id":"prod-ruijie-es209gc-p","name":"Ruijie Reyee RG-ES209GC-P 9-Port Gigabit Smart Cloud PoE Switch","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-ES209GC-P","sku":"RG-ES209GC-P","category":"Network Switches","categoryId":"cat-networking","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/ruijie-switch.svg"],"primaryImage":"/images/products/ruijie-switch.svg","shortDescription":"9-port gigabit switch with 8 PoE+ ports delivering up to 120W power budget.","description":"High power budget accommodates PTZ cameras and Wi-Fi 6 access points with seamless cloud rebooting.","keyFeatures":["9 x Gigabit RJ45 ports","8 ports 802.3af/at PoE+ with 120W power budget","Automatic IPC restart on camera freeze","Remote cable diagnostic testing from cloud app"],"specifications":{"ports":"9 Ports","poe_budget":"120 W","poe_support":true,"switching_capacity":"18 Gbps","managed":true},"specs":{"ports":{"label":"Ports","value":"9 Ports","highlightValue":"9 Ports","showInHighlights":true},"poe_budget":{"label":"PoE Budget","value":120,"highlightValue":"120 W","showInHighlights":true},"poe_support":{"label":"PoE Support","value":true,"highlightValue":"PoE+","showInHighlights":true}},"pricing":{"regularPrice":7500,"currency":"BDT"},"inventory":{"available":20,"status":"in_stock"},"unit":"Unit","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"createdAt":"2026-01-12T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-es216gc', 'Ruijie Reyee RG-ES216GC 16-Port Gigabit Unmanaged Switch', 'RG-ES216GC', 'RG-ES216GC', 'b-ruijie', 'Ruijie Networks', 'cat-networking', 'network-switches', 'active', 8900, 0, 15, 0, 0, 1, '{"id":"prod-ruijie-es216gc","name":"Ruijie Reyee RG-ES216GC 16-Port Gigabit Unmanaged Switch","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-ES216GC","sku":"RG-ES216GC","category":"Network Switches","categoryId":"cat-networking","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/ruijie-switch.svg"],"primaryImage":"/images/products/ruijie-switch.svg","shortDescription":"16-port gigabit rackmount switch for non-PoE network aggregation and high-speed data transfer.","description":"Sturdy 19-inch metal chassis with 32 Gbps non-blocking backplane switching capacity.","keyFeatures":["16 x 10/100/1000 Mbps Gigabit ports","19-inch rack-mountable with included brackets","Energy-efficient silent fanless operation","Built-in 6kV surge protection on all ports"],"specifications":{"ports":"16 Ports","poe_support":false,"switching_capacity":"32 Gbps","managed":false},"specs":{"ports":{"label":"Ports","value":"16 Ports","highlightValue":"16 Ports","showInHighlights":true},"switching_capacity":{"label":"Backplane","value":"32 Gbps","highlightValue":"32 Gbps","showInHighlights":true}},"pricing":{"regularPrice":8900,"currency":"BDT"},"inventory":{"available":15,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-enterprise-switch-req', 'Ruijie RG-NBS3100-24GT4SFP-P 24-Port Managed Gigabit PoE Switch', 'RG-NBS3100-24GT4SFP-P', 'RG-NBS3100-24P', 'b-ruijie', 'Ruijie Networks', 'cat-networking', 'network-switches', 'active', 32000, 0, 6, 0, 0, 1, '{"id":"prod-enterprise-switch-req","name":"Ruijie RG-NBS3100-24GT4SFP-P 24-Port Managed Gigabit PoE Switch","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-NBS3100-24GT4SFP-P","sku":"RG-NBS3100-24P","category":"Network Switches","categoryId":"cat-networking","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/ruijie-switch.svg"],"primaryImage":"/images/products/ruijie-switch.svg","shortDescription":"24-port Gigabit Layer 2 managed switch with 4 SFP fiber uplink ports and 370W PoE budget.","description":"Designed for enterprise campus networks and corporate headquarters requiring VLAN segmentation and optical backhaul.","keyFeatures":["24 x 10/100/1000 Mbps PoE+ ports","4 x 1G SFP fiber optical uplink slots","370W heavy-duty PoE power delivery","Layer 2 managed features: VLAN, QoS, IGMP Snooping, STP"],"specifications":{"ports":"24 Ports","poe_budget":"370 W","poe_support":true,"switching_capacity":"56 Gbps","managed":true},"specs":{"ports":{"label":"Ports","value":"24 Ports","highlightValue":"24 Ports","showInHighlights":true},"poe_budget":{"label":"PoE Budget","value":370,"highlightValue":"370 W","showInHighlights":true},"poe_support":{"label":"PoE Support","value":true,"highlightValue":"PoE+","showInHighlights":true}},"pricing":{"regularPrice":32000,"currency":"BDT"},"inventory":{"available":6,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-15T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-es224gc-p', 'Ruijie Reyee RG-ES224GC-P 24-Port Gigabit Smart Cloud PoE Switch', 'RG-ES224GC-P', 'RG-ES224GC-P', 'b-ruijie', 'Ruijie Networks', 'cat-networking', 'network-switches', 'active', 24500, 0, 8, 0, 0, 1, '{"id":"prod-ruijie-es224gc-p","name":"Ruijie Reyee RG-ES224GC-P 24-Port Gigabit Smart Cloud PoE Switch","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-ES224GC-P","sku":"RG-ES224GC-P","category":"Network Switches","categoryId":"cat-networking","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/ruijie-switch.svg"],"primaryImage":"/images/products/ruijie-switch.svg","shortDescription":"24-port gigabit cloud switch with 24 PoE+ ports and 250W power budget.","description":"Designed for dense IP camera clusters and office Wi-Fi setups with cloud dashboard visualization.","keyFeatures":["24 x 10/100/1000 Mbps RJ45 PoE ports","250W total power supply budget","Full Ruijie Cloud topology visualization","Port isolation and loop prevention"],"specifications":{"ports":"24 Ports","poe_budget":"250 W","poe_support":true,"switching_capacity":"48 Gbps","managed":true},"specs":{"ports":{"label":"Ports","value":"24 Ports","highlightValue":"24 Ports","showInHighlights":true},"poe_budget":{"label":"PoE Budget","value":250,"highlightValue":"250 W","showInHighlights":true},"poe_support":{"label":"PoE Support","value":true,"highlightValue":"PoE+","showInHighlights":true}},"pricing":{"regularPrice":24500,"currency":"BDT"},"inventory":{"available":8,"status":"in_stock"},"unit":"Unit","isPopular":false,"isNew":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-rap2200e', 'Ruijie Reyee RG-RAP2200(E) AC1300 Dual-Band Ceiling Access Point', 'RG-RAP2200(E)', 'RG-RAP2200-E', 'b-ruijie', 'Ruijie Networks', 'cat-access-points', 'access-points-wi-fi', 'active', 6200, 0, 25, 0, 0, 1, '{"id":"prod-ruijie-rap2200e","name":"Ruijie Reyee RG-RAP2200(E) AC1300 Dual-Band Ceiling Access Point","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-RAP2200(E)","sku":"RG-RAP2200-E","category":"Access Points & Wi-Fi","categoryId":"cat-access-points","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/ruijie-wifi6.png"],"primaryImage":"/images/hero/ruijie-wifi6.png","shortDescription":"Enterprise high-concurrency ceiling access point delivering 1267 Mbps combined throughput.","description":"Supports up to 110 concurrent clients with seamless 802.11k/v/r roaming. Powered via standard 802.3af PoE.","keyFeatures":["Dual band 2.4GHz (400Mbps) + 5GHz (867Mbps)","Dual Gigabit LAN Ethernet ports","Supports Reyee Mesh wireless backhaul","Free cloud management and guest portal"],"specifications":{"wifi_standard":"AC1300","max_speed":"1267 Mbps","poe_support":true,"form_factor":"Ceiling"},"specs":{"wifi_standard":{"label":"Standard","value":"AC1300","highlightValue":"AC1300","showInHighlights":true},"poe_support":{"label":"PoE Support","value":true,"highlightValue":"PoE","showInHighlights":true}},"pricing":{"regularPrice":6200,"currency":"BDT"},"inventory":{"available":25,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-rap2260g', 'Ruijie Reyee RG-RAP2260(G) Wi-Fi 6 AX1800 Multi-Gigabit AP', 'RG-RAP2260(G)', 'RG-RAP2260-G', 'b-ruijie', 'Ruijie Networks', 'cat-access-points', 'access-points-wi-fi', 'active', 11500, 0, 16, 0, 0, 1, '{"id":"prod-ruijie-rap2260g","name":"Ruijie Reyee RG-RAP2260(G) Wi-Fi 6 AX1800 Multi-Gigabit AP","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-RAP2260(G)","sku":"RG-RAP2260-G","category":"Access Points & Wi-Fi","categoryId":"cat-access-points","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/ruijie-wifi6.png"],"primaryImage":"/images/hero/ruijie-wifi6.png","shortDescription":"Next-gen Wi-Fi 6 dual-band ceiling AP with OFDMA, MU-MIMO and 1775 Mbps throughput.","description":"High performance enterprise AP designed for crowded meeting rooms, classrooms, and hotel lobbies.","keyFeatures":["Wi-Fi 6 (802.11ax) up to 1.775 Gbps","Up to 512 client capacity (110 recommended)","Gigabit PoE port + secondary Gigabit LAN port","Layer 3 roaming and WPA3 security"],"specifications":{"wifi_standard":"Wi-Fi 6 AX1800","max_speed":"1775 Mbps","poe_support":true,"form_factor":"Ceiling"},"specs":{"wifi_standard":{"label":"Standard","value":"Wi-Fi 6 AX1800","highlightValue":"Wi-Fi 6","showInHighlights":true},"poe_support":{"label":"PoE Support","value":true,"highlightValue":"PoE","showInHighlights":true}},"pricing":{"regularPrice":11500,"currency":"BDT"},"inventory":{"available":16,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-rap1200f', 'Ruijie Reyee RG-RAP1200(F) Dual-Band AC1200 In-Wall Plate AP', 'RG-RAP1200(F)', 'RG-RAP1200-F', 'b-ruijie', 'Ruijie Networks', 'cat-access-points', 'access-points-wi-fi', 'active', 4900, 0, 20, 0, 0, 1, '{"id":"prod-ruijie-rap1200f","name":"Ruijie Reyee RG-RAP1200(F) Dual-Band AC1200 In-Wall Plate AP","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-RAP1200(F)","sku":"RG-RAP1200-F","category":"Access Points & Wi-Fi","categoryId":"cat-access-points","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/ruijie-wifi6.png"],"primaryImage":"/images/hero/ruijie-wifi6.png","shortDescription":"Standard 86mm wall-switch box mount AP with front Ethernet port for hotel rooms and dorms.","description":"Flushes cleanly into wall electrical backboxes. Provides in-room Wi-Fi plus wired IPTV or IP phone connectivity.","keyFeatures":["Standard 86-type electrical outlet installation","1167 Mbps dual band concurrent speed","Front-facing 10/100 Mbps RJ45 jack","Centralized management via Ruijie Cloud app"],"specifications":{"wifi_standard":"AC1200","max_speed":"1167 Mbps","poe_support":true,"form_factor":"Wall Plate"},"specs":{"wifi_standard":{"label":"Standard","value":"AC1200","highlightValue":"AC1200","showInHighlights":true},"poe_support":{"label":"PoE Support","value":true,"highlightValue":"PoE","showInHighlights":true}},"pricing":{"regularPrice":4900,"currency":"BDT"},"inventory":{"available":20,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-rap6260h', 'Ruijie Reyee RG-RAP6260(H) High-Power Outdoor Wi-Fi 6 AP', 'RG-RAP6260(H)', 'RG-RAP6260-H', 'b-ruijie', 'Ruijie Networks', 'cat-access-points', 'access-points-wi-fi', 'active', 24000, 0, 6, 0, 0, 1, '{"id":"prod-ruijie-rap6260h","name":"Ruijie Reyee RG-RAP6260(H) High-Power Outdoor Wi-Fi 6 AP","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-RAP6260(H)","sku":"RG-RAP6260-H","category":"Access Points & Wi-Fi","categoryId":"cat-access-points","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/ruijie-wifi6.png"],"primaryImage":"/images/hero/ruijie-wifi6.png","shortDescription":"IP68 weatherproof outdoor Wi-Fi 6 access point with omnidirectional smart antennas.","description":"Provides long-range outdoor wireless coverage up to 300 meters for swimming pools, campuses, and parks.","keyFeatures":["IP68 rating against torrential rain and dust","Wi-Fi 6 speed up to 5952 Mbps","Omnidirectional smart antenna array","6kV lightning surge protection"],"specifications":{"wifi_standard":"Wi-Fi 6 AX5950","max_speed":"5952 Mbps","poe_support":true,"ip_rating":"IP68"},"specs":{"wifi_standard":{"label":"Standard","value":"Wi-Fi 6 AX5950","highlightValue":"Wi-Fi 6","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP68","highlightValue":"IP68","showInHighlights":true}},"pricing":{"regularPrice":24000,"currency":"BDT"},"inventory":{"available":6,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wd-purple-500gb', 'Western Digital Purple 500GB 3.5" Surveillance Internal HDD', 'WD5000PURZ', 'WD-PURPLE-500GB', 'b-wd', 'Western Digital', 'cat-storage', 'surveillance-storage', 'active', 1800, 0, 35, 0, 0, 1, '{"id":"prod-wd-purple-500gb","name":"Western Digital Purple 500GB 3.5\\" Surveillance Internal HDD","brand":"Western Digital","brandId":"b-wd","modelNumber":"WD5000PURZ","sku":"WD-PURPLE-500GB","category":"Surveillance Storage","categoryId":"cat-storage","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/surveillance-hdd.svg"],"primaryImage":"/images/products/surveillance-hdd.svg","shortDescription":"Built specifically for continuous high-definition surveillance recording.","description":"AllFrame technology reduces frame loss and improves video playback quality in security systems.","keyFeatures":["Built specifically for surveillance security systems","Supports up to 64 HD surveillance cameras","Reduced video frame loss with AllFrame technology","1 million hours MTBF reliability rating"],"specifications":{"capacity":"500 GB","form_factor":"3.5-inch","interface":"SATA 6 Gb/s"},"specs":{"capacity":{"label":"Capacity","value":"500 GB","highlightValue":"500 GB","showInHighlights":true},"form_factor":{"label":"Form Factor","value":"3.5-inch","highlightValue":"3.5\\"","showInHighlights":true}},"pricing":{"regularPrice":1800,"currency":"BDT"},"inventory":{"available":35,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wd-purple-1tb', 'Western Digital Purple 1TB 3.5" Surveillance Internal HDD', 'WD10PURZ', 'WD-PURPLE-1TB', 'b-wd', 'Western Digital', 'cat-storage', 'surveillance-storage', 'active', 4800, 0, 40, 0, 0, 1, '{"id":"prod-wd-purple-1tb","name":"Western Digital Purple 1TB 3.5\\" Surveillance Internal HDD","brand":"Western Digital","brandId":"b-wd","modelNumber":"WD10PURZ","sku":"WD-PURPLE-1TB","category":"Surveillance Storage","categoryId":"cat-storage","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/surveillance-hdd.svg"],"primaryImage":"/images/products/surveillance-hdd.svg","shortDescription":"1TB surveillance hard disk with AllFrame caching and 64MB cache buffer.","description":"Handles write-heavy surveillance workloads up to 180 TB/year in home and retail security installations.","keyFeatures":["1TB capacity optimized for surveillance","Workload rating up to 180 TB/year","AllFrame 4K firmware technology","3-year manufacturer hardware warranty"],"specifications":{"capacity":"1 TB","form_factor":"3.5-inch","interface":"SATA 6 Gb/s"},"specs":{"capacity":{"label":"Capacity","value":"1 TB","highlightValue":"1 TB","showInHighlights":true},"form_factor":{"label":"Form Factor","value":"3.5-inch","highlightValue":"3.5\\"","showInHighlights":true}},"pricing":{"regularPrice":4800,"currency":"BDT"},"inventory":{"available":40,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wd-purple-2tb', 'Western Digital Purple 2TB 3.5" Surveillance Internal HDD', 'WD20PURZ', 'WD-PURPLE-2TB', 'b-wd', 'Western Digital', 'cat-storage', 'surveillance-storage', 'active', 6900, 0, 22, 0, 0, 1, '{"id":"prod-wd-purple-2tb","name":"Western Digital Purple 2TB 3.5\\" Surveillance Internal HDD","brand":"Western Digital","brandId":"b-wd","modelNumber":"WD20PURZ","sku":"WD-PURPLE-2TB","category":"Surveillance Storage","categoryId":"cat-storage","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/surveillance-hdd.svg"],"primaryImage":"/images/products/surveillance-hdd.svg","shortDescription":"2TB enterprise surveillance drive with 64MB cache and tarnish-resistant components.","description":"Designed for systems with up to 64 HD cameras. Provides 2-3 weeks continuous archival for typical 4-8 camera setups.","keyFeatures":["2TB continuous recording space","Tarnish-resistant components for harsh DVR enclosures","Supports up to 64 streams per drive","Low power consumption design"],"specifications":{"capacity":"2 TB","form_factor":"3.5-inch","interface":"SATA 6 Gb/s"},"specs":{"capacity":{"label":"Capacity","value":"2 TB","highlightValue":"2 TB","showInHighlights":true},"form_factor":{"label":"Form Factor","value":"3.5-inch","highlightValue":"3.5\\"","showInHighlights":true}},"pricing":{"regularPrice":6900,"currency":"BDT"},"inventory":{"available":22,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-st-skyhawk-4tb', 'Seagate SkyHawk 4TB Surveillance Internal Hard Drive 3.5"', 'ST4000VX016', 'ST-SKYHAWK-4TB', 'b-seagate', 'Seagate', 'cat-storage', 'surveillance-storage', 'active', 11200, 0, 15, 0, 0, 1, '{"id":"prod-st-skyhawk-4tb","name":"Seagate SkyHawk 4TB Surveillance Internal Hard Drive 3.5\\"","brand":"Seagate","brandId":"b-seagate","modelNumber":"ST4000VX016","sku":"ST-SKYHAWK-4TB","category":"Surveillance Storage","categoryId":"cat-storage","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/surveillance-hdd.svg"],"primaryImage":"/images/products/surveillance-hdd.svg","shortDescription":"4TB surveillance hard drive with ImagePerfect firmware for crystal-clear video streaming.","description":"Custom-built for NVR systems with built-in rotational vibration sensors for reliable multi-bay enclosures.","keyFeatures":["ImagePerfect firmware supports 64 cameras","Rotational vibration sensors for multi-bay NVRs","180TB/year workload rating","1M hours MTBF rating"],"specifications":{"capacity":"4 TB","form_factor":"3.5-inch","interface":"SATA 6 Gb/s"},"specs":{"capacity":{"label":"Capacity","value":"4 TB","highlightValue":"4 TB","showInHighlights":true},"form_factor":{"label":"Form Factor","value":"3.5-inch","highlightValue":"3.5\\"","showInHighlights":true}},"pricing":{"regularPrice":11200,"currency":"BDT"},"inventory":{"available":15,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('cable-cat6', 'D-Link CAT6 UTP 23AWG Pure Solid Copper Cable (305m Box)', 'NCB-C6UBLUR-305', 'DL-CAT6-305M', 'b-dlink', 'D-Link', 'cat-cables', 'cables-accessories', 'active', 9800, 0, 15, 0, 0, 1, '{"id":"cable-cat6","name":"D-Link CAT6 UTP 23AWG Pure Solid Copper Cable (305m Box)","brand":"D-Link","brandId":"b-dlink","modelNumber":"NCB-C6UBLUR-305","sku":"DL-CAT6-305M","category":"Cables & Accessories","categoryId":"cat-cables","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"Premium 23 AWG 100% solid electrolytic copper conductor cable for Gigabit Ethernet & PoE.","description":"Delivers full Gigabit data rates and heavy PoE power without voltage drops up to 100 meters standard.","keyFeatures":["100% Bare Electrolytic Solid Copper Conductor","Tested up to 250 MHz frequency bandwidth","Flame-retardant PVC jacket","Compliant with 802.3af/at PoE+ transmission"],"specifications":{"cable_type":"CAT6 UTP","length":"305m Box","conductor":"100% Solid Copper 23 AWG"},"specs":{"cable_type":{"label":"Standard","value":"CAT6 UTP","highlightValue":"CAT6 UTP","showInHighlights":true},"length":{"label":"Length","value":"305m Box","highlightValue":"305m","showInHighlights":true}},"pricing":{"regularPrice":9800,"currency":"BDT"},"inventory":{"available":15,"status":"in_stock"},"unit":"Box","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('acc-power', 'CamneX Central 12V 10A 9-Channel Metal Cased Power Supply Box', 'PS-12V10A-9CH', 'ACC-PWR-9CH', 'b-hikvision', 'CamneX Pro', 'cat-cables', 'cables-accessories', 'active', 1800, 0, 40, 0, 0, 1, '{"id":"acc-power","name":"CamneX Central 12V 10A 9-Channel Metal Cased Power Supply Box","brand":"CamneX Pro","brandId":"b-hikvision","modelNumber":"PS-12V10A-9CH","sku":"ACC-PWR-9CH","category":"Cables & Accessories","categoryId":"cat-cables","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"Regulated 12V DC centralized power distribution unit with 9 individual PTC auto-reset fuses.","description":"Key-lockable steel enclosure with LED channel indicators. Prevents whole-system shutdowns during single-camera shorts.","keyFeatures":["9 individually fused DC output channels","PTC auto-resettable fuses (no glass replacement required)","Heavy gauge ventilated metal box with key lock","Built-in EMI filter and surge protection"],"specifications":{"output_voltage":"12V DC","total_current":"10 Amperes","channels":"9 Channels"},"specs":{"output_voltage":{"label":"Output","value":"12V DC","highlightValue":"12V 10A","showInHighlights":true},"channels":{"label":"Outputs","value":"9 Channels","highlightValue":"9 CH","showInHighlights":true}},"pricing":{"regularPrice":1800,"currency":"BDT"},"inventory":{"available":40,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('acc-balun', 'Passive HD Video Balun & DC Power Pigtails (Per Camera Kit)', 'BALUN-HD-KIT', 'ACC-BALUN-KIT', 'b-hikvision', 'CamneX Pro', 'cat-cables', 'cables-accessories', 'active', 250, 0, 200, 0, 0, 1, '{"id":"acc-balun","name":"Passive HD Video Balun & DC Power Pigtails (Per Camera Kit)","brand":"CamneX Pro","brandId":"b-hikvision","modelNumber":"BALUN-HD-KIT","sku":"ACC-BALUN-KIT","category":"Cables & Accessories","categoryId":"cat-cables","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"High-definition passive video transceiver pair supporting TVI, AHD, and CVI signals over UTP cable.","description":"Gold-plated BNC connectors and tool-free push-pin terminal blocks for clear video transmission up to 250m.","keyFeatures":["Compatible with HD-TVI, HD-CVI, AHD, and CVBS","Built-in transient suppression protection","Tool-free spring terminal connections","Up to 250m transmission distance"],"specifications":{"connector_type":"BNC to Terminal","compatibility":"TVI/CVI/AHD"},"specs":{"compatibility":{"label":"Standard","value":"TVI/CVI/AHD","highlightValue":"HD-TVI/AHD","showInHighlights":true}},"pricing":{"regularPrice":250,"currency":"BDT"},"inventory":{"available":200,"status":"in_stock"},"unit":"Set","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('acc-bracket', 'Hikvision Deep Base Waterproof Junction Box & Camera Mount Bracket', 'DS-1280ZJ-DM18', 'HIK-BRKT-DM18', 'b-hikvision', 'Hikvision', 'cat-cables', 'cables-accessories', 'active', 850, 0, 50, 0, 0, 1, '{"id":"acc-bracket","name":"Hikvision Deep Base Waterproof Junction Box & Camera Mount Bracket","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"DS-1280ZJ-DM18","sku":"HIK-BRKT-DM18","category":"Cables & Accessories","categoryId":"cat-cables","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"Weatherproof aluminum alloy junction box for concealing cable pigtails and securing bullet and dome cameras.","description":"Solid aluminum alloy build with waterproof rubber grommet for outdoor wall and ceiling installations.","keyFeatures":["Aluminum alloy with surface spray treatment","Waterproof design with cable inlet hole","Compatible with Hikvision dome and turret series","Up to 4.5 kg load-bearing capacity"],"specifications":{"material":"Aluminum Alloy","protection":"IP66 Weatherproof","mount_type":"Wall & Ceiling"},"specs":{"protection":{"label":"Protection","value":"IP66 Weatherproof","highlightValue":"IP66","showInHighlights":true},"material":{"label":"Material","value":"Aluminum Alloy","highlightValue":"Aluminum","showInHighlights":true}},"pricing":{"regularPrice":850,"currency":"BDT"},"inventory":{"available":50,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('acc-patch-cable', 'D-Link CAT6 RJ45 Molded High-Speed Patch Cord (3-Meter)', 'NCB-C6UBLUR1-3', 'DL-PATCH-3M', 'b-dlink', 'D-Link', 'cat-cables', 'cables-accessories', 'active', 280, 0, 80, 0, 0, 1, '{"id":"acc-patch-cable","name":"D-Link CAT6 RJ45 Molded High-Speed Patch Cord (3-Meter)","brand":"D-Link","brandId":"b-dlink","modelNumber":"NCB-C6UBLUR1-3","sku":"DL-PATCH-3M","category":"Cables & Accessories","categoryId":"cat-cables","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"Factory molded pure copper CAT6 patch cable for NVR switches and router connections.","description":"Gold-plated RJ45 connector pins ensuring zero signal latency and optimal Gigabit Ethernet throughput.","keyFeatures":["50-micron gold plated RJ45 pins","Snagless strain relief boots","Bare copper stranded conductors","Supports 10/100/1000Base-T networks"],"specifications":{"length":"3 Meters","standard":"CAT6 UTP"},"specs":{"length":{"label":"Length","value":"3 Meters","highlightValue":"3m","showInHighlights":true}},"pricing":{"regularPrice":280,"currency":"BDT"},"inventory":{"available":80,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('acc-power-adapter', 'CamneX Pro 12V 2A Regulated DC Switching Power Adapter', 'AD-12V2A-DC', 'ACC-ADAPT-12V2A', 'b-hikvision', 'CamneX Pro', 'cat-power', 'power-backup-units', 'active', 350, 0, 60, 0, 0, 1, '{"id":"acc-power-adapter","name":"CamneX Pro 12V 2A Regulated DC Switching Power Adapter","brand":"CamneX Pro","brandId":"b-hikvision","modelNumber":"AD-12V2A-DC","sku":"ACC-ADAPT-12V2A","category":"Power & Backup Units","categoryId":"cat-power","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"High-efficiency 12V 2000mA switching power adapter with 2.1mm DC plug and surge suppression.","description":"Standard CCTV camera and DVR power unit with overvoltage, overcurrent, and short circuit protection.","keyFeatures":["Input: AC 100-240V 50/60Hz universal","Output: 12V DC 2.0A stabilized","Overvoltage and short-circuit auto cutoff","Standard 5.5mm x 2.1mm center-positive connector"],"specifications":{"output":"12V 2A (24W)","connector":"5.5 x 2.1mm DC"},"specs":{"output":{"label":"Output","value":"12V 2A","highlightValue":"12V 2A","showInHighlights":true}},"pricing":{"regularPrice":350,"currency":"BDT"},"inventory":{"available":60,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-ptz-2mp', 'Hikvision 2MP 4-Inch Speed Dome Mini PTZ Camera', 'DS-2DE4225IW-DE', 'HIK-PTZ-2MP', 'b-hikvision', 'Hikvision', 'cat-cctv', 'cctv-cameras', 'active', 28500, 0, 5, 0, 0, 1, '{"id":"prod-hik-ptz-2mp","name":"Hikvision 2MP 4-Inch Speed Dome Mini PTZ Camera","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"DS-2DE4225IW-DE","sku":"HIK-PTZ-2MP","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/hikvision-bullet.png"],"primaryImage":"/images/hero/hikvision-bullet.png","shortDescription":"25x optical zoom mini PTZ dome with 100m Smart IR and auto-tracking capabilities.","description":"Ideal for expansive campus parking lots, commercial courtyards, and junction traffic monitoring.","keyFeatures":["1/2.8 progressive scan CMOS","25x optical zoom and 16x digital zoom","Up to 100m IR night distance","IP66 weatherproof and IK10 vandal proof"],"specifications":{"resolution":"2MP (1080p)","night_vision":"IR Night Vision (up to 40m)","lens":"Motorized Varifocal","ip_rating":"IP66 Weatherproof","form_factor":"PTZ","audio_support":true},"specs":{"resolution":{"label":"Resolution","value":"2MP (1080p)","highlightValue":"2 MP","showInHighlights":true},"form_factor":{"label":"Form Factor","value":"PTZ","highlightValue":"25x PTZ","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP66 Weatherproof","highlightValue":"IP66","showInHighlights":true}},"pricing":{"regularPrice":28500,"currency":"BDT"},"inventory":{"available":5,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-dahua-dome-2mp', 'Dahua 2MP HDCVI Eyeball Dome Audio Camera', 'DH-HAC-HDW1200EMP-A', 'DH-2MP-DOME', 'b-dahua', 'Dahua', 'cat-cctv', 'cctv-cameras', 'active', 2850, 0, 30, 0, 0, 1, '{"id":"prod-dahua-dome-2mp","name":"Dahua 2MP HDCVI Eyeball Dome Audio Camera","brand":"Dahua","brandId":"b-dahua","modelNumber":"DH-HAC-HDW1200EMP-A","sku":"DH-2MP-DOME","category":"CCTV Cameras","categoryId":"cat-cctv","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dome.svg"],"primaryImage":"/images/products/hikvision-dome.svg","shortDescription":"All-metal eyeball camera with built-in microphone and 50m Smart IR illumination.","description":"Rugged aluminum casing suited for harsh outdoor wall mounts or high-ceiling industrial rooms.","keyFeatures":["2MP high definition HDCVI video","Built-in high sensitivity microphone","50m Smart IR distance","IP67 waterproof aluminum chassis"],"specifications":{"resolution":"2MP (1080p)","night_vision":"IR Night Vision (up to 40m)","lens":"3.6mm (Standard)","ip_rating":"IP67 Weatherproof","form_factor":"Dome","audio_support":true},"specs":{"resolution":{"label":"Resolution","value":"2MP (1080p)","highlightValue":"2 MP","showInHighlights":true},"night_vision":{"label":"Night Vision","value":"IR Night Vision (up to 40m)","highlightValue":"50m IR","showInHighlights":true},"ip_rating":{"label":"IP Rating","value":"IP67 Weatherproof","highlightValue":"IP67","showInHighlights":true}},"pricing":{"regularPrice":2850,"currency":"BDT"},"inventory":{"available":30,"status":"in_stock"},"unit":"Piece","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-hik-dvr-32ch', 'Hikvision 32-Channel Enterprise AcuSense HD DVR', 'iDS-7232HQHI-M2/S', 'HIK-DVR-32CH', 'b-hikvision', 'Hikvision', 'cat-recorders', 'recorders', 'active', 28000, 0, 5, 0, 0, 1, '{"id":"prod-hik-dvr-32ch","name":"Hikvision 32-Channel Enterprise AcuSense HD DVR","brand":"Hikvision","brandId":"b-hikvision","modelNumber":"iDS-7232HQHI-M2/S","sku":"HIK-DVR-32CH","category":"Recorders","categoryId":"cat-recorders","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dvr.svg"],"primaryImage":"/images/products/hikvision-dvr.svg","shortDescription":"32-channel high-density AI DVR supporting 4 SATA hard drives up to 40TB total.","description":"Centralized recorder for hospitals, department stores, and large corporate campuses.","keyFeatures":["32 analog channels + 16 IP channels","AcuSense AI filtering on up to 16 channels","4 SATA interfaces supporting up to 10TB each","Dual Gigabit LAN interfaces"],"specifications":{"channels":"32 CH","compression":"H.265 Pro+","max_resolution":"5MP Lite","hdd_slots":"4 SATA Slots"},"specs":{"channels":{"label":"Channels","value":"32 CH","highlightValue":"32 CH","showInHighlights":true},"compression":{"label":"Compression","value":"H.265 Pro+","highlightValue":"H.265+","showInHighlights":true}},"pricing":{"regularPrice":28000,"currency":"BDT"},"inventory":{"available":5,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-dahua-xvr-16ch', 'Dahua 16-Channel WizSense 1U XVR System', 'DH-XVR5216AN-I3', 'DH-XVR-16CH', 'b-dahua', 'Dahua', 'cat-recorders', 'recorders', 'active', 15500, 0, 8, 0, 0, 1, '{"id":"prod-dahua-xvr-16ch","name":"Dahua 16-Channel WizSense 1U XVR System","brand":"Dahua","brandId":"b-dahua","modelNumber":"DH-XVR5216AN-I3","sku":"DH-XVR-16CH","category":"Recorders","categoryId":"cat-recorders","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hikvision-dvr.svg"],"primaryImage":"/images/products/hikvision-dvr.svg","shortDescription":"16-channel 5-in-1 digital video recorder with dual SATA bays and AI perimeter protection.","description":"Offers 16 SMD Plus channels to detect people and vehicles accurately, preventing false motion triggers.","keyFeatures":["16 channels SMD Plus protection","H.265+/H.265 dual-stream video compression","Supports up to 2 SATA drives up to 16TB each","Full HD 1080P real-time recording"],"specifications":{"channels":"16 CH","compression":"AI Coding (H.265+)","max_resolution":"5MP","hdd_slots":"2 SATA Slots"},"specs":{"channels":{"label":"Channels","value":"16 CH","highlightValue":"16 CH","showInHighlights":true},"compression":{"label":"Compression","value":"AI Coding (H.265+)","highlightValue":"AI Coding","showInHighlights":true}},"pricing":{"regularPrice":15500,"currency":"BDT"},"inventory":{"available":8,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-zkteco-f22', 'ZKTeco F22 Ultra-Thin Fingerprint Time Attendance & Access Control', 'F22', 'ZK-F22', 'b-zkteco', 'ZKTeco', 'cat-access', 'access-control-biometrics', 'active', 13500, 0, 12, 0, 0, 1, '{"id":"prod-zkteco-f22","name":"ZKTeco F22 Ultra-Thin Fingerprint Time Attendance & Access Control","brand":"ZKTeco","brandId":"b-zkteco","modelNumber":"F22","sku":"ZK-F22","category":"Access Control & Biometrics","categoryId":"cat-access","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/hero/zkteco-biometric.png"],"primaryImage":"/images/hero/zkteco-biometric.png","shortDescription":"Ultra-thin sleek biometric terminal with Wi-Fi connectivity and BioID fingerprint sensor.","description":"Modern slimline design for executive boardrooms and glass door entrances with built-in Wi-Fi.","keyFeatures":["BioID sensor with exceptional recognition rate","Built-in Wi-Fi and TCP/IP","Touch keypad with 2.4-inch TFT color display","Auxiliary input interface for linkage"],"specifications":{"user_capacity":"5000 Users","fingerprint_capacity":"3000 Prints","verification_methods":"Fingerprint / Card / Password","connectivity":"TCP/IP & Wi-Fi"},"specs":{"user_capacity":{"label":"Capacity","value":"5000 Users","highlightValue":"5000 Users","showInHighlights":true},"verification_methods":{"label":"Verification","value":"Fingerprint / Card / Password","highlightValue":"Finger & Wi-Fi","showInHighlights":true},"connectivity":{"label":"Network","value":"TCP/IP & Wi-Fi","highlightValue":"Wi-Fi","showInHighlights":true}},"pricing":{"regularPrice":13500,"currency":"BDT"},"inventory":{"available":12,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-zkteco-bracket-zl', 'ZKTeco Z&L Bracket for 280KG Magnetic Lock Installation', 'ZL-280', 'ZK-BRACKET-ZL', 'b-zkteco', 'ZKTeco', 'cat-access', 'access-control-biometrics', 'active', 1400, 0, 50, 0, 0, 1, '{"id":"prod-zkteco-bracket-zl","name":"ZKTeco Z&L Bracket for 280KG Magnetic Lock Installation","brand":"ZKTeco","brandId":"b-zkteco","modelNumber":"ZL-280","sku":"ZK-BRACKET-ZL","category":"Access Control & Biometrics","categoryId":"cat-access","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/hardware-accessory.svg"],"primaryImage":"/images/products/hardware-accessory.svg","shortDescription":"Heavy-duty anodized sandblasted aluminum bracket set for in-swing door magnetic locks.","description":"Ensures rigid and secure installation on inward opening wooden or metal security doors.","keyFeatures":["High strength anodized aluminum alloy","Sandblasting surface finish","Fits 280kg (600 lbs) electromagnetic locks","Easy to install with pre-drilled holes"],"specifications":{"material":"Anodized Aluminum","compatibility":"280KG Magnetic Locks"},"specs":{"compatibility":{"label":"Compatibility","value":"280KG Magnetic Locks","highlightValue":"280kg Lock","showInHighlights":true}},"pricing":{"regularPrice":1400,"currency":"BDT"},"inventory":{"available":50,"status":"in_stock"},"unit":"Set","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-ruijie-es105d', 'Ruijie Reyee RG-ES105D 5-Port Gigabit Desktop Plastic Switch', 'RG-ES105D', 'RG-ES105D', 'b-ruijie', 'Ruijie Networks', 'cat-networking', 'network-switches', 'active', 1350, 0, 50, 0, 0, 1, '{"id":"prod-ruijie-es105d","name":"Ruijie Reyee RG-ES105D 5-Port Gigabit Desktop Plastic Switch","brand":"Ruijie Networks","brandId":"b-ruijie","modelNumber":"RG-ES105D","sku":"RG-ES105D","category":"Network Switches","categoryId":"cat-networking","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/ruijie-switch.svg"],"primaryImage":"/images/products/ruijie-switch.svg","shortDescription":"Plug-and-play 5-port 10/100/1000 Mbps gigabit unmanaged compact desktop switch.","description":"Cost-effective high-speed switch for home offices, cash registers, and small network clusters.","keyFeatures":["5 x 10/100/1000 Mbps auto-negotiation RJ45 ports","Plug and play without any configuration","Compact matte plastic casing","Quiet fanless operation"],"specifications":{"ports":"5 Ports","poe_support":false,"switching_capacity":"10 Gbps","managed":false},"specs":{"ports":{"label":"Ports","value":"5 Ports","highlightValue":"5 Ports","showInHighlights":true},"switching_capacity":{"label":"Backplane","value":"10 Gbps","highlightValue":"10 Gbps","showInHighlights":true}},"pricing":{"regularPrice":1350,"currency":"BDT"},"inventory":{"available":50,"status":"in_stock"},"unit":"Unit","isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-01-05T10:00:00.000Z","updatedAt":"2026-02-15T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-c6n', 'EZVIZ C6N 3MP Pan & Tilt Smart Wi-Fi Camera', 'CS-C6N-D0-8B3WF', 'EZV-C6N-3MP', 'brand-ezviz', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 4200, 3850, 25, 1, 1, 1, '{"id":"prod-wifi-c6n","name":"EZVIZ C6N 3MP Pan & Tilt Smart Wi-Fi Camera","modelNumber":"CS-C6N-D0-8B3WF","sku":"EZV-C6N-3MP","brandId":"brand-ezviz","brand":"EZVIZ","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"description":"Motorized 360-degree pan and tilt Wi-Fi camera with smart tracking, two-way audio, and infrared night vision up to 10m.","pricing":{"regularPrice":4200,"salePrice":3850,"currency":"BDT"},"specifications":{"resolution":"3MP (2K)","wifi_band":"2.4 GHz","storage":"MicroSD up to 256GB","two_way_audio":true,"power_source":"5V USB-C","app_support":"EZVIZ App"},"inventory":{"available":25,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-h8c', 'EZVIZ H8c 4MP 360° Outdoor Pan & Tilt Wi-Fi Camera', 'CS-H8c-R100-1K4WKFL', 'EZV-H8C-4MP', 'brand-ezviz', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 9200, 0, 18, 1, 1, 1, '{"id":"prod-wifi-h8c","name":"EZVIZ H8c 4MP 360° Outdoor Pan & Tilt Wi-Fi Camera","modelNumber":"CS-H8c-R100-1K4WKFL","sku":"EZV-H8C-4MP","brandId":"brand-ezviz","brand":"EZVIZ","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"description":"Weatherproof outdoor pan/tilt camera with AI human detection, color night vision, active defense siren, and strobe light.","pricing":{"regularPrice":9200,"currency":"BDT"},"specifications":{"resolution":"4MP (2K QHD)","wifi_band":"2.4 GHz","storage":"MicroSD up to 512GB","two_way_audio":true,"power_source":"12V DC Plug-in","app_support":"EZVIZ App"},"inventory":{"available":18,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-h3c', 'EZVIZ H3c 2K Color Night Vision Outdoor Wi-Fi Camera', 'CS-H3c-R100-1K3WKFL', 'EZV-H3C-3MP', 'brand-ezviz', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 6500, 0, 20, 1, 0, 1, '{"id":"prod-wifi-h3c","name":"EZVIZ H3c 2K Color Night Vision Outdoor Wi-Fi Camera","modelNumber":"CS-H3c-R100-1K3WKFL","sku":"EZV-H3C-3MP","brandId":"brand-ezviz","brand":"EZVIZ","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":false,"isFeatured":true,"isDemo":true,"sample":true,"description":"Reliable IP67 weatherproof outdoor bullet camera featuring color night vision and AI-powered human shape detection.","pricing":{"regularPrice":6500,"currency":"BDT"},"specifications":{"resolution":"3MP (2K)","wifi_band":"2.4 GHz","storage":"MicroSD up to 512GB","two_way_audio":true,"power_source":"12V DC Plug-in","app_support":"EZVIZ App"},"inventory":{"available":20,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-hik-pt', 'Hikvision 2MP Indoor Pan & Tilt Wi-Fi Camera', 'DS-2CV2Q21FD-IW', 'HIK-2CV2Q21-2MP', 'brand-hikvision', 'Hikvision', 'cat-wifi', 'wi-fi-smart-devices', 'active', 5800, 0, 15, 1, 1, 1, '{"id":"prod-wifi-hik-pt","name":"Hikvision 2MP Indoor Pan & Tilt Wi-Fi Camera","modelNumber":"DS-2CV2Q21FD-IW","sku":"HIK-2CV2Q21-2MP","brandId":"brand-hikvision","brand":"Hikvision","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"description":"Dual-antenna indoor pan-tilt Wi-Fi camera with Hik-Connect cloud P2P, built-in microphone and speaker, and 10m IR.","pricing":{"regularPrice":5800,"currency":"BDT"},"specifications":{"resolution":"2MP (1080p)","wifi_band":"2.4 GHz","storage":"MicroSD up to 256GB","two_way_audio":true,"power_source":"5V USB-C","app_support":"Hik-Connect"},"inventory":{"available":15,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-hik-bullet', 'Hikvision 4MP Smart Wi-Fi Outdoor Bullet Camera', 'DS-2CV1043G2-LIDW', 'HIK-2CV1043-4MP', 'brand-hikvision', 'Hikvision', 'cat-wifi', 'wi-fi-smart-devices', 'active', 8500, 0, 12, 1, 0, 1, '{"id":"prod-wifi-hik-bullet","name":"Hikvision 4MP Smart Wi-Fi Outdoor Bullet Camera","modelNumber":"DS-2CV1043G2-LIDW","sku":"HIK-2CV1043-4MP","brandId":"brand-hikvision","brand":"Hikvision","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":false,"isFeatured":true,"isDemo":true,"sample":true,"description":"IP66 outdoor wireless bullet with smart dual lighting, onboard Wi-Fi range up to 120m in open field, and digital WDR.","pricing":{"regularPrice":8500,"currency":"BDT"},"specifications":{"resolution":"4MP (2K QHD)","wifi_band":"2.4 GHz","storage":"MicroSD up to 256GB","two_way_audio":true,"power_source":"12V DC Plug-in","app_support":"Hik-Connect"},"inventory":{"available":12,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-imou-ranger', 'Imou Ranger 2 4MP Indoor 360° Wi-Fi Camera', 'IPC-A42P-D', 'IMOU-RANGER2-4MP', 'brand-dahua', 'Dahua', 'cat-wifi', 'wi-fi-smart-devices', 'active', 4600, 0, 30, 1, 1, 1, '{"id":"prod-wifi-imou-ranger","name":"Imou Ranger 2 4MP Indoor 360° Wi-Fi Camera","modelNumber":"IPC-A42P-D","sku":"IMOU-RANGER2-4MP","brandId":"brand-dahua","brand":"Dahua","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"description":"High-resolution 4MP pan and tilt camera with abnormal sound alarm, physical privacy shutter, and human detection.","pricing":{"regularPrice":4600,"currency":"BDT"},"specifications":{"resolution":"4MP (2K QHD)","wifi_band":"2.4 GHz","storage":"MicroSD up to 256GB","two_way_audio":true,"power_source":"5V USB-C","app_support":"DMSS / Imou Life"},"inventory":{"available":30,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-imou-bullet', 'Imou Bullet 2C 4MP Weatherproof Outdoor Wi-Fi Camera', 'IPC-F42P', 'IMOU-BULLET2C-4MP', 'brand-dahua', 'Dahua', 'cat-wifi', 'wi-fi-smart-devices', 'active', 5900, 0, 22, 1, 0, 1, '{"id":"prod-wifi-imou-bullet","name":"Imou Bullet 2C 4MP Weatherproof Outdoor Wi-Fi Camera","modelNumber":"IPC-F42P","sku":"IMOU-BULLET2C-4MP","brandId":"brand-dahua","brand":"Dahua","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":false,"isFeatured":true,"isDemo":true,"sample":true,"description":"Weatherproof IP67 bullet camera with dual external antennas, built-in Wi-Fi hotspot mode, and 30m night vision.","pricing":{"regularPrice":5900,"currency":"BDT"},"specifications":{"resolution":"4MP (2K QHD)","wifi_band":"2.4 GHz","storage":"MicroSD up to 256GB","two_way_audio":false,"power_source":"12V DC Plug-in","app_support":"DMSS / Imou Life"},"inventory":{"available":22,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-imou-cruiser', 'Imou Cruiser 2 5MP 3K Outdoor PTZ Wi-Fi Camera', 'IPC-GS7EP-5M0WE', 'IMOU-CRUISER2-5MP', 'brand-dahua', 'Dahua', 'cat-wifi', 'wi-fi-smart-devices', 'active', 11500, 0, 14, 1, 1, 1, '{"id":"prod-wifi-imou-cruiser","name":"Imou Cruiser 2 5MP 3K Outdoor PTZ Wi-Fi Camera","modelNumber":"IPC-GS7EP-5M0WE","sku":"IMOU-CRUISER2-5MP","brandId":"brand-dahua","brand":"Dahua","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","status":"active","isPopular":true,"isFeatured":true,"isDemo":true,"sample":true,"description":"5MP 3K outdoor speed dome featuring full panoramic coverage, smart full-color night vision, and Wi-Fi 6 connectivity.","pricing":{"regularPrice":11500,"currency":"BDT"},"specifications":{"resolution":"5MP (3K)","wifi_band":"Wi-Fi 6","storage":"MicroSD up to 512GB","two_way_audio":true,"power_source":"12V DC Plug-in","app_support":"DMSS / Imou Life"},"inventory":{"available":14,"status":"in_stock"},"subcategoryId":"subcat-wifi-cameras","subcategory":"Wi-Fi Cameras","subcategorySlug":"wifi-cameras"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL);
+INSERT IGNORE INTO `products` (`id`, `name`, `model_number`, `sku`, `brand_id`, `brand_name`, `category_id`, `category_slug`, `status`, `price`, `compare_price`, `stock_quantity`, `is_featured`, `is_popular`, `is_demo`, `data_json`, `created_at`, `updated_at`, `is_archived`, `archived_at`) VALUES
+('prod-wifi-db1c', 'EZVIZ DB1C 1080p Smart Wi-Fi Video Doorbell', 'CS-DB1C-A0-1E2W2FR', 'EZVIZ-DB1C-1080P', 'b-hikvision', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 8500, 0, 12, 0, 1, 1, '{"id":"prod-wifi-db1c","name":"EZVIZ DB1C 1080p Smart Wi-Fi Video Doorbell","shortName":"EZVIZ DB1C Video Doorbell","brand":"EZVIZ","brandId":"b-hikvision","modelNumber":"CS-DB1C-A0-1E2W2FR","sku":"EZVIZ-DB1C-1080P","category":"Wi-Fi / Smart Devices","categoryId":"cat-wifi","subcategory":"Video Doorbells","subcategoryId":"subcat-video-doorbells","subcategorySlug":"video-doorbells","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/smart-doorbell.svg"],"primaryImage":"/images/products/smart-doorbell.svg","shortDescription":"1080p Full HD video doorbell with AI human detection, 170° vertical field of view, and two-way audio talk.","description":"Compact weatherproof smart doorbell featuring dual-band 2.4/5GHz Wi-Fi connectivity and night vision up to 5 meters. Free EZVIZ app push notifications on doorstep rings.","keyFeatures":["1080p Full HD Video","170° Vertical Viewing Angle","AI-Powered Human Detection","Dual-Band 2.4 & 5 GHz Wi-Fi","IP65 Weather Resistance"],"specifications":{"resolution":"1080p","field_of_view":"170° Vertical","audio":"Two-Way Talk","wifi":"Dual-Band 2.4/5GHz"},"specs":{"resolution":{"label":"Resolution","value":"1080p","highlightValue":"1080p FHD","showInHighlights":true},"viewingAngle":{"label":"FOV","value":"170°","highlightValue":"170° Vertical","showInHighlights":true},"audio":{"label":"Audio","value":"Two-Way","highlightValue":"Two-Way Talk","showInHighlights":true}},"pricing":{"regularPrice":8500,"currency":"BDT"},"inventory":{"trackQuantity":true,"available":12},"unit":"Piece","warrantyMonths":12,"isFeatured":false,"isPopular":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-light-lb1', 'EZVIZ LB1 Smart Color LED Wi-Fi Bulb (E27)', 'CS-HAL-LB1-LHAW', 'EZVIZ-LB1-RGB', 'b-hikvision', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 1650, 0, 25, 0, 1, 1, '{"id":"prod-wifi-light-lb1","name":"EZVIZ LB1 Smart Color LED Wi-Fi Bulb (E27)","shortName":"EZVIZ LB1 Color Smart Bulb","brand":"EZVIZ","brandId":"b-hikvision","modelNumber":"CS-HAL-LB1-LHAW","sku":"EZVIZ-LB1-RGB","category":"Wi-Fi / Smart Devices","categoryId":"cat-wifi","subcategory":"Smart Lights","subcategoryId":"subcat-smart-lights","subcategorySlug":"smart-lights","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/smart-light.svg"],"primaryImage":"/images/products/smart-light.svg","shortDescription":"Dimmable multicolor smart LED bulb with 16 million colors, 806 lumens brightness, and direct smartphone scheduling.","description":"Energy-saving 8W smart bulb fitting standard E27 sockets. Connects directly to 2.4GHz Wi-Fi with no hub required. Supports Alexa and Google Assistant voice automation.","keyFeatures":["16 Million Colors + Tunable White","806 Lumens Dimmable Brightness","No Hub Required (2.4GHz Wi-Fi)","Timer & Automation Schedules","Voice Control Compatible"],"specifications":{"brightness":"806 Lumens","fitting":"E27","power":"8W LED","connectivity":"2.4GHz Wi-Fi"},"specs":{"brightness":{"label":"Brightness","value":"806 Lumens","highlightValue":"806 Lumens","showInHighlights":true},"colors":{"label":"Colors","value":"16 Million RGB","highlightValue":"16M Colors","showInHighlights":true},"fitting":{"label":"Socket","value":"E27 Base","highlightValue":"E27 Fitting","showInHighlights":true}},"pricing":{"regularPrice":1650,"currency":"BDT"},"inventory":{"trackQuantity":true,"available":25},"unit":"Piece","warrantyMonths":12,"isFeatured":false,"isPopular":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-light-strip', 'EZVIZ T30-A Smart Wi-Fi RGB Light Strip (5 Meters)', 'CS-HAL-LS1-5M', 'EZVIZ-LS1-STRIP-5M', 'b-hikvision', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 2950, 0, 15, 0, 0, 1, '{"id":"prod-wifi-light-strip","name":"EZVIZ T30-A Smart Wi-Fi RGB Light Strip (5 Meters)","shortName":"EZVIZ 5m RGB Smart Strip","brand":"EZVIZ","brandId":"b-hikvision","modelNumber":"CS-HAL-LS1-5M","sku":"EZVIZ-LS1-STRIP-5M","category":"Wi-Fi / Smart Devices","categoryId":"cat-wifi","subcategory":"Smart Lights","subcategoryId":"subcat-smart-lights","subcategorySlug":"smart-lights","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/smart-light.svg"],"primaryImage":"/images/products/smart-light.svg","shortDescription":"Flexible 5-meter adhesive RGB light strip with music sync, custom scene illumination, and app control.","description":"Customizable accent strip for TV backlighting, false ceilings, and ambient displays. Cuttable every 10cm with included high-tack mounting tape.","keyFeatures":["5 Meters Flexible Length","Music Rhythm Sync Mode","Cuttable and Expandable","App Remote Dimming & Scenes"],"specifications":{"length":"5 Meters","colors":"RGBIC","connectivity":"Wi-Fi 2.4GHz"},"specs":{"length":{"label":"Length","value":"5 Meters","highlightValue":"5m Strip","showInHighlights":true},"sync":{"label":"Feature","value":"Music Sync","highlightValue":"Music Sync","showInHighlights":true}},"pricing":{"regularPrice":2950,"currency":"BDT"},"inventory":{"trackQuantity":true,"available":15},"unit":"Set","warrantyMonths":12,"isFeatured":false,"isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-plug-t30', 'EZVIZ T30-10B Smart Wi-Fi Plug with Power Metering', 'CS-T30-10B-EU', 'EZVIZ-T30-PLUG-10A', 'b-hikvision', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 1450, 0, 30, 1, 1, 1, '{"id":"prod-wifi-plug-t30","name":"EZVIZ T30-10B Smart Wi-Fi Plug with Power Metering","shortName":"EZVIZ T30 Smart Wi-Fi Plug","brand":"EZVIZ","brandId":"b-hikvision","modelNumber":"CS-T30-10B-EU","sku":"EZVIZ-T30-PLUG-10A","category":"Wi-Fi / Smart Devices","categoryId":"cat-wifi","subcategory":"Smart Plugs & Switches","subcategoryId":"subcat-smart-plugs","subcategorySlug":"smart-plugs-switches","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/smart-plug.svg"],"primaryImage":"/images/products/smart-plug.svg","shortDescription":"Compact 10A smart wall plug with energy consumption monitoring, countdown timers, and flame-retardant housing.","description":"Control AC appliances, water heaters, and chargers remotely from anywhere. Displays real-time wattage and kilowatt-hour tracking in the EZVIZ mobile app.","keyFeatures":["Real-Time Energy Metering","2300W Maximum Power Capacity","App Remote On/Off & Timers","Flame-Retardant 750°C Material"],"specifications":{"max_load":"10A / 2300W","voltage":"220-240V AC","connectivity":"2.4GHz Wi-Fi"},"specs":{"maxLoad":{"label":"Max Load","value":"10A / 2300W","highlightValue":"10A 2300W","showInHighlights":true},"metering":{"label":"Energy","value":"Live Metering","highlightValue":"Power Meter","showInHighlights":true}},"pricing":{"regularPrice":1450,"currency":"BDT"},"inventory":{"trackQuantity":true,"available":30},"unit":"Piece","warrantyMonths":12,"isFeatured":true,"isPopular":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-lock-dl01', 'EZVIZ DL01S Smart Keyless Entry Deadbolt Lock', 'CS-DL01S', 'EZVIZ-DL01S-LOCK', 'b-hikvision', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 16800, 0, 6, 1, 0, 1, '{"id":"prod-wifi-lock-dl01","name":"EZVIZ DL01S Smart Keyless Entry Deadbolt Lock","shortName":"EZVIZ DL01S Smart Deadbolt","brand":"EZVIZ","brandId":"b-hikvision","modelNumber":"CS-DL01S","sku":"EZVIZ-DL01S-LOCK","category":"Wi-Fi / Smart Devices","categoryId":"cat-wifi","subcategory":"Smart Locks","subcategoryId":"subcat-smart-locks","subcategorySlug":"smart-locks","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/smart-lock.svg"],"primaryImage":"/images/products/smart-lock.svg","shortDescription":"Keyless retrofit smart lock with digital keypad, temporary visitor passcodes, and auto-lock sensor.","description":"Fits over existing door deadbolts for fast 15-minute installation. Control access via Bluetooth or paired Wi-Fi gateway with real-time unlock logs.","keyFeatures":["Keypad Passcode & App Unlock","Temporary Visitor Access Codes","Door Status Auto-Lock Sensor","Emergency Power Interface"],"specifications":{"lock_type":"Deadbolt Retrofit","battery":"4 x AA Alkaline","connectivity":"Bluetooth & Wi-Fi"},"specs":{"unlockMethod":{"label":"Access","value":"Passcode & App","highlightValue":"Keypad + App","showInHighlights":true},"battery":{"label":"Battery","value":"4x AA Batteries","highlightValue":"1-Year Life","showInHighlights":true}},"pricing":{"regularPrice":16800,"currency":"BDT"},"inventory":{"trackQuantity":true,"available":6},"unit":"Set","warrantyMonths":18,"isFeatured":true,"isPopular":false,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-lock-dl05', 'EZVIZ DL05 Biometric Smart Door Lock with Fingerprint Scanner', 'CS-DL05-PRO', 'EZVIZ-DL05-FINGERPRINT', 'b-hikvision', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 0, 0, 4, 1, 1, 1, '{"id":"prod-wifi-lock-dl05","name":"EZVIZ DL05 Biometric Smart Door Lock with Fingerprint Scanner","shortName":"EZVIZ DL05 Biometric Lock","brand":"EZVIZ","brandId":"b-hikvision","modelNumber":"CS-DL05-PRO","sku":"EZVIZ-DL05-FINGERPRINT","category":"Wi-Fi / Smart Devices","categoryId":"cat-wifi","subcategory":"Smart Locks","subcategoryId":"subcat-smart-locks","subcategorySlug":"smart-locks","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"images":["/images/products/smart-lock.svg"],"primaryImage":"/images/products/smart-lock.svg","shortDescription":"Commercial biometric smart lock with semiconductor fingerprint sensor, anti-peep keypad, and IC card keys.","description":"Heavy-duty zinc alloy exterior door lock with integrated doorbell chime, emergency mechanical key cylinder, and remote unlocking.","keyFeatures":["0.3s Rapid Fingerprint Recognition","Anti-Peep Virtual Password Entry","RFID Card & Smartphone App Unlock","Built-in Doorbell & Tamper Alarm"],"specifications":{"fingerprint_capacity":"50 Users","material":"Zinc Alloy","connectivity":"Wi-Fi 2.4GHz"},"specs":{"biometrics":{"label":"Fingerprint","value":"0.3s Sensor","highlightValue":"Biometric 0.3s","showInHighlights":true},"material":{"label":"Chassis","value":"Zinc Alloy","highlightValue":"Zinc Alloy","showInHighlights":true}},"pricing":{"regularPrice":null,"currency":"BDT"},"inventory":{"trackQuantity":true,"available":4},"unit":"Set","warrantyMonths":24,"isFeatured":true,"isPopular":true,"isDemo":true,"sample":true,"createdAt":"2026-03-25T10:00:00.000Z","updatedAt":"2026-03-25T10:00:00.000Z"}', '2026-10-18 18:22:16', '2026-10-18 18:22:16', 0, NULL),
+('prod-wifi-db2', 'EZVIZ DB2 2K Battery Video Doorbell with Chime', 'CS-DB2-A0-2C5WF', 'EZV-DB2-2K', 'brand-ezviz', 'EZVIZ', 'cat-wifi', 'wi-fi-smart-devices', 'active', 11500, NULL, 12, 0, 1, 0, '{"id":"prod-wifi-db2","name":"EZVIZ DB2 2K Battery Video Doorbell with Chime","slug":"ezviz-db2-2k-battery-video-doorbell","modelNumber":"CS-DB2-A0-2C5WF","sku":"EZV-DB2-2K","brandId":"brand-ezviz","brand":"EZVIZ","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","shortDescription":"Wireless 2K smart video doorbell with wire-free battery installation and indoor chime.","description":"Crisp 2K resolution video doorbell featuring PIR human detection, ultra-wide 176° field of view, and included indoor wireless chime.","pricing":{"regularPrice":11500},"inventory":{"available":12,"reserved":0,"lowStockThreshold":3},"specifications":[{"key":"Resolution","value":"2K (2000 x 1504)"},{"key":"Field of View","value":"176° Ultra-Wide Angle"},{"key":"Night Vision","value":"Up to 5m Infrared"},{"key":"Battery","value":"5200mAh Rechargeable"},{"key":"Connectivity","value":"Wi-Fi 2.4GHz"}],"status":"active","websiteVisible":true,"isPopular":true,"subcategoryId":"subcat-video-doorbells","subcategory":"Video Doorbells","subcategorySlug":"video-doorbells"}', '2026-10-18 18:57:07', '2026-10-18 18:57:07', 0, NULL),
+('prod-wifi-imou-ranger2pro-3mp', 'Imou Ranger 2 Pro 3MP Indoor Pan & Tilt Wi-Fi Camera', 'IPC-A32P-L', 'IMOU-RANGER2PRO-3MP', 'brand-imou', 'Imou', 'cat-wifi', 'wi-fi-smart-devices', 'active', NULL, NULL, 10, 1, 1, 0, '{"id":"prod-wifi-imou-ranger2pro-3mp","name":"Imou Ranger 2 Pro 3MP Indoor Pan & Tilt Wi-Fi Camera","shortName":"Imou Ranger 2 Pro 3MP","modelNumber":"IPC-A32P-L","sku":"IMOU-RANGER2PRO-3MP","brandId":"brand-imou","brand":"Imou","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","subcategoryId":"subcat-wifi-cameras","subcategory":"Indoor Pan & Tilt Cameras","subcategorySlug":"wifi-cameras","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"isPopular":true,"isFeatured":true,"primaryImage":"/images/products/hikvision-dome.svg","images":["/images/products/hikvision-dome.svg"],"shortDescription":"3MP (2304 × 1296) 2K indoor smart pan & tilt Wi-Fi 6 camera featuring 355° pan, -5° to 80° tilt, two-way audio, and H.265 video compression.","description":"The Imou Ranger 2 Pro 3MP (IPC-A32P-L) delivers crystal-clear 2K indoor surveillance with 355° horizontal rotation and -5° to 80° vertical tilt. Powered by next-gen Dual-Band Wi-Fi 6 connectivity, it provides ultra-smooth video streaming, AI human detection, smart tracking, two-way audio, abnormal sound detection, and physical privacy shutter mode.","keyFeatures":["3MP 2K Resolution (2304 × 1296) with clear detail","355° Pan & -5° to 80° Tilt for complete 360° indoor coverage","Dual-Band Wi-Fi 6 (2.4GHz & 5GHz) for ultra-fast, stable streaming","Two-Way Audio with built-in microphone and high-fidelity speaker","Advanced AI Human Detection & Smart Motion Tracking","Physical Privacy Shield Mode to hide lens when at home","Abnormal Sound Alarm (baby crying, glass breaking alerts)","H.265 / H.264 Video Compression for optimized bandwidth and storage"],"specifications":{"resolution":"3MP (2304 × 1296)","pan_range":"0° to 355° Pan","tilt_range":"-5° to 80° Tilt","two_way_audio":"Built-in Mic & Speaker (Two-Way Audio)","wifi_connectivity":"Dual-Band Wi-Fi 6 (2.4GHz / 5GHz)","video_compression":"H.265 / H.264","night_vision":"Infrared Night Vision up to 10m (33ft)","lens":"3.6mm Fixed Lens","storage":"MicroSD Slot (up to 256GB), Imou Cloud, NVR","smart_detection":"AI Human Detection, Pet Detection, Motion Tracking","power_source":"DC 5V 1.5A USB Type-C","app_support":"Imou Life App (iOS / Android)"},"pricing":{"regularPrice":null,"salePrice":null,"currency":"BDT"},"inventory":{"available":0,"status":"request_quote"},"unit":"Piece","warrantyMonths":12,"warrantyType":"official","warrantyText":"1-Year Official Manufacturer Warranty"}', '2026-10-18 18:57:07', '2026-10-18 18:57:07', 0, NULL),
+('prod-wifi-imou-ranger2pro-5mp', 'Imou Ranger 2 Pro 5MP Indoor Pan & Tilt Wi-Fi Camera', 'IPC-A52P-L', 'IMOU-RANGER2PRO-5MP', 'brand-imou', 'Imou', 'cat-wifi', 'wi-fi-smart-devices', 'active', NULL, NULL, 10, 1, 1, 0, '{"id":"prod-wifi-imou-ranger2pro-5mp","name":"Imou Ranger 2 Pro 5MP Indoor Pan & Tilt Wi-Fi Camera","shortName":"Imou Ranger 2 Pro 5MP","modelNumber":"IPC-A52P-L","sku":"IMOU-RANGER2PRO-5MP","brandId":"brand-imou","brand":"Imou","categoryId":"cat-wifi","category":"Wi-Fi / Smart Devices","subcategoryId":"subcat-wifi-cameras","subcategory":"Indoor Pan & Tilt Cameras","subcategorySlug":"wifi-cameras","productType":"physical","status":"active","websiteVisible":true,"posAvailable":true,"isPopular":true,"isFeatured":true,"primaryImage":"/images/products/hikvision-dome.svg","images":["/images/products/hikvision-dome.svg"],"shortDescription":"5MP (2880 × 1620) 3K indoor smart pan & tilt Wi-Fi 6 camera featuring 355° pan, -5° to 80° tilt, two-way audio, and H.265 video compression.","description":"The Imou Ranger 2 Pro 5MP (IPC-A52P-L) provides ultra-high 3K resolution surveillance with complete 360° coverage via 355° pan and -5° to 80° tilt. Equipped with Dual-Band Wi-Fi 6 technology, AI-driven human and pet detection, auto-motion tracking, two-way audio communication, abnormal sound alarm, and physical privacy shutter.","keyFeatures":["5MP 3K Resolution (2880 × 1620) with ultra-fine clarity","355° Pan & -5° to 80° Tilt for complete 360° indoor coverage","Dual-Band Wi-Fi 6 (2.4GHz & 5GHz) for lag-free high-bitrate streaming","Two-Way Audio with built-in microphone and high-fidelity speaker","Advanced AI Human Detection & Smart Motion Tracking","Physical Privacy Shield Mode to hide lens when at home","Abnormal Sound Alarm (baby crying, glass breaking alerts)","H.265 / H.264 Video Compression for optimized bandwidth and storage"],"specifications":{"resolution":"5MP (2880 × 1620)","pan_range":"0° to 355° Pan","tilt_range":"-5° to 80° Tilt","two_way_audio":"Built-in Mic & Speaker (Two-Way Audio)","wifi_connectivity":"Dual-Band Wi-Fi 6 (2.4GHz / 5GHz)","video_compression":"H.265 / H.264","night_vision":"Infrared Night Vision up to 10m (33ft)","lens":"3.6mm Fixed Lens","storage":"MicroSD Slot (up to 256GB), Imou Cloud, NVR","smart_detection":"AI Human Detection, Pet Detection, Motion Tracking","power_source":"DC 5V 1.5A USB Type-C","app_support":"Imou Life App (iOS / Android)"},"pricing":{"regularPrice":null,"salePrice":null,"currency":"BDT"},"inventory":{"available":0,"status":"request_quote"},"unit":"Piece","warrantyMonths":12,"warrantyType":"official","warrantyText":"1-Year Official Manufacturer Warranty"}', '2026-10-18 18:57:07', '2026-10-18 18:57:07', 0, NULL);
+
+-- Table: projects (3 rows)
+INSERT IGNORE INTO `projects` (`id`, `title`, `slug`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('proj-1', 'Commercial Corporate Office Security setup', 'proj-1', '{"id":"proj-1","title":"Commercial Corporate Office Security setup","client":"Sample Corporate Client","category":"Commercial Surveillance","description":"Complete 32-camera 4K IP surveillance network with biometric turnstile entry integration.","thumbnail":"/images/hero/hikvision-bullet.png","sample":true,"scope":["32 4K IP Dome Cameras","Biometric Turnstiles","10G Fiber Uplink"]}', 0, NULL, NULL, 1),
+('proj-2', 'Manufacturing Facility Perimeter Protection', 'proj-2', '{"id":"proj-2","title":"Manufacturing Facility Perimeter Protection","client":"Sample Industrial Client","category":"Industrial Security","description":"Long-range thermal and optical perimeter tracking with centralized monitoring control room.","thumbnail":"/images/hero/hikvision-bullet.png","sample":true,"scope":["Perimeter Starlight Cameras","AcuSense AI Analytics","Central DVR Wall"]}', 0, NULL, NULL, 1),
+('proj-3', 'Multi-Floor Campus Wi-Fi 6 & Access Network', 'proj-3', '{"id":"proj-3","title":"Multi-Floor Campus Wi-Fi 6 & Access Network","client":"Sample Education Campus","category":"Enterprise Networking","description":"High-density ceiling access point installation covering lecture halls and administrative offices.","thumbnail":"/images/hero/ruijie-wifi6.png","sample":true,"scope":["24 Wi-Fi 6 APs","Layer 3 Managed PoE Switches","Cloud Controller"]}', 0, NULL, NULL, 1);
+
+-- Table: role_permissions (72 rows)
+INSERT IGNORE INTO `role_permissions` (`role_id`, `permission_key`) VALUES
+('role-super-admin', 'website.access'),
+('role-super-admin', 'website.content.write'),
+('role-super-admin', 'website.seo.write'),
+('role-super-admin', 'website.redirects.write'),
+('role-super-admin', 'website.settings.write'),
+('role-super-admin', 'media.write'),
+('role-super-admin', 'catalog.read'),
+('role-super-admin', 'catalog.write'),
+('role-super-admin', 'catalog.archive'),
+('role-super-admin', 'pricing.write'),
+('role-super-admin', 'pricing.cost.read'),
+('role-super-admin', 'inventory.read'),
+('role-super-admin', 'inventory.adjust'),
+('role-super-admin', 'orders.read'),
+('role-super-admin', 'orders.update'),
+('role-super-admin', 'customers.read'),
+('role-super-admin', 'customers.write'),
+('role-super-admin', 'quotes.manage'),
+('role-super-admin', 'services.manage'),
+('role-super-admin', 'staff.access'),
+('role-super-admin', 'staff.manage'),
+('role-super-admin', 'roles.manage'),
+('role-super-admin', 'audit.read'),
+('role-super-admin', 'pos.sell'),
+('role-super-admin', 'pos.refund'),
+('role-super-admin', 'purchasing.read'),
+('role-super-admin', 'purchasing.write'),
+('role-super-admin', 'purchasing.receive'),
+('role-super-admin', 'accounting.read'),
+('role-super-admin', 'accounting.write'),
+('role-super-admin', 'reports.view'),
+('role-super-admin', 'reports.export'),
+('role-website-manager', 'website.access'),
+('role-website-manager', 'website.content.write'),
+('role-website-manager', 'website.seo.write'),
+('role-website-manager', 'website.redirects.write'),
+('role-website-manager', 'website.settings.write'),
+('role-website-manager', 'media.write'),
+('role-website-manager', 'catalog.read'),
+('role-website-manager', 'catalog.write'),
+('role-website-manager', 'catalog.archive'),
+('role-website-manager', 'pricing.write'),
+('role-website-manager', 'orders.read'),
+('role-website-manager', 'orders.update'),
+('role-website-manager', 'customers.read'),
+('role-website-manager', 'quotes.manage'),
+('role-website-manager', 'services.manage'),
+('role-content-editor', 'website.access'),
+('role-content-editor', 'website.content.write'),
+('role-content-editor', 'media.write');
+INSERT IGNORE INTO `role_permissions` (`role_id`, `permission_key`) VALUES
+('role-catalog-manager', 'website.access'),
+('role-catalog-manager', 'staff.access'),
+('role-catalog-manager', 'catalog.read'),
+('role-catalog-manager', 'catalog.write'),
+('role-catalog-manager', 'catalog.archive'),
+('role-catalog-manager', 'pricing.write'),
+('role-catalog-manager', 'pricing.cost.read'),
+('role-catalog-manager', 'inventory.read'),
+('role-catalog-manager', 'media.write'),
+('role-sales-staff', 'staff.access'),
+('role-sales-staff', 'catalog.read'),
+('role-sales-staff', 'orders.read'),
+('role-sales-staff', 'orders.update'),
+('role-sales-staff', 'customers.read'),
+('role-sales-staff', 'customers.write'),
+('role-sales-staff', 'quotes.manage'),
+('role-sales-staff', 'services.manage'),
+('role-support-staff', 'staff.access'),
+('role-support-staff', 'orders.read'),
+('role-support-staff', 'customers.read'),
+('role-support-staff', 'services.manage'),
+('role-super-admin', 'system.maintenance');
+
+-- Table: roles (6 rows)
+INSERT IGNORE INTO `roles` (`id`, `name`, `description`, `is_system`, `created_at`, `updated_at`) VALUES
+('role-super-admin', 'Super Admin', 'Unrestricted full access across all modules, surfaces, and security administration', 1, '2026-10-18 19:04:32', '2026-10-18 19:04:32'),
+('role-website-manager', 'Website Manager', 'Manages website content, catalog presentation, pricing, orders, and customer inquiries', 1, '2026-10-18 19:04:32', '2026-10-18 19:04:32'),
+('role-content-editor', 'Content Editor', 'Manages marketing pages, blog articles, projects showcase, and testimonials', 1, '2026-10-18 19:04:32', '2026-10-18 19:04:32'),
+('role-catalog-manager', 'Catalog Manager', 'Manages technical product specifications, commercial catalog, pricing, and stock visibility', 1, '2026-10-18 19:04:32', '2026-10-18 19:04:32'),
+('role-sales-staff', 'Sales Staff', 'Processes sales orders, manages customer requests, quotations, and callback requests', 1, '2026-10-18 19:04:32', '2026-10-18 19:04:32'),
+('role-support-staff', 'Support Staff', 'Reviews customer order tracking, warranty claims, and field technician dispatch', 1, '2026-10-18 19:04:32', '2026-10-18 19:04:32');
+
+-- Table: schema_migrations (4 rows)
+INSERT IGNORE INTO `schema_migrations` (`version`, `name`, `applied_at`) VALUES
+('001', '001_phase2_variants_pricing.sql', '2026-10-14 00:25:08'),
+('002', '002_phase2_inventory_tracking.sql', '2026-10-14 00:25:08'),
+('003', '003_phase2_webhooks.sql', '2026-10-14 00:25:08'),
+('004', '004_managed_entity_lifecycle.sql', '2026-10-14 10:15:45');
+
+-- Table: services (6 rows)
+INSERT IGNORE INTO `services` (`id`, `title`, `short_label`, `enabled`, `display_order`, `data_json`, `is_archived`, `archived_at`) VALUES
+('srv-cctv', 'CCTV Camera Installation', 'CCTV Setup', 1, 1, '{"id":"srv-cctv","title":"CCTV Camera Installation","shortLabel":"CCTV Setup","description":"Mounting, cable termination, and field-of-view configuration for IP and Turbo HD cameras.","icon":"Video","enabled":true,"order":1,"solutionLink":"/solutions"}', 0, NULL),
+('srv-cabling', 'Cabling & Structured Wiring', 'Cabling & Wiring', 1, 2, '{"id":"srv-cabling","title":"Cabling & Structured Wiring","shortLabel":"Cabling & Wiring","description":"Cat6 UTP and optical fiber backhaul cabling through neat PVC conduit in commercial premises.","icon":"Cable","enabled":true,"order":2,"solutionLink":"/solutions"}', 0, NULL),
+('srv-survey', 'Physical Site Survey', 'Site Survey', 1, 3, '{"id":"srv-survey","title":"Physical Site Survey","shortLabel":"Site Survey","description":"Inspection of camera vantage points, lighting levels, and power distribution across your Dhaka site.","icon":"Compass","enabled":true,"order":3,"solutionLink":"/solutions"}', 0, NULL),
+('srv-network', 'Network & Wi-Fi Configuration', 'Wi-Fi Networking', 1, 4, '{"id":"srv-network","title":"Network & Wi-Fi Configuration","shortLabel":"Wi-Fi Networking","description":"VLAN subnetting, PoE switch setup, and enterprise Wi-Fi 6 access point roaming setup.","icon":"Wifi","enabled":true,"order":4,"solutionLink":"/solutions"}', 0, NULL),
+('srv-access', 'Biometric Access Control', 'Access Control', 1, 5, '{"id":"srv-access","title":"Biometric Access Control","shortLabel":"Access Control","description":"Fingerprint and facial recognition terminal installation with magnetic door lock integration.","icon":"Fingerprint","enabled":true,"order":5,"solutionLink":"/solutions"}', 0, NULL),
+('srv-repair', 'Hardware Diagnosis & Repair', 'Repair & Service', 1, 6, '{"id":"srv-repair","title":"Hardware Diagnosis & Repair","shortLabel":"Repair & Service","description":"Troubleshooting offline NVRs, failing hard disk drives, signal interference, and power supply issues.","icon":"Wrench","enabled":true,"order":6,"solutionLink":"/solutions"}', 0, NULL);
+
+-- Table: settings (1 rows)
+INSERT IGNORE INTO `settings` (`key`, `value`) VALUES
+('site_settings', '{"companyName":"CamneX Bangladesh","phone":"+880 1540-535150","email":"contact@camnexbd.com","secondaryEmail":"camnexbd@gmail.com","website":"https://camnexbd.com","facebookUrl":"https://facebook.com/camnexbd","youtubeUrl":"https://youtube.com/@camnexbd","linkedinUrl":"https://linkedin.com/company/camnexbd","whatsappNumber":"8801540535150","address":"Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207","credentials":["Hikvision Authorized Partner","ZKTeco Authorized Installer"],"services":["CCTV/video surveillance","Wi-Fi cameras","Networking","IT support and maintenance","Access control","Biometrics","Smart security","Installation","Maintenance","Site survey","Configuration","Network setup","IT infrastructure"],"businessHours":"Sat-Thu 9:30 AM - 7:30 PM, Friday on-call","enableStockBadges":true,"sampleDataBanner":true,"specialOfferSlider":{"enabled":true,"interval":5,"maxOffers":5},"footer":{"description":"Security, surveillance, enterprise networking and IT infrastructure engineering in Dhaka, Bangladesh.","quickLinks":[{"label":"Home","route":"home"},{"label":"Shop","route":"catalog"},{"label":"Solutions","route":"solutions"},{"label":"Services","route":"services"},{"label":"Installations","route":"projects"},{"label":"About Us","route":"about"},{"label":"Contact","route":"contact"}],"products":[{"label":"CCTV Cameras","route":"category","param":"cctv-cameras"},{"label":"IP Cameras","route":"category","param":"cctv-cameras"},{"label":"Network Equipment","route":"category","param":"network-switches"},{"label":"Access Control","route":"category","param":"biometrics-access-control"},{"label":"Time Attendance","route":"category","param":"biometrics-access-control"},{"label":"Smart Home","route":"category","param":"cctv-cameras"},{"label":"Accessories","route":"category","param":"cctv-accessories"}],"customerSupport":[{"label":"Warranty Policy","route":"warranty"},{"label":"Technical Support","route":"contact"},{"label":"FAQs","route":"faq"},{"label":"Track Order","route":"tracking"},{"label":"Privacy Policy","route":"privacy"},{"label":"Terms & Conditions","route":"terms"},{"label":"Refund Policy","route":"refund"}],"newsletterText":"Subscribe for product updates, new product releases, and security advisories.","copyrightText":"© 2026 CamneX Bangladesh. All Rights Reserved.","developerCredit":"Designed & Developed by CamneX"},"bkashMerchantNumber":"","nagadMerchantNumber":"","bankDetails":null,"deliveryFeeInsideDhaka":null,"deliveryFeeOutsideDhaka":null,"installationBaseFee":null,"warrantyPolicyText":"","returnPolicyText":"","termsPolicyText":"","privacyPolicyText":"","enableCashOnDelivery":false,"scenarios":[{"id":"scen-home","slug":"home-residence","title":"Home & Residential","description":"Discreet indoor and outdoor surveillance with smartphone live view and perimeter tripwire alerts.","iconName":"Home","recommendedCategories":["cctv-cameras","biometrics-access-control"],"recommendedPackages":["night-vision-cctv-package"],"recommendedProducts":["prod-hik-irpf-2mp"],"enabled":true,"order":1},{"id":"scen-office","slug":"corporate-office","title":"Corporate Office","description":"Time attendance biometrics, seamless Wi-Fi 6 roaming, and central server rack networking.","iconName":"Building2","recommendedCategories":["biometrics-access-control","access-points-wifi","network-switches"],"recommendedPackages":["night-vision-cctv-package"],"recommendedProducts":["prod-zkteco-mb20","prod-ruijie-rap2260g"],"enabled":true,"order":2},{"id":"scen-retail","slug":"shop-retail","title":"Shop & Retail Store","description":"Cash counter dome zoom, customer footfall monitoring, and concealed PVC channel wiring.","iconName":"ShoppingBag","recommendedCategories":["cctv-cameras","dvr-nvr-recorders"],"recommendedPackages":["night-vision-cctv-package"],"recommendedProducts":["prod-hik-dome-2mp"],"enabled":true,"order":3},{"id":"scen-factory","slug":"factory-warehouse","title":"Factory & Warehouse","description":"High-mount 4K optical zoom, weatherproof IP67 enclosures, and long-range fiber / PoE switches.","iconName":"Factory","recommendedCategories":["cctv-cameras","network-switches","cctv-accessories"],"recommendedPackages":["night-vision-cctv-package"],"recommendedProducts":["prod-ruijie-es205gc-p"],"enabled":true,"order":4},{"id":"scen-school","slug":"school-institute","title":"School & Institute","description":"Corridor surveillance, staff biometric check-in, and unified campus Wi-Fi infrastructure.","iconName":"GraduationCap","recommendedCategories":["cctv-cameras","biometrics-access-control","access-points-wifi"],"recommendedPackages":["night-vision-cctv-package"],"recommendedProducts":["prod-zkteco-mb20"],"enabled":true,"order":5}],"topBarHighlights":[{"id":"tbh-auth","text":"Hikvision & Dahua: Authorized Support Partner","icon":"shield-check","link":"/brands","highlighted":true,"enabled":true,"order":1},{"id":"tbh-warranty","text":"Official Warranty","icon":"shield","link":"/about","highlighted":false,"enabled":false,"order":2},{"id":"tbh-nationwide","text":"Nationwide Installation","icon":"truck","link":"/services","highlighted":false,"enabled":false,"order":3},{"id":"tbh-hours","text":"Sat-Thu 9:30 AM - 7:30 PM, Friday on-call","icon":"clock","link":"/contact","highlighted":false,"enabled":false,"order":4}],"quickServiceSettings":{"heading":"Need a technician?","subtext":"Technical consultations, cabling and installation, and hardware maintenance in Dhaka. Click a service below to schedule an engineer callback:","buttonText":"Request a call back","nameLabel":"Your Name *","namePlaceholder":"e.g. Tanvir Ahmed","phoneLabel":"Phone Number *","phonePlaceholder":"017XXXXXXXX","areaLabel":"Dhaka Area / Location","areaPlaceholder":"e.g. Uttara Sector 3, Dhanmondi, Mirpur","successMessage":"Thank you! Our engineer will call you back promptly during business hours.","enableOtherOption":true}}');
+
+-- Table: spec_templates (6 rows)
+INSERT IGNORE INTO `spec_templates` (`id`, `name`, `category_slug`, `data_json`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('tpl-cctv', 'CCTV Camera', 'cctv-cameras', '{"id":"tpl-cctv","name":"CCTV Camera","categorySlug":"cctv-cameras","fields":[{"id":"f-res","name":"Resolution","key":"resolution","type":"enum","options":["2MP (1080p)","4MP (2K)","5MP Super HD","8MP (4K)"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Resolution","order":1},{"id":"f-form","name":"Form Factor","key":"form_factor","type":"enum","options":["Bullet","Dome","Turret","PTZ"],"filterable":true,"comparable":true,"shortLabel":"Form Factor","order":2},{"id":"f-nv","name":"Night Vision","key":"night_vision","type":"enum","options":["IR Night Vision (up to 20m)","IR Night Vision (up to 40m)","ColorVu Full Color","Smart Hybrid Light"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Night Vision","order":3},{"id":"f-lens","name":"Lens","key":"lens","type":"enum","options":["2.8mm (Wide Angle)","3.6mm (Standard)","6mm (Long Range)","Motorized Varifocal"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Lens","order":4},{"id":"f-ip","name":"Ingress Protection","key":"ip_rating","type":"enum","options":["IP66 Weatherproof","IP67 Weatherproof","Indoor Use"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"IP Rating","order":5},{"id":"f-aud","name":"Audio Support","key":"audio_support","type":"boolean","filterable":true,"comparable":true,"shortLabel":"Audio Support","order":6}]}', 0, NULL, NULL, 1),
+('tpl-recorders', 'Recorders (DVR / NVR)', 'recorders', '{"id":"tpl-recorders","name":"Recorders (DVR / NVR)","categorySlug":"recorders","fields":[{"id":"f-ch","name":"Channels","key":"channels","type":"enum","options":["4 CH","8 CH","16 CH","32 CH"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Channels","order":1},{"id":"f-comp","name":"Compression","key":"compression","type":"enum","options":["H.264","H.265","H.265+","H.265 Pro+","AI Coding (H.265+)"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Compression","order":2},{"id":"f-res-rec","name":"Max Resolution","key":"max_resolution","type":"enum","options":["1080p Lite","5MP Lite","4K (8MP)"],"filterable":true,"comparable":true,"shortLabel":"Resolution","order":3},{"id":"f-hdd","name":"SATA Slots","key":"hdd_slots","type":"enum","options":["1 SATA Slot","2 SATA Slots","4 SATA Slots"],"filterable":true,"comparable":true,"shortLabel":"SATA Bays","order":4}]}', 0, NULL, NULL, 1),
+('tpl-access', 'Access Control & Biometrics', 'biometrics-access-control', '{"id":"tpl-access","name":"Access Control & Biometrics","categorySlug":"biometrics-access-control","fields":[{"id":"f-users","name":"User Capacity","key":"user_capacity","type":"enum","options":["1000 Users","3000 Users","5000 Users","10000 Users","30000 Users"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Capacity","order":1},{"id":"f-verif","name":"Verification Methods","key":"verification_methods","type":"string","filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Verification","order":2},{"id":"f-conn","name":"Connectivity","key":"connectivity","type":"enum","options":["USB Only","TCP/IP & USB","TCP/IP & Wi-Fi","TCP/IP & Wiegand","TCP/IP & RS485"],"filterable":true,"comparable":true,"shortLabel":"Network","order":3},{"id":"f-bat","name":"Battery Backup","key":"battery_backup","type":"boolean","filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Battery","order":4}]}', 0, NULL, NULL, 1),
+('tpl-networking', 'Network Switches', 'network-switches', '{"id":"tpl-networking","name":"Network Switches","categorySlug":"network-switches","fields":[{"id":"f-ports","name":"Port Count","key":"ports","type":"enum","options":["5 Ports","9 Ports","16 Ports","24 Ports"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Ports","order":1},{"id":"f-poe","name":"PoE Support","key":"poe_support","type":"boolean","filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"PoE","order":2},{"id":"f-budget","name":"PoE Budget","key":"poe_budget","type":"number","unit":"W","filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"PoE Budget","order":3},{"id":"f-cap","name":"Switching Capacity","key":"switching_capacity","type":"string","filterable":true,"comparable":true,"shortLabel":"Backplane","order":4},{"id":"f-mgd","name":"Cloud Managed","key":"managed","type":"boolean","filterable":true,"comparable":true,"shortLabel":"Managed","order":5}]}', 0, NULL, NULL, 1),
+('tpl-wifi', 'Access Points & Wi-Fi', 'access-points-wifi', '{"id":"tpl-wifi","name":"Access Points & Wi-Fi","categorySlug":"access-points-wifi","fields":[{"id":"f-wifistd","name":"Wi-Fi Standard","key":"wifi_standard","type":"enum","options":["Wi-Fi 5 (802.11ac)","Wi-Fi 6 (802.11ax)","AC1200","AC1300","Wi-Fi 6 AX1800","Wi-Fi 6 AX5950"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Wi-Fi Std","order":1},{"id":"f-speed","name":"Max Speed","key":"max_speed","type":"string","filterable":true,"comparable":true,"shortLabel":"Max Speed","order":2},{"id":"f-poewifi","name":"PoE Support","key":"poe_support","type":"boolean","filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"PoE","order":3},{"id":"f-formwifi","name":"Form Factor","key":"form_factor","type":"enum","options":["Ceiling","Wall Plate","Outdoor"],"filterable":true,"comparable":true,"shortLabel":"Mounting","order":4}]}', 0, NULL, NULL, 1),
+('tpl-storage', 'Surveillance Storage', 'surveillance-storage', '{"id":"tpl-storage","name":"Surveillance Storage","categorySlug":"surveillance-storage","fields":[{"id":"f-capst","name":"Capacity","key":"capacity","type":"enum","options":["500 GB","1 TB","2 TB","4 TB","6 TB","8 TB"],"filterable":true,"comparable":true,"showInHighlights":true,"shortLabel":"Capacity","order":1},{"id":"f-ffst","name":"Form Factor","key":"form_factor","type":"enum","options":["3.5-inch","2.5-inch"],"filterable":true,"comparable":true,"shortLabel":"Form Factor","order":2},{"id":"f-intst","name":"Interface","key":"interface","type":"enum","options":["SATA 6 Gb/s"],"filterable":true,"comparable":true,"shortLabel":"Interface","order":3}]}', 0, NULL, NULL, 1);
+
+-- Table: testimonials (3 rows)
+INSERT IGNORE INTO `testimonials` (`id`, `client_name`, `company`, `role`, `rating`, `content`, `image`, `verified`, `display_order`, `data_json`, `created_at`, `is_archived`, `archived_at`, `archived_by`, `version`) VALUES
+('t-1', 'Sample Customer 1', 'Dhaka Logistics Hub', 'Operations Director', 5, 'Professional IP camera installation and fiber backhaul across our commercial premises. Reliable system with clean cabling.', '', 1, 1, '{"id":"t-1","author":"Sample Customer 1","client_name":"Sample Customer 1","role":"Operations Director","company":"Dhaka Logistics Hub","solution":"8-Channel 4K IP CCTV & Fiber Backhaul","city":"Tejgaon, Dhaka","content":"Professional IP camera installation and fiber backhaul across our commercial premises. Reliable system with clean cabling.","rating":5,"sample":true,"avatar":""}', '2026-10-18 18:22:16', 0, NULL, NULL, 1),
+('t-2', 'Sample Customer 2', 'Apex Garments HQ', 'Facilities Manager', 5, 'Seamless biometric attendance and door access control integration. Software reports generated accurately every month.', '', 1, 1, '{"id":"t-2","author":"Sample Customer 2","client_name":"Sample Customer 2","role":"Facilities Manager","company":"Apex Garments HQ","solution":"Biometric Attendance & Door Access","city":"Uttara, Dhaka","content":"Seamless biometric attendance and door access control integration. Software reports generated accurately every month.","rating":5,"sample":true,"avatar":""}', '2026-10-18 18:22:16', 0, NULL, NULL, 1),
+('t-3', 'Sample Customer 3', 'Bengal Distribution Center', 'Logistics Supervisor', 5, '16-channel AcuSense surveillance setup covering warehouse loading bays. Night vision quality and playback clarity are excellent.', '', 1, 1, '{"id":"t-3","author":"Sample Customer 3","client_name":"Sample Customer 3","role":"Logistics Supervisor","company":"Bengal Distribution Center","solution":"16-Channel AcuSense Warehouse Setup","city":"Gazipur, Dhaka","content":"16-channel AcuSense surveillance setup covering warehouse loading bays. Night vision quality and playback clarity are excellent.","rating":5,"sample":true,"avatar":""}', '2026-10-18 18:22:16', 0, NULL, NULL, 1);
+
+-- Table: user_roles (1 rows)
+INSERT IGNORE INTO `user_roles` (`user_id`, `role_id`) VALUES
+('usr-1791405695642', 'role-super-admin');
+
+-- Table: users (2 rows)
+INSERT IGNORE INTO `users` (`id`, `name`, `email`, `password_hash`, `role`, `created_at`, `status`, `must_change_password`, `branch_id`, `warehouse_id`, `last_login`, `totp_secret`, `totp_enabled`, `failed_login_attempts`, `locked_until`) VALUES
+('usr-1791405695642', 'CamneX Administrator', 'admin@camnexbd.com', '$2b$12$NfVU37qco5PIeTy1op18Ie/pzAQUSs7szLeVNwHC0Gabve19yMIoS', 'admin', '2026-10-07 20:41:35', 'active', 0, NULL, NULL, '2026-10-18 18:28:59', NULL, 0, 0, NULL),
+('usr_devadmin_9d6e0976', 'CamneX Dev Admin', 'dev-admin@camnexbd.com', '$2b$12$NfVU37qco5PIeTy1op18Ie/pzAQUSs7szLeVNwHC0Gabve19yMIoS', 'admin', '2026-10-18 19:41:31', 'active', 0, NULL, NULL, NULL, NULL, 0, 0, NULL);
+
+-- Table: warehouses (1 rows)
+INSERT IGNORE INTO `warehouses` (`id`, `name`, `code`, `address_line1`, `city`, `district`, `contact_person`, `contact_phone`, `is_default`, `is_active`, `created_at`, `updated_at`) VALUES
+('wh-central', 'CamneX Central Headend Warehouse (Dhaka)', 'WH-CENTRAL', NULL, 'Dhaka', 'Dhaka', NULL, NULL, 1, 1, '2026-10-14 00:25:08', '2026-10-14 00:25:08');
+
+SET FOREIGN_KEY_CHECKS = 1;
+-- End of Migration Dump

@@ -53,7 +53,12 @@ export class RestProductService implements IProductService {
   async getProducts(params?: ProductFilterParams): Promise<PaginatedResult<Product>> {
     const q = new URLSearchParams();
     if (params?.categorySlug) q.set('categorySlug', params.categorySlug);
-    if (params?.brandSlug) q.set('brandSlug', params.brandSlug);
+    if (params?.brands && params.brands.length > 0) {
+      q.set('brands', params.brands.join(','));
+      q.set('brandSlug', params.brands.join(','));
+    } else if (params?.brandSlug) {
+      q.set('brandSlug', params.brandSlug);
+    }
     if (params?.subcategory || params?.subcat) q.set('subcat', params.subcategory || params.subcat || '');
     if (params?.search) q.set('search', params.search);
     if (params?.minPrice !== undefined) q.set('minPrice', String(params.minPrice));

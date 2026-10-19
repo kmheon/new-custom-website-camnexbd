@@ -61,6 +61,14 @@ const { courierRegistry } = require('./server/modules/courier/courier.registry')
 const { courierService } = require('./server/modules/courier/courier.service');
 
 const app = express();
+let isShuttingDown = false;
+app.use((req, res, next) => {
+  if (isShuttingDown) {
+    res.setHeader('Connection', 'close');
+    return res.status(503).json({ error: 'Server is recycling. Please retry shortly.' });
+  }
+  next();
+});
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
@@ -273,12 +281,12 @@ app.use('/api', (req, res, next) => {
 startDomainEventWorker(3000);
 
 // Dynamic 301/302 Redirect Manager Middleware
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api/')) {
     try {
       const cleanPath = req.path.toLowerCase();
-      const redirectRow = db.prepare('SELECT to_path, status_code FROM redirects WHERE LOWER(from_path) = ?').get(cleanPath);
-      if (redirectRow) {
+      const redirectRow = await db.prepare('SELECT to_path, status_code FROM redirects WHERE LOWER(from_path) = ?').get(cleanPath);
+      if (redirectRow && redirectRow.to_path) {
         return res.redirect(redirectRow.status_code || 301, redirectRow.to_path);
       }
     } catch (_) {}
@@ -1346,47 +1354,71 @@ app.get('/api/products', (req, res) => {
       return p;
     });
 
+    const rawBrandTargets = [];
+    if (req.query.brands) {
+      if (Array.isArray(req.query.brands)) {
+        rawBrandTargets.push(...req.query.brands);
+      } else if (typeof req.query.brands === 'string') {
+        try {
+          const parsed = JSON.parse(req.query.brands);
+          if (Array.isArray(parsed)) rawBrandTargets.push(...parsed);
+          else rawBrandTargets.push(...req.query.brands.split(','));
+        } catch {
+          rawBrandTargets.push(...req.query.brands.split(','));
+        }
+      }
+    }
     if (brandTarget) {
-      const targetLower = String(brandTarget).toLowerCase().trim();
-      let brandObj = null;
-      try {
-        const bRow = db.prepare('SELECT data_json FROM brands WHERE LOWER(slug) = ? OR LOWER(id) = ? OR LOWER(name) = ?').get(targetLower, targetLower, targetLower);
-        if (bRow) brandObj = JSON.parse(bRow.data_json);
-      } catch (_) {}
+      rawBrandTargets.push(...String(brandTarget).split(','));
+    }
+    const cleanBrandTargets = Array.from(new Set(rawBrandTargets.map(b => String(b).trim().toLowerCase()).filter(Boolean)));
 
-      const bId = (brandObj?.id || targetLower).toLowerCase();
-      const bIdBase = bId.replace(/^(b-|brand-)/i, '');
-      const bSlug = (brandObj?.slug || targetLower).toLowerCase();
-      const bSlugSpaced = bSlug.replace(/-/g, ' ');
-      const bSlugFirst = bSlug.split('-')[0];
-      const bName = (brandObj?.name || targetLower).toLowerCase();
+    if (cleanBrandTargets.length > 0) {
+      const resolvedBrandTargets = cleanBrandTargets.map(targetLower => {
+        let brandObj = null;
+        try {
+          const bRow = db.prepare('SELECT data_json FROM brands WHERE LOWER(slug) = ? OR LOWER(id) = ? OR LOWER(name) = ?').get(targetLower, targetLower, targetLower);
+          if (bRow) brandObj = JSON.parse(bRow.data_json);
+        } catch (_) {}
+
+        const bId = (brandObj?.id || targetLower).toLowerCase();
+        const bIdBase = bId.replace(/^(b-|brand-)/i, '');
+        const bSlug = (brandObj?.slug || targetLower).toLowerCase();
+        const bSlugSpaced = bSlug.replace(/-/g, ' ');
+        const bSlugFirst = bSlug.split('-')[0];
+        const bName = (brandObj?.name || targetLower).toLowerCase();
+
+        return { targetLower, bId, bIdBase, bSlug, bSlugSpaced, bSlugFirst, bName };
+      });
 
       items = items.filter(p => {
         const pBrandId = String(p.brandId || '').toLowerCase();
         const pBrandIdBase = pBrandId.replace(/^(b-|brand-)/i, '');
         const pBrandName = String(p.brand || '').toLowerCase();
 
-        if (pBrandId && (
-          pBrandId === bId ||
-          pBrandId === bSlug ||
-          pBrandId === targetLower ||
-          (bIdBase && pBrandIdBase === bIdBase) ||
-          (bSlug && pBrandIdBase === bSlug)
-        )) {
-          return true;
-        }
-        if (pBrandName && (
-          pBrandName === bName ||
-          pBrandName === bSlug ||
-          pBrandName === bSlugSpaced ||
-          pBrandName === targetLower ||
-          (bIdBase && pBrandName === bIdBase) ||
-          (bSlugFirst.length >= 4 && pBrandName.includes(bSlugFirst)) ||
-          (bName.length >= 3 && pBrandName.length >= 3 && bName.includes(pBrandName))
-        )) {
-          return true;
-        }
-        return false;
+        return resolvedBrandTargets.some(({ targetLower, bId, bIdBase, bSlug, bSlugSpaced, bSlugFirst, bName }) => {
+          if (pBrandId && (
+            pBrandId === bId ||
+            pBrandId === bSlug ||
+            pBrandId === targetLower ||
+            (bIdBase && pBrandIdBase === bIdBase) ||
+            (bSlug && pBrandIdBase === bSlug)
+          )) {
+            return true;
+          }
+          if (pBrandName && (
+            pBrandName === bName ||
+            pBrandName === bSlug ||
+            pBrandName === bSlugSpaced ||
+            pBrandName === targetLower ||
+            (bIdBase && pBrandName === bIdBase) ||
+            (bSlugFirst.length >= 4 && pBrandName.includes(bSlugFirst)) ||
+            (bName.length >= 3 && pBrandName.length >= 3 && bName.includes(pBrandName))
+          )) {
+            return true;
+          }
+          return false;
+        });
       });
     }
 
@@ -5912,57 +5944,72 @@ async function handleCatalogAuditJob(payload) {
   };
 }
 
+let isProcessingJob = false;
+
 async function processNextBackgroundJob() {
+  if (isShuttingDown || isProcessingJob) return;
+  isProcessingJob = true;
+  let currentJob = null;
   try {
-    const job = db.prepare(`
+    currentJob = await db.prepare(`
       SELECT * FROM background_jobs
       WHERE status = 'pending' AND attempts < max_attempts
       ORDER BY created_at ASC
       LIMIT 1
     `).get();
 
-    if (!job) return;
+    if (!currentJob) return;
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE background_jobs
       SET status = 'processing', attempts = attempts + 1, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(job.id);
+    `).run(currentJob.id);
 
     let payload = {};
-    try { payload = JSON.parse(job.payload_json || '{}'); } catch (_) {}
+    try { payload = JSON.parse(currentJob.payload_json || '{}'); } catch (_) {}
 
     let result = null;
-    if (job.type === 'product_research') {
+    if (currentJob.type === 'product_research') {
       result = await handleProductResearchJob(payload);
-    } else if (job.type === 'sitemap_generation') {
+    } else if (currentJob.type === 'sitemap_generation') {
       result = await handleSitemapJob(payload);
-    } else if (job.type === 'email_notification' || job.type === 'notification_dispatch') {
+    } else if (currentJob.type === 'email_notification' || currentJob.type === 'notification_dispatch') {
       result = await handleEmailNotificationJob(payload);
-    } else if (job.type === 'catalog_audit') {
+    } else if (currentJob.type === 'catalog_audit') {
       result = await handleCatalogAuditJob(payload);
     } else {
-      throw new Error(`Unsupported job type: ${job.type}`);
+      throw new Error(`Unsupported job type: ${currentJob.type}`);
     }
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE background_jobs
       SET status = 'completed', result_json = ?, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(JSON.stringify(result), job.id);
+    `).run(JSON.stringify(result), currentJob.id);
   } catch (err) {
-    db.prepare(`
-      UPDATE background_jobs
-      SET status = CASE WHEN attempts >= max_attempts THEN 'failed' ELSE 'pending' END,
-          last_error = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(err.message, job?.id);
+    if (currentJob && currentJob.id) {
+      try {
+        await db.prepare(`
+          UPDATE background_jobs
+          SET status = CASE WHEN attempts >= max_attempts THEN 'failed' ELSE 'pending' END,
+              last_error = ?,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(err.message, currentJob.id);
+      } catch (_) {}
+    }
+  } finally {
+    isProcessingJob = false;
   }
 }
 
 // Background queue polling runner
-setInterval(processNextBackgroundJob, 2500);
+const backgroundJobInterval = setInterval(() => {
+  processNextBackgroundJob().catch(err => {
+    console.error('[BACKGROUND JOB TIMER ERROR]', err.message);
+  });
+}, 2500);
 
 // Background Jobs REST APIs
 app.get('/api/admin/jobs', requireAdmin, (req, res) => {
@@ -6618,7 +6665,59 @@ app.use((req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, HOST, () => {
-  console.log(`CamneX Business Platform running at http://${HOST}:${PORT}`);
-  console.log(`Local Storefront & API: http://localhost:${PORT}`);
-});
+let serverInstance;
+if (process.env.HOST) {
+  serverInstance = app.listen(PORT, process.env.HOST, () => {
+    console.log(`CamneX Business Platform running at http://${process.env.HOST}:${PORT}`);
+    console.log(`Local Storefront & API: http://localhost:${PORT}`);
+  });
+} else {
+  serverInstance = app.listen(PORT, () => {
+    console.log(`CamneX Business Platform listening on port/socket: ${PORT}`);
+  });
+}
+
+// Coordinated graceful shutdown for Phusion Passenger / PM2 / container recycling
+async function handleShutdown(signal) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`[SHUTDOWN] Received ${signal}. Draining connections and shutting down gracefully...`);
+
+  // 1. Clear background timer runners
+  try { clearInterval(backgroundJobInterval); } catch (_) {}
+  try { stopDomainEventWorker(); } catch (_) {}
+
+  // 2. Safety timeout: force-terminate if in-flight requests take longer than 5 seconds
+  const forceTimer = setTimeout(() => {
+    console.warn('[SHUTDOWN] Graceful drain timeout exceeded. Forcing exit.');
+    process.exit(1);
+  }, 5000);
+  if (forceTimer.unref) forceTimer.unref();
+
+  // 3. Stop accepting new HTTP connections; finish existing requests
+  if (serverInstance && typeof serverInstance.close === 'function') {
+    serverInstance.close(async () => {
+      console.log('[SHUTDOWN] HTTP listener closed. Closing database connections...');
+      try {
+        if (db && typeof db.close === 'function') {
+          await db.close();
+        }
+      } catch (err) {
+        console.error('[SHUTDOWN ERROR]', err.message);
+      }
+      process.exit(0);
+    });
+  } else {
+    try {
+      if (db && typeof db.close === 'function') {
+        await db.close();
+      }
+    } catch (_) {}
+    process.exit(0);
+  }
+}
+
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+
+module.exports = app;

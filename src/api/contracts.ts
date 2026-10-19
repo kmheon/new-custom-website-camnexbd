@@ -30,6 +30,7 @@ export interface ProductFilterParams {
   categorySlug?: string;
   category?: string;
   brandSlug?: string;
+  brands?: string[];
   subcategory?: string;
   subcat?: string;
   minPrice?: number;

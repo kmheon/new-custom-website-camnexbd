@@ -1,4 +1,3 @@
-const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
@@ -25,14 +24,296 @@ try {
   }
 } catch (_) {}
 
-const dbPath = process.env.DB_PATH ? path.resolve(process.env.DB_PATH) : path.join(__dirname, 'camnex.db');
-const db = new Database(dbPath);
+// Dual-engine SQLite resolution: better-sqlite3 with automatic fallback to built-in node:sqlite
+let Database;
+let activeEngine = 'better-sqlite3';
 
-// Enable WAL mode and foreign keys for high performance and integrity
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+function createNodeSqliteAdapter(filePath, options = {}) {
+  const { DatabaseSync } = require('node:sqlite');
+  const rawDb = new DatabaseSync(filePath, options);
+  let txDepth = 0;
+
+  return {
+    _raw: rawDb,
+    _engine: 'node:sqlite',
+    prepare(sql) {
+      const rawStmt = rawDb.prepare(sql);
+      return {
+        _raw: rawStmt,
+        all(...args) {
+          const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
+          return rawStmt.all(...params);
+        },
+        get(...args) {
+          const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
+          return rawStmt.get(...params);
+        },
+        run(...args) {
+          const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
+          const res = rawStmt.run(...params);
+          return {
+            changes: Number(res.changes || 0),
+            lastInsertRowid: res.lastInsertRowid !== undefined
+              ? (typeof res.lastInsertRowid === 'bigint' ? Number(res.lastInsertRowid) : res.lastInsertRowid)
+              : 0
+          };
+        }
+      };
+    },
+    exec(sql) {
+      return rawDb.exec(sql);
+    },
+    pragma(pragmaStr, opts = {}) {
+      const trimmed = pragmaStr.trim();
+      const clean = trimmed.toLowerCase().startsWith('pragma ') ? trimmed.slice(7) : trimmed;
+      if (clean.includes('=')) {
+        rawDb.exec(`PRAGMA ${clean}`);
+        return [];
+      }
+      try {
+        const rows = rawDb.prepare(`PRAGMA ${clean}`).all();
+        if (opts.simple && rows.length > 0) {
+          const first = rows[0];
+          const keys = Object.keys(first);
+          return keys.length > 0 ? first[keys[0]] : undefined;
+        }
+        return rows;
+      } catch (err) {
+        rawDb.exec(`PRAGMA ${clean}`);
+        return [];
+      }
+    },
+    transaction(fn) {
+      return function(...args) {
+        const isRoot = txDepth === 0;
+        const sp = `sp_${++txDepth}`;
+        if (isRoot) {
+          rawDb.exec('BEGIN IMMEDIATE');
+        } else {
+          rawDb.exec(`SAVEPOINT ${sp}`);
+        }
+        try {
+          const result = fn.apply(this, args);
+          if (isRoot) {
+            rawDb.exec('COMMIT');
+          } else {
+            rawDb.exec(`RELEASE SAVEPOINT ${sp}`);
+          }
+          return result;
+        } catch (err) {
+          if (isRoot) {
+            try { rawDb.exec('ROLLBACK'); } catch (_) {}
+          } else {
+            try { rawDb.exec(`ROLLBACK TO SAVEPOINT ${sp}`); } catch (_) {}
+          }
+          throw err;
+        } finally {
+          txDepth--;
+        }
+      };
+    },
+    backup(destPath) {
+      const safePath = destPath.replace(/'/g, "''");
+      rawDb.exec(`VACUUM INTO '${safePath}'`);
+      return Promise.resolve();
+    },
+    close() {
+      return rawDb.close();
+    },
+    isClosed() {
+      return false;
+    }
+  };
+}
+
+const { AsyncLocalStorage } = require('node:async_hooks');
+const mysqlTxStorage = new AsyncLocalStorage();
+
+function createMysqlAdapter(config = {}) {
+  const host = config.host || process.env.DB_HOST || '127.0.0.1';
+  const port = parseInt(config.port || process.env.DB_PORT || '3306', 10);
+  const user = config.user || process.env.DB_USER;
+  const password = config.password || process.env.DB_PASSWORD || '';
+  const database = config.database || process.env.DB_NAME;
+
+  // Strict validation: never allow DB_CLIENT=mysql to boot with missing credentials or silently fall back
+  if (!user || !database) {
+    const missing = [];
+    if (!user) missing.push('DB_USER');
+    if (!database) missing.push('DB_NAME');
+    throw new Error(`[Database] FATAL: DB_CLIENT=mysql was explicitly requested, but required environment variable(s) are missing: ${missing.join(', ')}. Silent fallback to SQLite is strictly forbidden.`);
+  }
+
+  const mysql = require('mysql2/promise');
+  const pool = mysql.createPool({
+    host,
+    port,
+    user,
+    password,
+    database,
+    waitForConnections: true,
+    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10', 10),
+    queueLimit: 0,
+    charset: 'utf8mb4_unicode_ci',
+    timezone: '+06:00',
+    decimalNumbers: true
+  });
+
+  function translateSqliteToMysql(sql) {
+    let s = sql;
+    s = s.replace(/INSERT\s+OR\s+IGNORE(\s+INTO)?/gi, 'INSERT IGNORE INTO');
+    s = s.replace(/INSERT\s+OR\s+REPLACE(\s+INTO)?/gi, 'REPLACE INTO');
+    s = s.replace(/datetime\s*\(\s*['"]now['"]\s*,\s*['"]\+(\d+)\s*minutes?['"]\s*\)/gi, 'NOW() + INTERVAL $1 MINUTE');
+    s = s.replace(/datetime\s*\(\s*['"]now['"]\s*,\s*['"]-(\d+)\s*minutes?['"]\s*\)/gi, 'NOW() - INTERVAL $1 MINUTE');
+    s = s.replace(/datetime\s*\(\s*['"]now['"]\s*\)/gi, 'NOW()');
+    s = s.replace(/json_extract\s*\(\s*([a-zA-Z0-9_.]+)\s*,\s*(['"]\$\.[^'"]+['"])\s*\)/gi, '$1->>$2');
+    s = s.replace(/ON\s+CONFLICT\s*\([^)]*\)\s*DO\s+UPDATE\s+SET/gi, 'ON DUPLICATE KEY UPDATE');
+    s = s.replace(/excluded\.([a-zA-Z0-9_]+)/gi, 'VALUES($1)');
+    return s;
+  }
+
+  let isPoolClosed = false;
+  async function closePool() {
+    if (isPoolClosed) return;
+    isPoolClosed = true;
+    try { await pool.end(); } catch (_) {}
+  }
+
+  function getClient() {
+    if (isPoolClosed) {
+      const err = new Error('[Database] MySQL connection pool is closed or shutting down.');
+      err.code = 'ERR_DB_CLOSED';
+      throw err;
+    }
+    return mysqlTxStorage.getStore() || pool;
+  }
+
+  return {
+    _pool: pool,
+    _engine: 'mysql',
+    prepare(sql) {
+      const mysqlSql = translateSqliteToMysql(sql);
+      return {
+        _sql: mysqlSql,
+        async all(...args) {
+          const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
+          const [rows] = await getClient().query(mysqlSql, params);
+          return rows;
+        },
+        async get(...args) {
+          const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
+          const [rows] = await getClient().query(mysqlSql, params);
+          return rows && rows.length > 0 ? rows[0] : undefined;
+        },
+        async run(...args) {
+          const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
+          const [result] = await getClient().execute(mysqlSql, params);
+          return {
+            changes: Number(result.affectedRows || 0),
+            lastInsertRowid: result.insertId || 0
+          };
+        }
+      };
+    },
+    async query(sql, params = []) {
+      const mysqlSql = translateSqliteToMysql(sql);
+      const [rows] = await getClient().query(mysqlSql, params);
+      return rows;
+    },
+    async exec(sql) {
+      const mysqlSql = translateSqliteToMysql(sql);
+      const [result] = await getClient().query(mysqlSql);
+      return result;
+    },
+    pragma() {
+      return [];
+    },
+    transaction(fn) {
+      return async function(...args) {
+        const parentConn = mysqlTxStorage.getStore();
+        if (parentConn) {
+          const spName = 'sp_' + Math.random().toString(36).substring(2, 9);
+          await parentConn.query(`SAVEPOINT ${spName}`);
+          try {
+            const result = await fn.apply(this, args);
+            await parentConn.query(`RELEASE SAVEPOINT ${spName}`);
+            return result;
+          } catch (err) {
+            try { await parentConn.query(`ROLLBACK TO SAVEPOINT ${spName}`); } catch (_) {}
+            throw err;
+          }
+        }
+
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+        try {
+          const result = await mysqlTxStorage.run(connection, () => fn.apply(this, args));
+          await connection.commit();
+          return result;
+        } catch (err) {
+          try { await connection.rollback(); } catch (_) {}
+          throw err;
+        } finally {
+          connection.release();
+        }
+      };
+    },
+    close() {
+      return closePool();
+    },
+    isClosed() {
+      return isPoolClosed;
+    }
+  };
+}
+
+const forceNodeSqlite = process.env.USE_NODE_SQLITE === '1' ||
+  process.env.USE_NODE_SQLITE === 'true' ||
+  process.env.SQLITE_ENGINE === 'node' ||
+  process.env.DB_CLIENT === 'sqlite';
+
+const isMysqlClient = !forceNodeSqlite && process.env.DB_CLIENT === 'mysql';
+
+if (isMysqlClient) {
+  Database = createMysqlAdapter;
+  activeEngine = 'mysql';
+} else {
+  if (forceNodeSqlite) {
+    Database = createNodeSqliteAdapter;
+    activeEngine = 'node:sqlite (forced)';
+  } else {
+    try {
+      Database = require('better-sqlite3');
+    } catch (err) {
+      console.warn(`[Database] better-sqlite3 native addon unavailable (${err.message}). Falling back to built-in node:sqlite...`);
+      Database = createNodeSqliteAdapter;
+      activeEngine = 'node:sqlite (fallback)';
+    }
+  }
+}
+
+let db;
+let dbPath;
+
+if (isMysqlClient) {
+  db = Database();
+  console.log(`[Database] Initialized MySQL connection pool for host: ${process.env.DB_HOST || '127.0.0.1'}, database: ${process.env.DB_NAME || 'camnex_dev'}`);
+} else {
+  dbPath = (process.env.DB_PATH || process.env.DATABASE_PATH)
+    ? path.resolve(process.env.DB_PATH || process.env.DATABASE_PATH)
+    : path.join(__dirname, 'camnex.db');
+  db = Database(dbPath);
+  console.log(`[Database] Connected to SQLite via ${activeEngine} at ${path.basename(dbPath)}`);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+}
 
 function initDb() {
+  if (isMysqlClient) {
+    console.log('[Database] MySQL engine active. Schema migrations are managed via SQL migration runner.');
+    return;
+  }
+
   // Check if legacy schema without data_json exists
   let needsRebuild = false;
   try {

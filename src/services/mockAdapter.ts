@@ -104,47 +104,56 @@ export class MockProductService implements IProductService {
       }
     }
 
-    if (params?.brandSlug) {
+    const brandTargets = params?.brands && params.brands.length > 0
+      ? params.brands
+      : (params?.brandSlug ? [params.brandSlug] : []);
+
+    if (brandTargets.length > 0) {
       const brands = getStorage<Brand[]>(STORAGE_KEYS.BRANDS, INITIAL_BRANDS);
-      const targetLower = params.brandSlug.toLowerCase().trim();
-      const b = brands.find(br =>
-        br.slug.toLowerCase() === targetLower ||
-        br.id.toLowerCase() === targetLower ||
-        br.name.toLowerCase() === targetLower
-      );
-      const bId = (b?.id || targetLower).toLowerCase();
-      const bIdBase = bId.replace(/^(b-|brand-)/i, '');
-      const bSlug = (b?.slug || targetLower).toLowerCase();
-      const bSlugSpaced = bSlug.replace(/-/g, ' ');
-      const bSlugFirst = bSlug.split('-')[0];
-      const bName = (b?.name || targetLower).toLowerCase();
+      const targetLookups = brandTargets.map(bt => {
+        const targetLower = bt.toLowerCase().trim();
+        const b = brands.find(br =>
+          br.slug.toLowerCase() === targetLower ||
+          br.id.toLowerCase() === targetLower ||
+          br.name.toLowerCase() === targetLower
+        );
+        const bId = (b?.id || targetLower).toLowerCase();
+        const bIdBase = bId.replace(/^(b-|brand-)/i, '');
+        const bSlug = (b?.slug || targetLower).toLowerCase();
+        const bSlugSpaced = bSlug.replace(/-/g, ' ');
+        const bSlugFirst = bSlug.split('-')[0];
+        const bName = (b?.name || targetLower).toLowerCase();
+        return { targetLower, bId, bIdBase, bSlug, bSlugSpaced, bSlugFirst, bName };
+      });
 
       list = list.filter(p => {
         const pBrandId = String(p.brandId || '').toLowerCase();
         const pBrandIdBase = pBrandId.replace(/^(b-|brand-)/i, '');
         const pBrandName = String(p.brand || '').toLowerCase();
 
-        if (pBrandId && (
-          pBrandId === bId ||
-          pBrandId === bSlug ||
-          pBrandId === targetLower ||
-          (bIdBase && pBrandIdBase === bIdBase) ||
-          (bSlug && pBrandIdBase === bSlug)
-        )) {
-          return true;
-        }
-        if (pBrandName && (
-          pBrandName === bName ||
-          pBrandName === bSlug ||
-          pBrandName === bSlugSpaced ||
-          pBrandName === targetLower ||
-          (bIdBase && pBrandName === bIdBase) ||
-          (bSlugFirst.length >= 4 && pBrandName.includes(bSlugFirst)) ||
-          (bName.length >= 3 && pBrandName.length >= 3 && bName.includes(pBrandName))
-        )) {
-          return true;
-        }
-        return false;
+        return targetLookups.some(({ targetLower, bId, bIdBase, bSlug, bSlugSpaced, bSlugFirst, bName }) => {
+          if (pBrandId && (
+            pBrandId === bId ||
+            pBrandId === bSlug ||
+            pBrandId === targetLower ||
+            (bIdBase && pBrandIdBase === bIdBase) ||
+            (bSlug && pBrandIdBase === bSlug)
+          )) {
+            return true;
+          }
+          if (pBrandName && (
+            pBrandName === bName ||
+            pBrandName === bSlug ||
+            pBrandName === bSlugSpaced ||
+            pBrandName === targetLower ||
+            (bIdBase && pBrandName === bIdBase) ||
+            (bSlugFirst.length >= 4 && pBrandName.includes(bSlugFirst)) ||
+            (bName.length >= 3 && pBrandName.length >= 3 && bName.includes(pBrandName))
+          )) {
+            return true;
+          }
+          return false;
+        });
       });
     }
 

@@ -121,7 +121,7 @@ function destroySession(token, res, app = 'all') {
 }
 
 // 4. Authenticate Middleware
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   let token = null;
 
   // Determine token from cookie or Authorization header
@@ -145,7 +145,7 @@ function authenticate(req, res, next) {
   }
 
   try {
-    const session = db.prepare(`
+    const session = await db.prepare(`
       SELECT * FROM sessions WHERE id = ? AND expires_at > datetime('now')
     `).get(token);
 
@@ -155,7 +155,7 @@ function authenticate(req, res, next) {
     }
 
     if (session.role === 'customer') {
-      const customer = db.prepare(`SELECT * FROM customers WHERE id = ?`).get(session.user_id);
+      const customer = await db.prepare(`SELECT * FROM customers WHERE id = ?`).get(session.user_id);
       if (customer && customer.is_archived) {
         req.user = null;
         return next();
@@ -171,7 +171,7 @@ function authenticate(req, res, next) {
     }
 
     // Staff / User lookup
-    const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(session.user_id);
+    const user = await db.prepare(`SELECT * FROM users WHERE id = ?`).get(session.user_id);
     if (!user || user.status === 'disabled') {
       req.user = null;
       return next();
@@ -183,13 +183,13 @@ function authenticate(req, res, next) {
       permissions = Object.values(PERMISSIONS);
     } else {
       try {
-        const userRoles = db.prepare(`
+        const userRoles = await db.prepare(`
           SELECT r.id, r.name FROM user_roles ur
           JOIN roles r ON ur.role_id = r.id
           WHERE ur.user_id = ?
         `).all(user.id);
 
-        const permRows = db.prepare(`
+        const permRows = await db.prepare(`
           SELECT DISTINCT rp.permission_key
           FROM role_permissions rp
           JOIN user_roles ur ON rp.role_id = ur.role_id
