@@ -32,7 +32,7 @@ const { enforcePolicy } = require('./server/middleware/policy');
 const { createSession: createStaffSession, costFieldFilter } = require('./server/middleware/auth');
 const staffService = require('./server/modules/staff/staff.service');
 const { startDomainEventWorker, emitDomainEvent } = require('./server/middleware/events');
-const { encrypt, decrypt, maskSecret } = require('./server/shared/cryptoHelper');
+const { encrypt, decrypt, maskSecret, assertProductionKeyConfigured } = require('./server/shared/cryptoHelper');
 const apiV1Router = require('./server/routes/api.v1');
 const { logAudit } = require('./server/middleware/auditLogger');
 const { hasPermission, PERMISSIONS } = require('./server/shared/permissions');
@@ -6665,6 +6665,9 @@ app.use((req, res, next) => {
 });
 
 // Start server
+// Security enforcement: validate production encryption key before binding HTTP listener
+assertProductionKeyConfigured();
+
 let serverInstance;
 if (process.env.HOST) {
   serverInstance = app.listen(PORT, process.env.HOST, () => {
