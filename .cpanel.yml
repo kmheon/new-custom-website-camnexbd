@@ -1,7 +1,7 @@
-
 ---
 deployment:
   tasks:
     - export APPPATH=/home/camnexbd/camnex
     - cd "$APPPATH" && npm install --include=dev
     - cd "$APPPATH" && npm run build
+    - mkdir -p "$APPPATH/tmp" && touch "$APPPATH/tmp/restart.txt"

@@ -57,6 +57,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
   useEffect(() => {
     checkCustomerAuth();
     fetchVerifStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pre-fill customer contact fields if authenticated
@@ -66,6 +67,7 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
       if (currentCustomer.phone && !customerPhone) setCustomerPhone(currentCustomer.phone);
       if (currentCustomer.email && !customerEmail) setCustomerEmail(currentCustomer.email);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentCustomer]);
 
   const cleanPhoneInput = customerPhone.replace(/[\s\-\(\)]/g, '').replace(/^\+88/, '');

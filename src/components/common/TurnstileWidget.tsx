@@ -65,6 +65,7 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
         setIsConfigured(false);
         onVerify('XXXX.DUMMY.TOKEN.XXXX');
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -144,6 +145,7 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
         try { window.turnstile.remove(widgetIdRef.current); } catch (_) {}
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigured, siteKey, theme, action]);
 
   const handleRetry = () => {

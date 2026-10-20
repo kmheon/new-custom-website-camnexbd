@@ -113,27 +113,34 @@ async function runBuild() {
 
   fs.writeFileSync(path.join(distDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
-  // 4. Synchronize public/index.html with active hashed bundles
-  const indexHtmlPath = path.join(__dirname, '../public/index.html');
-  if (fs.existsSync(indexHtmlPath)) {
-    let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
-    const cssRegex = /<link[^>]+(?:id="app-styles"|href=["'][^"']*(?:\/style\.css|\/dist\/bundle\.[^"']*\.css)["'])[^>]*>/i;
-    const newCssTag = `<link rel="stylesheet" href="/dist/${hashedCssFilename}" id="app-styles">`;
-    if (cssRegex.test(indexHtml)) {
-      indexHtml = indexHtml.replace(cssRegex, newCssTag);
-    } else {
-      indexHtml = indexHtml.replace('</head>', `  ${newCssTag}\n</head>`);
-    }
+  // 4. Synchronize public/index.html with active hashed bundles (optional, disabled by default)
+  // server.js dynamically resolves and injects manifest assets into HTML responses at runtime.
+  // We leave public/index.html untouched so Git working trees remain clean during automated builds.
+  // Use --sync-html only when preparing an explicit static-file preview build.
+  const syncHtml = process.argv.includes('--sync-html');
+  if (syncHtml) {
+    const indexHtmlPath = path.join(__dirname, '../public/index.html');
+    if (fs.existsSync(indexHtmlPath)) {
+      let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+      const cssRegex = /<link[^>]+(?:id="app-styles"|href=["'][^"']*(?:\/style\.css|\/dist\/bundle\.[^"']*\.css)["'])[^>]*>/i;
+      const newCssTag = `<link rel="stylesheet" href="/dist/${hashedCssFilename}" id="app-styles">`;
+      if (cssRegex.test(indexHtml)) {
+        indexHtml = indexHtml.replace(cssRegex, newCssTag);
+      } else {
+        indexHtml = indexHtml.replace('</head>', `  ${newCssTag}\n</head>`);
+      }
 
-    const jsRegex = /<script[^>]+src=["'][^"']*(?:bundle\.js|\/dist\/bundle\.[^"']*\.js)["'][^>]*><\/script>/i;
-    const newJsTag = `<script src="/dist/${mainBundle.filename}"></script>`;
-    if (jsRegex.test(indexHtml)) {
-      indexHtml = indexHtml.replace(jsRegex, newJsTag);
-    } else {
-      indexHtml = indexHtml.replace('</body>', `  ${newJsTag}\n</body>`);
-    }
+      const jsRegex = /<script[^>]+src=["'][^"']*(?:bundle\.js|\/dist\/bundle\.[^"']*\.js)["'][^>]*><\/script>/i;
+      const newJsTag = `<script src="/dist/${mainBundle.filename}"></script>`;
+      if (jsRegex.test(indexHtml)) {
+        indexHtml = indexHtml.replace(jsRegex, newJsTag);
+      } else {
+        indexHtml = indexHtml.replace('</body>', `  ${newJsTag}\n</body>`);
+      }
 
-    fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
+      fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
+      console.log('  -> Synchronized public/index.html (--sync-html requested)');
+    }
   }
 
   // 5. Clean up old hashed bundle files (keep current ones)

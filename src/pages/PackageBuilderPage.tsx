@@ -1297,7 +1297,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
         compression: 'H.265 Pro+'
       };
     }
-  }, [systemArch, cameraCount, cameraCategory, selectedRecorderProduct, compatibleCatalogRecorders]);
+  }, [systemArch, cameraCount, cameraCategory, selectedRecorderProduct, compatibleCatalogRecorders, wirelessRecordingType]);
 
   // Derive Camera Model based on Hierarchy + Catalog + Overrides + Form Factor + Specialist + Night Vision
   const cameraSpec = useMemo(() => {
