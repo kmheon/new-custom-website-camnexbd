@@ -16,7 +16,7 @@ try {
         if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
           val = val.slice(1, -1);
         }
-        if (process.env[key] === undefined) {
+        if (process.env[key] === undefined || process.env[key] === '' || (typeof process.env[key] === 'string' && process.env[key].trim() === '')) {
           process.env[key] = val;
         }
       }
