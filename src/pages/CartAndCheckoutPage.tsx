@@ -357,6 +357,34 @@ export const CartAndCheckoutPage: React.FC<CartAndCheckoutPageProps> = ({
           </p>
         </div>
 
+        {/* Development Mode Ordering Advisory */}
+        <div
+          data-testid="checkout-dev-notice"
+          className="mb-6 p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-300/80 shadow-xs flex items-start gap-3.5"
+        >
+          <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 text-xs sm:text-sm">
+            <div className="font-extrabold text-amber-950 flex items-center gap-2 flex-wrap">
+              <span>Notice: Website in Development &amp; System Testing Phase</span>
+              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-200/90 text-amber-950 font-black">
+                Preview Only
+              </span>
+            </div>
+            <p className="text-amber-900 leading-relaxed">
+              Automated online order fulfillment and real payments are currently disabled while the website undergoes final testing. <strong>We advise customers not to submit live orders or payments yet.</strong> To order these items or get a verified quotation, call our sales desk at{' '}
+              <a href="tel:+8801540535150" className="font-bold underline text-amber-950 hover:text-black">
+                +880 1540-535150
+              </a>{' '}
+              or email{' '}
+              <a href="mailto:sales@camnexbd.com" className="font-bold underline text-amber-950 hover:text-black">
+                sales@camnexbd.com
+              </a>.
+            </p>
+          </div>
+        </div>
+
         {items.length === 0 ? (
           <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-4 my-8">
             <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">

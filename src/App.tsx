@@ -6,6 +6,7 @@ import { CatalogPage } from './pages/CatalogPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { SEO } from './components/common/SEO';
 import { Button } from './components/common/UI';
+import { DevelopmentNotice } from './components/common/DevelopmentNotice';
 import { X } from 'lucide-react';
 import { useCartStore, useSettingsStore, useCompareStore } from './store';
 
@@ -240,6 +241,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#111827] font-sans antialiased selection:bg-[#F15A24] selection:text-white">
+      {!isAdmin && <DevelopmentNotice onNavigate={navigate} />}
       {!isAdmin && <Header onNavigate={navigate} currentRoute={currentRoute} />}
 
       <main className="flex-1">
