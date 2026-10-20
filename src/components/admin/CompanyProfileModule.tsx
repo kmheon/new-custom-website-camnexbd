@@ -27,7 +27,7 @@ const DEFAULT_FOUNDERS = [
     responsibilities: 'Business planning, accounts and finance administration, corporate coordination, and business operations.',
     photoUrl: '',
     order: 2,
-    socialLinks: { linkedin: '', facebook: '', email: 'contact@camnexbd.com' }
+    socialLinks: { linkedin: '', facebook: '', email: 'accounts@camnexbd.com' }
   }
 ];
 

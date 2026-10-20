@@ -31,7 +31,8 @@ export const RefundPolicyPage: React.FC<RefundPolicyPageProps> = ({ onNavigate }
   }, []);
 
   const phone = settings?.phone || '+880 1540-535150';
-  const email = settings?.email || 'contact@camnexbd.com';
+  const ordersEmail = settings?.ordersEmail || 'orders@camnexbd.com';
+  const accountsEmail = settings?.accountsEmail || 'accounts@camnexbd.com';
   const address = settings?.address || 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207';
 
   const scrollToSection = (id: string) => {
@@ -307,7 +308,8 @@ export const RefundPolicyPage: React.FC<RefundPolicyPageProps> = ({ onNavigate }
             <div><strong>CamneX Bangladesh — Returns & Service Coordination</strong></div>
             <div>Center: {address}</div>
             <div>Phone: <a href={`tel:${phone.replace(/\s+/g, '')}`} className="text-[#F15A24] font-bold">{phone}</a></div>
-            <div>Email: <a href={`mailto:${email}`} className="text-[#F15A24] font-bold">{email}</a></div>
+            <div>Order & Return Queries: <a href={`mailto:${ordersEmail}`} className="text-[#F15A24] font-bold">{ordersEmail}</a></div>
+            <div>Billing & Refund Processing: <a href={`mailto:${accountsEmail}`} className="text-[#F15A24] font-bold">{accountsEmail}</a></div>
             <div>Working Hours: Saturday to Thursday, 9:30 AM to 7:30 PM</div>
           </div>
         </section>

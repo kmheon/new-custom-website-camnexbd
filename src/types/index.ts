@@ -658,6 +658,12 @@ export interface SiteSettings {
   phone: string;
   email: string;
   secondaryEmail: string;
+  salesEmail?: string;
+  ordersEmail?: string;
+  supportEmail?: string;
+  accountsEmail?: string;
+  partnersEmail?: string;
+  careersEmail?: string;
   website: string;
   facebookUrl: string;
   youtubeUrl?: string;

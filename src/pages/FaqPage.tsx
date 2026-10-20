@@ -26,7 +26,7 @@ interface FaqPageProps {
   onNavigate: (route: string, param?: string) => void;
 }
 
-const FAQ_CATEGORIES = [
+const DEFAULT_FAQ_CATEGORIES = [
   'ALL',
   'Products & Compatibility',
   'CCTV & Surveillance Systems',
@@ -48,15 +48,20 @@ export const FaqPage: React.FC<FaqPageProps> = ({ onNavigate }) => {
     cmsService
       .getFaqs()
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setFaqs(data);
-        } else {
-          setFaqs(INITIAL_FAQS);
+        // Intentionally configured smaller FAQ list (length > 0) is displayed as-is.
+        // Empty ([]), null, undefined, or uninitialized datasets fall back to INITIAL_FAQS.
+        const activeFaqs = Array.isArray(data) && data.length > 0 ? data : INITIAL_FAQS;
+        setFaqs(activeFaqs);
+        if (activeFaqs.length > 0 && activeFaqs[0]?.id) {
+          setOpenFaqIds(new Set([activeFaqs[0].id]));
         }
         setLoading(false);
       })
       .catch(() => {
         setFaqs(INITIAL_FAQS);
+        if (INITIAL_FAQS.length > 0 && INITIAL_FAQS[0]?.id) {
+          setOpenFaqIds(new Set([INITIAL_FAQS[0].id]));
+        }
         setLoading(false);
       });
   }, []);
@@ -74,7 +79,7 @@ export const FaqPage: React.FC<FaqPageProps> = ({ onNavigate }) => {
   };
 
   const expandAll = () => {
-    setOpenFaqIds(new Set(faqs.map((f) => f.id)));
+    setOpenFaqIds(new Set(effectiveFaqs.map((f) => f.id)));
   };
 
   const collapseAll = () => {
@@ -84,6 +89,26 @@ export const FaqPage: React.FC<FaqPageProps> = ({ onNavigate }) => {
   const effectiveFaqs = useMemo(() => {
     return faqs.length > 0 ? faqs : INITIAL_FAQS;
   }, [faqs]);
+
+  const categories = useMemo(() => {
+    const activeCategories = Array.from(
+      new Set(effectiveFaqs.map((f) => f.category).filter(Boolean))
+    );
+    const hasDefaultCategories = DEFAULT_FAQ_CATEGORIES.some(
+      (c) => c !== 'ALL' && activeCategories.includes(c)
+    );
+
+    if (hasDefaultCategories || activeCategories.length === 0) {
+      const list = [...DEFAULT_FAQ_CATEGORIES];
+      for (const cat of activeCategories) {
+        if (!list.includes(cat as any)) {
+          list.push(cat);
+        }
+      }
+      return list;
+    }
+    return ['ALL', ...activeCategories];
+  }, [effectiveFaqs]);
 
   const filteredFaqs = useMemo(() => {
     return effectiveFaqs.filter((f) => {
@@ -234,7 +259,7 @@ export const FaqPage: React.FC<FaqPageProps> = ({ onNavigate }) => {
 
           {/* Category Filter Pills */}
           <div className="flex flex-wrap gap-2 pt-1">
-            {FAQ_CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const isSelected = selectedCategory === cat;
               const count =
                 cat === 'ALL'

@@ -112,7 +112,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
   const footerConfig = settings?.footer;
 
-  const quickLinks: FooterLinkItem[] = footerConfig?.quickLinks || [
+  const baseQuickLinks: FooterLinkItem[] = footerConfig?.quickLinks || [
     { label: 'Home', route: 'home' },
     { label: 'Products', route: 'catalog' },
     { label: 'Brands', route: 'brands' },
@@ -122,8 +122,34 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     { label: 'Company Profile', route: 'company_profile' },
     { label: 'Projects & Portfolio', route: 'projects' },
     { label: 'Why Choose Us', route: 'why_choose_us' },
-    { label: 'Certifications & Compliance', route: 'certifications' }
+    { label: 'Certifications & Compliance', route: 'certifications' },
+    { label: 'Contact', route: 'contact' }
   ];
+
+  const requiredCompanyLinks: FooterLinkItem[] = [
+    { label: 'Company Profile', route: 'company_profile' },
+    { label: 'Projects & Portfolio', route: 'projects' },
+    { label: 'Why Choose Us', route: 'why_choose_us' },
+    { label: 'Certifications & Compliance', route: 'certifications' },
+    { label: 'Contact', route: 'contact' }
+  ];
+
+  const normalizedQuickLinks = baseQuickLinks.map((item) => {
+    if (item.route === 'about' || item.route === 'company_profile') {
+      return { ...item, label: 'Company Profile', route: 'company_profile' };
+    }
+    if (item.route === 'projects') {
+      return { ...item, label: 'Projects & Portfolio', route: 'projects' };
+    }
+    return item;
+  });
+
+  const quickLinks: FooterLinkItem[] = [...normalizedQuickLinks];
+  for (const reqLink of requiredCompanyLinks) {
+    if (!quickLinks.some((l) => l.route === reqLink.route || l.label === reqLink.label)) {
+      quickLinks.push(reqLink);
+    }
+  }
 
   const productsLinks: FooterLinkItem[] = footerConfig?.products || [
     { label: 'CCTV & IP Cameras', route: 'category', param: 'cctv-cameras' },

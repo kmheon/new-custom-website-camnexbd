@@ -22,8 +22,8 @@ class CompanyService {
       tax_circle: null,
       vat_reg_number: null,
       contact_email: 'contact@camnexbd.com',
-      sales_email: 'contact@camnexbd.com',
-      support_email: 'contact@camnexbd.com',
+      sales_email: 'sales@camnexbd.com',
+      support_email: 'support@camnexbd.com',
       primary_phone: '+880 1540-535150',
       secondary_phone: '+880 1410-085848',
       hotline: null,
@@ -208,7 +208,7 @@ class CompanyService {
           socialLinks: {
             linkedin: '',
             facebook: '',
-            email: 'contact@camnexbd.com'
+            email: 'accounts@camnexbd.com'
           },
           isVerified: true,
           awaitingConfirmation: false,
@@ -323,6 +323,22 @@ class CompanyService {
           "telephone": profile.primary_phone || "+880 1540-535150",
           "contactType": "customer service",
           "email": profile.contact_email || "contact@camnexbd.com",
+          "areaServed": "BD",
+          "availableLanguage": ["en", "bn"]
+        },
+        {
+          "@type": "ContactPoint",
+          "telephone": profile.primary_phone || "+880 1540-535150",
+          "contactType": "sales",
+          "email": profile.sales_email || "sales@camnexbd.com",
+          "areaServed": "BD",
+          "availableLanguage": ["en", "bn"]
+        },
+        {
+          "@type": "ContactPoint",
+          "telephone": profile.primary_phone || "+880 1540-535150",
+          "contactType": "technical support",
+          "email": profile.support_email || "support@camnexbd.com",
           "areaServed": "BD",
           "availableLanguage": ["en", "bn"]
         }

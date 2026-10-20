@@ -102,7 +102,13 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   companyName: 'CamneX Bangladesh',
   phone: '+880 1540-535150',
   email: 'contact@camnexbd.com',
-  secondaryEmail: 'camnexbd@gmail.com',
+  secondaryEmail: 'info@camnexbd.com',
+  salesEmail: 'sales@camnexbd.com',
+  ordersEmail: 'orders@camnexbd.com',
+  supportEmail: 'support@camnexbd.com',
+  accountsEmail: 'accounts@camnexbd.com',
+  partnersEmail: 'partners@camnexbd.com',
+  careersEmail: 'careers@camnexbd.com',
   website: 'https://camnexbd.com',
   facebookUrl: 'https://facebook.com/camnexbd',
   youtubeUrl: 'https://youtube.com/@camnexbd',
@@ -201,10 +207,10 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
     quickLinks: [
       { label: 'Home', route: 'home' },
       { label: 'Shop', route: 'catalog' },
-      { label: 'Solutions', route: 'solutions' },
-      { label: 'Services', route: 'services' },
-      { label: 'Installations', route: 'projects' },
-      { label: 'About Us', route: 'about' },
+      { label: 'Company Profile', route: 'company_profile' },
+      { label: 'Projects & Portfolio', route: 'projects' },
+      { label: 'Why Choose Us', route: 'why_choose_us' },
+      { label: 'Certifications & Compliance', route: 'certifications' },
       { label: 'Contact', route: 'contact' }
     ],
     products: [
@@ -5468,7 +5474,7 @@ export const INITIAL_FAQS: FaqItem[] = [
     id: 'faq-war-2',
     category: 'Warranty & After-Sales Support',
     question: 'How can I contact technical support?',
-    answer: 'Our dedicated engineering support desk can be reached via phone at +880 1540-535150, secondary support line +880 1410-085848, WhatsApp at 8801540535150, or email at contact@camnexbd.com. Support hours are Saturday through Thursday from 9:30 AM to 7:30 PM, with Friday on-call support for corporate enterprise clients.',
+    answer: 'Our dedicated engineering support desk can be reached via phone at +880 1540-535150, secondary support line +880 1410-085848, WhatsApp at 8801540535150, or email at support@camnexbd.com. Support hours are Saturday through Thursday from 9:30 AM to 7:30 PM, with Friday on-call support for corporate enterprise clients.',
     order: 16
   },
   {
@@ -5484,7 +5490,7 @@ export const INITIAL_FAQS: FaqItem[] = [
     id: 'faq-qp-1',
     category: 'Quotations & Packages',
     question: 'How can I request a quotation?',
-    answer: 'You can submit a formal quotation request online via our Request Quotation page (/quote) or by emailing contact@camnexbd.com with your site requirements. Our engineering team will review your specifications and provide a structured Bill of Materials with transparent line-item pricing.',
+    answer: 'You can submit a formal quotation request online via our Request Quotation page (/quote) or by emailing sales@camnexbd.com with your site requirements. Our engineering team will review your specifications and provide a structured Bill of Materials with transparent line-item pricing.',
     order: 18
   },
   {

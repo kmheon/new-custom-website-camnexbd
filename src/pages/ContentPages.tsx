@@ -317,6 +317,47 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
                     </div>
                   </div>
 
+                  {/* Departmental Directory */}
+                  <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EDE8E1] space-y-2.5">
+                    <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#5B6472]">
+                      Departmental Mailboxes
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">General Inquiries:</span>
+                        <a href="mailto:contact@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">contact@camnexbd.com</a>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">Sales & Quotations:</span>
+                        <a href="mailto:sales@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">sales@camnexbd.com</a>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">Orders & Tracking:</span>
+                        <a href="mailto:orders@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">orders@camnexbd.com</a>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">Technical & Warranty:</span>
+                        <a href="mailto:support@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">support@camnexbd.com</a>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">Accounts & Billing:</span>
+                        <a href="mailto:accounts@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">accounts@camnexbd.com</a>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">Corporate & Info:</span>
+                        <a href="mailto:info@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">info@camnexbd.com</a>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">Partners & Vendors:</span>
+                        <a href="mailto:partners@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">partners@camnexbd.com</a>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[#5B6472] font-semibold">Careers & Hiring:</span>
+                        <a href="mailto:careers@camnexbd.com" className="font-bold text-[#111827] hover:text-[#F15A24] transition-colors">careers@camnexbd.com</a>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Website & Facebook */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EDE8E1] space-y-1">

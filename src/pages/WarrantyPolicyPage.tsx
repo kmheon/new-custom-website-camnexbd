@@ -33,7 +33,7 @@ export const WarrantyPolicyPage: React.FC<WarrantyPolicyPageProps> = ({ onNaviga
 
   const phone = settings?.phone || '+880 1540-535150';
   const secondaryPhone = '+880 1410-085848';
-  const email = settings?.email || 'contact@camnexbd.com';
+  const email = settings?.supportEmail || 'support@camnexbd.com';
   const address = settings?.address || 'Block A, Chandrima Model Town, Shop 01, 1st Floor, House 22, Road 06 Main Rd, Dhaka 1207';
 
   const scrollToSection = (id: string) => {

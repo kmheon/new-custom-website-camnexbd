@@ -2009,7 +2009,7 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                 type={activeTestTemplate.channel === 'email' ? 'email' : 'text'}
                 value={testRecipient}
                 onChange={(e) => setTestRecipient(e.target.value)}
-                placeholder={activeTestTemplate.channel === 'email' ? 'engineering@camnexbd.com' : '+880 1712-345678'}
+                placeholder={activeTestTemplate.channel === 'email' ? 'admin@camnexbd.com' : '+880 1712-345678'}
                 className="w-full bg-slate-950 border border-slate-700 text-white p-2.5 rounded-lg text-xs font-mono"
               />
             </div>

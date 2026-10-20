@@ -3438,7 +3438,7 @@ app.get('/api/orders/:orderNumber', apiLimiter, (req, res) => {
       deliveryCharge: fullOrder.deliveryFee != null ? fullOrder.deliveryFee : (fullOrder.deliveryCharge || 0),
       contactSupport: {
         phone: '+880 1540-535150',
-        email: 'contact@camnexbd.com',
+        email: 'orders@camnexbd.com',
         whatsapp: '8801540535150'
       }
     };
@@ -5914,7 +5914,7 @@ async function handleEmailNotificationJob(payload) {
     delivered: true,
     dispatchedAt: new Date().toISOString(),
     channel,
-    recipient: recipient || 'system@camnexbd.com',
+    recipient: recipient || (type && type.includes('order') ? 'orders@camnexbd.com' : 'admin@camnexbd.com'),
     trigger: trigger || type || 'general',
     reference: referenceNumber || 'N/A',
     subject: subject || null,

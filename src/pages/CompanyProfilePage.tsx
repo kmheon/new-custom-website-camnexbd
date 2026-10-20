@@ -59,7 +59,7 @@ const DEFAULT_FOUNDERS = [
     socialLinks: {
       linkedin: '',
       facebook: '',
-      email: 'contact@camnexbd.com'
+      email: 'accounts@camnexbd.com'
     },
     isVerified: true,
     awaitingConfirmation: false,

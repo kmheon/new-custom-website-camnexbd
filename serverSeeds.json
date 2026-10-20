@@ -5040,7 +5040,13 @@
     "companyName": "CamneX Bangladesh",
     "phone": "+880 1540-535150",
     "email": "contact@camnexbd.com",
-    "secondaryEmail": "camnexbd@gmail.com",
+    "secondaryEmail": "info@camnexbd.com",
+    "salesEmail": "sales@camnexbd.com",
+    "ordersEmail": "orders@camnexbd.com",
+    "supportEmail": "support@camnexbd.com",
+    "accountsEmail": "accounts@camnexbd.com",
+    "partnersEmail": "partners@camnexbd.com",
+    "careersEmail": "careers@camnexbd.com",
     "website": "https://camnexbd.com",
     "facebookUrl": "https://facebook.com/camnexbd",
     "youtubeUrl": "https://youtube.com/@camnexbd",
@@ -5086,20 +5092,20 @@
           "route": "catalog"
         },
         {
-          "label": "Solutions",
-          "route": "solutions"
+          "label": "Company Profile",
+          "route": "company_profile"
         },
         {
-          "label": "Services",
-          "route": "services"
-        },
-        {
-          "label": "Installations",
+          "label": "Projects & Portfolio",
           "route": "projects"
         },
         {
-          "label": "About Us",
-          "route": "about"
+          "label": "Why Choose Us",
+          "route": "why_choose_us"
+        },
+        {
+          "label": "Certifications & Compliance",
+          "route": "certifications"
         },
         {
           "label": "Contact",

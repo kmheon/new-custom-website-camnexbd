@@ -16,7 +16,9 @@ function getVerificationConfig() {
   return {
     email: {
       configured: smtpConfigured,
-      host: smtpConfigured ? process.env.SMTP_HOST : null
+      host: smtpConfigured ? process.env.SMTP_HOST : null,
+      from: process.env.SMTP_FROM || 'CamneX Bangladesh <noreply@camnexbd.com>',
+      replyTo: 'support@camnexbd.com'
     },
     sms: {
       configured: smsConfigured,
