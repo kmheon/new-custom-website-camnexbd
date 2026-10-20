@@ -1224,12 +1224,9 @@ function ensurePackageSystemTypes() {
 function ensureAdminUser() {
   const adminEmail = (process.env.ADMIN_EMAIL || 'admin@camnexbd.com').toLowerCase().trim();
   const adminPass = process.env.ADMIN_PASSWORD;
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
+  const existing = db.prepare('SELECT id, role FROM users WHERE email = ?').get(adminEmail);
   if (existing) {
-    if (adminPass && adminPass.trim()) {
-      const hash = bcrypt.hashSync(adminPass.trim(), 10);
-      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, existing.id);
-    }
+    // Administrator already exists; never overwrite credentials on application restart
     return;
   }
   let passwordToUse;
@@ -1452,4 +1449,5 @@ initDb();
 module.exports = db;
 module.exports.reseedDatabase = reseedDatabase;
 module.exports.clearDemoData = clearDemoData;
+module.exports.ensureAdminUser = ensureAdminUser;
 module.exports.dbPath = dbPath;
