@@ -130,11 +130,11 @@ const { AsyncLocalStorage } = require('node:async_hooks');
 const mysqlTxStorage = new AsyncLocalStorage();
 
 function createMysqlAdapter(config = {}) {
-  const host = config.host || process.env.DB_HOST || '127.0.0.1';
+  const host = (config.host || process.env.DB_HOST || '127.0.0.1').trim();
   const port = parseInt(config.port || process.env.DB_PORT || '3306', 10);
-  const user = config.user || process.env.DB_USER;
+  const user = (config.user || process.env.DB_USER || '').trim();
   const password = config.password || process.env.DB_PASSWORD || '';
-  const database = config.database || process.env.DB_NAME;
+  const database = (config.database || process.env.DB_NAME || '').trim();
 
   // Strict validation: never allow DB_CLIENT=mysql to boot with missing credentials or silently fall back
   if (!user || !database) {
