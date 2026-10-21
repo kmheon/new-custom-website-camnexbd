@@ -138,7 +138,7 @@ class StaffService {
 
     const newHash = bcrypt.hashSync(newPassword, 10);
     db.prepare(`
-      UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+      UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?
     `).run(newHash, userId);
 
     logAudit({
@@ -225,8 +225,7 @@ class StaffService {
           status = COALESCE(?, status),
           must_change_password = COALESCE(?, must_change_password),
           branch_id = COALESCE(?, branch_id),
-          warehouse_id = COALESCE(?, warehouse_id),
-          updated_at = CURRENT_TIMESTAMP
+          warehouse_id = COALESCE(?, warehouse_id)
         WHERE id = ?
       `).run(
         data.name ?? null,

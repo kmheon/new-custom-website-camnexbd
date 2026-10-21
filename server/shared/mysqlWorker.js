@@ -77,3 +77,4 @@ parentPort.on('message', async ({ port, signal, action, sql, params }) => {
   Atomics.store(signal, 0, 1);
   Atomics.notify(signal, 0);
 });
+

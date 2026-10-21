@@ -91,15 +91,15 @@ async function run() {
   const otherId = 'usr-other-2';
 
   db.prepare(`
-    INSERT OR REPLACE INTO users (id, name, email, password_hash, role)
-    VALUES (?, 'CamneX Admin', 'admin@camnexbd.com', ?, 'admin')
+    INSERT OR REPLACE INTO users (id, name, email, password_hash, role, failed_login_attempts, locked_until)
+    VALUES (?, 'CamneX Admin', 'admin@camnexbd.com', ?, 'admin', 0, NULL)
   `).run(adminId, oldHash);
 
   const otherPassword = 'OtherUserPassword123!';
   const otherHash = bcrypt.hashSync(otherPassword, 10);
   db.prepare(`
-    INSERT OR REPLACE INTO users (id, name, email, password_hash, role)
-    VALUES (?, 'Other Staff', 'staff@camnexbd.com', ?, 'staff')
+    INSERT OR REPLACE INTO users (id, name, email, password_hash, role, failed_login_attempts, locked_until)
+    VALUES (?, 'Other Staff', 'staff@camnexbd.com', ?, 'staff', 0, NULL)
   `).run(otherId, otherHash);
 
   // Insert active session for admin and other user
@@ -122,24 +122,59 @@ async function run() {
     });
   });
 
-  console.log('\n--- 4. Testing Password Reset Functionality ---');
+  console.log('\n--- 4. Testing Account Lockout & Lockout Reset ---');
+
+  // Trigger 5 failed logins to activate the 15-minute lockout
+  for (let i = 0; i < 5; i++) {
+    try { staffService.login('admin@camnexbd.com', 'BadPass!'); } catch (_) {}
+  }
+
+  test('Account is locked out after failed attempts and rejects with 423', () => {
+    assert.throws(() => staffService.login('admin@camnexbd.com', oldPassword), (err) => {
+      assert.strictEqual(err.statusCode, 423);
+      assert.ok(err.message.includes('Account locked') || err.message.includes('Account temporarily locked'));
+      return true;
+    });
+  });
+
+  console.log('\n--- 5. Testing Schema-Compatible Password Reset & Lockout Clearing ---');
 
   const newPassword = 'NewStrongPassword456!';
   process.env.NEW_ADMIN_PASSWORD = newPassword;
 
-  // Run password reset logic directly
+  // Execute password reset transaction strictly using columns that exist in the MySQL & SQLite schema
+  // (password_hash, must_change_password, failed_login_attempts, locked_until) - NO updated_at
   const newHash = bcrypt.hashSync(newPassword, 10);
+  const auditId = `audit-test-${Date.now()}`;
+  const auditPayload = JSON.stringify({
+    action: 'password_reset',
+    targetEmail: 'admin@camnexbd.com',
+    sessionsRevoked: true,
+    lockoutCleared: true
+  });
+
   const tx = db.transaction(() => {
-    db.prepare(`
+    const updateResult = db.prepare(`
       UPDATE users
-      SET password_hash = ?, must_change_password = 0, updated_at = datetime('now')
+      SET password_hash = ?,
+          must_change_password = 0,
+          failed_login_attempts = 0,
+          locked_until = NULL
       WHERE id = ?
     `).run(newHash, adminId);
+
+    assert.strictEqual(updateResult.changes, 1, 'Expected exactly 1 user row updated');
+
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(adminId);
+
+    db.prepare(`
+      INSERT INTO audit_logs (id, user_id, user_name, user_email, surface, entity_type, entity_id, action, after_data)
+      VALUES (?, ?, 'CamneX Admin', 'admin@camnexbd.com', 'cli', 'users', ?, 'password_reset', ?)
+    `).run(auditId, adminId, adminId, auditPayload);
   });
   tx();
 
-  test('New password authenticates successfully', () => {
+  test('New password authenticates successfully and lockout is cleared', () => {
     const result = staffService.login('admin@camnexbd.com', newPassword);
     assert.strictEqual(result.id, adminId);
   });
@@ -161,6 +196,42 @@ async function run() {
     assert.strictEqual(otherUser.password_hash, otherHash);
     const otherSess = db.prepare('SELECT * FROM sessions WHERE id = ?').get('sess-other-1');
     assert.ok(otherSess, 'Other user session must still exist');
+  });
+
+  test('Audit log entry was written matching canonical schema', () => {
+    const log = db.prepare('SELECT * FROM audit_logs WHERE id = ?').get(auditId);
+    assert.ok(log, 'Audit log entry must exist');
+    assert.strictEqual(log.entity_type, 'users');
+    assert.strictEqual(log.action, 'password_reset');
+    assert.strictEqual(log.user_id, adminId);
+  });
+
+  console.log('\n--- 6. Testing Transaction Rollback on Failure ---');
+
+  const rollbackPassword = 'ShouldNeverBeSaved789!';
+  const rollbackHash = bcrypt.hashSync(rollbackPassword, 10);
+
+  test('Transaction rolls back completely if an error is thrown', () => {
+    assert.throws(() => {
+      const failingTx = db.transaction(() => {
+        db.prepare(`
+          UPDATE users
+          SET password_hash = ?
+          WHERE id = ?
+        `).run(rollbackHash, adminId);
+
+        // Force intentional failure
+        throw new Error('Simulated database write error inside transaction');
+      });
+      failingTx();
+    }, (err) => {
+      assert.ok(err.message.includes('Simulated database write error'));
+      return true;
+    });
+
+    // Verify password was NOT changed to rollbackPassword
+    const userAfterFail = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(adminId);
+    assert.strictEqual(userAfterFail.password_hash, newHash, 'Password hash must remain newHash after rollback');
   });
 
   console.log('\n================================================================');

@@ -2,9 +2,9 @@
 /**
  * CamneX Platform - Secure Administrator Password Reset Utility
  *
- * Prompts interactively for a new administrator password (or reads from NEW_ADMIN_PASSWORD env),
- * hashes it using bcrypt (salt rounds = 10), updates the user record, invalidates all existing
- * administrator sessions, and logs an audit entry.
+ * Resets the administrator password, clears any active login lockouts,
+ * invalidates existing administrator sessions, and logs a structured
+ * security audit entry using the real database schema.
  *
  * Usage:
  *   node scripts/reset_admin_password.js [email]
@@ -44,7 +44,7 @@ async function main() {
     process.exit(1);
   }
 
-  const user = db.prepare('SELECT id, name, email, role FROM users WHERE LOWER(email) = ?').get(targetEmail);
+  const user = db.prepare('SELECT id, name, email, role, failed_login_attempts, locked_until FROM users WHERE LOWER(email) = ?').get(targetEmail);
   if (!user || !user.id || !user.email) {
     console.error(`[ERROR] User not found with email: ${targetEmail}`);
     process.exit(1);
@@ -65,13 +65,16 @@ async function main() {
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(newPass, salt);
 
-  console.log('[2/3] Updating database credentials and invalidating active sessions...');
+  console.log('[2/3] Updating database credentials, clearing account lockout, and invalidating sessions...');
   const tx = db.transaction(() => {
+    // 1. Update password, reset force-change flag, and clear failed attempt lockout counters
+    // Note: 'updated_at' is omitted as it does not exist on the production users schema.
     const updateResult = db.prepare(`
       UPDATE users
       SET password_hash = ?,
           must_change_password = 0,
-          updated_at = datetime('now')
+          failed_login_attempts = 0,
+          locked_until = NULL
       WHERE id = ?
     `).run(hash, user.id);
 
@@ -79,28 +82,38 @@ async function main() {
       throw new Error(`Failed to update password: user ${user.id} was not modified.`);
     }
 
+    // 2. Invalidate existing sessions for this administrator
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(user.id);
 
+    // 3. Record security audit log entry matching canonical audit_logs schema
     const auditId = `audit-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const auditPayload = JSON.stringify({
+      action: 'password_reset',
+      targetEmail: user.email,
+      sessionsRevoked: true,
+      lockoutCleared: true,
+      resetTimestamp: new Date().toISOString()
+    });
+
     db.prepare(`
-      INSERT INTO audit_logs (id, entity, entity_id, action, actor_id, actor_name, changes_json, created_at)
-      VALUES (?, 'users', ?, 'password_reset', 'system-cli', 'CLI Admin Tool', ?, datetime('now'))
+      INSERT INTO audit_logs (id, user_id, user_name, user_email, surface, entity_type, entity_id, action, after_data)
+      VALUES (?, ?, ?, ?, 'cli', 'users', ?, 'password_reset', ?)
     `).run(
       auditId,
       user.id,
-      JSON.stringify({
-        action: 'password_reset',
-        targetEmail: user.email,
-        sessionsRevoked: true,
-        resetTimestamp: new Date().toISOString()
-      })
+      user.name || 'Administrator',
+      user.email,
+      user.id,
+      auditPayload
     );
   });
 
+  // Execute atomically
   tx();
 
   console.log('[3/3] Administrator password updated successfully!');
   console.log(`  Target Email: ${user.email}`);
+  console.log('  Account lockout cleared: Yes (failed_login_attempts reset to 0)');
   console.log('  Active sessions revoked: Yes');
   console.log('  Audit log entry recorded: Yes');
   console.log('================================================================');
