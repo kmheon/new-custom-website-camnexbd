@@ -29,7 +29,13 @@ function emitDomainEvent(eventType, payload = {}) {
 
 async function processPendingEvents() {
   try {
-    const events = db.prepare(`SELECT * FROM domain_events WHERE status = 'pending' AND attempts < 3 ORDER BY created_at ASC LIMIT 20`).all();
+    let events = db.prepare(`SELECT * FROM domain_events WHERE status = 'pending' AND attempts < 3 ORDER BY created_at ASC LIMIT 20`).all();
+    if (events && typeof events.then === 'function') {
+      events = await events;
+    }
+    if (!Array.isArray(events)) {
+      events = [];
+    }
     for (const event of events) {
       let payload = {};
       try { payload = JSON.parse(event.payload); } catch (_) {}

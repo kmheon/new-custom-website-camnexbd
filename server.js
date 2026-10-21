@@ -6407,7 +6407,7 @@ function resolveRouteMetadata(reqPath) {
   if (reqPath.startsWith('/product/')) {
     const prodId = reqPath.replace('/product/', '').trim();
     const row = db.prepare('SELECT data_json FROM products WHERE id = ? OR sku = ?').get(prodId, prodId);
-    if (!row) {
+    if (!row || typeof row.data_json !== 'string') {
       return {
         ...defaultMeta,
         title: '404 - Product Not Found | CamneX Bangladesh',
@@ -6415,7 +6415,12 @@ function resolveRouteMetadata(reqPath) {
         status: 404
       };
     }
-    const p = JSON.parse(row.data_json);
+    let p;
+    try {
+      p = JSON.parse(row.data_json);
+    } catch (_) {
+      return { ...defaultMeta, title: '404 - Product Not Found | CamneX Bangladesh', status: 404 };
+    }
     return {
       title: `${p.name} | CamneX Bangladesh`,
       description: p.shortDescription || p.description || `${p.name} supplied by CamneX Bangladesh.`,
@@ -6444,7 +6449,7 @@ function resolveRouteMetadata(reqPath) {
   if (reqPath.startsWith('/category/')) {
     const catSlug = reqPath.replace('/category/', '').trim();
     const row = db.prepare('SELECT data_json FROM categories WHERE slug = ? OR id = ?').get(catSlug, catSlug);
-    if (!row) {
+    if (!row || typeof row.data_json !== 'string') {
       return {
         ...defaultMeta,
         title: '404 - Category Not Found | CamneX Bangladesh',
@@ -6452,7 +6457,12 @@ function resolveRouteMetadata(reqPath) {
         status: 404
       };
     }
-    const c = JSON.parse(row.data_json);
+    let c;
+    try {
+      c = JSON.parse(row.data_json);
+    } catch (_) {
+      return { ...defaultMeta, title: '404 - Category Not Found | CamneX Bangladesh', status: 404 };
+    }
     return {
       ...defaultMeta,
       title: `${c.name} | CamneX Bangladesh`,
@@ -6466,7 +6476,7 @@ function resolveRouteMetadata(reqPath) {
   if (reqPath.startsWith('/brand/')) {
     const brandSlug = reqPath.replace('/brand/', '').trim();
     const row = db.prepare('SELECT data_json FROM brands WHERE slug = ? OR id = ?').get(brandSlug, brandSlug);
-    if (!row) {
+    if (!row || typeof row.data_json !== 'string') {
       return {
         ...defaultMeta,
         title: '404 - Brand Not Found | CamneX Bangladesh',
@@ -6474,7 +6484,12 @@ function resolveRouteMetadata(reqPath) {
         status: 404
       };
     }
-    const b = JSON.parse(row.data_json);
+    let b;
+    try {
+      b = JSON.parse(row.data_json);
+    } catch (_) {
+      return { ...defaultMeta, title: '404 - Brand Not Found | CamneX Bangladesh', status: 404 };
+    }
     return {
       ...defaultMeta,
       title: `${b.name} Authorized Security Hardware | CamneX Bangladesh`,
@@ -6487,7 +6502,7 @@ function resolveRouteMetadata(reqPath) {
   if (reqPath.startsWith('/blog/')) {
     const postSlug = reqPath.replace('/blog/', '').trim();
     const row = db.prepare('SELECT data_json FROM blog_posts WHERE slug = ?').get(postSlug);
-    if (!row) {
+    if (!row || typeof row.data_json !== 'string') {
       return {
         ...defaultMeta,
         title: '404 - Article Not Found | CamneX Bangladesh',
@@ -6495,7 +6510,12 @@ function resolveRouteMetadata(reqPath) {
         status: 404
       };
     }
-    const post = JSON.parse(row.data_json);
+    let post;
+    try {
+      post = JSON.parse(row.data_json);
+    } catch (_) {
+      return { ...defaultMeta, title: '404 - Article Not Found | CamneX Bangladesh', status: 404 };
+    }
     return {
       title: `${post.title} | CamneX Bangladesh`,
       description: post.excerpt || post.title,

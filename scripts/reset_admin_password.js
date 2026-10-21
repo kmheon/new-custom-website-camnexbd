@@ -34,23 +34,32 @@ async function main() {
   console.log('CAMNEX PLATFORM - SECURE ADMINISTRATOR PASSWORD RESET');
   console.log('================================================================');
 
-  const targetEmail = (process.argv[2] || process.env.ADMIN_EMAIL || 'admin@camnexbd.com').trim().toLowerCase();
+  const rawArg = process.argv[2];
+  const targetEmail = (rawArg || process.env.ADMIN_EMAIL || 'admin@camnexbd.com').trim().toLowerCase();
+
+  if (!targetEmail || !targetEmail.includes('@') || targetEmail.length < 5) {
+    console.error(`[ERROR] Invalid or malformed email address: "${rawArg || ''}"`);
+    console.error('  Usage: node scripts/reset_admin_password.js <admin-email>');
+    console.error('  Example: node scripts/reset_admin_password.js admin@camnexbd.com');
+    process.exit(1);
+  }
 
   const user = db.prepare('SELECT id, name, email, role FROM users WHERE LOWER(email) = ?').get(targetEmail);
-  if (!user) {
+  if (!user || !user.id || !user.email) {
     console.error(`[ERROR] User not found with email: ${targetEmail}`);
     process.exit(1);
   }
 
-  let newPass = process.env.NEW_ADMIN_PASSWORD || '';
+  let newPass = (process.env.NEW_ADMIN_PASSWORD || '').trim();
   if (!newPass) {
     newPass = await askPassword(`Enter new password for ${user.email} (${user.role}): `);
   }
 
-  if (!newPass || newPass.length < 8) {
+  if (!newPass || typeof newPass !== 'string' || newPass.trim().length < 8) {
     console.error('[ERROR] Password must be at least 8 characters long.');
     process.exit(1);
   }
+  newPass = newPass.trim();
 
   console.log('\n[1/3] Hashing password with bcrypt (cost = 10)...');
   const salt = bcrypt.genSaltSync(10);
@@ -58,8 +67,7 @@ async function main() {
 
   console.log('[2/3] Updating database credentials and invalidating active sessions...');
   const tx = db.transaction(() => {
-    // Update password
-    db.prepare(`
+    const updateResult = db.prepare(`
       UPDATE users
       SET password_hash = ?,
           must_change_password = 0,
@@ -67,10 +75,12 @@ async function main() {
       WHERE id = ?
     `).run(hash, user.id);
 
-    // Invalidate existing sessions for this administrator
+    if (updateResult && updateResult.changes === 0) {
+      throw new Error(`Failed to update password: user ${user.id} was not modified.`);
+    }
+
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(user.id);
 
-    // Record security audit log entry
     const auditId = `audit-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     db.prepare(`
       INSERT INTO audit_logs (id, entity, entity_id, action, actor_id, actor_name, changes_json, created_at)
@@ -94,6 +104,10 @@ async function main() {
   console.log('  Active sessions revoked: Yes');
   console.log('  Audit log entry recorded: Yes');
   console.log('================================================================');
+
+  if (typeof db.close === 'function') {
+    db.close();
+  }
 }
 
 if (require.main === module) {

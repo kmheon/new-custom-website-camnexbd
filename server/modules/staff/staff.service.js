@@ -7,9 +7,27 @@ const { PERMISSIONS, SYSTEM_ROLES } = require('../../shared/permissions');
 
 class StaffService {
   login(email, password, ip = null) {
-    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(email);
-    if (!user) {
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      const err = new Error('Email is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (!password || typeof password !== 'string' || !password.trim()) {
+      const err = new Error('Password is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(cleanEmail);
+    if (!user || !user.id) {
       const err = new Error('Invalid email or password.');
+      err.statusCode = 401;
+      throw err;
+    }
+
+    if (!user.password_hash || typeof user.password_hash !== 'string') {
+      const err = new Error('Account password not configured. Please use administrator reset tool.');
       err.statusCode = 401;
       throw err;
     }

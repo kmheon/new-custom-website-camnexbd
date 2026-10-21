@@ -126,8 +126,7 @@ function createNodeSqliteAdapter(filePath, options = {}) {
   };
 }
 
-const { AsyncLocalStorage } = require('node:async_hooks');
-const mysqlTxStorage = new AsyncLocalStorage();
+const { Worker, MessageChannel, receiveMessageOnPort } = require('worker_threads');
 
 function createMysqlAdapter(config = {}) {
   const host = (config.host || process.env.DB_HOST || '127.0.0.1').trim();
@@ -144,21 +143,6 @@ function createMysqlAdapter(config = {}) {
     throw new Error(`[Database] FATAL: DB_CLIENT=mysql was explicitly requested, but required environment variable(s) are missing: ${missing.join(', ')}. Silent fallback to SQLite is strictly forbidden.`);
   }
 
-  const mysql = require('mysql2/promise');
-  const pool = mysql.createPool({
-    host,
-    port,
-    user,
-    password,
-    database,
-    waitForConnections: true,
-    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10', 10),
-    queueLimit: 0,
-    charset: 'utf8mb4_unicode_ci',
-    timezone: '+06:00',
-    decimalNumbers: true
-  });
-
   function translateSqliteToMysql(sql) {
     let s = sql;
     s = s.replace(/INSERT\s+OR\s+IGNORE(\s+INTO)?/gi, 'INSERT IGNORE INTO');
@@ -172,94 +156,122 @@ function createMysqlAdapter(config = {}) {
     return s;
   }
 
+  const workerPath = path.join(__dirname, 'server/shared/mysqlWorker.js');
   let isPoolClosed = false;
-  async function closePool() {
-    if (isPoolClosed) return;
-    isPoolClosed = true;
-    try { await pool.end(); } catch (_) {}
+
+  const worker = new Worker(workerPath, {
+    workerData: {
+      host,
+      port,
+      user,
+      password,
+      database,
+      connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10', 10)
+    }
+  });
+
+  const signal = new Int32Array(new SharedArrayBuffer(4));
+
+  function cleanParams(params) {
+    if (!params || !Array.isArray(params)) return [];
+    return params.map(p => (p === undefined ? null : p));
   }
 
-  function getClient() {
+  function dispatchSync(action, sql, params = []) {
     if (isPoolClosed) {
       const err = new Error('[Database] MySQL connection pool is closed or shutting down.');
       err.code = 'ERR_DB_CLOSED';
       throw err;
     }
-    return mysqlTxStorage.getStore() || pool;
+
+    const safeParams = cleanParams(params);
+    const { port1, port2 } = new MessageChannel();
+    Atomics.store(signal, 0, 0);
+    worker.postMessage({ port: port2, signal, action, sql, params: safeParams }, [port2]);
+    Atomics.wait(signal, 0, 0);
+    const msg = receiveMessageOnPort(port1);
+    port1.close();
+
+    if (!msg || !msg.message) {
+      throw new Error('[Database] MySQL worker returned empty response');
+    }
+
+    if (msg.message.error) {
+      const errObj = msg.message.error;
+      const err = new Error(errObj.message || 'MySQL Error');
+      err.code = errObj.code;
+      err.errno = errObj.errno;
+      err.sqlState = errObj.sqlState;
+      err.sqlMessage = errObj.sqlMessage;
+      throw err;
+    }
+
+    return msg.message.result;
   }
 
   return {
-    _pool: pool,
+    _worker: worker,
     _engine: 'mysql',
     prepare(sql) {
       const mysqlSql = translateSqliteToMysql(sql);
       return {
         _sql: mysqlSql,
-        async all(...args) {
+        all(...args) {
           const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
-          const [rows] = await getClient().query(mysqlSql, params);
-          return rows;
+          return dispatchSync('query', mysqlSql, params);
         },
-        async get(...args) {
+        get(...args) {
           const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
-          const [rows] = await getClient().query(mysqlSql, params);
+          const rows = dispatchSync('query', mysqlSql, params);
           return rows && rows.length > 0 ? rows[0] : undefined;
         },
-        async run(...args) {
+        run(...args) {
           const params = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
-          const [result] = await getClient().execute(mysqlSql, params);
-          return {
-            changes: Number(result.affectedRows || 0),
-            lastInsertRowid: result.insertId || 0
-          };
+          return dispatchSync('execute', mysqlSql, params);
         }
       };
     },
-    async query(sql, params = []) {
+    query(sql, params = []) {
       const mysqlSql = translateSqliteToMysql(sql);
-      const [rows] = await getClient().query(mysqlSql, params);
-      return rows;
+      return dispatchSync('query', mysqlSql, params);
     },
-    async exec(sql) {
+    exec(sql) {
       const mysqlSql = translateSqliteToMysql(sql);
-      const [result] = await getClient().query(mysqlSql);
-      return result;
+      return dispatchSync('query', mysqlSql);
     },
     pragma() {
       return [];
     },
     transaction(fn) {
-      return async function(...args) {
-        const parentConn = mysqlTxStorage.getStore();
-        if (parentConn) {
-          const spName = 'sp_' + Math.random().toString(36).substring(2, 9);
-          await parentConn.query(`SAVEPOINT ${spName}`);
-          try {
-            const result = await fn.apply(this, args);
-            await parentConn.query(`RELEASE SAVEPOINT ${spName}`);
-            return result;
-          } catch (err) {
-            try { await parentConn.query(`ROLLBACK TO SAVEPOINT ${spName}`); } catch (_) {}
-            throw err;
-          }
-        }
-
-        const connection = await pool.getConnection();
-        await connection.beginTransaction();
+      return function(...args) {
+        dispatchSync('beginTransaction');
         try {
-          const result = await mysqlTxStorage.run(connection, () => fn.apply(this, args));
-          await connection.commit();
+          const result = fn.apply(this, args);
+          if (result && typeof result.then === 'function') {
+            return result.then(
+              res => {
+                dispatchSync('commit');
+                return res;
+              },
+              err => {
+                try { dispatchSync('rollback'); } catch (_) {}
+                throw err;
+              }
+            );
+          }
+          dispatchSync('commit');
           return result;
         } catch (err) {
-          try { await connection.rollback(); } catch (_) {}
+          try { dispatchSync('rollback'); } catch (_) {}
           throw err;
-        } finally {
-          connection.release();
         }
       };
     },
     close() {
-      return closePool();
+      if (isPoolClosed) return;
+      isPoolClosed = true;
+      try { dispatchSync('close'); } catch (_) {}
+      worker.terminate();
     },
     isClosed() {
       return isPoolClosed;
