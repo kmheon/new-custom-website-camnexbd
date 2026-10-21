@@ -5,6 +5,29 @@ const { logAudit } = require('../../middleware/auditLogger');
 const { emitDomainEvent } = require('../../middleware/events');
 const { PERMISSIONS, SYSTEM_ROLES } = require('../../shared/permissions');
 
+function parseLockoutDate(val) {
+  if (!val) return null;
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? null : val;
+  }
+  if (typeof val === 'number') {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed) return null;
+    // Handle standard MySQL "YYYY-MM-DD HH:MM:SS" without timezone indicator
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/.test(trimmed)) {
+      const d = new Date(trimmed.replace(' ', 'T') + 'Z');
+      if (!isNaN(d.getTime())) return d;
+    }
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 class StaffService {
   login(email, password, ip = null) {
     if (!email || typeof email !== 'string' || !email.trim()) {
@@ -39,16 +62,26 @@ class StaffService {
     }
 
     // Check account lockout
+    let isCurrentlyLocked = false;
+    let lockDate = null;
     if (user.locked_until) {
-      const lockDate = new Date(user.locked_until);
-      if (lockDate > new Date()) {
-        const err = new Error(`Account temporarily locked due to excessive failed attempts. Please try again after ${lockDate.toLocaleTimeString()}.`);
-        err.statusCode = 423;
-        throw err;
-      } else {
-        // Lock expired, reset
-        db.prepare('UPDATE users SET locked_until = NULL, failed_login_attempts = 0 WHERE id = ?').run(user.id);
+      lockDate = parseLockoutDate(user.locked_until);
+      if (lockDate && lockDate.getTime() > Date.now()) {
+        isCurrentlyLocked = true;
       }
+    }
+
+    if (isCurrentlyLocked) {
+      const err = new Error(`Account temporarily locked due to excessive failed attempts. Please try again after ${lockDate.toLocaleTimeString()}.`);
+      err.statusCode = 423;
+      throw err;
+    }
+
+    // If lock has expired or stale failed attempts exist from a previous lockout, reset both in DB and memory
+    if (user.locked_until || (user.failed_login_attempts && user.failed_login_attempts >= 5)) {
+      db.prepare('UPDATE users SET locked_until = NULL, failed_login_attempts = 0 WHERE id = ?').run(user.id);
+      user.locked_until = null;
+      user.failed_login_attempts = 0;
     }
 
     const isValid = bcrypt.compareSync(password, user.password_hash);

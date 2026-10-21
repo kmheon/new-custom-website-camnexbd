@@ -21,10 +21,10 @@ const staffService = require('../server/modules/staff/staff.service');
 let passed = 0;
 let total = 0;
 
-function test(name, fn) {
+async function test(name, fn) {
   total++;
   try {
-    fn();
+    await fn();
     console.log(`  [PASS] ${name}`);
     passed++;
   } catch (err) {
@@ -232,6 +232,76 @@ async function run() {
     // Verify password was NOT changed to rollbackPassword
     const userAfterFail = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(adminId);
     assert.strictEqual(userAfterFail.password_hash, newHash, 'Password hash must remain newHash after rollback');
+  });
+
+  console.log('\n--- 7. Testing Expired Lockout Recovery & Wrong Password Handling ---');
+
+  // Reproduce exact production scenario: failed_login_attempts = 8, locked_until = '2026-10-21 16:45:24 UTC' (in the past)
+  db.prepare(`
+    UPDATE users
+    SET failed_login_attempts = 8,
+        locked_until = '2026-10-21 16:45:24 UTC'
+    WHERE id = ?
+  `).run(adminId);
+
+  test('Expired lockout with wrong password throws 401 (not 423) and resets counter to 1', () => {
+    assert.throws(() => staffService.login('admin@camnexbd.com', 'IncorrectAttempt!'), (err) => {
+      assert.strictEqual(err.statusCode, 401, 'Must reject with 401 unauthorized, not 423 locked');
+      assert.ok(err.message.includes('Invalid email or password'), 'Must return invalid credentials error');
+      return true;
+    });
+
+    const userRow = db.prepare('SELECT failed_login_attempts, locked_until FROM users WHERE id = ?').get(adminId);
+    assert.strictEqual(userRow.failed_login_attempts, 1, 'Failed attempts must be reset to 1, not 9');
+    assert.strictEqual(userRow.locked_until, null, 'locked_until must remain null after single post-expiration failure');
+  });
+
+  test('Login succeeds with correct password after expired lockout', () => {
+    const res = staffService.login('admin@camnexbd.com', newPassword);
+    assert.strictEqual(res.id, adminId);
+    const userRow = db.prepare('SELECT failed_login_attempts, locked_until FROM users WHERE id = ?').get(adminId);
+    assert.strictEqual(userRow.failed_login_attempts, 0);
+    assert.strictEqual(userRow.locked_until, null);
+  });
+
+  console.log('\n--- 8. Testing Targeted Admin Unlock Recovery Tool (scripts/unlock_admin.js) ---');
+
+  const { unlockUser } = require('../scripts/unlock_admin');
+
+  // Simulate active lockout: failed_login_attempts = 10, locked_until = 15 mins in future
+  const futureLock = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  db.prepare(`
+    UPDATE users
+    SET failed_login_attempts = 10,
+        locked_until = ?
+    WHERE id = ?
+  `).run(futureLock, adminId);
+
+  await test('Active lockout prevents login even with correct password', () => {
+    assert.throws(() => staffService.login('admin@camnexbd.com', newPassword), (err) => {
+      assert.strictEqual(err.statusCode, 423);
+      assert.ok(err.message.includes('Account temporarily locked'));
+      return true;
+    });
+  });
+
+  await test('unlockUser clears lockout counters and writes audit log', async () => {
+    const unlockResult = await unlockUser('admin@camnexbd.com');
+    assert.strictEqual(unlockResult.after.failed_login_attempts, 0);
+    assert.strictEqual(unlockResult.after.locked_until, null);
+
+    const userRow = db.prepare('SELECT failed_login_attempts, locked_until FROM users WHERE id = ?').get(adminId);
+    assert.strictEqual(userRow.failed_login_attempts, 0);
+    assert.strictEqual(userRow.locked_until, null);
+
+    const auditEntry = db.prepare('SELECT * FROM audit_logs WHERE id = ?').get(unlockResult.auditId);
+    assert.ok(auditEntry, 'Unlock audit log must exist');
+    assert.strictEqual(auditEntry.action, 'account_unlock');
+  });
+
+  await test('Login succeeds immediately after unlockUser', () => {
+    const res = staffService.login('admin@camnexbd.com', newPassword);
+    assert.strictEqual(res.id, adminId);
   });
 
   console.log('\n================================================================');

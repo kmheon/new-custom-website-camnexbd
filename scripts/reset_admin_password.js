@@ -111,9 +111,15 @@ async function main() {
   // Execute atomically
   tx();
 
+  // Verify resulting database state directly
+  const verified = db.prepare('SELECT id, failed_login_attempts, locked_until, must_change_password FROM users WHERE id = ?').get(user.id);
+  if (!verified || verified.failed_login_attempts !== 0 || verified.locked_until !== null) {
+    throw new Error(`Database verification failed after reset: failed_attempts=${verified?.failed_login_attempts}, locked_until=${verified?.locked_until}`);
+  }
+
   console.log('[3/3] Administrator password updated successfully!');
   console.log(`  Target Email: ${user.email}`);
-  console.log('  Account lockout cleared: Yes (failed_login_attempts reset to 0)');
+  console.log('  Account lockout cleared: Yes (verified: failed_login_attempts=0, locked_until=NULL)');
   console.log('  Active sessions revoked: Yes');
   console.log('  Audit log entry recorded: Yes');
   console.log('================================================================');
