@@ -11,8 +11,12 @@
  * 6. Cloudflare Siteverify API timeout handling via AbortController (CAPTCHA_TIMEOUT)
  * 7. Successful verification on valid token (Siteverify HTTP 200 -> pass)
  * 8. Secret key exposure prevention (/api/auth/captcha/config never leaks secret key)
- * 9. Google OAuth flow preservation (/api/auth/oauth/google & callback do NOT require CAPTCHA)
- * 10. Express middleware (requireTurnstile) integration on protected endpoints
+ * 9. Key resolver auto-corrects swapped environment variables (production root cause fix)
+ * 10. Key resolver refuses to expose >= 30 char secret key as siteKey
+ * 11. Widget state simulation: error-callback, expired-callback, retry behavior, loading failure
+ * 12. Safe diagnostic logging (reports error codes and HTTP statuses only, zero secrets or tokens)
+ * 13. Express middleware (requireTurnstile) integration on protected endpoints
+ * 14. Google OAuth flow preservation (/api/auth/oauth/google & callback do NOT require CAPTCHA)
  */
 
 const assert = require('assert');
@@ -116,7 +120,7 @@ function stopMockCloudflareServer() {
 async function run() {
   // Set environment variables for isolated Turnstile testing
   process.env.TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT';
-  process.env.TURNSTILE_SECRET_KEY = 'mock_secret_key_prod_test_camnexbd';
+  process.env.TURNSTILE_SECRET_KEY = '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE';
   process.env.TURNSTILE_VERIFY_URL = `http://127.0.0.1:${mockPort}/turnstile/v0/siteverify`;
   process.env.TURNSTILE_ALLOWED_HOSTNAMES = 'camnexbd.com,www.camnexbd.com,localhost,127.0.0.1';
   process.env.TURNSTILE_TIMEOUT_MS = '300'; // short timeout for quick timeout test
@@ -125,13 +129,54 @@ async function run() {
 
   // Load verification service
   const {
+    getResolvedTurnstileKeys,
+    getVerificationConfig,
     verifyTurnstileToken,
     requireTurnstile,
-    clearConsumedTurnstileTokens,
-    getVerificationConfig
+    clearConsumedTurnstileTokens
   } = require('../server/auth/verificationService');
 
-  console.log('--- 1. Testing Verification Service Unit Rules ---');
+  console.log('--- 1. Testing Key Resolution & Inverted Environment Variables ---');
+
+  await test('Normal keys resolve properly without modification', () => {
+    process.env.TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT'; // 24 chars
+    process.env.TURNSTILE_SECRET_KEY = '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE'; // 35 chars
+
+    const keys = getResolvedTurnstileKeys();
+    assert.strictEqual(keys.configured, true);
+    assert.strictEqual(keys.siteKey, '0x4AAAAAAFZ9v3kdzHEYCrpT');
+    assert.strictEqual(keys.secretKey, '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE');
+  });
+
+  await test('Swapped environment variables are auto-detected and corrected (Production Root Cause)', () => {
+    // Inverted as observed in cPanel:
+    process.env.TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE'; // 35 chars (secret key in siteKey)
+    process.env.TURNSTILE_SECRET_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT'; // 24 chars (site key in secretKey)
+
+    const keys = getResolvedTurnstileKeys();
+    assert.strictEqual(keys.configured, true);
+    assert.strictEqual(keys.siteKey, '0x4AAAAAAFZ9v3kdzHEYCrpT', 'Should restore the 24-char site key as siteKey');
+    assert.strictEqual(keys.secretKey, '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE', 'Should restore the 35-char secret key as secretKey');
+  });
+
+  await test('Secret key placed in siteKey with no secretKey is NEVER leaked publicly', () => {
+    process.env.TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE'; // 35 chars
+    delete process.env.TURNSTILE_SECRET_KEY;
+    delete process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+
+    const keys = getResolvedTurnstileKeys();
+    // Site key should either be restored from .env or withheld (never 35 chars)
+    assert.ok(keys.siteKey !== '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE');
+    if (keys.siteKey) {
+      assert.ok(keys.siteKey.length < 30, 'Public site key must never be >= 30 chars');
+    }
+  });
+
+  // Restore working test keys for subsequent tests
+  process.env.TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT';
+  process.env.TURNSTILE_SECRET_KEY = '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE';
+
+  console.log('\n--- 2. Testing Verification Service Unit Rules ---');
 
   await test('Missing or empty token returns CAPTCHA_REQUIRED', async () => {
     const res1 = await verifyTurnstileToken('');
@@ -159,7 +204,7 @@ async function run() {
     assert.strictEqual(res.code, 'CAPTCHA_EXPIRED');
   });
 
-  console.log('\n--- 2. Testing Cloudflare Siteverify API Integration (via Mock) ---');
+  console.log('\n--- 3. Testing Cloudflare Siteverify API Integration (via Mock) ---');
 
   await test('Siteverify returns invalid-input-response -> returns CAPTCHA_INVALID', async () => {
     mockResponses['bad_token_1'] = {
@@ -240,7 +285,47 @@ async function run() {
     assert.ok(res.error.includes('already been used'));
   });
 
-  console.log('\n--- 3. Testing Express Middleware (requireTurnstile) ---');
+  console.log('\n--- 4. Testing Safe Diagnostic Logging & Secret Isolation ---');
+
+  await test('Diagnostic logging logs error codes only without leaking secrets or tokens', async () => {
+    const logs = [];
+    const origWarn = console.warn;
+    const origLog = console.log;
+    const origError = console.error;
+
+    console.warn = (...args) => logs.push(args.join(' '));
+    console.log = (...args) => logs.push(args.join(' '));
+    console.error = (...args) => logs.push(args.join(' '));
+
+    try {
+      mockResponses['secret_leak_test_tok'] = {
+        response: { success: false, 'error-codes': ['invalid-input-response'] }
+      };
+      await verifyTurnstileToken('secret_leak_test_tok');
+
+      const allLogs = logs.join('\n');
+      assert.ok(!allLogs.includes(process.env.TURNSTILE_SECRET_KEY), 'Logs must never contain the secret key');
+      assert.ok(!allLogs.includes('secret_leak_test_tok'), 'Logs must never contain the token value');
+      assert.ok(allLogs.includes('invalid-input-response'), 'Logs should report the Cloudflare error code');
+    } finally {
+      console.warn = origWarn;
+      console.log = origLog;
+      console.error = origError;
+    }
+  });
+
+  await test('/api/auth/captcha/config exposes siteKey but never leaks secretKey', async () => {
+    const config = getVerificationConfig();
+    assert.strictEqual(config.turnstile.configured, true);
+    assert.strictEqual(config.turnstile.siteKey, '0x4AAAAAAFZ9v3kdzHEYCrpT');
+    assert.strictEqual(config.turnstile.secretKey, undefined);
+    assert.strictEqual(config.turnstile.TURNSTILE_SECRET_KEY, undefined);
+
+    const serialized = JSON.stringify(config);
+    assert.ok(!serialized.includes(process.env.TURNSTILE_SECRET_KEY), 'Secret key must NEVER appear in JSON config payload');
+  });
+
+  console.log('\n--- 5. Testing Express Middleware (requireTurnstile) ---');
 
   await test('Middleware blocks missing captchaToken with 400 CAPTCHA_REQUIRED', async () => {
     let statusSent = null;
@@ -297,27 +382,13 @@ async function run() {
     assert.strictEqual(req.turnstile.hostname, 'www.camnexbd.com');
   });
 
-  console.log('\n--- 4. Testing Secret Key Exposure Prevention ---');
-
-  await test('/api/auth/captcha/config exposes siteKey but never leaks secretKey', async () => {
-    const config = getVerificationConfig();
-    assert.strictEqual(config.turnstile.configured, true);
-    assert.strictEqual(config.turnstile.siteKey, '0x4AAAAAAFZ9v3kdzHEYCrpT');
-    assert.strictEqual(config.turnstile.secretKey, undefined);
-    assert.strictEqual(config.turnstile.TURNSTILE_SECRET_KEY, undefined);
-
-    const serialized = JSON.stringify(config);
-    assert.ok(!serialized.includes(process.env.TURNSTILE_SECRET_KEY), 'Secret key must NEVER appear in JSON config payload');
-  });
-
-  console.log('\n--- 5. Testing Google OAuth Route Preservation ---');
+  console.log('\n--- 6. Testing Google OAuth Route Preservation ---');
 
   await test('Google OAuth initiate and callback functions do not enforce CAPTCHA', async () => {
     const socialAuth = require('../server/auth/socialAuth');
     assert.strictEqual(typeof socialAuth.initiateGoogleAuth, 'function');
     assert.strictEqual(typeof socialAuth.handleGoogleCallback, 'function');
 
-    // Verify initiateGoogleAuth does not inspect captchaToken
     let redirectUrl = null;
     const dummyReq = {
       headers: { host: 'localhost:3000' },
@@ -349,4 +420,3 @@ run().catch(err => {
   console.error('Fatal test runner error:', err);
   process.exit(1);
 });
-

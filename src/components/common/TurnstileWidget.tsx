@@ -53,6 +53,15 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
       .then(r => r.json())
       .then(data => {
         if (data && data.configured && data.siteKey) {
+          // Safeguard: Cloudflare Turnstile public site keys are 22-26 chars; never >= 30 chars
+          if (typeof data.siteKey === 'string' && data.siteKey.length >= 30) {
+            console.error('[Turnstile] Server provided secret key instead of site key. Withholding from frontend render.');
+            setIsConfigured(false);
+            const msg = 'Security challenge configuration error. Please contact site administrator.';
+            setErrorMsg(msg);
+            if (onError) onError(msg);
+            return;
+          }
           setSiteKey(data.siteKey);
           setIsConfigured(true);
         } else {
@@ -93,10 +102,16 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
               onVerify(token);
             }
           },
-          'error-callback': (err: any) => {
+          'error-callback': (errCode: any) => {
             if (isMounted) {
               setIsVerified(false);
-              const msg = 'Security challenge failed. Please click retry.';
+              console.warn(`[Turnstile] Challenge error-callback triggered with code: ${errCode || 'unknown'}`);
+              let msg = 'Security challenge failed. Please click retry.';
+              if (String(errCode) === '110200') {
+                msg = 'Security challenge domain not allowed. Please check widget configuration in Cloudflare dashboard.';
+              } else if (String(errCode) === '110100' || String(errCode) === '110110') {
+                msg = 'Security challenge configuration error (invalid site key).';
+              }
               setErrorMsg(msg);
               if (onError) onError(msg);
             }
@@ -104,13 +119,16 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
           'expired-callback': () => {
             if (isMounted) {
               setIsVerified(false);
+              const msg = 'Security challenge expired. Please click retry.';
+              setErrorMsg(msg);
               if (onExpire) onExpire();
             }
           }
         });
         widgetIdRef.current = id;
       } catch (e: any) {
-        console.error('Turnstile render failed:', e.message);
+        console.error('[Turnstile] render call failed:', e.message);
+        setErrorMsg('Failed to render security challenge. Please click retry.');
       }
     };
 
@@ -118,24 +136,43 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
       renderWidget();
     } else {
       const scriptId = 'cloudflare-turnstile-script';
-      if (!document.getElementById(scriptId)) {
-        const script = document.createElement('script');
+      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement('script');
         script.id = scriptId;
         script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
         script.async = true;
         script.defer = true;
         script.onload = () => {
-          renderWidget();
+          if (isMounted) renderWidget();
+        };
+        script.onerror = () => {
+          if (isMounted) {
+            const msg = 'Security challenge script failed to load. Please check your network connection.';
+            setErrorMsg(msg);
+            if (onError) onError(msg);
+          }
         };
         document.head.appendChild(script);
       } else {
         const interval = setInterval(() => {
           if (window.turnstile) {
             clearInterval(interval);
-            renderWidget();
+            if (isMounted) renderWidget();
           }
         }, 150);
-        return () => clearInterval(interval);
+        const timeout = setTimeout(() => {
+          clearInterval(interval);
+          if (isMounted && !window.turnstile) {
+            const msg = 'Security challenge script timed out. Please click retry.';
+            setErrorMsg(msg);
+            if (onError) onError(msg);
+          }
+        }, 10000);
+        return () => {
+          clearInterval(interval);
+          clearTimeout(timeout);
+        };
       }
     }
 
@@ -153,6 +190,41 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
     if (widgetIdRef.current && window.turnstile) {
       try {
         window.turnstile.reset(widgetIdRef.current);
+        return;
+      } catch (_) {}
+    }
+    if (window.turnstile && containerRef.current && isConfigured && siteKey) {
+      try {
+        const id = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          theme,
+          action,
+          size: 'flexible',
+          callback: (token: string) => {
+            setIsVerified(true);
+            setErrorMsg(null);
+            onVerify(token);
+          },
+          'error-callback': (errCode: any) => {
+            setIsVerified(false);
+            console.warn(`[Turnstile] Retry challenge error-callback: ${errCode || 'unknown'}`);
+            let msg = 'Security challenge failed. Please click retry.';
+            if (String(errCode) === '110200') {
+              msg = 'Security challenge domain not allowed. Please check widget configuration.';
+            } else if (String(errCode) === '110100' || String(errCode) === '110110') {
+              msg = 'Security challenge configuration error (invalid site key).';
+            }
+            setErrorMsg(msg);
+            if (onError) onError(msg);
+          },
+          'expired-callback': () => {
+            setIsVerified(false);
+            const msg = 'Security challenge expired. Please click retry.';
+            setErrorMsg(msg);
+            if (onExpire) onExpire();
+          }
+        });
+        widgetIdRef.current = id;
       } catch (_) {}
     }
   };

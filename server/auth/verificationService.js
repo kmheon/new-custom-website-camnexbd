@@ -1,14 +1,93 @@
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
 const db = require('../../database');
+
+/**
+ * Reads a single key from .env file directly if present on disk
+ */
+function readDotEnvValue(keyName) {
+  try {
+    const envPath = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+      for (const line of lines) {
+        const match = line.match(new RegExp(`^\\s*${keyName}\\s*=\\s*(.*)?\\s*$`));
+        if (match) {
+          let val = (match[1] || '').trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          return val.trim();
+        }
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+/**
+ * Resolves Cloudflare Turnstile public site key and secret key safely.
+ *
+ * Enforces:
+ * - Public site keys are 22-26 characters long (e.g. 0x4AAAAAAFZ9v3kdzHEYCrpT).
+ * - Secret keys are 35-37 characters long (e.g. 0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE).
+ * - Automatically detects and corrects inverted (swapped) environment variables.
+ * - Protects secret keys from EVER being returned as a siteKey.
+ * - Falls back to reading .env on disk if environment variables were misconfigured.
+ */
+function getResolvedTurnstileKeys() {
+  let siteKey = (process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || '').trim();
+  let secretKey = (process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '').trim();
+
+  const isCfKey = (k) => typeof k === 'string' && (k.startsWith('0x4') || k.startsWith('1x') || k.startsWith('2x') || k.startsWith('3x'));
+
+  // 1. Detect if environment variables were swapped:
+  // (e.g. operator placed the 35-char secret key into TURNSTILE_SITE_KEY and 24-char site key into TURNSTILE_SECRET_KEY)
+  if (siteKey && siteKey.length >= 30 && secretKey && secretKey.length < 30 && (isCfKey(siteKey) || isCfKey(secretKey))) {
+    console.warn('[TURNSTILE CONFIG] Swapped Turnstile keys detected in environment (secret key was assigned to site key). Auto-correcting key assignments.');
+    const temp = siteKey;
+    siteKey = secretKey;
+    secretKey = temp;
+  }
+
+  // 2. If siteKey is still a secret key (length >= 30), never expose it as a siteKey
+  if (siteKey && siteKey.length >= 30 && isCfKey(siteKey)) {
+    console.warn('[TURNSTILE CONFIG] Configured site key appears to be a secret key (length >= 30). Checking .env for proper public site key.');
+    const dotEnvSiteKey = readDotEnvValue('TURNSTILE_SITE_KEY') || readDotEnvValue('CLOUDFLARE_TURNSTILE_SITE_KEY');
+    if (dotEnvSiteKey && dotEnvSiteKey.length < 30) {
+      if (!secretKey || secretKey.length < 30) secretKey = siteKey;
+      siteKey = dotEnvSiteKey;
+      console.log('[TURNSTILE CONFIG] Restored valid public site key from .env file.');
+    } else {
+      console.error('[TURNSTILE CONFIG ERROR] Refusing to expose secret key as public siteKey. Turnstile will be disabled until valid site key is provided.');
+      if (!secretKey) secretKey = siteKey;
+      siteKey = '';
+    }
+  }
+
+  // 3. If secretKey is missing or appears to be a site key (< 30), check if .env has the secret key
+  if ((!secretKey || (secretKey.length < 30 && isCfKey(secretKey))) && process.env.NODE_ENV !== 'test') {
+    const dotEnvSecretKey = readDotEnvValue('TURNSTILE_SECRET_KEY') || readDotEnvValue('CLOUDFLARE_TURNSTILE_SECRET_KEY');
+    if (dotEnvSecretKey && dotEnvSecretKey.length >= 30) {
+      secretKey = dotEnvSecretKey;
+    }
+  }
+
+  const configured = Boolean(siteKey && secretKey);
+  return {
+    siteKey: siteKey || null,
+    secretKey: secretKey || null,
+    configured
+  };
+}
 
 /**
  * Returns configuration status of verification & bot-protection providers
  */
 function getVerificationConfig() {
   const smtpConfigured = !!(process.env.SMTP_HOST && (process.env.SMTP_USER || process.env.SMTP_PORT));
-  const turnstileSiteKey = process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || null;
-  const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || null;
-  const turnstileConfigured = !!(turnstileSiteKey && turnstileSecretKey);
+  const turnstile = getResolvedTurnstileKeys();
 
   const smsProvider = (process.env.SMS_GATEWAY_PROVIDER || '').trim().toLowerCase();
   const smsConfigured = !!(process.env.SMS_API_KEY && smsProvider && smsProvider !== 'disabled');
@@ -25,8 +104,8 @@ function getVerificationConfig() {
       provider: smsConfigured ? smsProvider : null
     },
     turnstile: {
-      configured: turnstileConfigured,
-      siteKey: turnstileSiteKey
+      configured: turnstile.configured,
+      siteKey: turnstile.siteKey
     }
   };
 }
@@ -80,11 +159,12 @@ function clearConsumedTurnstileTokens() {
  * Rejects invalid, expired, missing, or reused tokens, validates hostname, and enforces timeouts.
  */
 async function verifyTurnstileToken(token, remoteIp) {
-  const secretKey = process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+  const { secretKey } = getResolvedTurnstileKeys();
   const isTestEnv = process.env.NODE_ENV === 'test';
 
   // 1. Missing token rejection
   if (!token || typeof token !== 'string' || !token.trim()) {
+    console.warn('[TURNSTILE VERIFY] Token missing in verification request');
     return {
       success: false,
       error: 'Security verification token is missing. Please complete the CAPTCHA challenge.',
@@ -96,6 +176,7 @@ async function verifyTurnstileToken(token, remoteIp) {
 
   // 2. Token reuse rejection (prevent replay attacks)
   if (consumedTurnstileTokens.has(cleanToken)) {
+    console.warn('[TURNSTILE VERIFY] Token replay attempt detected and rejected (single-use protection)');
     return {
       success: false,
       error: 'Security challenge token has already been used. Please refresh the challenge.',
@@ -106,6 +187,7 @@ async function verifyTurnstileToken(token, remoteIp) {
   // 3. Cloudflare standard test tokens
   // Test failure token (always fails)
   if (cleanToken === '2x00000000000000000000AB' || cleanToken === 'FAIL.DUMMY.TOKEN.FAIL') {
+    console.log('[TURNSTILE VERIFY] Test rejection token detected (CAPTCHA_FAILED)');
     return {
       success: false,
       error: 'Security challenge verification failed (test rejection token).',
@@ -115,6 +197,7 @@ async function verifyTurnstileToken(token, remoteIp) {
 
   // Test timeout/expired token (always fails as expired/spent)
   if (cleanToken === '3x00000000000000000000AC') {
+    console.log('[TURNSTILE VERIFY] Test expired token detected (CAPTCHA_EXPIRED)');
     return {
       success: false,
       error: 'Security verification token expired or was already used. Please refresh the challenge.',
@@ -128,6 +211,7 @@ async function verifyTurnstileToken(token, remoteIp) {
   if ((cleanToken === '1x00000000000000000000AA' || cleanToken.startsWith('test_valid_') || cleanToken === 'XXXX.DUMMY.TOKEN.XXXX') && (isTestOrDev || isTestKey)) {
     // If the token explicitly requests a simulated hostname mismatch in test mode
     if (cleanToken.includes('mismatch_host')) {
+      console.warn('[TURNSTILE VERIFY] Simulated hostname mismatch in test mode');
       return {
         success: false,
         error: 'Security challenge verification failed (hostname mismatch). Please refresh and try again.',
@@ -144,6 +228,7 @@ async function verifyTurnstileToken(token, remoteIp) {
     if (isTestEnv) {
       return { success: true, unconfiguredBypass: true };
     }
+    console.error('[TURNSTILE VERIFY ERROR] Verification failed: TURNSTILE_SECRET_KEY is unconfigured on server');
     return {
       success: false,
       error: 'Cloudflare Turnstile is unconfigured on the server. Site administrator must provide TURNSTILE_SECRET_KEY in .env.',
@@ -175,7 +260,7 @@ async function verifyTurnstileToken(token, remoteIp) {
     });
 
     if (!res.ok) {
-      console.error(`[TURNSTILE API HTTP ${res.status}] Siteverify service returned error status`);
+      console.error(`[TURNSTILE VERIFY] Siteverify API returned HTTP status ${res.status}`);
       return {
         success: false,
         error: 'Security verification service is temporarily unavailable. Please retry in a moment.',
@@ -200,6 +285,7 @@ async function verifyTurnstileToken(token, remoteIp) {
         });
 
         if (!isMatch) {
+          console.warn(`[TURNSTILE VERIFY] Hostname mismatch. Allowed: [${allowedHostnames.join(', ')}], Received: ${incomingHostname}`);
           return {
             success: false,
             error: 'Security challenge verification failed (hostname mismatch). Please refresh and try again.',
@@ -211,6 +297,7 @@ async function verifyTurnstileToken(token, remoteIp) {
 
       // Record consumed token to enforce single-use / prevent replay
       consumedTurnstileTokens.set(cleanToken, Date.now());
+      console.log(`[TURNSTILE VERIFY] Token verified successfully for hostname: ${data.hostname || 'unknown'}`);
       return {
         success: true,
         challengeTs: data.challenge_ts,
@@ -220,6 +307,7 @@ async function verifyTurnstileToken(token, remoteIp) {
     }
 
     const errorCodes = Array.isArray(data['error-codes']) ? data['error-codes'] : [];
+    console.warn(`[TURNSTILE VERIFY] Siteverify rejected challenge. Error codes: [${errorCodes.join(', ')}]`);
     let errorMessage = 'Security challenge verification failed. Please try again.';
     let errorCode = 'CAPTCHA_FAILED';
 
@@ -245,14 +333,14 @@ async function verifyTurnstileToken(token, remoteIp) {
     };
   } catch (err) {
     if (err.name === 'AbortError' || err.code === 'ABORT_ERR') {
-      console.error('[TURNSTILE FETCH TIMEOUT] Verification request timed out');
+      console.warn(`[TURNSTILE VERIFY] Verification request timed out after ${timeoutMs}ms`);
       return {
         success: false,
         error: 'Security verification timed out. Please check your connection and retry.',
         code: 'CAPTCHA_TIMEOUT'
       };
     }
-    console.error('[TURNSTILE FETCH ERROR]', err.message);
+    console.error('[TURNSTILE VERIFY ERROR] Siteverify fetch failed:', err.message);
     return {
       success: false,
       error: 'Unable to verify security challenge at this time. Please check your connection and retry.',
@@ -594,6 +682,7 @@ function validateOrderVerification({ customerId, sessionData, orderCustomerPhone
 }
 
 module.exports = {
+  getResolvedTurnstileKeys,
   getVerificationConfig,
   normalizeEmail,
   normalizeBdPhone,
