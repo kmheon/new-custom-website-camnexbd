@@ -1,6 +1,39 @@
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
 const db = require('../../database');
 const { createSession } = require('../../auth');
+
+/**
+ * Reads a single key from .env file directly if present on disk across standard locations
+ */
+function readDotEnvValue(keyName) {
+  try {
+    const candidatePaths = [
+      path.resolve(__dirname, '../../.env'),
+      path.resolve(__dirname, '../.env'),
+      path.resolve(__dirname, '.env'),
+      path.resolve(process.cwd(), '.env'),
+      '/home/camnexbd/camnex/.env'
+    ];
+    for (const envPath of candidatePaths) {
+      if (fs.existsSync(envPath)) {
+        const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+        for (const line of lines) {
+          const match = line.match(new RegExp(`^\\s*${keyName}\\s*=\\s*(.*)?\\s*$`));
+          if (match) {
+            let val = (match[1] || '').trim();
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+              val = val.slice(1, -1);
+            }
+            if (val) return val.trim();
+          }
+        }
+      }
+    }
+  } catch (_) {}
+  return null;
+}
 
 /**
  * Returns configuration status of external authentication providers.
@@ -9,8 +42,9 @@ const { createSession } = require('../../auth');
 function getProvidersStatus() {
   const googleConfigured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const appleConfigured = !!(process.env.APPLE_CLIENT_ID && (process.env.APPLE_PRIVATE_KEY || process.env.APPLE_CLIENT_SECRET));
-  const smsProvider = (process.env.SMS_GATEWAY_PROVIDER || '').trim().toLowerCase();
-  const smsConfigured = !!(process.env.SMS_API_KEY && smsProvider && smsProvider !== 'disabled');
+  const smsProvider = (process.env.SMS_GATEWAY_PROVIDER || readDotEnvValue('SMS_GATEWAY_PROVIDER') || '').trim().toLowerCase();
+  const smsApiKey = (process.env.SMS_API_KEY || readDotEnvValue('SMS_API_KEY') || '').trim();
+  const smsConfigured = !!(smsApiKey && smsProvider && smsProvider !== 'disabled');
 
   return {
     google: {
@@ -478,47 +512,122 @@ async function sendPhoneOtp(req, res) {
 
   // Dispatch via real provider
   try {
-    const provider = process.env.SMS_GATEWAY_PROVIDER.toLowerCase();
+    const provider = (process.env.SMS_GATEWAY_PROVIDER || readDotEnvValue('SMS_GATEWAY_PROVIDER') || '').trim().toLowerCase();
+    const apiKey = (process.env.SMS_API_KEY || readDotEnvValue('SMS_API_KEY') || '').trim();
+    const senderId = (process.env.SMS_SENDER_ID || readDotEnvValue('SMS_SENDER_ID') || '8809648909250').trim();
     const message = `Your CamneX Bangladesh verification code is ${otpCode}. Valid for 5 minutes. Do not share this code.`;
 
-    if (provider === 'greenweb') {
-      await fetch('https://api.greenweb.com.bd/api.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          token: process.env.SMS_API_KEY,
-          to: cleanPhone,
-          message
-        })
-      });
-    } else if (provider === 'mimsms') {
-      await fetch('https://esms.mimsms.com/smsapi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          api_key: process.env.SMS_API_KEY,
-          type: 'text',
-          contacts: cleanPhone,
-          senderid: process.env.SMS_SENDER_ID || 'CamneX',
-          msg: message
-        })
-      });
-    } else if (provider === 'twilio') {
-      const accountSid = process.env.TWILIO_ACCOUNT_SID;
-      const authToken = process.env.SMS_API_KEY;
-      const fromNumber = process.env.SMS_SENDER_ID;
-      await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64')
-        },
-        body: new URLSearchParams({
-          To: `+88${cleanPhone}`,
-          From: fromNumber,
-          Body: message
-        })
-      });
+    const timeoutMs = parseInt(process.env.SMS_TIMEOUT_MS || '8000', 10);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      if (provider === 'bulksmsbd' || provider === 'bulksms' || provider === 'bulksmsbd.net') {
+        const apiUrl = process.env.BULKSMSBD_API_URL || process.env.SMS_GATEWAY_URL || 'https://bulksmsbd.net/api/smsapi';
+        const formattedNumber = cleanPhone.startsWith('88') ? cleanPhone : `88${cleanPhone}`;
+
+        const formData = new URLSearchParams();
+        formData.append('api_key', apiKey);
+        formData.append('type', 'text');
+        formData.append('number', formattedNumber);
+        formData.append('senderid', senderId || '8809648909250');
+        formData.append('message', message);
+
+        const apiRes = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData,
+          signal: controller.signal
+        });
+
+        if (!apiRes.ok) {
+          try { db.prepare(`DELETE FROM phone_otps WHERE id = ?`).run(otpId); } catch (_) {}
+          console.error(`[SMS GATEWAY] BulkSMSBD returned HTTP status ${apiRes.status}`);
+          return res.status(502).json({
+            error: 'SMS gateway service returned an error status. Please try again or use password sign-in.'
+          });
+        }
+
+        const textResponse = await apiRes.text();
+        let data = null;
+        try {
+          data = JSON.parse(textResponse);
+        } catch (_) {
+          data = { raw: textResponse };
+        }
+
+        const responseCode = data?.response_code !== undefined ? String(data.response_code) : null;
+        const isSuccess = responseCode === '202' || Boolean(data?.success_message && !data?.error_message);
+
+        if (!isSuccess) {
+          try { db.prepare(`DELETE FROM phone_otps WHERE id = ?`).run(otpId); } catch (_) {}
+          console.warn(`[SMS GATEWAY REJECTED] BulkSMSBD rejected SMS dispatch. Response code: ${responseCode || 'unknown'}`);
+          let clientErrMsg = 'Failed to deliver SMS verification code. Please check your phone number or try password sign-in.';
+          if (responseCode === '1002') {
+            clientErrMsg = 'SMS gateway configuration error: Sender ID is not approved or inactive.';
+          } else if (responseCode === '1006' || responseCode === '1007') {
+            clientErrMsg = 'SMS service temporarily unavailable due to gateway balance. Please use password sign-in.';
+          } else if (responseCode === '1003' || responseCode === '1011') {
+            clientErrMsg = 'SMS gateway authentication failed. Please contact the administrator.';
+          }
+          return res.status(502).json({
+            error: clientErrMsg,
+            code: 'SMS_GATEWAY_REJECTED'
+          });
+        }
+
+        console.log(`[SMS GATEWAY SUCCESS] OTP SMS submitted via BulkSMSBD (Code: ${responseCode || 202})`);
+      } else if (provider === 'greenweb') {
+        const apiRes = await fetch('https://api.greenweb.com.bd/api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            token: apiKey,
+            to: cleanPhone,
+            message
+          }),
+          signal: controller.signal
+        });
+        if (!apiRes.ok) throw new Error(`Greenweb HTTP ${apiRes.status}`);
+      } else if (provider === 'mimsms') {
+        const apiRes = await fetch('https://esms.mimsms.com/smsapi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            api_key: apiKey,
+            type: 'text',
+            contacts: cleanPhone,
+            senderid: senderId || 'CamneX',
+            msg: message
+          }),
+          signal: controller.signal
+        });
+        if (!apiRes.ok) throw new Error(`MimSMS HTTP ${apiRes.status}`);
+      } else if (provider === 'twilio') {
+        const accountSid = process.env.TWILIO_ACCOUNT_SID;
+        const authToken = apiKey;
+        const fromNumber = senderId;
+        const apiRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64')
+          },
+          body: new URLSearchParams({
+            To: `+88${cleanPhone}`,
+            From: fromNumber,
+            Body: message
+          }),
+          signal: controller.signal
+        });
+        if (!apiRes.ok) throw new Error(`Twilio HTTP ${apiRes.status}`);
+      } else {
+        return res.status(503).json({
+          error: `Configured SMS provider '${provider}' is not supported. Supported providers are bulksmsbd, greenweb, mimsms, twilio.`
+        });
+      }
+    } finally {
+      clearTimeout(timer);
     }
 
     return res.json({
@@ -526,7 +635,14 @@ async function sendPhoneOtp(req, res) {
       message: 'A 6-digit verification code has been sent to your mobile phone.'
     });
   } catch (err) {
-    console.error('Failed to dispatch SMS OTP:', err);
+    try { db.prepare(`DELETE FROM phone_otps WHERE id = ?`).run(otpId); } catch (_) {}
+    if (err.name === 'AbortError' || err.code === 'ABORT_ERR') {
+      console.warn('[SMS GATEWAY TIMEOUT] SMS dispatch request timed out');
+      return res.status(504).json({
+        error: 'SMS gateway service timed out. Please check your connection and retry.'
+      });
+    }
+    console.error('[SMS GATEWAY ERROR] Failed to dispatch SMS OTP:', err.message);
     return res.status(502).json({
       error: 'Failed to send SMS through the gateway provider. Please try again or use password sign-in.'
     });

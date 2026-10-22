@@ -118,8 +118,9 @@ function getVerificationConfig() {
   const smtpConfigured = !!(process.env.SMTP_HOST && (process.env.SMTP_USER || process.env.SMTP_PORT));
   const turnstile = getResolvedTurnstileKeys();
 
-  const smsProvider = (process.env.SMS_GATEWAY_PROVIDER || '').trim().toLowerCase();
-  const smsConfigured = !!(process.env.SMS_API_KEY && smsProvider && smsProvider !== 'disabled');
+  const smsProvider = (process.env.SMS_GATEWAY_PROVIDER || readDotEnvValue('SMS_GATEWAY_PROVIDER') || '').trim().toLowerCase();
+  const smsApiKey = (process.env.SMS_API_KEY || readDotEnvValue('SMS_API_KEY') || '').trim();
+  const smsConfigured = !!(smsApiKey && smsProvider && smsProvider !== 'disabled');
 
   return {
     email: {
