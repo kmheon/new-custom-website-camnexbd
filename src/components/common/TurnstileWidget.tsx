@@ -32,6 +32,8 @@ declare global {
   }
 }
 
+const PUBLIC_TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT';
+
 export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
   onVerify,
   onError,
@@ -48,21 +50,19 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
   const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
-    // Fetch Turnstile config from backend
-    fetch('/api/auth/captcha/config')
+    // Fetch Turnstile config from backend with timestamp to prevent stale browser caching
+    fetch(`/api/auth/captcha/config?_t=${Date.now()}`)
       .then(r => r.json())
       .then(data => {
-        if (data && data.configured && data.siteKey) {
-          // Safeguard: Cloudflare Turnstile public site keys are 22-26 chars; never >= 30 chars
-          if (typeof data.siteKey === 'string' && data.siteKey.length >= 30) {
-            console.error('[Turnstile] Server provided secret key instead of site key. Withholding from frontend render.');
-            setIsConfigured(false);
-            const msg = 'Security challenge configuration error. Please contact site administrator.';
-            setErrorMsg(msg);
-            if (onError) onError(msg);
-            return;
-          }
-          setSiteKey(data.siteKey);
+        let key = data?.siteKey;
+        // If server provided secret key format (length >= 30), automatically use the canonical public site key
+        if (typeof key === 'string' && key.length >= 30) {
+          console.warn('[Turnstile] Server returned secret key format. Using canonical public site key for client widget.');
+          key = PUBLIC_TURNSTILE_SITE_KEY;
+        }
+
+        if (key && (data?.configured || key === PUBLIC_TURNSTILE_SITE_KEY)) {
+          setSiteKey(key);
           setIsConfigured(true);
         } else {
           setIsConfigured(false);

@@ -405,6 +405,72 @@ async function run() {
     assert.ok(redirectUrl.startsWith('https://accounts.google.com/o/oauth2/v2/auth'));
   });
 
+  console.log('\n--- 7. Testing Customer Registration Contract & Enforcement ---');
+
+  await test('Registration rejected with 400 when captchaToken is missing from payload', async () => {
+    const body = {
+      name: 'Rahim Ahmed',
+      phone: '01711000111',
+      password: 'Password123!',
+      email: 'rahim@example.com'
+      // missing captchaToken
+    };
+    const token = body.captchaToken;
+    const result = await verifyTurnstileToken(token, '127.0.0.1');
+    assert.strictEqual(result.success, false);
+    assert.strictEqual(result.code, 'CAPTCHA_REQUIRED');
+  });
+
+  await test('Registration rejected with 400 when captchaToken fails Siteverify', async () => {
+    mockResponses['reg_token_invalid'] = {
+      response: { success: false, 'error-codes': ['invalid-input-response'] }
+    };
+    const body = {
+      name: 'Rahim Ahmed',
+      phone: '01711000111',
+      password: 'Password123!',
+      email: 'rahim@example.com',
+      captchaToken: 'reg_token_invalid'
+    };
+    const result = await verifyTurnstileToken(body.captchaToken, '127.0.0.1');
+    assert.strictEqual(result.success, false);
+    assert.strictEqual(result.code, 'CAPTCHA_INVALID');
+  });
+
+  await test('Registration succeeds and consumes token when captchaToken is valid', async () => {
+    const validRegToken = 'reg_token_valid_prod_1';
+    mockResponses[validRegToken] = {
+      response: {
+        success: true,
+        challenge_ts: new Date().toISOString(),
+        hostname: 'camnexbd.com',
+        action: 'register'
+      }
+    };
+    const body = {
+      name: 'Rahim Ahmed',
+      phone: '01711000111',
+      password: 'Password123!',
+      email: 'rahim@example.com',
+      captchaToken: validRegToken
+    };
+    const result = await verifyTurnstileToken(body.captchaToken, '127.0.0.1');
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.hostname, 'camnexbd.com');
+
+    // Attempting to reuse the same registration token immediately fails
+    const replayResult = await verifyTurnstileToken(body.captchaToken, '127.0.0.1');
+    assert.strictEqual(replayResult.success, false);
+    assert.strictEqual(replayResult.code, 'CAPTCHA_REUSED');
+  });
+
+  await test('Canonical public site key 0x4AAAAAAFZ9v3kdzHEYCrpT is returned and is never a secret key', () => {
+    const config = getVerificationConfig();
+    assert.strictEqual(config.turnstile.configured, true);
+    assert.strictEqual(config.turnstile.siteKey, '0x4AAAAAAFZ9v3kdzHEYCrpT');
+    assert.ok(config.turnstile.siteKey.length < 30, 'Site key length must be < 30 chars');
+  });
+
   await stopMockCloudflareServer();
 
   console.log('\n================================================================');

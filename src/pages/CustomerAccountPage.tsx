@@ -312,6 +312,14 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginIdentifier || !loginPassword) return;
+    if (!loginCaptchaToken) {
+      setUrlMessage({
+        type: 'error',
+        title: 'Security Verification Required',
+        text: 'Please complete the Cloudflare security verification challenge before signing in.'
+      });
+      return;
+    }
     const ok = await login(loginIdentifier, loginPassword, loginCaptchaToken);
     if (ok) {
       setLoginPassword('');
@@ -326,6 +334,14 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
         type: 'error',
         title: 'Contact Required',
         text: 'Please provide either a phone number or an email address to register.'
+      });
+      return;
+    }
+    if (!registerCaptchaToken) {
+      setUrlMessage({
+        type: 'error',
+        title: 'Security Verification Required',
+        text: 'Please complete the Cloudflare security verification challenge before creating an account.'
       });
       return;
     }

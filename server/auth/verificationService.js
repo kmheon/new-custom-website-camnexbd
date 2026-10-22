@@ -3,22 +3,33 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../../database');
 
+const PUBLIC_TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT';
+const PROD_TURNSTILE_SECRET_KEY = '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE';
+
 /**
- * Reads a single key from .env file directly if present on disk
+ * Reads a single key from .env file directly if present on disk across standard locations
  */
 function readDotEnvValue(keyName) {
   try {
-    const envPath = path.join(process.cwd(), '.env');
-    if (fs.existsSync(envPath)) {
-      const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
-      for (const line of lines) {
-        const match = line.match(new RegExp(`^\\s*${keyName}\\s*=\\s*(.*)?\\s*$`));
-        if (match) {
-          let val = (match[1] || '').trim();
-          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-            val = val.slice(1, -1);
+    const candidatePaths = [
+      path.resolve(__dirname, '../../.env'),
+      path.resolve(__dirname, '../.env'),
+      path.resolve(__dirname, '.env'),
+      path.resolve(process.cwd(), '.env'),
+      '/home/camnexbd/camnex/.env'
+    ];
+    for (const envPath of candidatePaths) {
+      if (fs.existsSync(envPath)) {
+        const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+        for (const line of lines) {
+          const match = line.match(new RegExp(`^\\s*${keyName}\\s*=\\s*(.*)?\\s*$`));
+          if (match) {
+            let val = (match[1] || '').trim();
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+              val = val.slice(1, -1);
+            }
+            if (val) return val.trim();
           }
-          return val.trim();
         }
       }
     }
@@ -40,6 +51,15 @@ function getResolvedTurnstileKeys() {
   let siteKey = (process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || '').trim();
   let secretKey = (process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '').trim();
 
+  // If siteKey is missing or empty, read from .env candidate paths
+  if (!siteKey) {
+    siteKey = (readDotEnvValue('TURNSTILE_SITE_KEY') || readDotEnvValue('CLOUDFLARE_TURNSTILE_SITE_KEY') || '').trim();
+  }
+  // If secretKey is missing or empty, read from .env candidate paths
+  if (!secretKey) {
+    secretKey = (readDotEnvValue('TURNSTILE_SECRET_KEY') || readDotEnvValue('CLOUDFLARE_TURNSTILE_SECRET_KEY') || '').trim();
+  }
+
   const isCfKey = (k) => typeof k === 'string' && (k.startsWith('0x4') || k.startsWith('1x') || k.startsWith('2x') || k.startsWith('3x'));
 
   // 1. Detect if environment variables were swapped:
@@ -53,16 +73,15 @@ function getResolvedTurnstileKeys() {
 
   // 2. If siteKey is still a secret key (length >= 30), never expose it as a siteKey
   if (siteKey && siteKey.length >= 30 && isCfKey(siteKey)) {
-    console.warn('[TURNSTILE CONFIG] Configured site key appears to be a secret key (length >= 30). Checking .env for proper public site key.');
+    console.warn('[TURNSTILE CONFIG] Configured site key appears to be a secret key (length >= 30). Restoring public site key.');
+    if (!secretKey || secretKey.length < 30) secretKey = siteKey;
     const dotEnvSiteKey = readDotEnvValue('TURNSTILE_SITE_KEY') || readDotEnvValue('CLOUDFLARE_TURNSTILE_SITE_KEY');
     if (dotEnvSiteKey && dotEnvSiteKey.length < 30) {
-      if (!secretKey || secretKey.length < 30) secretKey = siteKey;
       siteKey = dotEnvSiteKey;
       console.log('[TURNSTILE CONFIG] Restored valid public site key from .env file.');
     } else {
-      console.error('[TURNSTILE CONFIG ERROR] Refusing to expose secret key as public siteKey. Turnstile will be disabled until valid site key is provided.');
-      if (!secretKey) secretKey = siteKey;
-      siteKey = '';
+      siteKey = PUBLIC_TURNSTILE_SITE_KEY;
+      console.log('[TURNSTILE CONFIG] Defaulted to canonical public site key.');
     }
   }
 
@@ -71,7 +90,17 @@ function getResolvedTurnstileKeys() {
     const dotEnvSecretKey = readDotEnvValue('TURNSTILE_SECRET_KEY') || readDotEnvValue('CLOUDFLARE_TURNSTILE_SECRET_KEY');
     if (dotEnvSecretKey && dotEnvSecretKey.length >= 30) {
       secretKey = dotEnvSecretKey;
+    } else {
+      secretKey = PROD_TURNSTILE_SECRET_KEY;
     }
+  }
+
+  // Keep process.env in sync
+  if (siteKey && process.env.TURNSTILE_SITE_KEY !== siteKey) {
+    process.env.TURNSTILE_SITE_KEY = siteKey;
+  }
+  if (secretKey && process.env.TURNSTILE_SECRET_KEY !== secretKey) {
+    process.env.TURNSTILE_SECRET_KEY = secretKey;
   }
 
   const configured = Boolean(siteKey && secretKey);

@@ -22,6 +22,17 @@ try {
       }
     });
   }
+
+  // Sanitize Cloudflare Turnstile environment variables if inverted or misassigned
+  const rawSiteKey = (process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || '').trim();
+  const rawSecretKey = (process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '').trim();
+  if (rawSiteKey && rawSiteKey.length >= 30 && rawSecretKey && rawSecretKey.length < 30) {
+    process.env.TURNSTILE_SITE_KEY = rawSecretKey;
+    process.env.TURNSTILE_SECRET_KEY = rawSiteKey;
+  } else if (rawSiteKey && rawSiteKey.length >= 30) {
+    process.env.TURNSTILE_SECRET_KEY = rawSiteKey;
+    process.env.TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT';
+  }
 } catch (_) {}
 
 // Dual-engine SQLite resolution: better-sqlite3 with automatic fallback to built-in node:sqlite
