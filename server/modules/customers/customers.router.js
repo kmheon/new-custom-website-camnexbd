@@ -12,8 +12,9 @@ const {
   destroySession,
   validateBody
 } = require('../../middleware/auth');
+const { requireTurnstile } = require('../../auth/verificationService');
 
-router.post('/auth/customer/register', registerLimiter, validateBody(customerRegisterSchema), (req, res) => {
+router.post('/auth/customer/register', registerLimiter, requireTurnstile, validateBody(customerRegisterSchema), (req, res) => {
   try {
     const customer = customersService.register(req.body);
     const session = createSession(customer.id, 'customer', customer.email, customer.name, res, 'storefront');
@@ -28,7 +29,7 @@ router.post('/auth/customer/register', registerLimiter, validateBody(customerReg
   }
 });
 
-router.post('/auth/customer/login', loginLimiter, validateBody(customerLoginSchema), (req, res) => {
+router.post('/auth/customer/login', loginLimiter, requireTurnstile, validateBody(customerLoginSchema), (req, res) => {
   try {
     const user = customersService.login(req.body);
     const session = createSession(user.id, 'customer', user.email, user.name, res, 'storefront');

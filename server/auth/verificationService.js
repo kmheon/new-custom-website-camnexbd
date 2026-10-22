@@ -71,12 +71,17 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000).unref();
 
+function clearConsumedTurnstileTokens() {
+  consumedTurnstileTokens.clear();
+}
+
 /**
  * Verifies Cloudflare Turnstile CAPTCHA token
- * Rejects invalid, expired, missing, or reused tokens.
+ * Rejects invalid, expired, missing, or reused tokens, validates hostname, and enforces timeouts.
  */
 async function verifyTurnstileToken(token, remoteIp) {
   const secretKey = process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+  const isTestEnv = process.env.NODE_ENV === 'test';
 
   // 1. Missing token rejection
   if (!token || typeof token !== 'string' || !token.trim()) {
@@ -112,7 +117,7 @@ async function verifyTurnstileToken(token, remoteIp) {
   if (cleanToken === '3x00000000000000000000AC') {
     return {
       success: false,
-      error: 'Security verification token expired or was already used.',
+      error: 'Security verification token expired or was already used. Please refresh the challenge.',
       code: 'CAPTCHA_EXPIRED'
     };
   }
@@ -121,8 +126,17 @@ async function verifyTurnstileToken(token, remoteIp) {
   const isTestOrDev = process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_AUTH === 'true';
   const isTestKey = secretKey === '1x0000000000000000000000000000000AA';
   if ((cleanToken === '1x00000000000000000000AA' || cleanToken.startsWith('test_valid_') || cleanToken === 'XXXX.DUMMY.TOKEN.XXXX') && (isTestOrDev || isTestKey)) {
+    // If the token explicitly requests a simulated hostname mismatch in test mode
+    if (cleanToken.includes('mismatch_host')) {
+      return {
+        success: false,
+        error: 'Security challenge verification failed (hostname mismatch). Please refresh and try again.',
+        code: 'CAPTCHA_HOSTNAME_MISMATCH',
+        hostname: 'unauthorized-domain.com'
+      };
+    }
     consumedTurnstileTokens.set(cleanToken, Date.now());
-    return { success: true, isTest: true };
+    return { success: true, isTest: true, hostname: 'localhost' };
   }
 
   // If secret key is not configured
@@ -137,7 +151,11 @@ async function verifyTurnstileToken(token, remoteIp) {
     };
   }
 
-  // 4. Validate with Cloudflare Siteverify API
+  // 4. Validate with Cloudflare Siteverify API (with timeout and hostname validation)
+  const timeoutMs = parseInt(process.env.TURNSTILE_TIMEOUT_MS || '7000', 10);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const formData = new URLSearchParams();
     formData.append('secret', secretKey);
@@ -148,14 +166,16 @@ async function verifyTurnstileToken(token, remoteIp) {
       formData.append('remoteip', remoteIp);
     }
 
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    const verifyUrl = process.env.TURNSTILE_VERIFY_URL || 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+    const res = await fetch(verifyUrl, {
       method: 'POST',
       body: formData,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      signal: controller.signal
     });
 
     if (!res.ok) {
-      console.error(`[TURNSTILE API HTTP ${res.status}]`, await res.text());
+      console.error(`[TURNSTILE API HTTP ${res.status}] Siteverify service returned error status`);
       return {
         success: false,
         error: 'Security verification service is temporarily unavailable. Please retry in a moment.',
@@ -166,6 +186,29 @@ async function verifyTurnstileToken(token, remoteIp) {
     const data = await res.json();
 
     if (data.success) {
+      // Validate returned hostname against configured allowed hostnames
+      const allowedHostnames = (process.env.TURNSTILE_ALLOWED_HOSTNAMES || process.env.ALLOWED_HOSTNAMES || 'camnexbd.com,www.camnexbd.com,localhost,127.0.0.1')
+        .split(',')
+        .map(h => h.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (data.hostname && allowedHostnames.length > 0) {
+        const incomingHostname = String(data.hostname).trim().toLowerCase();
+        const isMatch = allowedHostnames.some(allowed => {
+          if (allowed.startsWith('.')) return incomingHostname.endsWith(allowed);
+          return incomingHostname === allowed || incomingHostname.endsWith('.' + allowed);
+        });
+
+        if (!isMatch) {
+          return {
+            success: false,
+            error: 'Security challenge verification failed (hostname mismatch). Please refresh and try again.',
+            code: 'CAPTCHA_HOSTNAME_MISMATCH',
+            hostname: incomingHostname
+          };
+        }
+      }
+
       // Record consumed token to enforce single-use / prevent replay
       consumedTurnstileTokens.set(cleanToken, Date.now());
       return {
@@ -201,13 +244,44 @@ async function verifyTurnstileToken(token, remoteIp) {
       errorCodes
     };
   } catch (err) {
+    if (err.name === 'AbortError' || err.code === 'ABORT_ERR') {
+      console.error('[TURNSTILE FETCH TIMEOUT] Verification request timed out');
+      return {
+        success: false,
+        error: 'Security verification timed out. Please check your connection and retry.',
+        code: 'CAPTCHA_TIMEOUT'
+      };
+    }
     console.error('[TURNSTILE FETCH ERROR]', err.message);
     return {
       success: false,
       error: 'Unable to verify security challenge at this time. Please check your connection and retry.',
       code: 'CAPTCHA_PROVIDER_ERROR'
     };
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+/**
+ * Express middleware to enforce Turnstile CAPTCHA verification on routes.
+ */
+function requireTurnstile(req, res, next) {
+  const token = req.body?.captchaToken || req.headers['x-turnstile-token'];
+  return verifyTurnstileToken(token, req.ip)
+    .then((result) => {
+      if (!result.success) {
+        return res.status(400).json({
+          error: result.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
+          code: result.code || 'CAPTCHA_FAILED'
+        });
+      }
+      req.turnstile = result;
+      next();
+    })
+    .catch((err) => {
+      res.status(500).json({ error: 'Internal verification failure: ' + err.message });
+    });
 }
 
 /**
@@ -524,6 +598,8 @@ module.exports = {
   normalizeEmail,
   normalizeBdPhone,
   verifyTurnstileToken,
+  requireTurnstile,
+  clearConsumedTurnstileTokens,
   sendEmailVerification,
   verifyEmailCode,
   verifyEmailToken,

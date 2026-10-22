@@ -7,6 +7,7 @@ const {
   submissionLimiter,
   validateBody
 } = require('../../middleware/auth');
+const { requireTurnstile } = require('../../auth/verificationService');
 
 router.get('/quotes', requireAdmin, (req, res) => {
   try {
@@ -17,7 +18,7 @@ router.get('/quotes', requireAdmin, (req, res) => {
   }
 });
 
-router.post('/quotes', submissionLimiter, validateBody(quoteSchema), (req, res) => {
+router.post('/quotes', submissionLimiter, requireTurnstile, validateBody(quoteSchema), (req, res) => {
   try {
     const quote = quotesService.createQuote(req.body, req.user);
     res.json(quote);

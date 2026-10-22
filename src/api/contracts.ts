@@ -159,7 +159,7 @@ export interface IOrderService {
 
 export interface IQuoteService {
   createQuote(data: Omit<QuoteRequest, 'id' | 'quoteNumber' | 'createdAt' | 'status'>): Promise<QuoteRequest>;
-  createServiceRequest(data: { customerName: string; phone: string; serviceType: string; serviceId?: string; area?: string; website?: string }): Promise<any>;
+  createServiceRequest(data: { customerName: string; phone: string; serviceType: string; serviceId?: string; area?: string; website?: string; captchaToken?: string }): Promise<any>;
   getServiceOfferings(): Promise<ServiceOffering[]>;
   getAllServiceOfferings(): Promise<ServiceOffering[]>;
   saveServiceOffering(service: ServiceOffering): Promise<ServiceOffering>;

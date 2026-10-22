@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Badge } from '../components/common/UI';
+import { TurnstileWidget } from '../components/common/TurnstileWidget';
 import { packageService, productService, quoteService } from '../services';
 import {
   SecurityPackage,
@@ -460,6 +461,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     district?: string;
     siteAddress?: string;
   }>({});
+  const [quoteCaptchaToken, setQuoteCaptchaToken] = useState<string | null>(null);
 
 
   // Escape key accessibility handler to close quotation modal
@@ -2516,6 +2518,7 @@ export const PackageBuilderPage: React.FC<PackageBuilderPageProps> = ({
     setQuoteErrorMessage(null);
     setQuoteFormErrors({});
     setQuoteSuccessResult(null);
+    setQuoteCaptchaToken(null);
 
     // Also update localStorage prefill as backup for navigation
     const summaryText = `[Custom Package Builder Configuration]
@@ -2605,7 +2608,8 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
         district: selectedDistrict,
         thana: selectedThana,
         notes: notesContent,
-        quotationAmount: totalPrice || undefined
+        quotationAmount: totalPrice || undefined,
+        captchaToken: quoteCaptchaToken || undefined
       };
 
       const result = await quoteService.createQuote(payload);
@@ -5937,6 +5941,14 @@ Customer Site Notes: ${quoteFormData.notes || 'None provided'}`;
                         <span>{quoteErrorMessage}</span>
                       </div>
                     )}
+
+                    <TurnstileWidget
+                      action="quote"
+                      onVerify={setQuoteCaptchaToken}
+                      onExpire={() => setQuoteCaptchaToken(null)}
+                      onError={() => setQuoteCaptchaToken(null)}
+                      className="my-2"
+                    />
 
                     <div className="pt-2 flex items-center justify-end gap-3">
                       <button

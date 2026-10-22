@@ -45,6 +45,7 @@ import { PackageFilterBar } from '../components/packages/PackageFilterBar';
 import { WifiSubcategoryChips, normalizeWifiSlug, toWifiUrlParam } from '../components/common/WifiSubcategoryChips';
 import { Term } from '../components/common/Term';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { TurnstileWidget } from '../components/common/TurnstileWidget';
 import {
   cmsService,
   productService,
@@ -369,6 +370,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [honeypot, setHoneypot] = useState<string>('');
   const [callbackStatus, setCallbackStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [callbackMessage, setCallbackMessage] = useState<string>('');
+  const [callbackCaptchaToken, setCallbackCaptchaToken] = useState<string>('');
 
   // Slider state for Testimonials
   const [testimonialIdx, setTestimonialIdx] = useState(0);
@@ -560,7 +562,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         serviceId: !isOther ? selectedServiceId : undefined,
         serviceType: serviceTypeToSubmit,
         area: callbackArea.trim(),
-        website: honeypot // Anti-bot honeypot field
+        website: honeypot, // Anti-bot honeypot field
+        captchaToken: callbackCaptchaToken
       });
 
       setCallbackStatus('success');
@@ -1430,6 +1433,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                       {callbackMessage}
                     </div>
                   )}
+
+                  <TurnstileWidget
+                    action="callback"
+                    theme="dark"
+                    onVerify={(token) => setCallbackCaptchaToken(token)}
+                    onError={() => setCallbackCaptchaToken('')}
+                    onExpire={() => setCallbackCaptchaToken('')}
+                    className="py-1"
+                  />
 
                   <button
                     type="submit"

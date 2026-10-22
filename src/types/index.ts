@@ -605,6 +605,7 @@ export interface QuoteRequest {
   status: 'pending' | 'contacted' | 'quoted' | 'approved' | 'rejected';
   estimatedBudget?: string;
   attachmentName?: string;
+  captchaToken?: string;
   createdAt: string;
   isDemo?: boolean;
 }

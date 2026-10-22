@@ -119,6 +119,7 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
   const [verificationMethod, setVerificationMethod] = useState<'email' | 'phone'>('phone');
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
+  const [loginCaptchaToken, setLoginCaptchaToken] = useState('');
   const [registerCaptchaToken, setRegisterCaptchaToken] = useState('');
   const [otpCaptchaToken, setOtpCaptchaToken] = useState('');
 
@@ -311,7 +312,7 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginIdentifier || !loginPassword) return;
-    const ok = await login(loginIdentifier, loginPassword);
+    const ok = await login(loginIdentifier, loginPassword, loginCaptchaToken);
     if (ok) {
       setLoginPassword('');
     }
@@ -707,6 +708,14 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#F15A24] focus:bg-white transition-all"
                     />
                   </div>
+
+                  <TurnstileWidget
+                    action="login"
+                    onVerify={(token) => setLoginCaptchaToken(token)}
+                    onError={() => setLoginCaptchaToken('')}
+                    onExpire={() => setLoginCaptchaToken('')}
+                    className="py-1"
+                  />
 
                   <Button
                     type="submit"

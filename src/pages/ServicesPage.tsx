@@ -27,6 +27,7 @@ import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Input, Select, Badge, Alert } from '../components/common/UI';
 import { quoteService, cmsService } from '../services';
 import { ServiceType, QuoteRequest, FaqItem } from '../types';
+import { TurnstileWidget } from '../components/common/TurnstileWidget';
 import { INITIAL_FAQS } from '../services/seedData';
 
 interface ServicesPageProps {
@@ -191,6 +192,7 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onNavigate }) => {
   const [fileName, setFileName] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quoteCaptchaToken, setQuoteCaptchaToken] = useState('');
   const [submittedQuote, setSubmittedQuote] = useState<QuoteRequest | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -244,7 +246,8 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onNavigate }) => {
         cameraCount: Number(cameraCount) || 1,
         preferredDate: preferredDate.trim() || undefined,
         notes: notes.trim(),
-        attachmentName: fileName.trim() || undefined
+        attachmentName: fileName.trim() || undefined,
+        captchaToken: quoteCaptchaToken
       });
       setSubmittedQuote(result);
     } catch (err: any) {
@@ -645,6 +648,15 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onNavigate }) => {
                       </span>
                     )}
                   </div>
+
+                  {/* Turnstile Bot Protection */}
+                  <TurnstileWidget
+                    action="quote"
+                    onVerify={(token) => setQuoteCaptchaToken(token)}
+                    onError={() => setQuoteCaptchaToken('')}
+                    onExpire={() => setQuoteCaptchaToken('')}
+                    className="py-1"
+                  />
 
                   {/* Submit Button */}
                   <button

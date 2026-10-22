@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calculator, CheckCircle2, MessageSquare, ArrowRight, Loader2, Sparkles, Phone, Calendar, MapPin, User, Building, ShieldCheck } from 'lucide-react';
 import { QuoteFormData } from '../types';
 import { apiFetch } from '../services/apiClient';
+import { TurnstileWidget } from './common/TurnstileWidget';
 
 interface QuoteCalculatorProps {
   initialPremise?: string;
@@ -32,6 +33,7 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [quoteSuccess, setQuoteSuccess] = useState<{ quoteNumber: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [quoteCaptchaToken, setQuoteCaptchaToken] = useState<string | null>(null);
 
   // Dynamic Live Estimated Price calculation
   const getEstimatedPrice = () => {
@@ -71,6 +73,7 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({
         email: '',
         address: formData.location || 'Dhaka, Bangladesh',
         serviceType: `${formData.serviceNeeded} - ${formData.propertyType} (${formData.cameraCount} Cams / ${formData.doorCount} Doors)`,
+        captchaToken: quoteCaptchaToken || undefined,
         notes: `Selected: ${formData.packagePreselected || 'Custom Builder'}. Storage: ${formData.storageDays}. Preferred Date: ${formData.preferredDate}. Notes: ${formData.notes}`,
         products: [
           { name: formData.serviceNeeded, qty: formData.cameraCount, type: formData.propertyType }
@@ -499,6 +502,14 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({
                       Includes hardware, cables, connectors & 1-year service support
                     </div>
                   </div>
+
+                  <TurnstileWidget
+                    action="quote"
+                    onVerify={setQuoteCaptchaToken}
+                    onExpire={() => setQuoteCaptchaToken(null)}
+                    onError={() => setQuoteCaptchaToken(null)}
+                    className="my-2"
+                  />
 
                   <div className="pt-2 flex justify-between items-center">
                     <button

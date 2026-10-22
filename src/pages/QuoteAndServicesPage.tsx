@@ -4,6 +4,7 @@ import { SEO } from '../components/common/SEO';
 import { Breadcrumbs, Button, Input, Select, Badge, Alert } from '../components/common/UI';
 import { quoteService } from '../services';
 import { ServiceType, QuoteRequest } from '../types';
+import { TurnstileWidget } from '../components/common/TurnstileWidget';
 
 interface QuoteAndServicesPageProps {
   onNavigate: (route: string, param?: string) => void;
@@ -29,6 +30,7 @@ export const QuoteAndServicesPage: React.FC<QuoteAndServicesPageProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedQuote, setSubmittedQuote] = useState<QuoteRequest | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [quoteCaptchaToken, setQuoteCaptchaToken] = useState('');
 
   React.useEffect(() => {
     try {
@@ -65,7 +67,8 @@ export const QuoteAndServicesPage: React.FC<QuoteAndServicesPageProps> = ({
         cameraCount,
         preferredDate,
         notes,
-        attachmentName: fileName
+        attachmentName: fileName,
+        captchaToken: quoteCaptchaToken
       });
       setSubmittedQuote(q);
     } catch (err: any) {
@@ -301,6 +304,14 @@ export const QuoteAndServicesPage: React.FC<QuoteAndServicesPageProps> = ({
                     />
                     {fileName && <span className="text-xs font-bold text-emerald-600 block mt-1">Attached: {fileName}</span>}
                   </div>
+
+                  <TurnstileWidget
+                    action="quote"
+                    onVerify={(token) => setQuoteCaptchaToken(token)}
+                    onError={() => setQuoteCaptchaToken('')}
+                    onExpire={() => setQuoteCaptchaToken('')}
+                    className="py-1"
+                  />
 
                   <Button
                     size="lg"

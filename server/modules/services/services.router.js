@@ -7,6 +7,7 @@ const {
   submissionLimiter,
   validateBody
 } = require('../../middleware/auth');
+const { requireTurnstile } = require('../../auth/verificationService');
 
 router.get('/service-requests', requireAdmin, (req, res) => {
   try {
@@ -27,7 +28,7 @@ router.get('/services', requireAdmin, (req, res) => {
   }
 });
 
-router.post(['/services', '/service-requests'], submissionLimiter, validateBody(serviceRequestSchema), (req, res) => {
+router.post(['/services', '/service-requests'], submissionLimiter, requireTurnstile, validateBody(serviceRequestSchema), (req, res) => {
   try {
     const request = servicesService.createRequest(req.body, req.user);
     res.json(request);

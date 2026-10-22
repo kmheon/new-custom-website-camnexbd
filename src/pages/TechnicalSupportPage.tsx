@@ -22,6 +22,7 @@ import { Breadcrumbs, Button, Input, Textarea, Badge, Alert } from '../component
 import { apiClient } from '../shared/apiClient';
 import { cmsService } from '../services';
 import { SiteSettings } from '../types';
+import { TurnstileWidget } from '../components/common/TurnstileWidget';
 
 interface TechnicalSupportPageProps {
   onNavigate: (route: string, param?: string) => void;
@@ -44,6 +45,7 @@ export const TechnicalSupportPage: React.FC<TechnicalSupportPageProps> = ({ onNa
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [supportCaptchaToken, setSupportCaptchaToken] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState<{ referenceNumber: string; createdAt: string } | null>(null);
 
   useEffect(() => {
@@ -104,7 +106,8 @@ ${formData.description.trim()}`;
         email: formData.email.trim() || undefined,
         subject: 'Technical Support & Troubleshooting',
         message: detailedMessage,
-        website_url: formData.website_url
+        website_url: formData.website_url,
+        captchaToken: supportCaptchaToken
       });
 
       if (res && res.referenceNumber) {
@@ -422,6 +425,14 @@ ${formData.description.trim()}`;
                   </span>
                 )}
               </div>
+
+              <TurnstileWidget
+                action="support"
+                onVerify={(token) => setSupportCaptchaToken(token)}
+                onError={() => setSupportCaptchaToken('')}
+                onExpire={() => setSupportCaptchaToken('')}
+                className="py-1"
+              />
 
               <div className="pt-2">
                 <Button

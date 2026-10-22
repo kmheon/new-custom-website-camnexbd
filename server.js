@@ -507,10 +507,20 @@ app.post('/api/auth/customer/register', registerLimiter, validateBody(schemas.cu
   }
 });
 
-app.post('/api/auth/customer/login', loginLimiter, validateBody(schemas.customerLogin), (req, res) => {
+app.post('/api/auth/customer/login', loginLimiter, validateBody(schemas.customerLogin), async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    const { identifier, password, captchaToken } = req.body;
     const idClean = identifier.trim();
+
+    // Lightweight CAPTCHA / Bot Protection verification
+    const captchaTokenValue = captchaToken || req.headers['x-turnstile-token'];
+    const captchaResult = await verifyTurnstileToken(captchaTokenValue, req.ip);
+    if (!captchaResult.success) {
+      return res.status(400).json({
+        error: captchaResult.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
+        code: captchaResult.code || 'CAPTCHA_FAILED'
+      });
+    }
 
     const customerRow = db.prepare(`
       SELECT * FROM customers
@@ -3827,9 +3837,20 @@ app.get('/api/quotes', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/quotes', submissionLimiter, validateBody(schemas.quote), (req, res) => {
+app.post('/api/quotes', submissionLimiter, validateBody(schemas.quote), async (req, res) => {
   try {
     const q = req.body;
+
+    // Lightweight CAPTCHA / Bot Protection verification
+    const captchaToken = q.captchaToken || req.headers['x-turnstile-token'];
+    const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+    if (!captchaRes.success) {
+      return res.status(400).json({
+        error: captchaRes.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
+        code: captchaRes.code || 'CAPTCHA_FAILED'
+      });
+    }
+
     const id = `qte-${Date.now()}`;
     const referenceNumber = generateNumber('CNX-QTE');
     const createdAt = new Date().toISOString();
@@ -3856,12 +3877,22 @@ app.post('/api/quotes', submissionLimiter, validateBody(schemas.quote), (req, re
   }
 });
 
-app.post('/api/contact', submissionLimiter, (req, res) => {
+app.post('/api/contact', submissionLimiter, async (req, res) => {
   try {
     const body = req.body || {};
     // Honeypot check
     if (body.website_url || body._honeypot || body.hp) {
       return res.json({ success: true, referenceNumber: 'CNX-MSG-OK', message: 'Inquiry received' });
+    }
+
+    // Lightweight CAPTCHA / Bot Protection verification
+    const captchaToken = body.captchaToken || req.headers['x-turnstile-token'];
+    const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+    if (!captchaRes.success) {
+      return res.status(400).json({
+        error: captchaRes.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
+        code: captchaRes.code || 'CAPTCHA_FAILED'
+      });
     }
 
     const name = String(body.name || body.customerName || '').trim();
@@ -4077,12 +4108,22 @@ app.get('/api/services', requireAdmin, (req, res) => {
   }
 });
 
-app.post(['/api/services', '/api/service-requests'], submissionLimiter, validateBody(schemas.serviceRequest), (req, res) => {
+app.post(['/api/services', '/api/service-requests'], submissionLimiter, validateBody(schemas.serviceRequest), async (req, res) => {
   try {
     const s = req.body;
     // Honeypot anti-spam check: bots fill hidden fields
     if (s.website || s._honeypot || s.hp) {
       return res.json({ success: true, message: 'Request submitted successfully' });
+    }
+
+    // Lightweight CAPTCHA / Bot Protection verification
+    const captchaToken = s.captchaToken || req.headers['x-turnstile-token'];
+    const captchaRes = await verifyTurnstileToken(captchaToken, req.ip);
+    if (!captchaRes.success) {
+      return res.status(400).json({
+        error: captchaRes.error || 'Security verification (CAPTCHA) failed. Please complete the verification challenge.',
+        code: captchaRes.code || 'CAPTCHA_FAILED'
+      });
     }
 
     const id = `srv-${Date.now()}`;

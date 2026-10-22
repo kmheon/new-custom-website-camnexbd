@@ -220,8 +220,9 @@ const schemas = {
 
   customerLogin: z.object({
     identifier: z.string().min(3, 'Email or phone number is required'),
-    password: z.string().min(1, 'Password is required')
-  }),
+    password: z.string().min(1, 'Password is required'),
+    captchaToken: z.string().optional()
+  }).passthrough(),
 
   product: z.object({
     name: z.string().min(2, 'Product name is required'),

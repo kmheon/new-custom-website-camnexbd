@@ -18,6 +18,7 @@ import { PrivacyPolicyPage } from './PrivacyPolicyPage';
 import { TermsConditionsPage } from './TermsConditionsPage';
 import { RefundPolicyPage } from './RefundPolicyPage';
 import { TechnicalSupportPage } from './TechnicalSupportPage';
+import { TurnstileWidget } from '../components/common/TurnstileWidget';
 
 interface ContentPageProps {
   type: 'solutions' | 'projects' | 'testimonials' | 'faq' | 'contact' | 'blog' | 'blog_post' | 'about' | 'warranty' | 'terms' | 'privacy' | 'refund' | 'support';
@@ -48,6 +49,7 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
   const [contactSubmitting, setContactSubmitting] = useState(false);
   const [contactSubmitError, setContactSubmitError] = useState<string | null>(null);
+  const [contactCaptchaToken, setContactCaptchaToken] = useState('');
   const [contactSuccess, setContactSuccess] = useState<{ referenceNumber: string; createdAt: string } | null>(null);
 
   useEffect(() => {
@@ -155,7 +157,8 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
           email: contactForm.email.trim() || undefined,
           subject: contactForm.subject.trim(),
           message: contactForm.message.trim(),
-          website_url: contactForm.website_url
+          website_url: contactForm.website_url,
+          captchaToken: contactCaptchaToken
         });
 
         if (res && res.referenceNumber) {
@@ -690,6 +693,14 @@ export const ContentPages: React.FC<ContentPageProps> = ({ type, param, onNaviga
                         </p>
                       )}
                     </div>
+
+                    <TurnstileWidget
+                      action="contact"
+                      onVerify={(token) => setContactCaptchaToken(token)}
+                      onError={() => setContactCaptchaToken('')}
+                      onExpire={() => setContactCaptchaToken('')}
+                      className="py-1"
+                    />
 
                     <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <p className="text-[11px] text-[#5B6472]">

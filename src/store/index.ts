@@ -261,7 +261,7 @@ interface CustomerAuthState {
   providersStatus: AuthProvidersStatus | null;
   checkCustomerAuth: () => Promise<boolean>;
   getProvidersStatus: () => Promise<AuthProvidersStatus>;
-  login: (identifier: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string, captchaToken?: string) => Promise<boolean>;
   register: (name: string, phone: string, password: string, email?: string, captchaToken?: string) => Promise<boolean>;
   sendOtp: (phone: string) => Promise<{ success: boolean; configured: boolean; message?: string; error?: string }>;
   verifyOtp: (phone: string, code: string) => Promise<boolean>;
@@ -339,13 +339,13 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
     }
   },
 
-  login: async (identifier, password) => {
+  login: async (identifier, password, captchaToken) => {
     set({ isLoading: true, error: null });
     try {
       await fetchCsrfToken();
       const data = await apiFetch<{ success: boolean; customer: Customer; csrfToken?: string }>('/auth/customer/login', {
         method: 'POST',
-        body: JSON.stringify({ identifier, password })
+        body: JSON.stringify({ identifier, password, captchaToken })
       });
 
       if (data && data.csrfToken) {
