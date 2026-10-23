@@ -554,7 +554,7 @@ app.post(['/api/auth/logout', '/api/auth/customer/logout', '/api/auth/admin/logo
 });
 
 // External Authentication & Social OAuth Providers Status
-app.get(['/api/auth', '/api/auth/providers', '/api/auth/diagnostic'], (req, res) => {
+app.get(['/api/auth', '/api/auth/providers'], (req, res) => {
   res.json(getProvidersStatus());
 });
 
@@ -6726,6 +6726,14 @@ app.use((req, res, next) => {
     }
   }
   next();
+});
+
+// Explicit JSON 404 handler for unmatched /api/* requests
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    error: 'Endpoint not found',
+    message: `Cannot ${req.method} ${req.originalUrl || req.url}`
+  });
 });
 
 // Start server

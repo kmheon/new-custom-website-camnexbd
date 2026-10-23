@@ -78,7 +78,7 @@ router.get('/auth/csrf', (req, res) => {
 });
 
 // 1b. External Auth Providers Status
-router.get(['/auth', '/auth/providers', '/auth/diagnostic'], (req, res) => {
+router.get(['/auth', '/auth/providers'], (req, res) => {
   const { getProvidersStatus } = require('../auth/socialAuth');
   res.json(getProvidersStatus());
 });

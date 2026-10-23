@@ -25,8 +25,7 @@ function getProvidersStatus() {
     },
     smsOtp: {
       configured: smsCfg.configured,
-      provider: smsCfg.configured ? smsCfg.provider : null,
-      diagnostic: smsCfg.diagnostic
+      provider: smsCfg.configured ? smsCfg.provider : null
     }
   };
 }

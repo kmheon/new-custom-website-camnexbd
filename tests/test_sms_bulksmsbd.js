@@ -493,13 +493,14 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
     });
 
     // 18. Secret isolation: /api/auth and /api/auth/providers consistency
-    await test('Secret isolation: getProvidersStatus never returns secret keys or tokens', async () => {
+    await test('Secret isolation: getProvidersStatus never returns secret keys, tokens or diagnostic endpoint', async () => {
       process.env.SMS_GATEWAY_PROVIDER = 'bulksmsbd';
       process.env.SMS_API_KEY = 'super_secret_production_key_xyz';
       const status = getProvidersStatus();
       const serialized = JSON.stringify(status);
       assert(!serialized.includes('super_secret_production_key_xyz'), 'Never leak API key');
-      assert.deepStrictEqual(Object.keys(status.smsOtp).sort(), ['configured', 'provider', 'diagnostic'].sort());
+      assert.deepStrictEqual(Object.keys(status.smsOtp).sort(), ['configured', 'provider'].sort());
+      assert.strictEqual(status.smsOtp.diagnostic, undefined, 'No diagnostic exposed on public status');
     });
 
     // 19. Regression: Disk recovery from bash export lines in activate/env files
@@ -518,23 +519,62 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
       assert.strictEqual(parsed.SMS_SENDER_ID, '8809648909250');
     });
 
-    // 20. Safe Diagnostic: reports whether variables are present and source without key
-    await test('Safe diagnostic reports presence and source without leaking API key', async () => {
-      process.env.SMS_GATEWAY_PROVIDER = 'bulksmsbd';
-      process.env.SMS_API_KEY = 'super_secret_diagnostic_key_123';
-      const status = getProvidersStatus();
-      const diag = status.smsOtp.diagnostic;
-      assert(diag, 'Diagnostic object exists');
-      assert.strictEqual(diag.processEnv.hasProvider, true);
-      assert.strictEqual(diag.processEnv.hasApiKey, true);
-      assert.strictEqual(diag.processEnv.apiKeyLength, 'super_secret_diagnostic_key_123'.length);
-      assert.strictEqual(diag.normalizedProvider, 'bulksmsbd');
-      assert.strictEqual(diag.selectedSource, 'process.env');
-      assert(!JSON.stringify(diag).includes('super_secret_diagnostic_key_123'), 'Diagnostic must never leak API key');
+    // 20. Routing Regression: /api/auth/providers and /api/auth serve valid JSON, /api/auth/diagnostic is disabled
+    await test('Routing: /api/auth/providers and /api/auth return 200, /api/auth/diagnostic 404, app.js alias works', async () => {
+      const expressApp = require('../server');
+      const passengerEntry = require('../app');
+      assert.strictEqual(expressApp, passengerEntry, 'app.js entry point must export the exact server.js app');
+
+      // Helper function to invoke HTTP requests on express app
+      function makeRequest(pathUrl) {
+        return new Promise((resolve, reject) => {
+          const s = expressApp.listen(0, '127.0.0.1', () => {
+            const port = s.address().port;
+            http.get(`http://127.0.0.1:${port}${pathUrl}`, res => {
+              let body = '';
+              res.on('data', chunk => { body += chunk; });
+              res.on('end', () => {
+                s.close();
+                resolve({ statusCode: res.statusCode, headers: res.headers, body });
+              });
+            }).on('error', err => {
+              s.close();
+              reject(err);
+            });
+          });
+        });
+      }
+
+      // Check /api/auth/providers
+      const resProviders = await makeRequest('/api/auth/providers');
+      assert.strictEqual(resProviders.statusCode, 200, '/api/auth/providers must return 200');
+      const dataProviders = JSON.parse(resProviders.body);
+      assert('google' in dataProviders && 'smsOtp' in dataProviders, 'Must return providers JSON');
+      assert.strictEqual(dataProviders.smsOtp.diagnostic, undefined, 'No diagnostic leaked');
+
+      // Check /api/auth
+      const resAuth = await makeRequest('/api/auth');
+      assert.strictEqual(resAuth.statusCode, 200, '/api/auth must return 200');
+      const dataAuth = JSON.parse(resAuth.body);
+      assert.deepStrictEqual(dataAuth, dataProviders, '/api/auth must match /api/auth/providers output');
+
+      // Check /api/v1/auth/providers (rewritten)
+      const resV1 = await makeRequest('/api/v1/auth/providers');
+      assert.strictEqual(resV1.statusCode, 200, '/api/v1/auth/providers must return 200');
+
+      // Check /api/auth/diagnostic is 404 and returns JSON
+      const resDiag = await makeRequest('/api/auth/diagnostic');
+      assert.strictEqual(resDiag.statusCode, 404, '/api/auth/diagnostic must return 404');
+      const diagJson = JSON.parse(resDiag.body);
+      assert.strictEqual(diagJson.error, 'Endpoint not found', 'Must return structured JSON 404');
     });
 
   } finally {
     // Restore original env and stop mock server
+    try {
+      const { stopDomainEventWorker } = require('../server/middleware/events');
+      stopDomainEventWorker();
+    } catch (_) {}
     for (const key of Object.keys(process.env)) {
       if (!(key in originalEnv)) {
         delete process.env[key];
@@ -548,8 +588,6 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
   console.log(`TEST SUMMARY: ${passed} / ${total} tests passed (${failed} failed)`);
   console.log('================================================================');
 
-  if (failed > 0) {
-    process.exit(1);
-  }
+  process.exit(failed > 0 ? 1 : 0);
 })();
 
