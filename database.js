@@ -3,36 +3,10 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-// Load environment variables from .env if present
+// Load and sanitize environment variables across production and cPanel environments
 try {
-  const envPath = path.join(__dirname, '.env');
-  if (fs.existsSync(envPath)) {
-    const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
-    lines.forEach(line => {
-      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
-      if (match) {
-        const key = match[1];
-        let val = (match[2] || '').trim();
-        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-          val = val.slice(1, -1);
-        }
-        if (process.env[key] === undefined || process.env[key] === '' || (typeof process.env[key] === 'string' && process.env[key].trim() === '')) {
-          process.env[key] = val;
-        }
-      }
-    });
-  }
-
-  // Sanitize Cloudflare Turnstile environment variables if inverted or misassigned
-  const rawSiteKey = (process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || '').trim();
-  const rawSecretKey = (process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '').trim();
-  if (rawSiteKey && rawSiteKey.length >= 30 && rawSecretKey && rawSecretKey.length < 30) {
-    process.env.TURNSTILE_SITE_KEY = rawSecretKey;
-    process.env.TURNSTILE_SECRET_KEY = rawSiteKey;
-  } else if (rawSiteKey && rawSiteKey.length >= 30) {
-    process.env.TURNSTILE_SECRET_KEY = rawSiteKey;
-    process.env.TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT';
-  }
+  const { loadAndSanitizeEnvironment } = require('./server/shared/envHelper');
+  loadAndSanitizeEnvironment();
 } catch (_) {}
 
 // Dual-engine SQLite resolution: better-sqlite3 with automatic fallback to built-in node:sqlite

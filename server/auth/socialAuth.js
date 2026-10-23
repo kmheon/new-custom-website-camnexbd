@@ -3,37 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../../database');
 const { createSession } = require('../../auth');
-
-/**
- * Reads a single key from .env file directly if present on disk across standard locations
- */
-function readDotEnvValue(keyName) {
-  try {
-    const candidatePaths = [
-      path.resolve(__dirname, '../../.env'),
-      path.resolve(__dirname, '../.env'),
-      path.resolve(__dirname, '.env'),
-      path.resolve(process.cwd(), '.env'),
-      '/home/camnexbd/camnex/.env'
-    ];
-    for (const envPath of candidatePaths) {
-      if (fs.existsSync(envPath)) {
-        const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
-        for (const line of lines) {
-          const match = line.match(new RegExp(`^\\s*${keyName}\\s*=\\s*(.*)?\\s*$`));
-          if (match) {
-            let val = (match[1] || '').trim();
-            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-              val = val.slice(1, -1);
-            }
-            if (val) return val.trim();
-          }
-        }
-      }
-    }
-  } catch (_) {}
-  return null;
-}
+const { getSmsGatewayConfig, normalizeSmsProvider } = require('../shared/envHelper');
 
 /**
  * Returns configuration status of external authentication providers.
@@ -42,9 +12,7 @@ function readDotEnvValue(keyName) {
 function getProvidersStatus() {
   const googleConfigured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const appleConfigured = !!(process.env.APPLE_CLIENT_ID && (process.env.APPLE_PRIVATE_KEY || process.env.APPLE_CLIENT_SECRET));
-  const smsProvider = (process.env.SMS_GATEWAY_PROVIDER || readDotEnvValue('SMS_GATEWAY_PROVIDER') || '').trim().toLowerCase();
-  const smsApiKey = (process.env.SMS_API_KEY || readDotEnvValue('SMS_API_KEY') || '').trim();
-  const smsConfigured = !!(smsApiKey && smsProvider && smsProvider !== 'disabled');
+  const smsCfg = getSmsGatewayConfig();
 
   return {
     google: {
@@ -56,8 +24,8 @@ function getProvidersStatus() {
       clientId: appleConfigured ? process.env.APPLE_CLIENT_ID : null
     },
     smsOtp: {
-      configured: smsConfigured,
-      provider: smsConfigured ? smsProvider : null
+      configured: smsCfg.configured,
+      provider: smsCfg.configured ? smsCfg.provider : null
     }
   };
 }
@@ -512,9 +480,10 @@ async function sendPhoneOtp(req, res) {
 
   // Dispatch via real provider
   try {
-    const provider = (process.env.SMS_GATEWAY_PROVIDER || readDotEnvValue('SMS_GATEWAY_PROVIDER') || '').trim().toLowerCase();
-    const apiKey = (process.env.SMS_API_KEY || readDotEnvValue('SMS_API_KEY') || '').trim();
-    const senderId = (process.env.SMS_SENDER_ID || readDotEnvValue('SMS_SENDER_ID') || '8809648909250').trim();
+    const smsCfg = getSmsGatewayConfig();
+    const provider = smsCfg.provider || (process.env.SMS_GATEWAY_PROVIDER || '').trim().toLowerCase();
+    const apiKey = smsCfg.apiKey || (process.env.SMS_API_KEY || '').trim();
+    const senderId = smsCfg.senderId || (process.env.SMS_SENDER_ID || '8809648909250').trim();
     const message = `Your CamneX Bangladesh verification code is ${otpCode}. Valid for 5 minutes. Do not share this code.`;
 
     const timeoutMs = parseInt(process.env.SMS_TIMEOUT_MS || '8000', 10);

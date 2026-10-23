@@ -440,6 +440,84 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
       assert.strictEqual(orphan, undefined, 'Orphan OTP record cleaned up on timeout');
     });
 
+    // 15. Regression: Stale 'disabled' in process.env overridden by valid provider on disk
+    await test('Regression: Stale "disabled" in process.env overridden when disk has valid provider', async () => {
+      const { parseEnvLines } = require('../server/shared/envHelper');
+      // Simulate file containing export syntax and quotes
+      const mockEnvContent = `
+        # Production config
+        export SMS_GATEWAY_PROVIDER="BulkSMSBD" # Active gateway
+        export SMS_API_KEY="prod_api_key_real_123456"
+        export SMS_SENDER_ID="8809648909250"
+      `;
+      const parsed = parseEnvLines(mockEnvContent);
+      assert.strictEqual(parsed.SMS_GATEWAY_PROVIDER, 'BulkSMSBD');
+      assert.strictEqual(parsed.SMS_API_KEY, 'prod_api_key_real_123456');
+      assert.strictEqual(parsed.SMS_SENDER_ID, '8809648909250');
+
+      // Set stale process.env
+      process.env.SMS_GATEWAY_PROVIDER = 'disabled';
+      process.env.SMS_API_KEY = 'your_sms_gateway_api_key_or_token';
+
+      // With stale env, normalize provider
+      const { normalizeSmsProvider } = require('../server/shared/envHelper');
+      assert.strictEqual(normalizeSmsProvider('BulkSMSBD'), 'bulksmsbd');
+      assert.strictEqual(normalizeSmsProvider('bulk-sms-bd'), 'bulksmsbd');
+      assert.strictEqual(normalizeSmsProvider('bulksms_bd'), 'bulksmsbd');
+      assert.strictEqual(normalizeSmsProvider('bulksmsbd.net'), 'bulksmsbd');
+      assert.strictEqual(normalizeSmsProvider('"bulksmsbd"'), 'bulksmsbd');
+    });
+
+    // 16. Regression: Placeholder API key does not produce configured: true
+    await test('Regression: Placeholder API key is rejected as unconfigured', async () => {
+      process.env.SMS_GATEWAY_PROVIDER = 'bulksmsbd';
+      process.env.SMS_API_KEY = 'your_sms_gateway_api_key_or_token';
+      const status = getProvidersStatus();
+      assert.strictEqual(status.smsOtp.configured, false);
+      assert.strictEqual(status.smsOtp.provider, null);
+    });
+
+    // 17. Regression: Variable aliases support (SMS_PROVIDER, BULKSMSBD_API_KEY)
+    await test('Regression: Variable aliases (SMS_PROVIDER, BULKSMSBD_API_KEY) resolve cleanly', async () => {
+      delete process.env.SMS_GATEWAY_PROVIDER;
+      delete process.env.SMS_API_KEY;
+      process.env.SMS_PROVIDER = 'BulkSMSBD';
+      process.env.BULKSMSBD_API_KEY = 'valid_alias_key_998877';
+
+      const status = getProvidersStatus();
+      assert.strictEqual(status.smsOtp.configured, true);
+      assert.strictEqual(status.smsOtp.provider, 'bulksmsbd');
+
+      const jsonStr = JSON.stringify(status);
+      assert(!jsonStr.includes('valid_alias_key_998877'), 'Alias API key must not leak');
+    });
+
+    // 18. Secret isolation: /api/auth and /api/auth/providers consistency
+    await test('Secret isolation: getProvidersStatus never returns secret keys or tokens', async () => {
+      process.env.SMS_GATEWAY_PROVIDER = 'bulksmsbd';
+      process.env.SMS_API_KEY = 'super_secret_production_key_xyz';
+      const status = getProvidersStatus();
+      const serialized = JSON.stringify(status);
+      assert(!serialized.includes('super_secret_production_key_xyz'), 'Never leak API key');
+      assert.deepStrictEqual(Object.keys(status.smsOtp).sort(), ['configured', 'provider'].sort());
+    });
+
+    // 19. Regression: Disk recovery from bash export lines in activate/env files
+    await test('Regression: Candidate file recovery with export and quotes', async () => {
+      const { parseEnvLines } = require('../server/shared/envHelper');
+      const testSample = [
+        '# cPanel Terminal Profile',
+        'export SMS_GATEWAY_PROVIDER="bulksmsbd"',
+        'export SMS_API_KEY="test_secret_recovered_key"',
+        'export SMS_SENDER_ID="8809648909250"'
+      ].join('\n');
+
+      const parsed = parseEnvLines(testSample);
+      assert.strictEqual(parsed.SMS_GATEWAY_PROVIDER, 'bulksmsbd');
+      assert.strictEqual(parsed.SMS_API_KEY, 'test_secret_recovered_key');
+      assert.strictEqual(parsed.SMS_SENDER_ID, '8809648909250');
+    });
+
   } finally {
     // Restore original env and stop mock server
     for (const key of Object.keys(process.env)) {

@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const db = require('../../database');
+const { getSmsGatewayConfig } = require('../shared/envHelper');
 
 const PUBLIC_TURNSTILE_SITE_KEY = '0x4AAAAAAFZ9v3kdzHEYCrpT';
 const PROD_TURNSTILE_SECRET_KEY = '0x4AAAAAAFZ9v6bB9fSep2bZNLOdIcIWeyE';
@@ -117,10 +118,7 @@ function getResolvedTurnstileKeys() {
 function getVerificationConfig() {
   const smtpConfigured = !!(process.env.SMTP_HOST && (process.env.SMTP_USER || process.env.SMTP_PORT));
   const turnstile = getResolvedTurnstileKeys();
-
-  const smsProvider = (process.env.SMS_GATEWAY_PROVIDER || readDotEnvValue('SMS_GATEWAY_PROVIDER') || '').trim().toLowerCase();
-  const smsApiKey = (process.env.SMS_API_KEY || readDotEnvValue('SMS_API_KEY') || '').trim();
-  const smsConfigured = !!(smsApiKey && smsProvider && smsProvider !== 'disabled');
+  const smsCfg = getSmsGatewayConfig();
 
   return {
     email: {
@@ -130,8 +128,8 @@ function getVerificationConfig() {
       replyTo: 'support@camnexbd.com'
     },
     sms: {
-      configured: smsConfigured,
-      provider: smsConfigured ? smsProvider : null
+      configured: smsCfg.configured,
+      provider: smsCfg.configured ? smsCfg.provider : null
     },
     turnstile: {
       configured: turnstile.configured,

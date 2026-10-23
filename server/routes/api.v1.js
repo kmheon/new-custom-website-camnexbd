@@ -77,6 +77,12 @@ router.get('/auth/csrf', (req, res) => {
   res.json({ csrfToken: token });
 });
 
+// 1b. External Auth Providers Status
+router.get(['/auth', '/auth/providers'], (req, res) => {
+  const { getProvidersStatus } = require('../auth/socialAuth');
+  res.json(getProvidersStatus());
+});
+
 // 2. Server-Side Unified Search
 router.get('/search', (req, res) => {
   try {
