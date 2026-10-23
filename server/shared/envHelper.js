@@ -53,17 +53,21 @@ function parseEnvLines(content) {
 }
 
 /**
- * Returns candidate .env file paths where application configuration resides.
+ * Returns candidate .env and virtualenv activation paths where application configuration resides.
  */
 function getCandidateEnvPaths() {
   const homeDir = process.env.HOME || '/home/camnexbd';
   const cwd = process.cwd();
   const rootDir = path.resolve(__dirname, '../../');
+  const venvActivate = path.join(path.dirname(process.execPath), 'activate');
 
   return [
     path.join(rootDir, '.env'),
     '/home/camnexbd/camnex/.env',
     path.join(cwd, '.env'),
+    venvActivate,
+    '/home/camnexbd/nodevenv/camnex/22/bin/activate',
+    path.join(homeDir, 'nodevenv/camnex/22/bin/activate'),
     path.join(homeDir, '.env'),
     '/home/camnexbd/.env'
   ];
@@ -117,13 +121,40 @@ function isValidApiKey(key) {
 }
 
 /**
+ * Resolves a key from an object using exact match first, then case-insensitive and trimmed key match.
+ */
+function findInEnvOrObject(sourceObj, candidateKeys) {
+  if (!sourceObj || typeof sourceObj !== 'object') return null;
+
+  // 1. Exact match pass
+  for (const k of candidateKeys) {
+    if (sourceObj[k] !== undefined) {
+      const val = cleanValue(sourceObj[k]);
+      if (val) return { key: k, value: val };
+    }
+  }
+
+  // 2. Case-insensitive and trimmed match pass (handles 'sms_gateway_provider' or 'SMS_GATEWAY_PROVIDER ')
+  const normalizedCandidates = candidateKeys.map(k => k.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  for (const [actualKey, rawVal] of Object.entries(sourceObj)) {
+    const cleanK = actualKey.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (normalizedCandidates.includes(cleanK)) {
+      const val = cleanValue(rawVal);
+      if (val) return { key: actualKey.trim(), value: val };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Resolves SMS Gateway configuration and generates safe diagnostic info.
  * NEVER leaks or logs the API key.
  */
 function getSmsGatewayConfig() {
-  const providerKeys = ['SMS_GATEWAY_PROVIDER', 'SMS_PROVIDER', 'SMS_GATEWAY'];
-  const apiKeyKeys = ['SMS_API_KEY', 'BULKSMSBD_API_KEY', 'SMS_KEY', 'SMS_GATEWAY_KEY'];
-  const senderIdKeys = ['SMS_SENDER_ID', 'BULKSMSBD_SENDER_ID', 'SMS_SENDER'];
+  const providerKeys = ['SMS_GATEWAY_PROVIDER', 'SMS_PROVIDER', 'SMS_GATEWAY', 'SMS_SERVICE_PROVIDER'];
+  const apiKeyKeys = ['SMS_API_KEY', 'BULKSMSBD_API_KEY', 'SMS_KEY', 'SMS_GATEWAY_KEY', 'SMS_TOKEN'];
+  const senderIdKeys = ['SMS_SENDER_ID', 'BULKSMSBD_SENDER_ID', 'SMS_SENDER', 'SMS_SENDER_NAME'];
 
   const diagnostic = {
     processEnv: {
@@ -132,7 +163,6 @@ function getSmsGatewayConfig() {
       rawProvider: null,
       hasApiKey: false,
       apiKeyKey: null,
-      apiKeyLength: 0,
       hasSenderId: false,
       senderId: null
     },
@@ -145,7 +175,6 @@ function getSmsGatewayConfig() {
       rawProvider: null,
       hasApiKey: false,
       apiKeyKey: null,
-      apiKeyLength: 0,
       hasSenderId: false,
       senderId: null
     },
@@ -154,48 +183,38 @@ function getSmsGatewayConfig() {
     reason: ''
   };
 
-  // 1. Inspect process.env
+  // 1. Inspect process.env using exact and case-insensitive matching
   let procProvider = null;
   let procApiKey = null;
   let procSenderId = null;
 
-  for (const k of providerKeys) {
-    const val = cleanValue(process.env[k]);
-    if (val) {
-      diagnostic.processEnv.hasProvider = true;
-      diagnostic.processEnv.providerKey = k;
-      diagnostic.processEnv.rawProvider = val;
-      if (!['disabled', 'none', 'off', 'false'].includes(val.toLowerCase())) {
-        procProvider = val;
-      }
-      break;
+  const foundProcProvider = findInEnvOrObject(process.env, providerKeys);
+  if (foundProcProvider) {
+    diagnostic.processEnv.hasProvider = true;
+    diagnostic.processEnv.providerKey = foundProcProvider.key;
+    diagnostic.processEnv.rawProvider = foundProcProvider.value;
+    if (!['disabled', 'none', 'off', 'false', '0'].includes(foundProcProvider.value.toLowerCase())) {
+      procProvider = foundProcProvider.value;
     }
   }
 
-  for (const k of apiKeyKeys) {
-    const val = cleanValue(process.env[k]);
-    if (val) {
-      diagnostic.processEnv.hasApiKey = true;
-      diagnostic.processEnv.apiKeyKey = k;
-      diagnostic.processEnv.apiKeyLength = val.length;
-      if (isValidApiKey(val)) {
-        procApiKey = val;
-      }
-      break;
+  const foundProcApiKey = findInEnvOrObject(process.env, apiKeyKeys);
+  if (foundProcApiKey) {
+    diagnostic.processEnv.hasApiKey = true;
+    diagnostic.processEnv.apiKeyKey = foundProcApiKey.key;
+    if (isValidApiKey(foundProcApiKey.value)) {
+      procApiKey = foundProcApiKey.value;
     }
   }
 
-  for (const k of senderIdKeys) {
-    const val = cleanValue(process.env[k]);
-    if (val) {
-      diagnostic.processEnv.hasSenderId = true;
-      diagnostic.processEnv.senderId = val;
-      procSenderId = val;
-      break;
-    }
+  const foundProcSenderId = findInEnvOrObject(process.env, senderIdKeys);
+  if (foundProcSenderId) {
+    diagnostic.processEnv.hasSenderId = true;
+    diagnostic.processEnv.senderId = foundProcSenderId.value;
+    procSenderId = foundProcSenderId.value;
   }
 
-  // 2. Inspect candidate .env files on disk
+  // 2. Inspect candidate .env files and virtualenv activate scripts on disk
   let fileProvider = null;
   let fileApiKey = null;
   let fileSenderId = null;
@@ -205,51 +224,46 @@ function getSmsGatewayConfig() {
   for (const filePath of candidatePaths) {
     try {
       if (fs.existsSync(filePath)) {
-        foundFilePath = filePath;
         const fileContent = fs.readFileSync(filePath, 'utf8');
         const parsed = parseEnvLines(fileContent);
-        diagnostic.dotEnv.checkedPath = filePath;
-        diagnostic.dotEnv.exists = true;
-        diagnostic.dotEnv.allKeysFound = Object.keys(parsed);
 
-        for (const k of providerKeys) {
-          const val = cleanValue(parsed[k]);
-          if (val) {
-            diagnostic.dotEnv.hasProvider = true;
-            diagnostic.dotEnv.providerKey = k;
-            diagnostic.dotEnv.rawProvider = val;
-            if (!['disabled', 'none', 'off', 'false'].includes(val.toLowerCase())) {
-              fileProvider = val;
-            }
-            break;
+        const foundFileProv = findInEnvOrObject(parsed, providerKeys);
+        const foundFileKey = findInEnvOrObject(parsed, apiKeyKeys);
+        const foundFileSender = findInEnvOrObject(parsed, senderIdKeys);
+
+        if (!diagnostic.dotEnv.checkedPath) {
+          diagnostic.dotEnv.checkedPath = filePath;
+          diagnostic.dotEnv.exists = true;
+          diagnostic.dotEnv.allKeysFound = Object.keys(parsed);
+        }
+
+        if (foundFileProv && !fileProvider) {
+          diagnostic.dotEnv.hasProvider = true;
+          diagnostic.dotEnv.providerKey = foundFileProv.key;
+          diagnostic.dotEnv.rawProvider = foundFileProv.value;
+          if (!['disabled', 'none', 'off', 'false', '0'].includes(foundFileProv.value.toLowerCase())) {
+            fileProvider = foundFileProv.value;
+            foundFilePath = foundFilePath || filePath;
           }
         }
 
-        for (const k of apiKeyKeys) {
-          const val = cleanValue(parsed[k]);
-          if (val) {
-            diagnostic.dotEnv.hasApiKey = true;
-            diagnostic.dotEnv.apiKeyKey = k;
-            diagnostic.dotEnv.apiKeyLength = val.length;
-            if (isValidApiKey(val)) {
-              fileApiKey = val;
-            }
-            break;
+        if (foundFileKey && !fileApiKey) {
+          diagnostic.dotEnv.hasApiKey = true;
+          diagnostic.dotEnv.apiKeyKey = foundFileKey.key;
+          if (isValidApiKey(foundFileKey.value)) {
+            fileApiKey = foundFileKey.value;
+            foundFilePath = foundFilePath || filePath;
           }
         }
 
-        for (const k of senderIdKeys) {
-          const val = cleanValue(parsed[k]);
-          if (val) {
-            diagnostic.dotEnv.hasSenderId = true;
-            diagnostic.dotEnv.senderId = val;
-            fileSenderId = val;
-            break;
-          }
+        if (foundFileSender && !fileSenderId) {
+          diagnostic.dotEnv.hasSenderId = true;
+          diagnostic.dotEnv.senderId = foundFileSender.value;
+          fileSenderId = foundFileSender.value;
         }
 
-        // If we found any relevant keys in this file, prioritize it
-        if (diagnostic.dotEnv.hasProvider || diagnostic.dotEnv.hasApiKey) {
+        // If we found both provider and apiKey on disk, we have satisfied disk resolution
+        if (fileProvider && fileApiKey) {
           break;
         }
       }
@@ -258,7 +272,7 @@ function getSmsGatewayConfig() {
 
   // 3. Selection hierarchy:
   // Prefer process.env if both provider and valid API key exist in process.env
-  // Otherwise fall back to disk .env values
+  // Otherwise fall back to disk values (.env or virtualenv activate script)
   let resolvedProvider = null;
   let resolvedApiKey = null;
   let resolvedSenderId = null;
@@ -278,12 +292,12 @@ function getSmsGatewayConfig() {
     resolvedProvider = procProvider;
     resolvedApiKey = fileApiKey;
     resolvedSenderId = procSenderId || fileSenderId || '8809648909250';
-    selectedSource = 'hybrid (process.env provider + .env key)';
+    selectedSource = 'hybrid (process.env provider + file key)';
   } else if (fileProvider && procApiKey) {
     resolvedProvider = fileProvider;
     resolvedApiKey = procApiKey;
     resolvedSenderId = procSenderId || fileSenderId || '8809648909250';
-    selectedSource = 'hybrid (.env provider + process.env key)';
+    selectedSource = 'hybrid (file provider + process.env key)';
   } else {
     // Unconfigured state determination
     resolvedProvider = procProvider || fileProvider || diagnostic.processEnv.rawProvider || diagnostic.dotEnv.rawProvider || null;
@@ -303,7 +317,7 @@ function getSmsGatewayConfig() {
   if (configured) {
     diagnostic.reason = `SMS OTP configured successfully via ${selectedSource} with provider '${normalizedProvider}'.`;
   } else if (!isProviderValid && !isKeyValid) {
-    diagnostic.reason = 'Neither SMS_GATEWAY_PROVIDER nor SMS_API_KEY were found with active values in process.env or .env.';
+    diagnostic.reason = 'Neither SMS_GATEWAY_PROVIDER nor SMS_API_KEY were found with active values in process.env or candidate files.';
   } else if (!isProviderValid) {
     if (normalizedProvider === 'disabled') {
       diagnostic.reason = "SMS_GATEWAY_PROVIDER is explicitly set to 'disabled'.";
@@ -314,7 +328,7 @@ function getSmsGatewayConfig() {
     if (diagnostic.processEnv.hasApiKey || diagnostic.dotEnv.hasApiKey) {
       diagnostic.reason = 'SMS_API_KEY matches default placeholder value or is too short.';
     } else {
-      diagnostic.reason = 'SMS_API_KEY is missing in both process.env and .env.';
+      diagnostic.reason = 'SMS_API_KEY is missing in both process.env and disk candidate files.';
     }
   }
 
@@ -336,7 +350,28 @@ function getSmsGatewayConfig() {
 }
 
 /**
- * Loads and sanitizes runtime environment variables at server boot.
+ * Returns safe diagnostic info reporting only boolean presence flags and normalized provider.
+ * NEVER exposes or logs the API key, its value, or its length.
+ */
+function getSmsGatewaySafeDiagnostic() {
+  const cfg = getSmsGatewayConfig();
+  const d = cfg.diagnostic;
+  return {
+    startupFile: path.basename(process.argv[1] || 'server.js'),
+    hasProcessProvider: Boolean(d.processEnv.hasProvider),
+    hasProcessApiKey: Boolean(d.processEnv.hasApiKey),
+    hasProcessSenderId: Boolean(d.processEnv.hasSenderId),
+    hasFileProvider: Boolean(d.dotEnv.hasProvider),
+    hasFileApiKey: Boolean(d.dotEnv.hasApiKey),
+    hasFileSenderId: Boolean(d.dotEnv.hasSenderId),
+    resolvedSource: d.selectedSource,
+    normalizedProvider: d.normalizedProvider,
+    configured: cfg.configured
+  };
+}
+
+/**
+ * Loads and sanitizes runtime environment variables at server boot across all candidate files.
  */
 function loadAndSanitizeEnvironment() {
   const candidatePaths = getCandidateEnvPaths();
@@ -351,7 +386,6 @@ function loadAndSanitizeEnvironment() {
             process.env[key] = val;
           }
         }
-        break; // Stop at first valid .env file found
       }
     } catch (_) {}
   }
@@ -382,6 +416,8 @@ module.exports = {
   getCandidateEnvPaths,
   normalizeSmsProvider,
   isValidApiKey,
+  findInEnvOrObject,
   getSmsGatewayConfig,
+  getSmsGatewaySafeDiagnostic,
   loadAndSanitizeEnvironment
 };

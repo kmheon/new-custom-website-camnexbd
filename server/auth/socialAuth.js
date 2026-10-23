@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../../database');
 const { createSession } = require('../../auth');
-const { getSmsGatewayConfig, normalizeSmsProvider } = require('../shared/envHelper');
+const { getSmsGatewayConfig, getSmsGatewaySafeDiagnostic, normalizeSmsProvider } = require('../shared/envHelper');
 
 /**
  * Returns configuration status of external authentication providers.
@@ -717,6 +717,7 @@ function verifyPhoneOtp(req, res) {
 
 module.exports = {
   getProvidersStatus,
+  getSmsGatewaySafeDiagnostic,
   initiateGoogleAuth,
   handleGoogleCallback,
   initiateAppleAuth,

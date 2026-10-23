@@ -38,6 +38,7 @@ const { logAudit } = require('./server/middleware/auditLogger');
 const { hasPermission, PERMISSIONS } = require('./server/shared/permissions');
 const {
   getProvidersStatus,
+  getSmsGatewaySafeDiagnostic,
   initiateGoogleAuth,
   handleGoogleCallback,
   initiateAppleAuth,
@@ -555,7 +556,22 @@ app.post(['/api/auth/logout', '/api/auth/customer/logout', '/api/auth/admin/logo
 
 // External Authentication & Social OAuth Providers Status
 app.get(['/api/auth', '/api/auth/providers'], (req, res) => {
-  res.json(getProvidersStatus());
+  const status = getProvidersStatus();
+  if (req.query.diagnostic === '1' || req.query.diagnostic === 'true' || req.headers['x-camnex-diagnostic'] === '1') {
+    return res.json({
+      ...status,
+      _diagnostic: getSmsGatewaySafeDiagnostic()
+    });
+  }
+  res.json(status);
+});
+
+// Diagnostic endpoint (reports boolean presence flags and normalized provider name only)
+app.get(['/api/auth/diagnostic', '/api/auth/providers/diagnostic'], (req, res) => {
+  res.json({
+    ...getProvidersStatus(),
+    _diagnostic: getSmsGatewaySafeDiagnostic()
+  });
 });
 
 // Google OAuth

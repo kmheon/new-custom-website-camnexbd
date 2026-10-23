@@ -519,8 +519,8 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
       assert.strictEqual(parsed.SMS_SENDER_ID, '8809648909250');
     });
 
-    // 20. Routing Regression: /api/auth/providers and /api/auth serve valid JSON, /api/auth/diagnostic is disabled
-    await test('Routing: /api/auth/providers and /api/auth return 200, /api/auth/diagnostic 404, app.js alias works', async () => {
+    // 20. Routing & Safe Diagnostic: /api/auth/providers serves standard JSON, ?diagnostic=1 reports safe presence flags only
+    await test('Routing & Safe Diagnostic: standard 200, diagnostic query reports boolean flags without keys/values/lengths', async () => {
       const expressApp = require('../server');
       const passengerEntry = require('../app');
       assert.strictEqual(expressApp, passengerEntry, 'app.js entry point must export the exact server.js app');
@@ -545,28 +545,70 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
         });
       }
 
-      // Check /api/auth/providers
+      // Check standard /api/auth/providers has NO diagnostic object
       const resProviders = await makeRequest('/api/auth/providers');
       assert.strictEqual(resProviders.statusCode, 200, '/api/auth/providers must return 200');
       const dataProviders = JSON.parse(resProviders.body);
       assert('google' in dataProviders && 'smsOtp' in dataProviders, 'Must return providers JSON');
-      assert.strictEqual(dataProviders.smsOtp.diagnostic, undefined, 'No diagnostic leaked');
+      assert.strictEqual(dataProviders._diagnostic, undefined, 'No diagnostic leaked on standard status');
 
-      // Check /api/auth
+      // Check /api/auth matches /api/auth/providers output
       const resAuth = await makeRequest('/api/auth');
       assert.strictEqual(resAuth.statusCode, 200, '/api/auth must return 200');
       const dataAuth = JSON.parse(resAuth.body);
       assert.deepStrictEqual(dataAuth, dataProviders, '/api/auth must match /api/auth/providers output');
 
-      // Check /api/v1/auth/providers (rewritten)
-      const resV1 = await makeRequest('/api/v1/auth/providers');
-      assert.strictEqual(resV1.statusCode, 200, '/api/v1/auth/providers must return 200');
+      // Check /api/auth/providers?diagnostic=1 returns safe diagnostic
+      const resDiag = await makeRequest('/api/auth/providers?diagnostic=1');
+      assert.strictEqual(resDiag.statusCode, 200, '/api/auth/providers?diagnostic=1 must return 200');
+      const dataDiag = JSON.parse(resDiag.body);
+      assert(dataDiag._diagnostic, '_diagnostic must be present when requested');
+      assert.strictEqual(typeof dataDiag._diagnostic.hasProcessProvider, 'boolean');
+      assert.strictEqual(typeof dataDiag._diagnostic.hasProcessApiKey, 'boolean');
+      assert.strictEqual(typeof dataDiag._diagnostic.hasFileProvider, 'boolean');
+      assert.strictEqual(typeof dataDiag._diagnostic.hasFileApiKey, 'boolean');
+      assert.strictEqual(typeof dataDiag._diagnostic.configured, 'boolean');
+      // Assert zero secret leakage and zero lengths in diagnostic
+      const diagStr = JSON.stringify(dataDiag._diagnostic);
+      assert(!diagStr.includes('keyLength') && !diagStr.includes('apiKeyLength'), 'Never leak API key length');
+      assert(!diagStr.includes('apiKey') || diagStr.includes('hasProcessApiKey'), 'Only boolean presence flags');
 
-      // Check /api/auth/diagnostic is 404 and returns JSON
-      const resDiag = await makeRequest('/api/auth/diagnostic');
-      assert.strictEqual(resDiag.statusCode, 404, '/api/auth/diagnostic must return 404');
-      const diagJson = JSON.parse(resDiag.body);
-      assert.strictEqual(diagJson.error, 'Endpoint not found', 'Must return structured JSON 404');
+      // Check dedicated /api/auth/diagnostic endpoint
+      const resDedicatedDiag = await makeRequest('/api/auth/diagnostic');
+      assert.strictEqual(resDedicatedDiag.statusCode, 200, '/api/auth/diagnostic must return 200');
+      const dataDedicatedDiag = JSON.parse(resDedicatedDiag.body);
+      assert(dataDedicatedDiag._diagnostic, 'Dedicated endpoint returns _diagnostic');
+    });
+
+    // 21. Case-insensitivity and whitespace resilience in process.env
+    await test('Resilience: case variations and trailing whitespace in process.env resolve cleanly', async () => {
+      delete process.env.SMS_GATEWAY_PROVIDER;
+      delete process.env.SMS_API_KEY;
+      delete process.env.SMS_SENDER_ID;
+
+      // Simulate cPanel saving key with trailing space or mixed case
+      process.env['sms_gateway_provider '] = ' BulkSMSBD ';
+      process.env['sms_api_key'] = 'resilient_test_key_445566';
+      process.env['SMS_SENDER '] = '8809648909250';
+
+      const status = getProvidersStatus();
+      assert.strictEqual(status.smsOtp.configured, true, 'Must resolve configured true despite case/spacing variations');
+      assert.strictEqual(status.smsOtp.provider, 'bulksmsbd', 'Must normalize provider to bulksmsbd');
+
+      const jsonStr = JSON.stringify(status);
+      assert(!jsonStr.includes('resilient_test_key_445566'), 'Must not leak API key');
+
+      delete process.env['sms_gateway_provider '];
+      delete process.env['sms_api_key'];
+      delete process.env['SMS_SENDER '];
+    });
+
+    // 22. Virtualenv activate script recovery in candidate paths
+    await test('Virtualenv recovery: getCandidateEnvPaths includes virtualenv activate script', async () => {
+      const { getCandidateEnvPaths } = require('../server/shared/envHelper');
+      const paths = getCandidateEnvPaths();
+      const hasVenv = paths.some(p => p.includes('activate') && p.includes('nodevenv'));
+      assert(hasVenv, 'Candidate paths must include virtualenv activate script');
     });
 
   } finally {

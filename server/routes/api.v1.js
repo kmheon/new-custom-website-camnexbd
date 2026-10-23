@@ -79,8 +79,23 @@ router.get('/auth/csrf', (req, res) => {
 
 // 1b. External Auth Providers Status
 router.get(['/auth', '/auth/providers'], (req, res) => {
-  const { getProvidersStatus } = require('../auth/socialAuth');
-  res.json(getProvidersStatus());
+  const { getProvidersStatus, getSmsGatewaySafeDiagnostic } = require('../auth/socialAuth');
+  const status = getProvidersStatus();
+  if (req.query.diagnostic === '1' || req.query.diagnostic === 'true' || req.headers['x-camnex-diagnostic'] === '1') {
+    return res.json({
+      ...status,
+      _diagnostic: getSmsGatewaySafeDiagnostic()
+    });
+  }
+  res.json(status);
+});
+
+router.get(['/auth/diagnostic', '/auth/providers/diagnostic'], (req, res) => {
+  const { getProvidersStatus, getSmsGatewaySafeDiagnostic } = require('../auth/socialAuth');
+  res.json({
+    ...getProvidersStatus(),
+    _diagnostic: getSmsGatewaySafeDiagnostic()
+  });
 });
 
 // 2. Server-Side Unified Search
