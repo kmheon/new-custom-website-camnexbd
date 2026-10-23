@@ -557,7 +557,8 @@ app.post(['/api/auth/logout', '/api/auth/customer/logout', '/api/auth/admin/logo
 // External Authentication & Social OAuth Providers Status
 app.get(['/api/auth', '/api/auth/providers'], (req, res) => {
   const status = getProvidersStatus();
-  if (req.query.diagnostic === '1' || req.query.diagnostic === 'true' || req.headers['x-camnex-diagnostic'] === '1') {
+  const wantsDiagnostic = req.query.diagnostic !== undefined || req.headers['x-camnex-diagnostic'] !== undefined;
+  if (wantsDiagnostic) {
     return res.json({
       ...status,
       _diagnostic: getSmsGatewaySafeDiagnostic()

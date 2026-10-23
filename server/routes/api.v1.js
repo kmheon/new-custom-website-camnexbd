@@ -81,7 +81,8 @@ router.get('/auth/csrf', (req, res) => {
 router.get(['/auth', '/auth/providers'], (req, res) => {
   const { getProvidersStatus, getSmsGatewaySafeDiagnostic } = require('../auth/socialAuth');
   const status = getProvidersStatus();
-  if (req.query.diagnostic === '1' || req.query.diagnostic === 'true' || req.headers['x-camnex-diagnostic'] === '1') {
+  const wantsDiagnostic = req.query.diagnostic !== undefined || req.headers['x-camnex-diagnostic'] !== undefined;
+  if (wantsDiagnostic) {
     return res.json({
       ...status,
       _diagnostic: getSmsGatewaySafeDiagnostic()

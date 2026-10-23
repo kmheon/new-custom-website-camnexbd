@@ -5,6 +5,8 @@ const db = require('../../database');
 const { createSession } = require('../../auth');
 const { getSmsGatewayConfig, getSmsGatewaySafeDiagnostic, normalizeSmsProvider } = require('../shared/envHelper');
 
+const BUILD_IDENTIFIER = '20261024-sms-v4';
+
 /**
  * Returns configuration status of external authentication providers.
  * Allows frontend to know whether Google, Apple, or SMS OTP are configured on this server.
@@ -15,6 +17,7 @@ function getProvidersStatus() {
   const smsCfg = getSmsGatewayConfig();
 
   return {
+    buildId: BUILD_IDENTIFIER,
     google: {
       configured: googleConfigured,
       clientId: googleConfigured ? process.env.GOOGLE_CLIENT_ID : null

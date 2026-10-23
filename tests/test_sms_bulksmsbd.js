@@ -550,6 +550,7 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
       assert.strictEqual(resProviders.statusCode, 200, '/api/auth/providers must return 200');
       const dataProviders = JSON.parse(resProviders.body);
       assert('google' in dataProviders && 'smsOtp' in dataProviders, 'Must return providers JSON');
+      assert.strictEqual(dataProviders.buildId, '20261024-sms-v4', 'Build identifier must confirm running code version');
       assert.strictEqual(dataProviders._diagnostic, undefined, 'No diagnostic leaked on standard status');
 
       // Check /api/auth matches /api/auth/providers output
@@ -562,6 +563,7 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
       const resDiag = await makeRequest('/api/auth/providers?diagnostic=1');
       assert.strictEqual(resDiag.statusCode, 200, '/api/auth/providers?diagnostic=1 must return 200');
       const dataDiag = JSON.parse(resDiag.body);
+      assert.strictEqual(dataDiag.buildId, '20261024-sms-v4', 'Build identifier must be present');
       assert(dataDiag._diagnostic, '_diagnostic must be present when requested');
       assert.strictEqual(typeof dataDiag._diagnostic.hasProcessProvider, 'boolean');
       assert.strictEqual(typeof dataDiag._diagnostic.hasProcessApiKey, 'boolean');
