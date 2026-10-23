@@ -499,7 +499,7 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
       const status = getProvidersStatus();
       const serialized = JSON.stringify(status);
       assert(!serialized.includes('super_secret_production_key_xyz'), 'Never leak API key');
-      assert.deepStrictEqual(Object.keys(status.smsOtp).sort(), ['configured', 'provider'].sort());
+      assert.deepStrictEqual(Object.keys(status.smsOtp).sort(), ['configured', 'provider', 'diagnostic'].sort());
     });
 
     // 19. Regression: Disk recovery from bash export lines in activate/env files
@@ -516,6 +516,21 @@ function createMockReqRes(body = {}, ip = '127.0.0.1') {
       assert.strictEqual(parsed.SMS_GATEWAY_PROVIDER, 'bulksmsbd');
       assert.strictEqual(parsed.SMS_API_KEY, 'test_secret_recovered_key');
       assert.strictEqual(parsed.SMS_SENDER_ID, '8809648909250');
+    });
+
+    // 20. Safe Diagnostic: reports whether variables are present and source without key
+    await test('Safe diagnostic reports presence and source without leaking API key', async () => {
+      process.env.SMS_GATEWAY_PROVIDER = 'bulksmsbd';
+      process.env.SMS_API_KEY = 'super_secret_diagnostic_key_123';
+      const status = getProvidersStatus();
+      const diag = status.smsOtp.diagnostic;
+      assert(diag, 'Diagnostic object exists');
+      assert.strictEqual(diag.processEnv.hasProvider, true);
+      assert.strictEqual(diag.processEnv.hasApiKey, true);
+      assert.strictEqual(diag.processEnv.apiKeyLength, 'super_secret_diagnostic_key_123'.length);
+      assert.strictEqual(diag.normalizedProvider, 'bulksmsbd');
+      assert.strictEqual(diag.selectedSource, 'process.env');
+      assert(!JSON.stringify(diag).includes('super_secret_diagnostic_key_123'), 'Diagnostic must never leak API key');
     });
 
   } finally {

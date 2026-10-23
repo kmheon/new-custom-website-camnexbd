@@ -2,6 +2,18 @@ const path = require('path');
 const fs = require('fs');
 
 /**
+ * Strips surrounding single or double quotes and trims whitespace.
+ */
+function cleanValue(val) {
+  if (!val || typeof val !== 'string') return '';
+  let s = val.trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+/**
  * Parses a key-value file line-by-line supporting:
  * - KEY=VALUE
  * - export KEY=VALUE
@@ -34,14 +46,14 @@ function parseEnvLines(content) {
           val = val.slice(0, commentIdx).trim();
         }
       }
-      result[key] = val.trim();
+      result[key] = cleanValue(val);
     }
   }
   return result;
 }
 
 /**
- * Returns candidate file paths where environment variables may reside on production/cPanel.
+ * Returns candidate .env file paths where application configuration resides.
  */
 function getCandidateEnvPaths() {
   const homeDir = process.env.HOME || '/home/camnexbd';
@@ -50,17 +62,10 @@ function getCandidateEnvPaths() {
 
   return [
     path.join(rootDir, '.env'),
-    path.join(cwd, '.env'),
     '/home/camnexbd/camnex/.env',
+    path.join(cwd, '.env'),
     path.join(homeDir, '.env'),
-    '/home/camnexbd/.env',
-    path.join(rootDir, 'server/.env'),
-    path.join(rootDir, 'server/auth/.env'),
-    '/home/camnexbd/nodevenv/camnex/22/bin/activate',
-    path.join(homeDir, '.bashrc'),
-    '/home/camnexbd/.bashrc',
-    path.join(homeDir, '.bash_profile'),
-    path.join(homeDir, '.profile')
+    '/home/camnexbd/.env'
   ];
 }
 
@@ -69,10 +74,8 @@ function getCandidateEnvPaths() {
  */
 function normalizeSmsProvider(rawProvider) {
   if (!rawProvider || typeof rawProvider !== 'string') return null;
-  const cleaned = rawProvider
-    .trim()
+  const cleaned = cleanValue(rawProvider)
     .toLowerCase()
-    .replace(/^['"]+|['"]+$/g, '')
     .replace(/[\-_]/g, '')
     .trim();
 
@@ -95,141 +98,231 @@ function normalizeSmsProvider(rawProvider) {
   return cleaned;
 }
 
-/**
- * Reads a single key from process.env or disk candidate files.
- */
-function readEnvValue(keyName, fallbackKeys = []) {
-  const allKeys = [keyName, ...fallbackKeys];
-  for (const k of allKeys) {
-    const val = (process.env[k] || '').trim();
-    if (val && val !== 'disabled' && val !== 'your_sms_gateway_api_key_or_token') {
-      return val;
-    }
-  }
+const KNOWN_PLACEHOLDER_KEYS = [
+  'your_sms_gateway_api_key_or_token',
+  'change_this_to_your_api_key',
+  'your_api_key',
+  'placeholder'
+];
 
-  const candidatePaths = getCandidateEnvPaths();
-  for (const filePath of candidatePaths) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const parsed = parseEnvLines(fs.readFileSync(filePath, 'utf8'));
-        for (const k of allKeys) {
-          const val = (parsed[k] || '').trim();
-          if (val && val !== 'disabled' && val !== 'your_sms_gateway_api_key_or_token') {
-            return val;
-          }
-        }
-      }
-    } catch (_) {}
-  }
-  return null;
+/**
+ * Checks whether an API key is a valid non-placeholder value.
+ */
+function isValidApiKey(key) {
+  if (!key || typeof key !== 'string') return false;
+  const cleaned = cleanValue(key);
+  if (cleaned.length < 3) return false;
+  if (KNOWN_PLACEHOLDER_KEYS.includes(cleaned.toLowerCase())) return false;
+  return true;
 }
 
 /**
- * Resolves SMS Gateway configuration safely.
- * Never leaks the API key to callers expecting public status.
+ * Resolves SMS Gateway configuration and generates safe diagnostic info.
+ * NEVER leaks or logs the API key.
  */
 function getSmsGatewayConfig() {
   const providerKeys = ['SMS_GATEWAY_PROVIDER', 'SMS_PROVIDER', 'SMS_GATEWAY'];
   const apiKeyKeys = ['SMS_API_KEY', 'BULKSMSBD_API_KEY', 'SMS_KEY', 'SMS_GATEWAY_KEY'];
   const senderIdKeys = ['SMS_SENDER_ID', 'BULKSMSBD_SENDER_ID', 'SMS_SENDER'];
 
-  let resolvedProvider = null;
-  let resolvedApiKey = null;
-  let resolvedSenderId = null;
+  const diagnostic = {
+    processEnv: {
+      hasProvider: false,
+      providerKey: null,
+      rawProvider: null,
+      hasApiKey: false,
+      apiKeyKey: null,
+      apiKeyLength: 0,
+      hasSenderId: false,
+      senderId: null
+    },
+    dotEnv: {
+      checkedPath: null,
+      exists: false,
+      allKeysFound: [],
+      hasProvider: false,
+      providerKey: null,
+      rawProvider: null,
+      hasApiKey: false,
+      apiKeyKey: null,
+      apiKeyLength: 0,
+      hasSenderId: false,
+      senderId: null
+    },
+    selectedSource: 'none',
+    normalizedProvider: null,
+    reason: ''
+  };
 
-  // 1. Check process.env for non-placeholder, non-disabled values
+  // 1. Inspect process.env
+  let procProvider = null;
+  let procApiKey = null;
+  let procSenderId = null;
+
   for (const k of providerKeys) {
-    const val = (process.env[k] || '').trim();
-    if (val && !['disabled', 'none', 'off', 'false'].includes(val.toLowerCase())) {
-      resolvedProvider = val;
+    const val = cleanValue(process.env[k]);
+    if (val) {
+      diagnostic.processEnv.hasProvider = true;
+      diagnostic.processEnv.providerKey = k;
+      diagnostic.processEnv.rawProvider = val;
+      if (!['disabled', 'none', 'off', 'false'].includes(val.toLowerCase())) {
+        procProvider = val;
+      }
       break;
     }
   }
 
   for (const k of apiKeyKeys) {
-    const val = (process.env[k] || '').trim();
-    if (val && val !== 'your_sms_gateway_api_key_or_token' && val.length > 5) {
-      resolvedApiKey = val;
+    const val = cleanValue(process.env[k]);
+    if (val) {
+      diagnostic.processEnv.hasApiKey = true;
+      diagnostic.processEnv.apiKeyKey = k;
+      diagnostic.processEnv.apiKeyLength = val.length;
+      if (isValidApiKey(val)) {
+        procApiKey = val;
+      }
       break;
     }
   }
 
   for (const k of senderIdKeys) {
-    const val = (process.env[k] || '').trim();
+    const val = cleanValue(process.env[k]);
     if (val) {
-      resolvedSenderId = val;
+      diagnostic.processEnv.hasSenderId = true;
+      diagnostic.processEnv.senderId = val;
+      procSenderId = val;
       break;
     }
   }
 
-  // 2. If provider or apiKey not resolved from active process.env, inspect candidate files on disk
-  if (!resolvedProvider || !resolvedApiKey) {
-    const candidatePaths = getCandidateEnvPaths();
-    for (const filePath of candidatePaths) {
-      try {
-        if (fs.existsSync(filePath)) {
-          const parsed = parseEnvLines(fs.readFileSync(filePath, 'utf8'));
+  // 2. Inspect candidate .env files on disk
+  let fileProvider = null;
+  let fileApiKey = null;
+  let fileSenderId = null;
+  let foundFilePath = null;
 
-          if (!resolvedProvider) {
-            for (const k of providerKeys) {
-              const val = (parsed[k] || '').trim();
-              if (val && !['disabled', 'none', 'off', 'false'].includes(val.toLowerCase())) {
-                resolvedProvider = val;
-                process.env.SMS_GATEWAY_PROVIDER = val;
-                break;
-              }
+  const candidatePaths = getCandidateEnvPaths();
+  for (const filePath of candidatePaths) {
+    try {
+      if (fs.existsSync(filePath)) {
+        foundFilePath = filePath;
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const parsed = parseEnvLines(fileContent);
+        diagnostic.dotEnv.checkedPath = filePath;
+        diagnostic.dotEnv.exists = true;
+        diagnostic.dotEnv.allKeysFound = Object.keys(parsed);
+
+        for (const k of providerKeys) {
+          const val = cleanValue(parsed[k]);
+          if (val) {
+            diagnostic.dotEnv.hasProvider = true;
+            diagnostic.dotEnv.providerKey = k;
+            diagnostic.dotEnv.rawProvider = val;
+            if (!['disabled', 'none', 'off', 'false'].includes(val.toLowerCase())) {
+              fileProvider = val;
             }
+            break;
           }
-
-          if (!resolvedApiKey) {
-            for (const k of apiKeyKeys) {
-              const val = (parsed[k] || '').trim();
-              if (val && val !== 'your_sms_gateway_api_key_or_token' && val.length > 5) {
-                resolvedApiKey = val;
-                process.env.SMS_API_KEY = val;
-                break;
-              }
-            }
-          }
-
-          if (!resolvedSenderId) {
-            for (const k of senderIdKeys) {
-              const val = (parsed[k] || '').trim();
-              if (val) {
-                resolvedSenderId = val;
-                process.env.SMS_SENDER_ID = val;
-                break;
-              }
-            }
-          }
-
-          if (resolvedProvider && resolvedApiKey) break;
         }
-      } catch (_) {}
-    }
+
+        for (const k of apiKeyKeys) {
+          const val = cleanValue(parsed[k]);
+          if (val) {
+            diagnostic.dotEnv.hasApiKey = true;
+            diagnostic.dotEnv.apiKeyKey = k;
+            diagnostic.dotEnv.apiKeyLength = val.length;
+            if (isValidApiKey(val)) {
+              fileApiKey = val;
+            }
+            break;
+          }
+        }
+
+        for (const k of senderIdKeys) {
+          const val = cleanValue(parsed[k]);
+          if (val) {
+            diagnostic.dotEnv.hasSenderId = true;
+            diagnostic.dotEnv.senderId = val;
+            fileSenderId = val;
+            break;
+          }
+        }
+
+        // If we found any relevant keys in this file, prioritize it
+        if (diagnostic.dotEnv.hasProvider || diagnostic.dotEnv.hasApiKey) {
+          break;
+        }
+      }
+    } catch (_) {}
   }
 
-  // 3. Fallback check: if provider was explicitly set to 'disabled' and no valid provider was found on disk
-  if (!resolvedProvider) {
-    for (const k of providerKeys) {
-      const val = (process.env[k] || '').trim().toLowerCase();
-      if (val === 'disabled') {
-        resolvedProvider = 'disabled';
-        break;
-      }
-    }
+  // 3. Selection hierarchy:
+  // Prefer process.env if both provider and valid API key exist in process.env
+  // Otherwise fall back to disk .env values
+  let resolvedProvider = null;
+  let resolvedApiKey = null;
+  let resolvedSenderId = null;
+  let selectedSource = 'none';
+
+  if (procProvider && procApiKey) {
+    resolvedProvider = procProvider;
+    resolvedApiKey = procApiKey;
+    resolvedSenderId = procSenderId || fileSenderId || '8809648909250';
+    selectedSource = 'process.env';
+  } else if (fileProvider && fileApiKey) {
+    resolvedProvider = fileProvider;
+    resolvedApiKey = fileApiKey;
+    resolvedSenderId = fileSenderId || procSenderId || '8809648909250';
+    selectedSource = foundFilePath || '.env';
+  } else if (procProvider && fileApiKey) {
+    resolvedProvider = procProvider;
+    resolvedApiKey = fileApiKey;
+    resolvedSenderId = procSenderId || fileSenderId || '8809648909250';
+    selectedSource = 'hybrid (process.env provider + .env key)';
+  } else if (fileProvider && procApiKey) {
+    resolvedProvider = fileProvider;
+    resolvedApiKey = procApiKey;
+    resolvedSenderId = procSenderId || fileSenderId || '8809648909250';
+    selectedSource = 'hybrid (.env provider + process.env key)';
+  } else {
+    // Unconfigured state determination
+    resolvedProvider = procProvider || fileProvider || diagnostic.processEnv.rawProvider || diagnostic.dotEnv.rawProvider || null;
+    resolvedApiKey = procApiKey || fileApiKey || null;
+    resolvedSenderId = procSenderId || fileSenderId || '8809648909250';
+    selectedSource = 'none';
   }
 
   const normalizedProvider = normalizeSmsProvider(resolvedProvider);
-  const isProviderActive = normalizedProvider && normalizedProvider !== 'disabled';
-  const isKeyActive = Boolean(resolvedApiKey && resolvedApiKey !== 'your_sms_gateway_api_key_or_token' && resolvedApiKey.length > 5);
-  const configured = Boolean(isProviderActive && isKeyActive);
+  diagnostic.selectedSource = selectedSource;
+  diagnostic.normalizedProvider = normalizedProvider;
 
-  // Sync back into process.env so dependent modules access synchronized state
+  const isProviderValid = Boolean(normalizedProvider && normalizedProvider !== 'disabled');
+  const isKeyValid = Boolean(resolvedApiKey && isValidApiKey(resolvedApiKey));
+  const configured = Boolean(isProviderValid && isKeyValid);
+
+  if (configured) {
+    diagnostic.reason = `SMS OTP configured successfully via ${selectedSource} with provider '${normalizedProvider}'.`;
+  } else if (!isProviderValid && !isKeyValid) {
+    diagnostic.reason = 'Neither SMS_GATEWAY_PROVIDER nor SMS_API_KEY were found with active values in process.env or .env.';
+  } else if (!isProviderValid) {
+    if (normalizedProvider === 'disabled') {
+      diagnostic.reason = "SMS_GATEWAY_PROVIDER is explicitly set to 'disabled'.";
+    } else {
+      diagnostic.reason = 'SMS_GATEWAY_PROVIDER is missing or unsupported.';
+    }
+  } else if (!isKeyValid) {
+    if (diagnostic.processEnv.hasApiKey || diagnostic.dotEnv.hasApiKey) {
+      diagnostic.reason = 'SMS_API_KEY matches default placeholder value or is too short.';
+    } else {
+      diagnostic.reason = 'SMS_API_KEY is missing in both process.env and .env.';
+    }
+  }
+
+  // Populate process.env if resolved from file
   if (configured) {
     process.env.SMS_GATEWAY_PROVIDER = normalizedProvider;
-    if (resolvedApiKey) process.env.SMS_API_KEY = resolvedApiKey;
-    if (resolvedSenderId) process.env.SMS_SENDER_ID = resolvedSenderId;
+    process.env.SMS_API_KEY = resolvedApiKey;
+    process.env.SMS_SENDER_ID = resolvedSenderId;
   }
 
   return {
@@ -237,7 +330,8 @@ function getSmsGatewayConfig() {
     rawProvider: resolvedProvider || null,
     apiKey: resolvedApiKey || null,
     senderId: resolvedSenderId || '8809648909250',
-    configured
+    configured,
+    diagnostic
   };
 }
 
@@ -251,13 +345,13 @@ function loadAndSanitizeEnvironment() {
       if (fs.existsSync(filePath)) {
         const parsed = parseEnvLines(fs.readFileSync(filePath, 'utf8'));
         for (const [key, val] of Object.entries(parsed)) {
-          // Do not overwrite existing non-empty env vars unless it's a known placeholder/disabled
           const curVal = process.env[key];
           const isPlaceholder = curVal === 'disabled' || curVal === 'your_sms_gateway_api_key_or_token';
           if (curVal === undefined || curVal === '' || isPlaceholder) {
             process.env[key] = val;
           }
         }
+        break; // Stop at first valid .env file found
       }
     } catch (_) {}
   }
@@ -271,8 +365,8 @@ function loadAndSanitizeEnvironment() {
   }
 
   // Sanitize Cloudflare Turnstile environment variables if inverted or misassigned
-  const rawSiteKey = (process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || '').trim();
-  const rawSecretKey = (process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '').trim();
+  const rawSiteKey = cleanValue(process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY);
+  const rawSecretKey = cleanValue(process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY);
   if (rawSiteKey && rawSiteKey.length >= 30 && rawSecretKey && rawSecretKey.length < 30) {
     process.env.TURNSTILE_SITE_KEY = rawSecretKey;
     process.env.TURNSTILE_SECRET_KEY = rawSiteKey;
@@ -283,10 +377,11 @@ function loadAndSanitizeEnvironment() {
 }
 
 module.exports = {
+  cleanValue,
   parseEnvLines,
   getCandidateEnvPaths,
   normalizeSmsProvider,
-  readEnvValue,
+  isValidApiKey,
   getSmsGatewayConfig,
   loadAndSanitizeEnvironment
 };
