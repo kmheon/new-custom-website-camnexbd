@@ -77,3 +77,4 @@ code = code.replace(/!isCollapsed && \(/g, 'isExpanded && (');
 
 fs.writeFileSync(targetFile, code, 'utf8');
 console.log('Successfully updated AdminDashboard.tsx to Accordion Auto-Collapse mode!');
+

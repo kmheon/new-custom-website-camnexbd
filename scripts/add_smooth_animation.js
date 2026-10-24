@@ -77,3 +77,4 @@ code = code.replace('duration-200', 'duration-300 ease-out');
 
 fs.writeFileSync(targetFile, code, 'utf8');
 console.log('Successfully added soft opening and closing accordion animation!');
+
