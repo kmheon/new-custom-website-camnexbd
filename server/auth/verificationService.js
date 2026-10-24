@@ -49,6 +49,15 @@ function readDotEnvValue(keyName) {
  * - Falls back to reading .env on disk if environment variables were misconfigured.
  */
 function getResolvedTurnstileKeys() {
+  if (process.env.TURNSTILE_DISABLED === '1') {
+    return {
+      siteKey: null,
+      secretKey: null,
+      configured: false,
+      disabled: true
+    };
+  }
+
   let siteKey = (process.env.TURNSTILE_SITE_KEY || process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || '').trim();
   let secretKey = (process.env.TURNSTILE_SECRET_KEY || process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '').trim();
 
@@ -116,7 +125,7 @@ function getResolvedTurnstileKeys() {
  * Returns configuration status of verification & bot-protection providers
  */
 function getVerificationConfig() {
-  const smtpConfigured = !!(process.env.SMTP_HOST && (process.env.SMTP_USER || process.env.SMTP_PORT));
+  const smtpConfigured = process.env.SMTP_DISABLED !== '1' && !!(process.env.SMTP_HOST && (process.env.SMTP_USER || process.env.SMTP_PORT));
   const turnstile = getResolvedTurnstileKeys();
   const smsCfg = getSmsGatewayConfig();
 
@@ -187,6 +196,9 @@ function clearConsumedTurnstileTokens() {
  * Rejects invalid, expired, missing, or reused tokens, validates hostname, and enforces timeouts.
  */
 async function verifyTurnstileToken(token, remoteIp) {
+  if (process.env.TURNSTILE_DISABLED === '1') {
+    return { success: true, adminDisabledBypass: true };
+  }
   const { secretKey } = getResolvedTurnstileKeys();
   const isTestEnv = process.env.NODE_ENV === 'test';
 

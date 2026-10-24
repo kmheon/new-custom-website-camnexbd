@@ -183,6 +183,21 @@ function getSmsGatewayConfig() {
     reason: ''
   };
 
+  // 0. Check if explicitly disabled at runtime via Central API Control Center
+  if (process.env.SMS_OTP_ADMIN_DISABLED === '1') {
+    diagnostic.selectedSource = 'control_center_disabled';
+    diagnostic.normalizedProvider = 'disabled';
+    diagnostic.reason = 'SMS OTP Gateway is disabled by administrator in Central API Control Center.';
+    return {
+      provider: null,
+      rawProvider: 'disabled',
+      apiKey: null,
+      senderId: process.env.SMS_SENDER_ID || '8809648909250',
+      configured: false,
+      diagnostic
+    };
+  }
+
   // 1. Inspect process.env using exact and case-insensitive matching
   let procProvider = null;
   let procApiKey = null;

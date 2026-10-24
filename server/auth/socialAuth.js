@@ -20,8 +20,8 @@ function getSmsGatewaySafeDiagnostic() {
  * Allows frontend to know whether Google, Apple, or SMS OTP are configured on this server.
  */
 function getProvidersStatus() {
-  const googleConfigured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
-  const appleConfigured = !!(process.env.APPLE_CLIENT_ID && (process.env.APPLE_PRIVATE_KEY || process.env.APPLE_CLIENT_SECRET));
+  const googleConfigured = process.env.GOOGLE_AUTH_DISABLED !== '1' && !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const appleConfigured = process.env.APPLE_AUTH_DISABLED !== '1' && !!(process.env.APPLE_CLIENT_ID && (process.env.APPLE_PRIVATE_KEY || process.env.APPLE_CLIENT_SECRET));
   const smsCfg = getSmsGatewayConfig();
 
   return {

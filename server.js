@@ -60,6 +60,15 @@ const {
 const courierRouter = require('./server/modules/courier/courier.router');
 const { courierRegistry } = require('./server/modules/courier/courier.registry');
 const { courierService } = require('./server/modules/courier/courier.service');
+const integrationsRouter = require('./server/modules/integrations/integrations.router');
+const { integrationsControlService } = require('./server/modules/integrations/integrations.service');
+
+// Auto-discover and seed/migrate existing integrations idempotently at startup
+try {
+  integrationsControlService.seedAndMigrateIntegrations();
+} catch (seedErr) {
+  console.error('[Startup] Integrations control service seed warning:', seedErr.message);
+}
 
 const app = express();
 let isShuttingDown = false;
@@ -3681,6 +3690,7 @@ app.put('/api/orders/:id/details', requireAdmin, (req, res) => {
 // ============================================================================
 
 app.use('/api/admin/couriers', requireAdmin, courierRouter);
+app.use('/api/admin/integrations', requireAdmin, integrationsRouter);
 
 app.post(['/api/admin/orders/:id/dispatch-courier', '/api/orders/:id/dispatch-courier'], requireAdmin, async (req, res) => {
   const { id } = req.params;

@@ -50,6 +50,7 @@ const RULES = [
   [W.concat('DELETE'), /^\/(cms\/(hero-slides|sections|blog|projects|pages|testimonials|faqs)|projects|pages|testimonials|admin\/(projects|pages|testimonials|glossary))(\/|$)/, P.WEBSITE_CONTENT_WRITE],
   [ANY, /^\/admin\/redirects/, P.WEBSITE_REDIRECTS_WRITE],
   [['PUT'], /^\/settings$/, P.WEBSITE_SETTINGS_WRITE],
+  [ANY, /^\/admin\/integrations(\/|$)/, P.WEBSITE_SETTINGS_WRITE],
   [ANY, /^\/admin\/jobs/, P.WEBSITE_SETTINGS_WRITE],
   [['POST'], /^\/admin\/(clear-demo-data|reset-seeds)$/, P.ROLES_MANAGE],
 

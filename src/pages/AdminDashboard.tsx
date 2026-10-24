@@ -45,6 +45,7 @@ import { SettingsModule } from '../components/admin/SettingsModule';
 import { CouponsModule } from '../components/admin/CouponsModule';
 import { DocumentsModule } from '../components/admin/DocumentsModule';
 import { SystemLogsAndHealthModule } from '../components/admin/SystemLogsAndHealthModule';
+import { ApiControlCenterModule } from '../components/admin/ApiControlCenterModule';
 import { ConfirmDialog } from '../components/admin/framework';
 import { ImagePickerField } from '../components/admin/ImagePickerField';
 
@@ -1228,6 +1229,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             { id: 'faqs', label: 'FAQ Knowledgebase', icon: <HelpCircle className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'glossary', label: 'Technical Glossary', icon: <HelpCircle className="w-4 h-4 text-amber-400" />, perm: PERMISSIONS.WEBSITE_CONTENT_WRITE },
             { id: 'systemlogs', label: 'System Logs & Health', icon: <Activity className="w-4 h-4 text-emerald-400" />, perm: PERMISSIONS.AUDIT_READ },
+            { id: 'integrations', label: 'API & Auth Control Center', icon: <Shield className="w-4 h-4 text-[#F15A24]" />, perm: PERMISSIONS.WEBSITE_SETTINGS_WRITE },
             { id: 'settings', label: 'Site Settings & SEO', icon: <Settings className="w-4 h-4" />, perm: PERMISSIONS.WEBSITE_SETTINGS_WRITE }
           ].filter((m) => !m.perm || hasPerm(m.perm)).map((m) => (
             <button
@@ -3490,6 +3492,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
             <SystemLogsAndHealthModule />
           )}
 
+          {/*CENTRAL API, AUTHENTICATION & ENVIRONMENT CONTROL CENTER*/}
+          {activeModule === 'integrations' && <ApiControlCenterModule />}
           {/* 6. SITE SETTINGS & PLATFORM CONFIGURATION */}
           {activeModule === 'settings' && (
             <SettingsModule
