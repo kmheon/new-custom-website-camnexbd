@@ -66,38 +66,50 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       return 'dashboard';
     }
   });
-  // Sidebar Search, Navigation Hubs & State
+  // Sidebar Search, Navigation Hubs & State (Accordion Auto-Collapse)
   const [sidebarSearch, setSidebarSearch] = useState('');
   const sidebarSearchRef = useRef<HTMLInputElement>(null);
-  const [collapsedHubs, setCollapsedHubs] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem('camnex_admin_collapsed_hubs');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
+
+  const getHubForModule = (modId: string): string | null => {
+    if (['orders', 'quotes', 'customers'].includes(modId)) return 'operations';
+    if (['products', 'categories', 'templates', 'packages', 'coupons'].includes(modId)) return 'commerce';
+    if (['heroslides', 'sections', 'scenarios', 'services', 'projects', 'testimonials'].includes(modId)) return 'storefront';
+    if (['pages', 'company', 'blog', 'faqs', 'glossary'].includes(modId)) return 'content';
+    if (['media', 'documents', 'brands'].includes(modId)) return 'media';
+    if (['integrations', 'systemlogs', 'redirects', 'settings'].includes(modId)) return 'system';
+    return null;
+  };
+
+  // Accordion Mode: Only ONE hub is expanded at a time, auto-collapsing the rest
+  const [expandedHubId, setExpandedHubId] = useState<string | null>(() => {
+    return getHubForModule(activeModule) || 'operations';
   });
 
+  // When active module changes, auto-expand its parent hub and collapse others
+  useEffect(() => {
+    const parentHub = getHubForModule(activeModule);
+    if (parentHub) {
+      setExpandedHubId(parentHub);
+    }
+  }, [activeModule]);
+
   const toggleHub = useCallback((hubId: string) => {
-    setCollapsedHubs((prev) => {
-      const next = { ...prev, [hubId]: !prev[hubId] };
-      try {
-        localStorage.setItem('camnex_admin_collapsed_hubs', JSON.stringify(next));
-      } catch (_) {}
-      return next;
-    });
+    setExpandedHubId((prev) => (prev === hubId ? null : hubId));
   }, []);
 
   const handleSelectModule = useCallback((id: string) => {
     setActiveModule(id);
+    const parentHub = getHubForModule(id);
+    if (parentHub) {
+      setExpandedHubId(parentHub);
+    }
     try {
       const url = new URL(window.location.href);
       url.searchParams.set('module', id);
       window.history.replaceState(null, '', url.toString());
     } catch (_) {}
   }, []);
-
-  // Keyboard shortcut: Ctrl+K or Cmd+K to jump to sidebar search
+// Keyboard shortcut: Ctrl+K or Cmd+K to jump to sidebar search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -1412,8 +1424,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               .filter((hub) => hub.items.length > 0)
               .map((hub) => {
                 const HubIcon = hub.icon;
-                const isAutoExpanded = Boolean(sidebarSearch) || hub.items.some((i) => i.id === activeModule);
-                const isCollapsed = !isAutoExpanded && Boolean(collapsedHubs[hub.id]);
+                const isExpanded = Boolean(sidebarSearch) || expandedHubId === hub.id;
+                const isCollapsed = !isExpanded;
 
                 return (
                   <div key={hub.id} className="space-y-1">
@@ -1442,7 +1454,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     </button>
 
                     {/* Hub Items */}
-                    {!isCollapsed && (
+                    {isExpanded && (
                       <div className="space-y-0.5 pl-1.5">
                         {hub.items.map((item) => {
                           const isActive = activeModule === item.id;
