@@ -193,6 +193,7 @@ export interface ProductInventory {
   reserved?: number;
   status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'pre_order' | 'request_quote';
   warehouseId?: string;
+  shelfLocation?: string;
   trackQuantity?: boolean;
   lowStockThreshold?: number;
   allowBackorder?: boolean;
