@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Check, X, Plus, Trash2, Image as ImageIcon, Sliders, Shield, Tag, HelpCircle,
   Globe, QrCode, Barcode, Calendar, ArrowUp, ArrowDown, FileText, CheckCircle2,
-  AlertTriangle, Eye, Layers, Wrench, ChevronRight, Sparkles, RefreshCw, Star, UploadCloud
+  AlertTriangle, Eye, Layers, Wrench, ChevronLeft, ChevronRight, Sparkles, RefreshCw, Star, UploadCloud
 } from 'lucide-react';
 import { Button, Modal, Badge } from '../common/UI';
 import { MediaPickerModal } from './MediaLibraryModal';
@@ -444,10 +444,25 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={product?.id ? `Edit Product: ${product.name}` : 'Add New Hardware Product'}
+        theme="dark"
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#F15A24]/10 border border-[#F15A24]/20 flex items-center justify-center text-[#F15A24] shrink-0">
+              <Package className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-base font-black font-heading text-white tracking-tight">
+                {product?.id ? `Edit Hardware Asset: ${product.name}` : 'Add New Security Hardware Product'}
+              </div>
+              <div className="text-[11px] text-slate-400 font-normal">
+                Phase 2 Multi-tier Pricing, Warehouse Location & Barcode Engine
+              </div>
+            </div>
+          </div>
+        }
         maxWidth="max-w-5xl"
       >
-        <div className="text-slate-900 max-h-[84vh] flex flex-col">
+        <div className="text-slate-200 max-h-[84vh] flex flex-col">
           {error && (
             <div className="mb-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl flex items-center justify-between">
               <span className="font-medium">{error}</span>
@@ -455,117 +470,66 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             </div>
           )}
 
-          {/* Navigation Pill Bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-4 border-b border-slate-200 shrink-0 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setActiveTab('basics')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'basics' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Tag className="w-3.5 h-3.5" />
-              <span>1. Basics & Identifiers</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('pricing')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'pricing' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <span>2. Pricing & B2B</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('inventory')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'inventory' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span>3. Stock & Tracking</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('media')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'media' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>4. Media & Alpha PNG</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('specs')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'specs' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Wrench className="w-3.5 h-3.5" />
-              <span>5. Specifications</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('descriptions')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'descriptions' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>6. Copy & Features</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('seo')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'seo' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span>7. SEO & SERP</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('relations')}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'relations' ? 'bg-[#F15A24] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>8. Packages & Relations</span>
-            </button>
+          {/* Navigation Pill Grid: Strict Zero Horizontal Scroll */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 p-1.5 bg-slate-950 rounded-2xl border border-slate-800 mb-4 shrink-0 text-xs font-bold">
+            {[
+              { id: 'basics', label: '1. Identity', icon: Tag },
+              { id: 'pricing', label: '2. Pricing', icon: Percent },
+              { id: 'inventory', label: '3. Stock & ERP', icon: Sliders },
+              { id: 'media', label: '4. Media PNG', icon: ImageIcon },
+              { id: 'specs', label: '5. Specs', icon: Wrench },
+              { id: 'descriptions', label: '6. Features', icon: FileText },
+              { id: 'seo', label: '7. SEO SERP', icon: Globe },
+              { id: 'relations', label: '8. Packages', icon: Layers }
+            ].map(t => {
+              const Icon = t.icon;
+              const isCur = activeTab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setActiveTab(t.id as any)}
+                  className={`flex items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all ${
+                    isCur
+                      ? 'bg-[#F15A24] text-white shadow-md shadow-orange-500/20'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{t.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto pr-1 space-y-6">
             {/* TAB 1: BASICS & IDENTIFIERS */}
             {activeTab === 'basics' && (
               <div className="space-y-4">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Core Identity</h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Product Title *</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Product Title *</label>
                       <input
                         type="text"
                         value={formData.name || ''}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                         placeholder="e.g. Hikvision 2MP Fixed Bullet Turbo HD Camera"
-                        className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg font-bold"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24] font-bold"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Model Number *</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Model Number *</label>
                       <input
                         type="text"
                         value={formData.modelNumber || ''}
                         onChange={e => setFormData({ ...formData, modelNumber: e.target.value })}
                         placeholder="e.g. DS-2CE16D0T-IRPF"
-                        className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg font-mono font-bold"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24] font-mono font-bold"
                         required
                       />
                     </div>
@@ -575,7 +539,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                     <div className="md:col-span-2">
                       <div className="flex items-center justify-between mb-1">
-                        <label className="text-xs font-bold text-slate-700">URL Slug *</label>
+                        <label className="text-xs font-bold text-slate-300">URL Slug *</label>
                         <span className="text-[10px] text-slate-500 font-mono">
                           /product/{formData.slug || 'url-slug'}
                         </span>
@@ -585,7 +549,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         value={formData.slug || ''}
                         onChange={e => setFormData({ ...formData, slug: e.target.value })}
                         placeholder="e.g. hikvision-2mp-fixed-bullet-turbo-hd"
-                        className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg font-mono"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24] font-mono"
                       />
                     </div>
                     <div>
@@ -603,14 +567,14 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Short display name (max 36 characters)</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Short display name (max 36 characters)</label>
                     <input
                       type="text"
                       maxLength={36}
                       value={formData.shortName || ''}
                       onChange={e => setFormData({ ...formData, shortName: e.target.value })}
                       placeholder={getShortDisplayName(formData.name || '') || 'e.g. Bullet Camera'}
-                      className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">
                       Used on compact package cards. If empty, auto-derived: “{getShortDisplayName(formData.name || '') || '—'}”.
@@ -619,23 +583,23 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">SKU *</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">SKU *</label>
                       <input
                         type="text"
                         value={formData.sku || ''}
                         onChange={e => setFormData({ ...formData, sku: e.target.value })}
                         placeholder="e.g. HIK-2CE16D0T-IRPF"
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-mono focus:outline-none focus:border-[#F15A24]"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Brand *</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Brand *</label>
                       <select
                         value={formData.brandId || ''}
                         onChange={e => handleBrandChange(e.target.value)}
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-medium focus:outline-none focus:border-[#F15A24]"
                       >
                         {brands.map(b => (
                           <option key={b.id} value={b.id}>{b.name}</option>
@@ -644,7 +608,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Category *</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Category *</label>
                       <select
                         value={formData.categoryId || ''}
                         onChange={e => {
@@ -658,7 +622,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                             subcategorySlug: defaultSub ? defaultSub.slug : undefined
                           }));
                         }}
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-medium focus:outline-none focus:border-[#F15A24]"
                       >
                         {categories.map(c => (
                           <option key={c.id} value={c.id}>{c.name}</option>
@@ -679,7 +643,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                                 subcategorySlug: sc ? sc.slug : undefined
                               }));
                             }}
-                            className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-medium"
+                            className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-medium focus:outline-none focus:border-[#F15A24]"
                           >
                             <option value="">-- General Category (None) --</option>
                             {selectedCategoryObj.subcategories.map(sc => (
@@ -691,11 +655,11 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Unit of Measure</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Unit of Measure</label>
                       <select
                         value={formData.unit || 'Piece'}
                         onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       >
                         <option value="Piece">Piece</option>
                         <option value="Meter">Meter</option>
@@ -708,10 +672,10 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
 
                   {/* Barcode & Format */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80">
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                        <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
                           <Barcode className="w-3.5 h-3.5 text-[#F15A24]" />
                           <span>Barcode / UPC / EAN</span>
                         </label>
@@ -732,15 +696,15 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         value={formData.barcode || ''}
                         onChange={e => setFormData({ ...formData, barcode: e.target.value })}
                         placeholder="e.g. 8801234567890"
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-mono focus:outline-none focus:border-[#F15A24]"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Barcode Format</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Barcode Format</label>
                       <select
                         value={formData.barcodeFormat || 'Code 128'}
                         onChange={e => setFormData({ ...formData, barcodeFormat: e.target.value as any })}
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       >
                         <option value="Code 128">Code 128 (Standard POS)</option>
                         <option value="EAN-13">EAN-13 (International)</option>
@@ -762,16 +726,16 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 </div>
 
                 {/* Status & Channels */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Lifecycle & Visibility</h3>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Publication Status</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Publication Status</label>
                       <select
                         value={formData.status || 'active'}
                         onChange={e => setFormData({ ...formData, status: e.target.value as any })}
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       >
                         <option value="active">Active (Published)</option>
                         <option value="draft">Draft (Hidden)</option>
@@ -787,7 +751,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         onChange={e => setFormData({ ...formData, websiteVisible: e.target.checked })}
                         className="w-4 h-4 rounded text-[#F15A24] focus:ring-[#F15A24]"
                       />
-                      <label htmlFor="visibleToggle" className="text-xs font-bold text-slate-700 cursor-pointer">
+                      <label htmlFor="visibleToggle" className="text-xs font-bold text-slate-300 cursor-pointer">
                         Website Storefront
                       </label>
                     </div>
@@ -800,7 +764,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         onChange={e => setFormData({ ...formData, posAvailable: e.target.checked })}
                         className="w-4 h-4 rounded text-[#F15A24] focus:ring-[#F15A24]"
                       />
-                      <label htmlFor="posToggle" className="text-xs font-bold text-slate-700 cursor-pointer">
+                      <label htmlFor="posToggle" className="text-xs font-bold text-slate-300 cursor-pointer">
                         POS / Physical Desk
                       </label>
                     </div>
@@ -813,17 +777,17 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         onChange={e => setFormData({ ...formData, showOnHomepage: e.target.checked })}
                         className="w-4 h-4 rounded text-[#F15A24] focus:ring-[#F15A24]"
                       />
-                      <label htmlFor="homepageToggle" className="text-xs font-bold text-slate-700 cursor-pointer">
+                      <label htmlFor="homepageToggle" className="text-xs font-bold text-slate-300 cursor-pointer">
                         Show on Homepage
                       </label>
                     </div>
                   </div>
 
                   {/* Commercial Flags */}
-                  <div className="pt-2 border-t border-slate-200">
+                  <div className="pt-2 border-t border-slate-800/80">
                     <span className="text-[11px] font-bold text-slate-500 uppercase block mb-2">Merchandising Badges</span>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                      <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={!!formData.isFeatured}
@@ -832,7 +796,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         />
                         <span>Featured</span>
                       </label>
-                      <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={!!formData.isPopular}
@@ -841,7 +805,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         />
                         <span>Best Seller</span>
                       </label>
-                      <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={!!formData.isNew}
@@ -850,7 +814,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         />
                         <span>New Arrival</span>
                       </label>
-                      <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={!!formData.isHot}
@@ -859,7 +823,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         />
                         <span>Hot / Trending</span>
                       </label>
-                      <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={!!formData.isAccessory}
@@ -876,7 +840,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
             {/* TAB 2: PRICING & B2B */}
             {activeTab === 'pricing' && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Commercial Pricing & Schedules</h3>
                   <span className="text-[10px] text-slate-400">Currency: BDT (৳)</span>
@@ -884,7 +848,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                    <label className="text-xs font-bold text-slate-300 block mb-1">
                       Regular Retail Price (৳)
                       <span className="text-[10px] text-slate-400 font-normal block">Empty for "Request Quote"</span>
                     </label>
@@ -900,12 +864,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         }
                       })}
                       placeholder="e.g. 2100"
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold text-[#F15A24]"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-bold focus:outline-none focus:border-[#F15A24] text-[#F15A24]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                    <label className="text-xs font-bold text-slate-300 block mb-1">
                       Sale Promotional Price (৳)
                       <span className="text-[10px] text-slate-400 font-normal block">Must be &lt; Regular Price</span>
                     </label>
@@ -921,12 +885,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         }
                       })}
                       placeholder="e.g. 1950"
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold text-emerald-600"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-bold focus:outline-none focus:border-[#F15A24] text-emerald-600"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                    <label className="text-xs font-bold text-slate-300 block mb-1">
                       Wholesale / B2B Price (৳)
                       <span className="text-[10px] text-slate-400 font-normal block">Dealer / Corporate tier</span>
                     </label>
@@ -938,12 +902,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         wholesalePrice: e.target.value ? Number(e.target.value) : undefined
                       })}
                       placeholder="e.g. 1750"
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold text-blue-600"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-bold focus:outline-none focus:border-[#F15A24] text-blue-600"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center justify-between">
                       <span>Purchase Cost (৳)</span>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold">Guarded</span>
                     </label>
@@ -956,10 +920,10 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           costPrice: e.target.value ? Number(e.target.value) : undefined
                         })}
                         placeholder="e.g. 1400"
-                        className="w-full bg-white border border-amber-300 text-xs p-2 rounded font-mono text-slate-800"
+                        className="w-full bg-slate-900 border border-amber-500/40 text-amber-300 font-mono text-xs p-2.5 rounded-xl focus:outline-none focus:border-amber-400"
                       />
                     ) : (
-                      <div className="p-2 bg-slate-200 border border-slate-300 rounded text-xs text-slate-500 italic">
+                      <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-500 italic">
                         •••• (Redacted)
                       </div>
                     )}
@@ -967,10 +931,34 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
                 </div>
 
+                {/* Real-time Profit Margin Indicator */}
+                {(() => {
+                  const reg = Number(formData.pricing?.regularPrice || 0);
+                  const cost = Number(formData.costPrice || formData.pricing?.costPrice || 0);
+                  if (reg > 0 && cost > 0) {
+                    const margin = reg - cost;
+                    const pct = ((margin / reg) * 100).toFixed(1);
+                    return (
+                      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-300">Gross Margin Estimation:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-slate-400">Profit: ৳{margin.toLocaleString()}</span>
+                          <span className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
+                            Number(pct) >= 20 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                          }`}>
+                            {pct}% Gross Margin
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {/* Promotional Dates */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-800/80">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center gap-1">
+                    <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" />
                       <span>Sale Start Date</span>
                     </label>
@@ -984,12 +972,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           saleStartDate: e.target.value
                         }
                       })}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center gap-1">
+                    <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" />
                       <span>Sale End Date</span>
                     </label>
@@ -1003,7 +991,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           saleEndDate: e.target.value
                         }
                       })}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
                 </div>
@@ -1012,12 +1000,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
             {/* TAB 3: STOCK & INVENTORY */}
             {activeTab === 'inventory' && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Inventory & Tracking Controls</h3>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Available Quantity</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Available Quantity</label>
                     <input
                       type="number"
                       value={formData.inventory?.available ?? 0}
@@ -1028,12 +1016,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           available: parseInt(e.target.value) || 0
                         }
                       })}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-bold focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Low Stock Threshold</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Low Stock Threshold</label>
                     <input
                       type="number"
                       value={formData.inventory?.lowStockThreshold ?? 5}
@@ -1044,12 +1032,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           lowStockThreshold: parseInt(e.target.value) || 0
                         }
                       })}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Stock Status</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Stock Status</label>
                     <select
                       value={formData.inventory?.status || 'in_stock'}
                       onChange={e => setFormData({
@@ -1059,7 +1047,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           status: e.target.value as any
                         }
                       })}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     >
                       <option value="in_stock">In Stock</option>
                       <option value="low_stock">Low Stock</option>
@@ -1070,7 +1058,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Default Warehouse</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Default Warehouse</label>
                     <select
                       value={formData.inventory?.warehouseId || 'main'}
                       onChange={e => setFormData({
@@ -1080,7 +1068,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           warehouseId: e.target.value
                         }
                       })}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     >
                       <option value="main">Main Warehouse (Dhaka Central)</option>
                       <option value="depot-chittagong">Chittagong Distribution Depot</option>
@@ -1089,7 +1077,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Shelf Location (Rack / Bin)</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Shelf Location (Rack / Bin)</label>
                     <input
                       type="text"
                       value={formData.inventory?.shelfLocation || ''}
@@ -1101,13 +1089,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         }
                       })}
                       placeholder="e.g. Rack A-02 / Bin 04"
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-mono focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
                 </div>
 
                 {/* Phase 2 ERP Serial & Batch Tracking */}
-                <div className="pt-3 border-t border-slate-200">
+                <div className="pt-3 border-t border-slate-800/80">
                   <span className="text-[11px] font-bold text-slate-500 uppercase block mb-2">Phase 2 ERP Tracking Capabilities</span>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <label className="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer">
@@ -1163,7 +1151,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             {activeTab === 'media' && (
               <div className="space-y-4">
                 {/* Primary Image with Alpha Checker & ImagePickerField */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Primary Product Photography</h3>
                     <p className="text-[11px] text-slate-400">Used across storefront catalog rows, search suggestions, and hero presentations</p>
@@ -1180,7 +1168,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 </div>
 
                 {/* Gallery Manager */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Product Gallery (Multi-angle Views)</h3>
@@ -1244,7 +1232,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                       value={galleryUrlInput}
                       onChange={e => setGalleryUrlInput(e.target.value)}
                       placeholder="Paste image URL to append to gallery..."
-                      className="flex-1 bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono"
+                      className="flex-1 bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]-lg font-mono"
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1319,7 +1307,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                               type="button"
                               disabled={idx === 0}
                               onClick={() => handleMoveGalleryImage(idx, 'up')}
-                              className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                              className="p-1 text-slate-400 hover:text-slate-300 disabled:opacity-30"
                               title="Move Left"
                             >
                               <ArrowUp className="w-3.5 h-3.5 rotate-[-90deg]" />
@@ -1328,7 +1316,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                               type="button"
                               disabled={idx === galleryImages.length - 1}
                               onClick={() => handleMoveGalleryImage(idx, 'down')}
-                              className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                              className="p-1 text-slate-400 hover:text-slate-300 disabled:opacity-30"
                               title="Move Right"
                             >
                               <ArrowDown className="w-3.5 h-3.5 rotate-[-90deg]" />
@@ -1353,7 +1341,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 </div>
 
                 {/* Documents & PDF Datasheets */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Downloadable Technical Documents</h3>
@@ -1415,7 +1403,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
             {/* TAB 5: SPECIFICATIONS */}
             {activeTab === 'specs' && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Technical Specifications</h3>
@@ -1441,7 +1429,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                       return (
                         <div key={field.id} className="space-y-1 p-2 rounded-lg bg-slate-50/60 border border-slate-100">
                           <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold text-slate-700">
+                            <label className="text-xs font-bold text-slate-300">
                               {field.name}
                               {field.unit && <span className="text-slate-400 font-normal ml-1">({field.unit})</span>}
                               {field.required && <span className="text-rose-500 ml-0.5">*</span>}
@@ -1508,9 +1496,9 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 )}
 
                 {/* Custom Extra Specs */}
-                <div className="pt-2 border-t border-slate-200 space-y-2">
+                <div className="pt-2 border-t border-slate-800/80 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700">Custom / Ad-hoc Specifications</label>
+                    <label className="text-xs font-bold text-slate-300">Custom / Ad-hoc Specifications</label>
                     <Button type="button" variant="outline" size="sm" onClick={handleAddCustomSpec}>
                       <Plus className="w-3.5 h-3.5 mr-1" />
                       <span>Add Spec Row</span>
@@ -1524,14 +1512,14 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         value={spec.key}
                         onChange={e => handleCustomSpecChange(idx, 'key', e.target.value)}
                         placeholder="Key (e.g. Ingress Protection)"
-                        className="flex-1 bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="flex-1 bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={e => handleCustomSpecChange(idx, 'value', e.target.value)}
                         placeholder="Value (e.g. IP67 Weatherproof)"
-                        className="flex-1 bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="flex-1 bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       />
                       <button
                         type="button"
@@ -1549,62 +1537,62 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             {/* TAB 6: DESCRIPTIONS & WARRANTY */}
             {activeTab === 'descriptions' && (
               <div className="space-y-4">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Marketing Descriptions</h3>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Short Description (Summary)</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Short Description (Summary)</label>
                     <textarea
                       rows={2}
                       value={formData.shortDescription || ''}
                       onChange={e => setFormData({ ...formData, shortDescription: e.target.value })}
                       placeholder="One or two sentences summarizing the product for listing cards..."
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]-lg"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Key Features (One bullet per line)</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Key Features (One bullet per line)</label>
                     <textarea
                       rows={4}
                       value={keyFeaturesText}
                       onChange={e => setKeyFeaturesText(e.target.value)}
                       placeholder="2 MP high performance CMOS sensor&#10;1920 × 1080 resolution&#10;Up to 20m IR distance&#10;IP66 weatherproof casing"
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]-lg font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Full Detailed Product Description</label>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Full Detailed Product Description</label>
                     <textarea
                       rows={5}
                       value={formData.description || ''}
                       onChange={e => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Comprehensive product details, operational tolerances, and technical overview..."
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]-lg"
                     />
                   </div>
                 </div>
 
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Warranty Policy & Terms</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Warranty Period (Months)</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Warranty Period (Months)</label>
                       <input
                         type="number"
                         value={formData.warrantyMonths ?? 12}
                         onChange={e => setFormData({ ...formData, warrantyMonths: parseInt(e.target.value) || 0 })}
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-bold"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-bold focus:outline-none focus:border-[#F15A24]"
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Warranty Type</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Warranty Type</label>
                       <select
                         value={formData.warrantyType || 'official'}
                         onChange={e => setFormData({ ...formData, warrantyType: e.target.value as any })}
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       >
                         <option value="official">Official Brand Warranty</option>
                         <option value="vendor">Vendor / Importer Warranty</option>
@@ -1613,13 +1601,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Warranty Description Note</label>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Warranty Description Note</label>
                       <input
                         type="text"
                         value={formData.warrantyText || ''}
                         onChange={e => setFormData({ ...formData, warrantyText: e.target.value })}
                         placeholder="e.g. 1 Year Official Brand Warranty"
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       />
                     </div>
                   </div>
@@ -1629,7 +1617,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
             {/* TAB 7: SEO & SERP */}
             {activeTab === 'seo' && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                     <Globe className="w-3.5 h-3.5 text-[#F15A24]" />
@@ -1654,7 +1642,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold text-slate-700">Meta Title</label>
+                      <label className="text-xs font-bold text-slate-300">Meta Title</label>
                       <span className="text-[10px] text-slate-400 font-mono">
                         {(seo.metaTitle || '').length}/60 chars
                       </span>
@@ -1665,13 +1653,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                       value={seo.metaTitle || ''}
                       onChange={e => setSeo({ ...seo, metaTitle: e.target.value })}
                       placeholder={formData.name || 'e.g. Hikvision 2MP Turbo HD Bullet Camera | CamneX BD'}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold text-slate-700">Meta Description</label>
+                      <label className="text-xs font-bold text-slate-300">Meta Description</label>
                       <span className="text-[10px] text-slate-400 font-mono">
                         {(seo.metaDescription || '').length}/160 chars
                       </span>
@@ -1682,13 +1670,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                       value={seo.metaDescription || ''}
                       onChange={e => setSeo({ ...seo, metaDescription: e.target.value })}
                       placeholder={formData.shortDescription || 'Enter search engine snippet description...'}
-                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                      className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">
+                      <label className="text-xs font-bold text-slate-300 block mb-1">
                         Keywords (comma-separated)
                       </label>
                       <input
@@ -1696,12 +1684,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         value={keywordsText}
                         onChange={e => setKeywordsText(e.target.value)}
                         placeholder="cctv camera, 2mp bullet, hikvision dhaka"
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">
+                      <label className="text-xs font-bold text-slate-300 block mb-1">
                         Canonical URL Override (Optional)
                       </label>
                       <input
@@ -1709,7 +1697,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         value={seo.canonicalUrl || ''}
                         onChange={e => setSeo({ ...seo, canonicalUrl: e.target.value })}
                         placeholder="/product/ds-2ce16d0t-irpf"
-                        className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+                        className="w-full bg-slate-900 border border-slate-700/80 text-white text-xs p-2.5 rounded-xl font-mono focus:outline-none focus:border-[#F15A24]"
                       />
                     </div>
                   </div>
@@ -1721,7 +1709,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             {activeTab === 'relations' && (
               <div className="space-y-4">
                 {/* CCTV Turnkey Package Compatibility */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">CCTV Package Component Eligibility</h3>
@@ -1739,7 +1727,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
 
                   {formData.packageEligible !== false && (
-                    <div className="pt-2 border-t border-slate-200">
+                    <div className="pt-2 border-t border-slate-800/80">
                       <span className="text-[11px] font-bold text-slate-600 block mb-2">Supported Turnkey Roles</span>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {[
@@ -1766,7 +1754,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                                 }}
                                 className="rounded text-[#F15A24]"
                               />
-                              <span className="text-slate-700 font-medium">{item.label}</span>
+                              <span className="text-slate-300 font-medium">{item.label}</span>
                             </label>
                           );
                         })}
@@ -1776,11 +1764,11 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 </div>
 
                 {/* Related & Compatible Products */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Cross-Sell & Compatibility</h3>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                    <label className="text-xs font-bold text-slate-300 block mb-1">
                       Related Alternative Products
                       <span className="text-[10px] text-slate-400 font-normal ml-1">(Shown on PDP "Alternative Choices")</span>
                     </label>
@@ -1810,7 +1798,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                    <label className="text-xs font-bold text-slate-300 block mb-1">
                       Compatible Accessories
                       <span className="text-[10px] text-slate-400 font-normal ml-1">(Shown on PDP "Frequently Bought Together")</span>
                     </label>
@@ -1843,12 +1831,47 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             )}
 
             {/* Form Footer Action Bar */}
-            <div className="pt-4 border-t border-slate-200 flex items-center justify-between shrink-0">
-              <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving}>
+            {/* Step Navigation & Action Bar */}
+            <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between shrink-0">
+              <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving} className="text-slate-400 hover:text-white">
                 Cancel
               </Button>
               <div className="flex items-center gap-2">
-                <Button type="submit" disabled={isSaving} className="bg-[#F15A24] text-white hover:bg-[#D94D1C]">
+                {(() => {
+                  const tabOrder: Array<'basics' | 'pricing' | 'inventory' | 'media' | 'specs' | 'descriptions' | 'seo' | 'relations'> = [
+                    'basics', 'pricing', 'inventory', 'media', 'specs', 'descriptions', 'seo', 'relations'
+                  ];
+                  const curIdx = tabOrder.indexOf(activeTab);
+                  return (
+                    <>
+                      {curIdx > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setActiveTab(tabOrder[curIdx - 1])}
+                          className="border-slate-800 bg-slate-900 text-slate-300 hover:text-white"
+                        >
+                          <ChevronLeft className="w-4 h-4 mr-1" />
+                          <span>Back</span>
+                        </Button>
+                      )}
+                      {curIdx < tabOrder.length - 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setActiveTab(tabOrder[curIdx + 1])}
+                          className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800"
+                        >
+                          <span>Next Section</span>
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      )}
+                    </>
+                  );
+                })()}
+                <Button type="submit" disabled={isSaving} className="bg-[#F15A24] text-white hover:bg-[#D94D1C] font-bold">
                   <Check className="w-4 h-4 mr-1.5" />
                   <span>{isSaving ? 'Saving Changes...' : product?.id ? 'Update Product' : 'Create Product'}</span>
                 </Button>
