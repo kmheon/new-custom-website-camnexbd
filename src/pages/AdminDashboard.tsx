@@ -1286,24 +1286,26 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
           <div className="flex-1 overflow-y-auto p-3 space-y-3.5 custom-scrollbar">
             {/* Top-Level: Dashboard Overview */}
             {(!sidebarSearch || 'dashboard overview'.includes(sidebarSearch.toLowerCase())) && (
-              <button
-                type="button"
-                data-module="dashboard"
-                onClick={() => handleSelectModule('dashboard')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeModule === 'dashboard'
-                    ? 'bg-[#F15A24] text-white shadow-lg shadow-[#F15A24]/20'
-                    : 'text-slate-300 hover:bg-slate-900 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <LayoutDashboard className="w-4 h-4 text-white" />
-                  <span>Dashboard Overview</span>
-                </div>
-                {activeModule === 'dashboard' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                )}
-              </button>
+              <div className="pb-2.5 border-b border-slate-800/60">
+                <button
+                  type="button"
+                  data-module="dashboard"
+                  onClick={() => handleSelectModule('dashboard')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeModule === 'dashboard'
+                      ? 'bg-[#F15A24] text-white shadow-lg shadow-[#F15A24]/20'
+                      : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <LayoutDashboard className="w-4 h-4 text-white" />
+                    <span>Dashboard Overview</span>
+                  </div>
+                  {activeModule === 'dashboard' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                  )}
+                </button>
+              </div>
             )}
 
             {/* 6 Functional Hubs */}
@@ -1428,7 +1430,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                 const isCollapsed = !isExpanded;
 
                 return (
-                  <div key={hub.id} className="space-y-1">
+                  <div key={hub.id} className="space-y-1 pb-2 border-b border-slate-800/60 last:border-b-0 last:pb-0">
                     {/* Collapsible Hub Header */}
                     <button
                       type="button"
