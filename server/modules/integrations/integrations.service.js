@@ -6,6 +6,9 @@
 const crypto = require('crypto');
 const net = require('net');
 const dns = require('dns');
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 const db = require('../../../database');
 const { encrypt, decrypt, maskSecret } = require('../../shared/cryptoHelper');
 const {
@@ -374,8 +377,8 @@ const CODEBASE_INTEGRATION_DEFINITIONS = [
     category: INTEGRATION_CATEGORIES.DELIVERY_COURIER,
     isCritical: false,
     adapterStatus: 'integrated',
-    description: 'Automated parcel booking, consignment generation, and live delivery status tracking across all 64 districts of Bangladesh.',
-    website: 'https://portal.steadfast.com.bd',
+    description: 'Automated parcel booking, consignment generation, and live delivery status tracking across all 64 districts of Bangladesh via Steadfast (Packzy) API.',
+    website: 'https://portal.packzy.com',
     dependentFeatures: [
       'One-Click Order Courier Dispatch (/api/admin/orders/:id/dispatch-courier)',
       'Live Consignment Status Tracking (/api/admin/orders/:id/courier-tracking)',

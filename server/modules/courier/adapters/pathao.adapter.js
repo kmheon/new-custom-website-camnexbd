@@ -4,8 +4,22 @@
  * Production: https://api-hermes.pathao.com
  */
 
+const dns = require('dns');
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const BaseCourierAdapter = require('../base.adapter');
 const { COURIER_PROVIDERS, SHIPMENT_STATUS, COURIER_CAPABILITIES } = require('../courier.types');
+
+function formatFetchError(err) {
+  if (!err) return 'Unknown network error';
+  const causeMsg = err.cause?.message || err.cause?.code || '';
+  if (causeMsg && !String(err.message).includes(causeMsg)) {
+    return `${err.message} (${causeMsg})`;
+  }
+  return err.message || String(err);
+}
 
 class PathaoAdapter extends BaseCourierAdapter {
   constructor(config = {}) {
@@ -103,9 +117,9 @@ class PathaoAdapter extends BaseCourierAdapter {
       }
 
       const errMessage = data?.message || data?.error_description || `HTTP ${response.status}`;
-      throw new Error(`Pathao token generation failed: ${errMessage}`);
+      throw new Error(`Pathao token generation failed (${this.baseUrl}): ${errMessage}`);
     } catch (err) {
-      throw new Error(`Pathao authentication error: ${err.message}`);
+      throw new Error(`Pathao authentication error (${this.baseUrl}): ${formatFetchError(err)}`);
     }
   }
 

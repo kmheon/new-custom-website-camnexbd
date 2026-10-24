@@ -1,17 +1,38 @@
 /**
  * CamneX Bangladesh - Steadfast Courier Adapter
- * Portal: https://portal.steadfast.com.bd/api/v1
+ * Official API Base URL: https://portal.packzy.com/api/v1
+ * Merchant Portal: https://steadfast.com.bd
  */
+
+const dns = require('dns');
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 const BaseCourierAdapter = require('../base.adapter');
 const { COURIER_PROVIDERS, SHIPMENT_STATUS, COURIER_CAPABILITIES } = require('../courier.types');
 
+const STEADFAST_LIVE_API_BASE = 'https://portal.packzy.com/api/v1';
+
+function formatFetchError(err) {
+  if (!err) return 'Unknown network error';
+  const causeMsg = err.cause?.message || err.cause?.code || '';
+  if (causeMsg && !String(err.message).includes(causeMsg)) {
+    return `${err.message} (${causeMsg})`;
+  }
+  return err.message || String(err);
+}
+
 class SteadfastAdapter extends BaseCourierAdapter {
   constructor(config = {}) {
     super({ ...config, provider: COURIER_PROVIDERS.STEADFAST });
-    this.apiKey = config.apiKey || '';
-    this.secretKey = config.secretKey || '';
-    this.baseUrl = config.baseUrl || 'https://portal.steadfast.com.bd/api/v1';
+    this.apiKey = (config.apiKey || '').trim();
+    this.secretKey = (config.secretKey || '').trim();
+    // Note: portal.steadfast.com.bd does not resolve in DNS (NXDOMAIN); Steadfast's official API host is portal.packzy.com
+    const rawBase = (config.baseUrl || '').trim();
+    this.baseUrl = (!rawBase || rawBase.includes('portal.steadfast.com.bd'))
+      ? STEADFAST_LIVE_API_BASE
+      : rawBase.replace(/\/+$/, '');
   }
 
   getName() {
@@ -48,23 +69,30 @@ class SteadfastAdapter extends BaseCourierAdapter {
   }
 
   /**
-   * Test API connectivity using get_balance endpoint
+   * Test API connectivity using live Steadfast (Packzy) get_balance endpoint
    */
   async testConnection() {
     if (!this.apiKey || !this.secretKey) {
       return {
         success: false,
-        message: 'Steadfast API Key and Secret Key are required.'
+        message: 'Not configured: Steadfast API Key and Secret Key are required before testing.'
       };
     }
 
+    const endpoint = `${this.baseUrl}/get_balance`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+
     try {
-      const response = await fetch(`${this.baseUrl}/get_balance`, {
+      const response = await fetch(endpoint, {
         method: 'GET',
+        signal: controller.signal,
         headers: {
           'Api-Key': this.apiKey,
           'Secret-Key': this.secretKey,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'User-Agent': 'CamneX-Server/1.0'
         }
       });
 
@@ -73,21 +101,33 @@ class SteadfastAdapter extends BaseCourierAdapter {
       if (response.ok && data && (data.status === 200 || data.current_balance !== undefined)) {
         return {
           success: true,
-          message: `Connection successful. Current Account Balance: ৳${data.current_balance ?? '0.00'}`,
-          details: { balance: data.current_balance }
+          message: `Live Steadfast API (portal.packzy.com) authenticated! Current Account Balance: ৳${data.current_balance ?? '0.00'}`,
+          details: { balance: data.current_balance, endpoint }
+        };
+      }
+
+      if (response.status === 401 || data?.status === 401) {
+        return {
+          success: false,
+          message: `Live Steadfast API (portal.packzy.com) reached, but rejected credentials (HTTP 401): ${data?.message || 'Unauthorized Access (invalid API credentials)'}${data?.attempts_left !== undefined ? ` [${data.attempts_left} attempts left]` : ''}`,
+          details: { status: response.status, endpoint }
         };
       }
 
       return {
         success: false,
-        message: data?.message || `Steadfast API responded with status ${response.status}`,
-        details: data
+        message: data?.message
+          ? `Live Steadfast API (portal.packzy.com) responded (HTTP ${response.status}): ${data.message}`
+          : `Live Steadfast API (portal.packzy.com) responded with HTTP ${response.status}`,
+        details: { status: response.status, endpoint }
       };
     } catch (err) {
       return {
         success: false,
-        message: `Steadfast connection failed: ${err.message}`
+        message: `Steadfast API (${endpoint}) unreachable: ${formatFetchError(err)}`
       };
+    } finally {
+      clearTimeout(timer);
     }
   }
 

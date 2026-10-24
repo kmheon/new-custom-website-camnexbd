@@ -29,7 +29,7 @@ class CourierRegistry {
       status: INTEGRATION_STATUS.INTEGRATED,
       description: 'Nationwide next-day parcel delivery and COD across all 64 districts of Bangladesh.',
       website: 'https://steadfast.com.bd',
-      portalUrl: 'https://portal.steadfast.com.bd',
+      portalUrl: 'https://portal.packzy.com',
       trackingUrlPattern: 'https://steadfast.com.bd/t/{consignment_id}',
       fields: [
         { key: 'apiKey', label: 'API Key', type: 'text', secret: false, required: true },
