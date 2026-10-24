@@ -52,7 +52,7 @@ class OrdersService {
   }
 
   createOrder(orderData, actor = null) {
-    const settingsRow = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const settingsRow = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     const siteSettings = settingsRow ? JSON.parse(settingsRow.value) : {};
     const hasCod = Boolean(siteSettings.enableCashOnDelivery);
     const hasBkash = Boolean(siteSettings.bkashMerchantNumber && siteSettings.bkashMerchantNumber.trim().length > 0);

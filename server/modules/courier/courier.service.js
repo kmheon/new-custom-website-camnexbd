@@ -15,7 +15,7 @@ class CourierService {
    */
   getSiteSettings() {
     try {
-      const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+      const row = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
       return row ? JSON.parse(row.value) : {};
     } catch (err) {
       console.error('[CourierService] Error fetching site_settings:', err.message);

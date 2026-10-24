@@ -22,13 +22,13 @@ function maskSettingsSecrets(settings) {
 class CmsService {
   // SETTINGS
   getSettings() {
-    const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const row = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     if (!row) return {};
     return maskSettingsSecrets(JSON.parse(row.value));
   }
 
   updateSettings(data, actor = null) {
-    const rawRow = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const rawRow = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     const existing = rawRow ? JSON.parse(rawRow.value) : {};
     const payload = { ...data };
 
@@ -124,7 +124,7 @@ class CmsService {
 
   // SECTIONS
   getSections() {
-    const row = db.prepare("SELECT value FROM settings WHERE key = 'homepage_sections'").get();
+    const row = db.prepare("SELECT value FROM settings WHERE `key` = 'homepage_sections'").get();
     return row ? JSON.parse(row.value) : [];
   }
 

@@ -750,7 +750,7 @@ class IntegrationsControlService {
    */
   getSiteSettingsRaw() {
     try {
-      const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+      const row = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
       return row ? JSON.parse(row.value) : {};
     } catch (_) {
       return {};
@@ -766,7 +766,7 @@ class IntegrationsControlService {
       const updated = updaterFn({ ...current });
       if (updated) {
         db.prepare(`
-          INSERT INTO settings (key, value)
+          INSERT INTO settings (\`key\`, value)
           VALUES ('site_settings', ?)
           ON CONFLICT(key) DO UPDATE SET value = excluded.value
         `).run(JSON.stringify(updated));

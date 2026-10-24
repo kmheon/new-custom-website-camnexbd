@@ -4,7 +4,7 @@ import {
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
   Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench, Building2,
-  Clock, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, Activity, Zap, Percent, FileCheck
+  Clock, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, Truck, Activity, Zap, Percent, FileCheck
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';

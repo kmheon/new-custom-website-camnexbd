@@ -138,6 +138,16 @@ function createMysqlAdapter(config = {}) {
     s = s.replace(/json_extract\s*\(\s*([a-zA-Z0-9_.]+)\s*,\s*(['"]\$\.[^'"]+['"])\s*\)/gi, '$1->>$2');
     s = s.replace(/ON\s+CONFLICT\s*\([^)]*\)\s*DO\s+UPDATE\s+SET/gi, 'ON DUPLICATE KEY UPDATE');
     s = s.replace(/excluded\.([a-zA-Z0-9_]+)/gi, 'VALUES($1)');
+    // Escape MariaDB/MySQL reserved keyword `key` in settings table queries
+    s = s.replace(/\bWHERE\s+key\s*=/gi, 'WHERE `key` =');
+    s = s.replace(/\bWHERE\s+key\s+IN\b/gi, 'WHERE `key` IN');
+    s = s.replace(/\bSET\s+key\s*=/gi, 'SET `key` =');
+    s = s.replace(/\bsettings\s*\(\s*key\s*,/gi, 'settings (`key`,');
+    s = s.replace(/\bINSERT\s+INTO\s+settings\s*\(\s*key\b/gi, 'INSERT INTO settings (`key`');
+    s = s.replace(/\bSELECT\s+key\s*,/gi, 'SELECT `key`,');
+    s = s.replace(/\bSELECT\s+([a-zA-Z0-9_.*,\s]+),\s*key\s+FROM/gi, 'SELECT $1, `key` FROM');
+    s = s.replace(/\bkey\s*=\s*\?/gi, '`key` = ?');
+    s = s.replace(/\bkey\s*=\s*'site_settings'/gi, "`key` = 'site_settings'");
     return s;
   }
 
@@ -1427,12 +1437,12 @@ function clearDemoData() {
     db.prepare("DELETE FROM testimonials WHERE data_json LIKE '%\"sample\":true%'").run();
     
     // Update settings to hide sample data banner
-    const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const row = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     if (row) {
       const s = JSON.parse(row.value);
       s.sampleDataBanner = false;
       s.showDemoTags = false;
-      db.prepare("UPDATE settings SET value = ? WHERE key = 'site_settings'").run(JSON.stringify(s));
+      db.prepare("UPDATE settings SET value = ? WHERE `key` = 'site_settings'").run(JSON.stringify(s));
     }
     return true;
   } catch (err) {

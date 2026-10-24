@@ -3525,7 +3525,7 @@ app.post(['/api/orders', '/api/cart/checkout'], submissionLimiter, validateBody(
     }
 
     // Verify configured payment methods from site settings
-    const settingsRow = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const settingsRow = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     const siteSettings = settingsRow ? JSON.parse(settingsRow.value) : {};
     const hasCod = Boolean(siteSettings.enableCashOnDelivery);
     const hasBkash = Boolean(siteSettings.bkashMerchantNumber && siteSettings.bkashMerchantNumber.trim().length > 0);
@@ -4670,7 +4670,7 @@ function maskSettingsSecrets(settings) {
 
 app.get('/api/settings', (req, res) => {
   try {
-    const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const row = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     if (!row) return res.json({});
     res.json(maskSettingsSecrets(JSON.parse(row.value)));
   } catch (err) {
@@ -4680,7 +4680,7 @@ app.get('/api/settings', (req, res) => {
 
 app.get('/api/cms/settings', (req, res) => {
   try {
-    const row = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const row = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     if (!row) return res.json({});
     res.json(maskSettingsSecrets(JSON.parse(row.value)));
   } catch (err) {
@@ -4690,7 +4690,7 @@ app.get('/api/cms/settings', (req, res) => {
 
 app.put('/api/settings', requireAdmin, validateBody(schemas.settings), (req, res) => {
   try {
-    const current = db.prepare("SELECT value FROM settings WHERE key = 'site_settings'").get();
+    const current = db.prepare("SELECT value FROM settings WHERE `key` = 'site_settings'").get();
     const existing = current ? JSON.parse(current.value) : {};
     const payload = { ...req.body };
 
