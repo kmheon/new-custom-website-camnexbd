@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Check, X, Plus, Trash2, Image as ImageIcon, Sliders, Shield, Tag, HelpCircle,
+  Package, Check, X, Plus, Trash2, Image as ImageIcon, Sliders, Shield, Tag, HelpCircle,
   Globe, QrCode, Barcode, Calendar, ArrowUp, ArrowDown, FileText, CheckCircle2,
   AlertTriangle, Eye, Layers, Wrench, ChevronLeft, ChevronRight, Sparkles, RefreshCw, Star, UploadCloud
 } from 'lucide-react';
