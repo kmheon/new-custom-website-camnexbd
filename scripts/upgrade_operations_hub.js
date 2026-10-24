@@ -661,3 +661,4 @@ if (quotesStartIdx !== -1 && specTemplatesStartIdx !== -1) {
 
 fs.writeFileSync(targetFile, code, 'utf8');
 console.log('Successfully upgraded Operations Hub (Orders & Quotes) in AdminDashboard.tsx!');
+
