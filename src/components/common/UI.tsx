@@ -206,10 +206,12 @@ export const Textarea: React.FC<TextareaProps> = ({ label, error, hint, classNam
 export const Modal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: string | React.ReactNode;
   children: React.ReactNode;
   maxWidth?: string;
-}> = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl' }) => {
+  theme?: 'light' | 'dark';
+  containerClassName?: string;
+}> = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl', theme = 'light', containerClassName = '' }) => {
   React.useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -223,21 +225,39 @@ export const Modal: React.FC<{
 
   if (!isOpen) return null;
 
+  const isDark = theme === 'dark';
+
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
         }
       }}
     >
-      <div className={`bg-white w-full ${maxWidth} rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="text-lg font-bold text-[#111827]">{title}</h3>
+      <div className={`w-full ${maxWidth} rounded-2xl shadow-2xl overflow-hidden animate-fade-in ${
+        isDark
+          ? 'bg-slate-900 border border-slate-800 text-white'
+          : 'bg-white border border-slate-200 text-slate-900'
+      } ${containerClassName}`}>
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${
+          isDark
+            ? 'border-slate-800/80 bg-slate-950/90'
+            : 'border-slate-100 bg-white'
+        }`}>
+          {typeof title === 'string' ? (
+            <h3 className={`text-lg font-bold font-heading ${isDark ? 'text-white' : 'text-[#111827]'}`}>{title}</h3>
+          ) : (
+            title
+          )}
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
+            className={`p-1.5 rounded-lg transition-colors ${
+              isDark
+                ? 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+            }`}
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />

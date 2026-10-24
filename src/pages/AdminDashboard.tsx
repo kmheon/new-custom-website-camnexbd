@@ -4342,28 +4342,39 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
         <Modal
           isOpen={assistantModalOpen}
           onClose={() => setAssistantModalOpen(false)}
-          title="Product Creation Assistant (Mode A / Mode B)"
+          theme="dark"
+          title={
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#F15A24]/10 border border-[#F15A24]/20 flex items-center justify-center text-[#F15A24]">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-base font-black font-heading text-white">Hardware Research & Specification Engine</div>
+                <div className="text-[11px] text-slate-400 font-normal">Official Security Hardware Datasheet Intelligence</div>
+              </div>
+            </div>
+          }
           maxWidth="max-w-3xl"
         >
-          <div className="space-y-6 text-slate-900">
+          <div className="space-y-6 text-slate-200">
             
             {/* Mode Selector */}
-            <div className="grid grid-cols-2 gap-3 p-1 bg-slate-100 rounded-xl">
+            <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
               <button
                 onClick={() => setAssistantMode('A')}
-                className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                  assistantMode === 'A' ? 'bg-[#0F172A] text-white shadow-sm' : 'text-slate-600'
+                className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
+                  assistantMode === 'A' ? 'bg-[#F15A24] text-white shadow-md shadow-orange-600/20' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Mode A: Automatic Research Assistant
+                Mode A: Automatic Hardware Intelligence
               </button>
               <button
                 onClick={() => setAssistantMode('B')}
-                className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                  assistantMode === 'B' ? 'bg-[#0F172A] text-white shadow-sm' : 'text-slate-600'
+                className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
+                  assistantMode === 'B' ? 'bg-[#F15A24] text-white shadow-md shadow-orange-600/20' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Mode B: Manual Entry
+                Mode B: Manual Fast Draft
               </button>
             </div>
 

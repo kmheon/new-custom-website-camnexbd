@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import {
-  SlidersHorizontal, ArrowRight, Percent, DollarSign, FolderTree, Tag,
-  Eye, EyeOff, Trash2, Archive, Check, AlertTriangle, FileSpreadsheet,
-  Download, Upload, RefreshCw, X, AlertCircle, Boxes, Warehouse, Barcode
+  SlidersHorizontal, ArrowRight, Percent, FolderTree, Tag,
+  Eye, EyeOff, Check, AlertTriangle, FileSpreadsheet,
+  Download, Upload, RefreshCw, X, AlertCircle, Boxes, Warehouse, Barcode,
+  CheckCircle2, Layers, TrendingUp, TrendingDown, DollarSign, Sparkles
 } from 'lucide-react';
 import { Button, Modal, Badge } from '../common/UI';
 import { productService } from '../../services';
@@ -30,6 +31,9 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Target scope: apply to selected items or entire catalog
+  const [scopeMode, setScopeMode] = useState<'selected' | 'all'>(selectedProductIds.length > 0 ? 'selected' : 'all');
+
   // Bulk Price adjustment state
   const [priceMode, setPriceMode] = useState<BulkPriceMode>('percent_increase');
   const [priceAmount, setPriceAmount] = useState<number>(5);
@@ -37,7 +41,7 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   const [roundToNearest, setRoundToNearest] = useState<number>(50);
 
   // Bulk Stock & Inventory state (Phase 2 ERP/POS)
-  const [stockMode, setStockMode] = useState<'set_fixed' | 'add_stock' | 'reduce_stock'>('add_stock');
+  const [stockMode, setStockMode] = useState<'add_stock' | 'set_fixed' | 'reduce_stock'>('add_stock');
   const [stockAmount, setStockAmount] = useState<number>(10);
   const [shelfLocationInput, setShelfLocationInput] = useState<string>('');
   const [lowStockThresholdInput, setLowStockThresholdInput] = useState<number>(5);
@@ -60,10 +64,15 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const selectedProducts = products.filter(p => selectedProductIds.includes(p.id));
+  // Determine active target items
+  const activeProducts = (scopeMode === 'selected' && selectedProductIds.length > 0)
+    ? products.filter(p => selectedProductIds.includes(p.id))
+    : products;
+
+  const targetIds = activeProducts.map(p => p.id);
 
   // Compute live price preview on first 3 products
-  const previewProducts = selectedProducts.slice(0, 3).map(p => {
+  const previewProducts = activeProducts.slice(0, 3).map(p => {
     const cur = p.pricing[targetField] ?? p.pricing.regularPrice ?? 0;
     let next = cur;
     if (priceMode === 'percent_increase') next = cur * (1 + priceAmount / 100);
@@ -75,11 +84,12 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
     if (roundToNearest > 0) {
       next = Math.round(next / roundToNearest) * roundToNearest;
     }
-    return { name: p.name, sku: p.sku, oldVal: cur, newVal: next };
+    const delta = next - cur;
+    return { name: p.name, sku: p.sku, oldVal: cur, newVal: next, delta };
   });
 
   // Compute live stock preview on first 3 products
-  const previewStockProducts = selectedProducts.slice(0, 3).map(p => {
+  const previewStockProducts = activeProducts.slice(0, 3).map(p => {
     const cur = p.inventory?.available ?? 0;
     let next = cur;
     if (stockMode === 'set_fixed') next = Math.max(0, stockAmount);
@@ -89,8 +99,8 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   });
 
   const handleApplyPrice = async () => {
-    if (selectedProductIds.length === 0) {
-      setErrorMsg('No products selected');
+    if (targetIds.length === 0) {
+      setErrorMsg('No products found to adjust.');
       return;
     }
     setLoading(true);
@@ -98,13 +108,13 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
     try {
       if (productService.bulkAdjustPrices) {
         await productService.bulkAdjustPrices({
-          productIds: selectedProductIds,
+          productIds: targetIds,
           mode: priceMode,
           amount: priceAmount,
           targetField,
           roundToNearest
         });
-        setSuccessMsg(`Successfully adjusted prices for ${selectedProductIds.length} products`);
+        setSuccessMsg(`Successfully adjusted prices for ${targetIds.length} products.`);
         setTimeout(() => {
           onSuccess();
           onClose();
@@ -118,8 +128,8 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   };
 
   const handleApplyStock = async () => {
-    if (selectedProductIds.length === 0) {
-      setErrorMsg('No products selected');
+    if (targetIds.length === 0) {
+      setErrorMsg('No products found to adjust.');
       return;
     }
     setLoading(true);
@@ -127,13 +137,13 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
     try {
       if (productService.bulkAdjustStock) {
         await productService.bulkAdjustStock({
-          productIds: selectedProductIds,
+          productIds: targetIds,
           mode: stockMode,
           amount: stockAmount,
           shelfLocation: shelfLocationInput.trim() ? shelfLocationInput.trim() : undefined,
           lowStockThreshold: lowStockThresholdInput
         });
-        setSuccessMsg(`Successfully updated inventory & shelf tracking for ${selectedProductIds.length} products`);
+        setSuccessMsg(`Successfully updated inventory & shelf tracking for ${targetIds.length} products.`);
         setTimeout(() => {
           onSuccess();
           onClose();
@@ -147,8 +157,8 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   };
 
   const handleApplyCategoryMove = async () => {
-    if (selectedProductIds.length === 0 || !targetCategory) {
-      setErrorMsg('Please select a target category');
+    if (targetIds.length === 0 || !targetCategory) {
+      setErrorMsg('Please select a target category.');
       return;
     }
     setLoading(true);
@@ -157,11 +167,11 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
       const cat = categories.find(c => c.id === targetCategory || c.slug === targetCategory);
       if (productService.bulkMoveCategory) {
         await productService.bulkMoveCategory({
-          productIds: selectedProductIds,
+          productIds: targetIds,
           categoryId: targetCategory,
           categoryName: cat?.name
         });
-        setSuccessMsg(`Moved ${selectedProductIds.length} products to ${cat?.name || targetCategory}`);
+        setSuccessMsg(`Moved ${targetIds.length} products to ${cat?.name || targetCategory}.`);
         setTimeout(() => {
           onSuccess();
           onClose();
@@ -175,18 +185,18 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   };
 
   const handleApplyVisibility = async () => {
-    if (selectedProductIds.length === 0) return;
+    if (targetIds.length === 0) return;
     setLoading(true);
     setErrorMsg('');
     try {
       if (productService.bulkUpdateVisibility) {
         await productService.bulkUpdateVisibility({
-          productIds: selectedProductIds,
+          productIds: targetIds,
           websiteVisible: visibilityOption === 'publish',
           posAvailable: true,
           status: visibilityOption === 'publish' ? 'active' : 'draft'
         });
-        setSuccessMsg(`Updated publication visibility for ${selectedProductIds.length} products`);
+        setSuccessMsg(`Updated publication status for ${targetIds.length} products.`);
         setTimeout(() => {
           onSuccess();
           onClose();
@@ -200,7 +210,7 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   };
 
   const handleApplyTags = async () => {
-    if (selectedProductIds.length === 0) return;
+    if (targetIds.length === 0) return;
     setLoading(true);
     setErrorMsg('');
     try {
@@ -212,10 +222,10 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
 
       if (productService.bulkUpdateTags) {
         await productService.bulkUpdateTags({
-          productIds: selectedProductIds,
+          productIds: targetIds,
           tags
         });
-        setSuccessMsg(`Applied catalog tags to ${selectedProductIds.length} products`);
+        setSuccessMsg(`Applied catalog badge tags to ${targetIds.length} products.`);
         setTimeout(() => {
           onSuccess();
           onClose();
@@ -230,7 +240,10 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
 
   // Client-side Instant POS CSV Export with Barcodes & Multi-tier Pricing
   const handleExportCustomCsv = (onlySelected: boolean) => {
-    const targetProducts = onlySelected && selectedProducts.length > 0 ? selectedProducts : products;
+    const targetProducts = onlySelected && selectedProductIds.length > 0
+      ? products.filter(p => selectedProductIds.includes(p.id))
+      : products;
+
     const headers = [
       'ID', 'Name', 'SKU', 'Model', 'Brand', 'Category',
       'Regular Price (BDT)', 'Sale Price (BDT)', 'Wholesale Price (BDT)', 'Cost Price (BDT)',
@@ -316,554 +329,621 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Bulk Catalog Operations & Phase 2 POS/ERP Tools"
+      theme="dark"
       maxWidth="max-w-4xl"
-    >
-      <div className="flex flex-col h-[75vh]">
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 border-b border-slate-200 pb-3 mb-4 text-xs font-bold text-slate-600 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setActiveTab('prices')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-              activeTab === 'prices' ? 'bg-[#F15A24] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
-            }`}
-          >
-            <Percent className="w-3.5 h-3.5" />
-            <span>Price & Margin</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('stock')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-              activeTab === 'stock' ? 'bg-[#F15A24] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
-            }`}
-          >
-            <Boxes className="w-3.5 h-3.5" />
-            <span>Stock & Shelf (ERP)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('category')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-              activeTab === 'category' ? 'bg-[#F15A24] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
-            }`}
-          >
-            <FolderTree className="w-3.5 h-3.5" />
-            <span>Category Move</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('visibility')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-              activeTab === 'visibility' ? 'bg-[#F15A24] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Visibility & Status</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('tags')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-              activeTab === 'tags' ? 'bg-[#F15A24] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
-            }`}
-          >
-            <Tag className="w-3.5 h-3.5" />
-            <span>Badges & Flags</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('impexp')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-              activeTab === 'impexp' ? 'bg-[#F15A24] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
-            }`}
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>POS Barcode & CSV</span>
-          </button>
-        </div>
-
-        {/* Selected target info banner */}
-        <div className="mb-3 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs text-slate-600">
-          <div>
-            <strong>{selectedProductIds.length}</strong> products selected for bulk action
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#F15A24]/10 border border-[#F15A24]/20 flex items-center justify-center text-[#F15A24] shrink-0">
+            <SlidersHorizontal className="w-5 h-5" />
           </div>
-          {selectedProductIds.length === 0 && activeTab !== 'impexp' && (
-            <span className="text-amber-600 font-bold flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Select products using checkboxes in the table first
-            </span>
-          )}
+          <div>
+            <div className="text-base font-black font-heading text-white tracking-tight">Bulk Catalog Operations & Phase 2 Tools</div>
+            <div className="text-[11px] text-slate-400 font-normal">Pricing Margins, Warehouse Inventory & POS Handheld Scanner Exports</div>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-5 text-slate-200">
+        {/* Navigation Tabs (High Contrast Dark Segmented Control) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
+          {[
+            { id: 'prices', label: 'Price & Margin', icon: Percent },
+            { id: 'stock', label: 'Stock & Shelf', icon: Boxes },
+            { id: 'category', label: 'Category Move', icon: FolderTree },
+            { id: 'visibility', label: 'Visibility / POS', icon: Eye },
+            { id: 'tags', label: 'Badges & Ribbons', icon: Tag },
+            { id: 'impexp', label: 'POS Barcode CSV', icon: FileSpreadsheet }
+          ].map(t => {
+            const Icon = t.icon;
+            const isActive = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setActiveTab(t.id as any)}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-[#F15A24] text-white shadow-lg shadow-orange-600/20'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{t.label}</span>
+              </button>
+            );
+          })}
         </div>
 
+        {/* Dynamic Scope Controller Card */}
+        <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-[#F15A24]">
+              <Layers className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Operation Target Scope:</span>
+                <span className="text-[#F15A24] font-black">{targetIds.length} Products</span>
+              </div>
+              <div className="text-[11px] text-slate-400">
+                {scopeMode === 'selected' && selectedProductIds.length > 0
+                  ? `Applying only to the ${selectedProductIds.length} checked rows from the catalog table.`
+                  : `Applying globally across all ${products.length} products in the catalog.`}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 shrink-0">
+            <button
+              type="button"
+              onClick={() => setScopeMode('selected')}
+              disabled={selectedProductIds.length === 0}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                scopeMode === 'selected' && selectedProductIds.length > 0
+                  ? 'bg-[#F15A24] text-white'
+                  : 'text-slate-400 hover:text-white disabled:opacity-40 disabled:hover:text-slate-400'
+              }`}
+            >
+              Selected ({selectedProductIds.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setScopeMode('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                scopeMode === 'all' ? 'bg-[#F15A24] text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              All Catalog ({products.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Error Alert */}
         {errorMsg && (
-          <div className="mb-3 p-2.5 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
             <span>{errorMsg}</span>
           </div>
         )}
 
+        {/* Success Alert */}
         {successMsg && (
-          <div className="mb-3 p-2.5 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-200 flex items-center gap-2">
-            <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-xl flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
             <span>{successMsg}</span>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-          {/* TAB 1: BULK PRICE ADJUSTMENT */}
-          {activeTab === 'prices' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Adjustment Mode</label>
-                  <select
-                    value={priceMode}
-                    onChange={(e) => setPriceMode(e.target.value as any)}
-                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-bold"
-                  >
-                    <option value="percent_increase">+ Percentage Increase (%)</option>
-                    <option value="percent_decrease">- Percentage Decrease (%)</option>
-                    <option value="fixed_increase">+ Fixed Amount Increase (BDT)</option>
-                    <option value="fixed_decrease">- Fixed Amount Decrease (BDT)</option>
-                    <option value="set_fixed">Set Exact Price (BDT)</option>
-                  </select>
-                </div>
+        {/* TAB 1: BULK PRICE & MARGIN ADJUSTMENT */}
+        {activeTab === 'prices' && (
+          <div className="space-y-4">
+            {/* Mode Cards */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                1. Select Adjustment Formula
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {[
+                  { id: 'percent_increase', label: '+ Markup (%)', desc: 'Inflation / Margins', icon: TrendingUp },
+                  { id: 'percent_decrease', label: '- Discount (%)', desc: 'Promotional sale', icon: TrendingDown },
+                  { id: 'fixed_increase', label: '+ Fixed (৳)', desc: 'Add exact BDT', icon: DollarSign },
+                  { id: 'fixed_decrease', label: '- Markdown (৳)', desc: 'Deduct exact BDT', icon: DollarSign },
+                  { id: 'set_fixed', label: '= Set Price (৳)', desc: 'Exact flat rate', icon: Sparkles }
+                ].map(m => {
+                  const Icon = m.icon;
+                  const isCur = priceMode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setPriceMode(m.id as any)}
+                      className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                        isCur
+                          ? 'bg-orange-500/10 border-[#F15A24] text-white shadow-sm'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold">{m.label}</span>
+                        <Icon className={`w-3.5 h-3.5 ${isCur ? 'text-[#F15A24]' : 'text-slate-500'}`} />
+                      </div>
+                      <span className="text-[10px] text-slate-500">{m.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Amount / Value</label>
+            {/* Target Tier & Adjustment Value */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                  Target Price Field Tier
+                </label>
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900 rounded-xl border border-slate-800">
+                  {[
+                    { id: 'regularPrice', label: 'Regular Retail' },
+                    { id: 'salePrice', label: 'Sale Promo' },
+                    { id: 'wholesalePrice', label: 'B2B Wholesale' }
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setTargetField(f.id as any)}
+                      className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition-all ${
+                        targetField === f.id
+                          ? 'bg-[#F15A24] text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Adjustment Amount ({priceMode.includes('percent') ? '%' : 'BDT ৳'})
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {(priceMode.includes('percent') ? [5, 10, 15, 20] : [100, 500, 1000, 2000]).map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setPriceAmount(val)}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800"
+                      >
+                        {priceMode.includes('percent') ? `+${val}%` : `+৳${val}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="relative">
                   <input
                     type="number"
                     value={priceAmount}
                     onChange={(e) => setPriceAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-bold text-[#F15A24]"
+                    className="w-full bg-slate-900 border border-slate-700/80 text-white font-mono font-bold text-base px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                   />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Target Price Field</label>
-                  <select
-                    value={targetField}
-                    onChange={(e) => setTargetField(e.target.value as any)}
-                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-medium"
-                  >
-                    <option value="regularPrice">Regular Price (Storefront)</option>
-                    <option value="salePrice">Sale / Promotional Price</option>
-                    <option value="wholesalePrice">B2B Wholesale / Dealer Price</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Commercial Rounding Rule</label>
-                <select
-                  value={roundToNearest}
-                  onChange={(e) => setRoundToNearest(parseInt(e.target.value, 10) || 1)}
-                  className="w-full sm:w-1/2 bg-white border border-slate-300 text-xs p-2 rounded-lg"
-                >
-                  <option value={1}>Exact (No rounding)</option>
-                  <option value={10}>Round to nearest ৳10</option>
-                  <option value={50}>Round to nearest ৳50 (e.g. ৳1,450 / ৳1,500)</option>
-                  <option value={100}>Round to nearest ৳100 (e.g. ৳2,400 / ৳2,500)</option>
-                </select>
-              </div>
-
-              {/* Live Preview Card */}
-              {previewProducts.length > 0 && (
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Live Calculation Preview (First {previewProducts.length} items):
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                    {priceMode.includes('percent') ? '%' : '৳ BDT'}
                   </span>
-                  <div className="space-y-1.5">
-                    {previewProducts.map((p, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 last:border-0">
-                        <span className="font-medium text-slate-800 truncate max-w-xs">{p.name} ({p.sku})</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-400 line-through">৳{p.oldVal.toLocaleString()}</span>
-                          <ArrowRight className="w-3 h-3 text-slate-400" />
-                          <strong className="text-[#F15A24]">৳{p.newVal.toLocaleString()}</strong>
-                        </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Commercial Rounding Chips */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                Commercial Price Rounding Rules
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { val: 1, label: 'Exact BDT', desc: 'No rounding (e.g. ৳1,483)' },
+                  { val: 10, label: 'Nearest ৳10', desc: 'Tidy digits (e.g. ৳1,480)' },
+                  { val: 50, label: 'Nearest ৳50', desc: 'Standard retail (e.g. ৳1,450 / ৳1,500)' },
+                  { val: 100, label: 'Nearest ৳100', desc: 'Clean high-value (e.g. ৳2,400 / ৳2,500)' }
+                ].map(r => (
+                  <button
+                    key={r.val}
+                    type="button"
+                    onClick={() => setRoundToNearest(r.val)}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      roundToNearest === r.val
+                        ? 'bg-orange-500/10 border-[#F15A24] text-white'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <div className="text-xs font-bold">{r.label}</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">{r.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Calculation Preview */}
+            {previewProducts.length > 0 && (
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span>Live Calculation Preview (First {previewProducts.length} items):</span>
+                  <span className="text-emerald-400 font-mono">Real-time simulation</span>
+                </div>
+                <div className="space-y-2">
+                  {previewProducts.map((p, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800/80">
+                      <span className="font-medium text-slate-200 truncate max-w-sm">{p.name} ({p.sku})</span>
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <span className="text-slate-500 line-through font-mono">৳{p.oldVal.toLocaleString()}</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
+                        <span className="text-[#F15A24] font-black font-mono text-sm">৳{p.newVal.toLocaleString()}</span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                          p.delta >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                        }`}>
+                          {p.delta >= 0 ? `+৳${p.delta.toLocaleString()}` : `-৳${Math.abs(p.delta).toLocaleString()}`}
+                        </span>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Button
+              size="md"
+              onClick={handleApplyPrice}
+              disabled={loading || targetIds.length === 0}
+              className="w-full bg-[#F15A24] hover:bg-[#D94D1C] text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-500/20"
+            >
+              <Check className="w-4 h-4 mr-1.5" />
+              <span>Apply Price Formula to {targetIds.length} Products</span>
+            </Button>
+          </div>
+        )}
+
+        {/* TAB 2: BULK STOCK & SHELF LOCATION (PHASE 2 ERP/POS) */}
+        {activeTab === 'stock' && (
+          <div className="space-y-4">
+            {/* Mode Cards */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                1. Select Inventory Action Mode
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { id: 'add_stock', label: '+ Inward Stock Receipt', desc: 'Add +X units to current warehouse count', color: 'emerald' },
+                  { id: 'set_fixed', label: '= Stock Audit / Count', desc: 'Set exact physical on-hand quantity', color: 'sky' },
+                  { id: 'reduce_stock', label: '- Stock Outflow / Write-off', desc: 'Deduct -X units (minimum 0)', color: 'rose' }
+                ].map(m => {
+                  const isCur = stockMode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setStockMode(m.id as any)}
+                      className={`p-3.5 rounded-xl border text-left transition-all ${
+                        isCur
+                          ? 'bg-orange-500/10 border-[#F15A24] text-white'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-white mb-0.5">{m.label}</div>
+                      <div className="text-[10px] text-slate-500">{m.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Inputs: Amount, Threshold, Shelf */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quantity (Units)</label>
+                  <div className="flex items-center gap-1">
+                    {[5, 10, 25, 50].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setStockAmount(val)}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800"
+                      >
+                        +{val}
+                      </button>
                     ))}
                   </div>
                 </div>
-              )}
-
-              <Button
-                size="md"
-                onClick={handleApplyPrice}
-                disabled={loading || selectedProductIds.length === 0}
-              >
-                <Check className="w-4 h-4 mr-1.5" />
-                <span>Apply Price Adjustment ({selectedProductIds.length} items)</span>
-              </Button>
-            </div>
-          )}
-
-          {/* TAB 2: BULK STOCK & SHELF LOCATION (PHASE 2 ERP/POS) */}
-          {activeTab === 'stock' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Stock Adjustment Mode</label>
-                  <select
-                    value={stockMode}
-                    onChange={(e) => setStockMode(e.target.value as any)}
-                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-bold"
-                  >
-                    <option value="add_stock">+ Add to Existing Stock (+X Units)</option>
-                    <option value="set_fixed">Set Exact Stock Quantity (X Units)</option>
-                    <option value="reduce_stock">- Deduct from Stock (-X Units)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Quantity (Units)</label>
-                  <input
-                    type="number"
-                    value={stockAmount}
-                    onChange={(e) => setStockAmount(parseInt(e.target.value, 10) || 0)}
-                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-bold text-emerald-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Low Stock Warning Threshold</label>
-                  <input
-                    type="number"
-                    value={lowStockThresholdInput}
-                    onChange={(e) => setLowStockThresholdInput(parseInt(e.target.value, 10) || 5)}
-                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
-                  />
-                </div>
+                <input
+                  type="number"
+                  value={stockAmount}
+                  onChange={(e) => setStockAmount(parseInt(e.target.value, 10) || 0)}
+                  className="w-full bg-slate-900 border border-slate-700/80 text-emerald-400 font-mono font-bold text-base px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
+                />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Assign Warehouse Shelf Location (Optional)</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Low Stock Warning Limit</label>
+                <input
+                  type="number"
+                  value={lowStockThresholdInput}
+                  onChange={(e) => setLowStockThresholdInput(parseInt(e.target.value, 10) || 5)}
+                  className="w-full bg-slate-900 border border-slate-700/80 text-amber-400 font-mono font-bold text-base px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Warehouse Shelf Location</label>
                 <input
                   type="text"
                   value={shelfLocationInput}
                   onChange={(e) => setShelfLocationInput(e.target.value)}
-                  placeholder="e.g. Rack A-01 / Bin 03 (Leave blank to keep current location)"
-                  className="w-full sm:w-2/3 bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono"
+                  placeholder="e.g. Rack A-01 / Shelf 2"
+                  className="w-full bg-slate-900 border border-slate-700/80 text-white font-mono text-sm px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-[#F15A24]"
                 />
               </div>
+            </div>
 
-              {/* Stock Live Preview */}
-              {previewStockProducts.length > 0 && (
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Live Stock Preview (First {previewStockProducts.length} items):
-                  </span>
-                  <div className="space-y-1.5">
-                    {previewStockProducts.map((p, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 last:border-0">
-                        <span className="font-medium text-slate-800 truncate max-w-xs">{p.name} ({p.sku})</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-400">{p.oldVal} in stock</span>
-                          <ArrowRight className="w-3 h-3 text-slate-400" />
-                          <strong className="text-emerald-600">{p.newVal} in stock</strong>
-                          {shelfLocationInput && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[10px]">
-                              {shelfLocationInput}
-                            </span>
-                          )}
-                        </div>
+            {/* Stock Live Preview */}
+            {previewStockProducts.length > 0 && (
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Live Stock Simulation (First {previewStockProducts.length} items):
+                </div>
+                <div className="space-y-2">
+                  {previewStockProducts.map((p, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800/80">
+                      <span className="font-medium text-slate-200 truncate max-w-sm">{p.name} ({p.sku})</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-slate-400 font-mono">{p.oldVal} units</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
+                        <span className="text-emerald-400 font-black font-mono">{p.newVal} units</span>
+                        {shelfLocationInput && (
+                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">
+                            {shelfLocationInput}
+                          </span>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <Button
-                size="md"
-                onClick={handleApplyStock}
-                disabled={loading || selectedProductIds.length === 0}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                <Boxes className="w-4 h-4 mr-1.5" />
-                <span>Apply Inventory Adjustment ({selectedProductIds.length} items)</span>
-              </Button>
-            </div>
-          )}
-
-          {/* TAB 3: BULK CATEGORY MOVE */}
-          {activeTab === 'category' && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Target Category *</label>
-                <select
-                  value={targetCategory}
-                  onChange={(e) => setTargetCategory(e.target.value)}
-                  className="w-full bg-white border border-slate-300 text-xs p-2.5 rounded-lg font-bold"
-                >
-                  <option value="">-- Choose Category to Move Selected Products Into --</option>
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    </div>
                   ))}
-                </select>
+                </div>
               </div>
+            )}
 
-              <p className="text-xs text-slate-500">
-                Moving products will reassign their canonical category and update storefront breadcrumbs immediately.
+            <Button
+              size="md"
+              onClick={handleApplyStock}
+              disabled={loading || targetIds.length === 0}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold"
+            >
+              <Boxes className="w-4 h-4 mr-1.5" />
+              <span>Update Inventory & Shelf for {targetIds.length} Products</span>
+            </Button>
+          </div>
+        )}
+
+        {/* TAB 3: BULK CATEGORY MOVE */}
+        {activeTab === 'category' && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                Target Hardware Category
+              </label>
+              <select
+                value={targetCategory}
+                onChange={(e) => setTargetCategory(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700/80 text-white text-sm p-3 rounded-xl font-bold focus:outline-none focus:border-[#F15A24]"
+              >
+                <option value="" className="bg-slate-900 text-slate-400">-- Choose Category Destination --</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id} className="bg-slate-900 text-white font-medium">{c.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-400">
+                Moving products will reassign their canonical category hierarchy and update live storefront breadcrumbs immediately.
               </p>
-
-              <Button
-                size="md"
-                onClick={handleApplyCategoryMove}
-                disabled={loading || selectedProductIds.length === 0 || !targetCategory}
-              >
-                <FolderTree className="w-4 h-4 mr-1.5" />
-                <span>Move Selected to Category</span>
-              </Button>
             </div>
-          )}
 
-          {/* TAB 4: VISIBILITY & STATUS */}
-          {activeTab === 'visibility' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setVisibilityOption('publish')}
-                  className={`p-3.5 rounded-xl border text-left transition-all ${
-                    visibilityOption === 'publish'
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-950 font-bold'
-                      : 'bg-white border-slate-200 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 text-xs font-bold mb-1 text-emerald-700">
-                    <Eye className="w-4 h-4" />
-                    <span>Publish (Active)</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-normal">
-                    Visible on live website catalog and POS terminals.
-                  </div>
-                </button>
+            <Button
+              size="md"
+              onClick={handleApplyCategoryMove}
+              disabled={loading || targetIds.length === 0 || !targetCategory}
+              className="w-full bg-[#F15A24] hover:bg-[#D94D1C] text-white py-3 rounded-xl font-bold"
+            >
+              <FolderTree className="w-4 h-4 mr-1.5" />
+              <span>Relocate {targetIds.length} Products to Category</span>
+            </Button>
+          </div>
+        )}
 
-                <button
-                  type="button"
-                  onClick={() => setVisibilityOption('hide')}
-                  className={`p-3.5 rounded-xl border text-left transition-all ${
-                    visibilityOption === 'hide'
-                      ? 'bg-amber-50 border-amber-500 text-amber-950 font-bold'
-                      : 'bg-white border-slate-200 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 text-xs font-bold mb-1 text-amber-700">
-                    <EyeOff className="w-4 h-4" />
-                    <span>Draft / Hidden</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-normal">
-                    Hidden from storefront customers. Preserved in database.
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setVisibilityOption('pos_only')}
-                  className={`p-3.5 rounded-xl border text-left transition-all ${
-                    visibilityOption === 'pos_only'
-                      ? 'bg-sky-50 border-sky-500 text-sky-950 font-bold'
-                      : 'bg-white border-slate-200 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 text-xs font-bold mb-1 text-sky-700">
-                    <Warehouse className="w-4 h-4" />
-                    <span>POS / In-Store Only</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-normal">
-                    Hidden from public web, accessible only on physical POS registers.
-                  </div>
-                </button>
-              </div>
-
-              <Button
-                size="md"
-                onClick={handleApplyVisibility}
-                disabled={loading || selectedProductIds.length === 0}
-              >
-                <Check className="w-4 h-4 mr-1.5" />
-                <span>Apply Visibility Status ({selectedProductIds.length} items)</span>
-              </Button>
-            </div>
-          )}
-
-          {/* TAB 5: BADGES & FLAGS */}
-          {activeTab === 'tags' && (
-            <div className="space-y-4">
-              <span className="text-xs text-slate-600 block">
-                Update marketing ribbon tags across all selected catalog items:
-              </span>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <label className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between cursor-pointer">
-                  <span className="text-xs font-bold text-slate-800">Featured</span>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(tagFeatured)}
-                    onChange={(e) => setTagFeatured(e.target.checked)}
-                    className="rounded text-[#F15A24]"
-                  />
-                </label>
-
-                <label className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between cursor-pointer">
-                  <span className="text-xs font-bold text-slate-800">Popular</span>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(tagPopular)}
-                    onChange={(e) => setTagPopular(e.target.checked)}
-                    className="rounded text-[#F15A24]"
-                  />
-                </label>
-
-                <label className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between cursor-pointer">
-                  <span className="text-xs font-bold text-slate-800">New Arrival</span>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(tagNew)}
-                    onChange={(e) => setTagNew(e.target.checked)}
-                    className="rounded text-[#F15A24]"
-                  />
-                </label>
-
-                <label className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between cursor-pointer">
-                  <span className="text-xs font-bold text-slate-800">Hot Item</span>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(tagHot)}
-                    onChange={(e) => setTagHot(e.target.checked)}
-                    className="rounded text-[#F15A24]"
-                  />
-                </label>
-              </div>
-
-              <Button
-                size="md"
-                onClick={handleApplyTags}
-                disabled={loading || selectedProductIds.length === 0}
-              >
-                <Tag className="w-4 h-4 mr-1.5" />
-                <span>Save Badge Flags</span>
-              </Button>
-            </div>
-          )}
-
-          {/* TAB 6: POS BARCODE & CSV SPREADSHEETS */}
-          {activeTab === 'impexp' && (
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <Barcode className="w-4 h-4 text-[#F15A24]" />
-                      <span>Export POS Scanner & Inventory CSV</span>
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Includes Barcode (UPC/EAN), SKU, Name, Model, Category, Regular Price, B2B Wholesale Price, Stock & Shelf Location.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-200">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleExportCustomCsv(true)}
-                    disabled={selectedProductIds.length === 0}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-100"
-                  >
-                    <Download className="w-3.5 h-3.5 mr-1" />
-                    <span>Download Selected ({selectedProductIds.length} items)</span>
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    onClick={() => handleExportCustomCsv(false)}
-                    className="bg-[#0F172A] text-white hover:bg-slate-800"
-                  >
-                    <Download className="w-3.5 h-3.5 mr-1" />
-                    <span>Download Full Catalog ({products.length} items)</span>
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 block">Import Products JSON Data</label>
+        {/* TAB 4: VISIBILITY & STATUS */}
+        {activeTab === 'visibility' && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { id: 'publish', title: 'Active & Published', desc: 'Visible on live storefront and POS terminals', icon: Eye, activeBorder: 'border-emerald-500', activeBg: 'bg-emerald-500/10' },
+                { id: 'hide', title: 'Draft / Hidden', desc: 'Hidden from customers; preserved in back-office', icon: EyeOff, activeBorder: 'border-amber-500', activeBg: 'bg-amber-500/10' },
+                { id: 'pos_only', title: 'POS / Physical Desk Only', desc: 'Hidden on web; available on physical checkout registers', icon: Warehouse, activeBorder: 'border-sky-500', activeBg: 'bg-sky-500/10' }
+              ].map(opt => {
+                const Icon = opt.icon;
+                const isCur = visibilityOption === opt.id;
+                return (
                   <button
+                    key={opt.id}
                     type="button"
-                    onClick={() => {
-                      setImportJsonText(JSON.stringify([
-                        {
-                          name: "Hikvision DS-2CD2047G2-LU 4MP ColorVu",
-                          sku: "CNX-HIK-2CD2047",
-                          modelNumber: "DS-2CD2047G2-LU",
-                          brand: "Hikvision",
-                          category: "CCTV Cameras",
-                          regularPrice: 8500,
-                          salePrice: 7990,
-                          wholesalePrice: 6800,
-                          availableStock: 15,
-                          barcode: "8801234567890",
-                          shelfLocation: "Rack H-01"
-                        }
-                      ], null, 2));
-                    }}
-                    className="text-[10px] text-[#F15A24] font-bold hover:underline"
+                    onClick={() => setVisibilityOption(opt.id as any)}
+                    className={`p-4 rounded-2xl border text-left transition-all ${
+                      isCur
+                        ? `${opt.activeBg} ${opt.activeBorder} text-white`
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                    }`}
                   >
-                    Load Sample Template
+                    <div className="flex items-center gap-2 text-xs font-bold text-white mb-1">
+                      <Icon className="w-4 h-4 text-[#F15A24]" />
+                      <span>{opt.title}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-500">{opt.desc}</div>
                   </button>
+                );
+              })}
+            </div>
+
+            <Button
+              size="md"
+              onClick={handleApplyVisibility}
+              disabled={loading || targetIds.length === 0}
+              className="w-full bg-[#F15A24] hover:bg-[#D94D1C] text-white py-3 rounded-xl font-bold"
+            >
+              <Check className="w-4 h-4 mr-1.5" />
+              <span>Apply Publication Status to {targetIds.length} Products</span>
+            </Button>
+          </div>
+        )}
+
+        {/* TAB 5: BADGES & FLAGS */}
+        {activeTab === 'tags' && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { state: tagFeatured, set: setTagFeatured, label: 'Featured' },
+                { state: tagPopular, set: setTagPopular, label: 'Popular' },
+                { state: tagNew, set: setTagNew, label: 'New Arrival' },
+                { state: tagHot, set: setTagHot, label: 'Hot Item' }
+              ].map(tag => (
+                <label key={tag.label} className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between cursor-pointer hover:border-slate-700">
+                  <span className="text-xs font-bold text-white">{tag.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(tag.state)}
+                    onChange={(e) => tag.set(e.target.checked)}
+                    className="rounded bg-slate-900 border-slate-700 text-[#F15A24] focus:ring-0 w-4 h-4 cursor-pointer"
+                  />
+                </label>
+              ))}
+            </div>
+
+            <Button
+              size="md"
+              onClick={handleApplyTags}
+              disabled={loading || targetIds.length === 0}
+              className="w-full bg-[#F15A24] hover:bg-[#D94D1C] text-white py-3 rounded-xl font-bold"
+            >
+              <Tag className="w-4 h-4 mr-1.5" />
+              <span>Save Badge Flags for {targetIds.length} Products</span>
+            </Button>
+          </div>
+        )}
+
+        {/* TAB 6: POS BARCODE & CSV SPREADSHEETS */}
+        {activeTab === 'impexp' && (
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Barcode className="w-4 h-4 text-[#F15A24]" />
+                    <span>Export POS Scanner & Inventory CSV</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Formatted for barcode handheld terminals & reconciliation. Includes Barcode (UPC/EAN), SKU, Regular Price, Wholesale Price, Cost, Stock, and Shelf Location.
+                  </p>
                 </div>
+              </div>
 
-                <textarea
-                  value={importJsonText}
-                  onChange={(e) => setImportJsonText(e.target.value)}
-                  placeholder="Paste JSON array of products here..."
-                  className="w-full h-32 p-2.5 font-mono text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#F15A24]"
-                />
+              <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-800/80">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleExportCustomCsv(true)}
+                  disabled={selectedProductIds.length === 0}
+                  className="border-slate-700 bg-slate-900 text-slate-200 hover:text-white hover:bg-slate-800"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  <span>Download Selected ({selectedProductIds.length} items)</span>
+                </Button>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleImportDryRun}
-                    disabled={!importJsonText.trim()}
-                  >
-                    Preview Import
-                  </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleExportCustomCsv(false)}
+                  className="bg-[#F15A24] hover:bg-[#D94D1C] text-white"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  <span>Download Full Catalog ({products.length} items)</span>
+                </Button>
+              </div>
+            </div>
 
-                  {importPreview && (
-                    <Button
-                      size="sm"
-                      onClick={handleExecuteImport}
-                      disabled={loading}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      Commit {importPreview.validRows?.length || 0} Products
-                    </Button>
-                  )}
-                </div>
+            {/* JSON Catalog Import */}
+            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-white block">Import Catalog JSON Payload</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImportJsonText(JSON.stringify([
+                      {
+                        name: "Hikvision DS-2CD2047G2-LU 4MP ColorVu",
+                        sku: "CNX-HIK-2CD2047",
+                        modelNumber: "DS-2CD2047G2-LU",
+                        brand: "Hikvision",
+                        category: "CCTV Cameras",
+                        regularPrice: 8500,
+                        salePrice: 7990,
+                        wholesalePrice: 6800,
+                        availableStock: 15,
+                        barcode: "8801234567890",
+                        shelfLocation: "Rack H-01"
+                      }
+                    ], null, 2));
+                  }}
+                  className="text-[10px] text-[#F15A24] font-bold hover:underline"
+                >
+                  Load Sample Template
+                </button>
+              </div>
+
+              <textarea
+                value={importJsonText}
+                onChange={(e) => setImportJsonText(e.target.value)}
+                placeholder="Paste JSON array of products here..."
+                className="w-full h-28 p-3 font-mono text-xs bg-slate-900 border border-slate-700/80 text-slate-200 rounded-xl focus:outline-none focus:border-[#F15A24]"
+              />
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleImportDryRun}
+                  disabled={!importJsonText.trim()}
+                  className="border-slate-700 bg-slate-900 text-slate-200 hover:text-white"
+                >
+                  Validate & Preview
+                </Button>
 
                 {importPreview && (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
-                    <div className="font-bold text-slate-700">Import Validation Summary:</div>
-                    <div className="text-emerald-700">Valid Products: {importPreview.validRows?.length || 0}</div>
-                    {importPreview.invalidRows?.length > 0 && (
-                      <div className="text-rose-600">Errors: {importPreview.invalidRows.length} rows failed validation.</div>
-                    )}
-                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleExecuteImport}
+                    disabled={loading}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    Commit {importPreview.validRows?.length || 0} Products
+                  </Button>
                 )}
               </div>
+
+              {importPreview && (
+                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs space-y-1">
+                  <div className="font-bold text-white">Import Validation Summary:</div>
+                  <div className="text-emerald-400">Valid Products: {importPreview.validRows?.length || 0}</div>
+                  {importPreview.invalidRows?.length > 0 && (
+                    <div className="text-rose-400">Errors: {importPreview.invalidRows.length} rows failed validation.</div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </Modal>
   );
