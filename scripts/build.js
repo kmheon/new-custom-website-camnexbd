@@ -6,7 +6,14 @@
  * 2. Website Manager: src/admin/main.tsx -> bundle.admin.<hash>.js
  * 3. Staff App: src/staff/main.tsx -> bundle.staff.<hash>.js
  * And compiles Tailwind CSS with PostCSS.
+ *
+ * CloudLinux / cPanel LVE Memory & Thread Concurrency Protection:
+ * Caps Go and libuv worker threads so esbuild + PostCSS never exceed shared-hosting LVE limits.
  */
+
+process.env.GOMAXPROCS = process.env.GOMAXPROCS || '1';
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '1';
+process.env.RAYON_NUM_THREADS = process.env.RAYON_NUM_THREADS || '1';
 
 const esbuild = require('esbuild');
 const fs = require('fs');
@@ -77,6 +84,16 @@ async function runBuild() {
     path.join(__dirname, '../public/bundle.staff.js')
   );
 
+  // Stop esbuild child service before running PostCSS/Tailwind to release ~150MB RAM and OS threads on cPanel LVE
+  try {
+    if (typeof esbuild.stop === 'function') {
+      await esbuild.stop();
+    }
+  } catch (_) {}
+  if (typeof global.gc === 'function') {
+    try { global.gc(); } catch (_) {}
+  }
+
   // 2. Compile Tailwind CSS (Build-time, minified)
   console.log('[BUILD] Compiling Tailwind CSS with PostCSS...');
   const cssInputPath = path.join(__dirname, '../src/style.css');
@@ -87,12 +104,15 @@ async function runBuild() {
     autoprefixer
   ]).process(cssInput, { from: cssInputPath });
 
-  const minifiedCssResult = await esbuild.transform(postcssResult.css, {
-    loader: 'css',
-    minify: true
-  });
+  // Lightweight in-process CSS minification to avoid respawning esbuild child process during peak PostCSS heap
+  const minifiedCss = postcssResult.css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([{}:;,])\s*/g, '$1')
+    .replace(/;}/g, '}')
+    .trim();
 
-  const outputCss = Buffer.from(minifiedCssResult.code);
+  const outputCss = Buffer.from(minifiedCss, 'utf8');
   const cssHash = crypto.createHash('md5').update(outputCss).digest('hex').slice(0, 10);
   const hashedCssFilename = `bundle.${cssHash}.css`;
   const hashedCssPath = path.join(distDir, hashedCssFilename);
