@@ -395,7 +395,8 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
       return { success: true, configured: true, message: res.message };
     } catch (err: any) {
       set({ isLoading: false, error: err.message });
-      return { success: false, configured: false, error: err.message };
+      const isUnconfiguredError = Boolean(err?.message && String(err.message).toLowerCase().includes('unconfigured'));
+      return { success: false, configured: isUnconfiguredError ? false : (get().providersStatus?.smsOtp?.configured ?? true), error: err.message };
     }
   },
 
@@ -454,7 +455,8 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
       return { success: true, configured: res.configured !== false, message: res.message };
     } catch (err: any) {
       set({ isLoading: false, error: err.message });
-      return { success: false, configured: false, error: err.message };
+      const isUnconfiguredError = Boolean(err?.message && String(err.message).toLowerCase().includes('unconfigured'));
+      return { success: false, configured: isUnconfiguredError ? false : (get().providersStatus?.smsOtp?.configured ?? true), error: err.message };
     }
   },
 

@@ -391,7 +391,7 @@ export const CustomerAccountPage: React.FC<CustomerAccountPageProps> = ({ onNavi
         type: 'error',
         message: res.error || 'Failed to send OTP code.'
       });
-      if (res.configured === false) {
+      if (res.configured === false && !providersStatus?.smsOtp?.configured) {
         setSetupNotice({
           provider: 'SMS Gateway',
           title: 'SMS Gateway Not Configured',

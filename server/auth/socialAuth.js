@@ -3,9 +3,17 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../../database');
 const { createSession } = require('../../auth');
-const { getSmsGatewayConfig, getSmsGatewaySafeDiagnostic, normalizeSmsProvider } = require('../shared/envHelper');
+const { getSmsGatewayConfig, getSmsGatewaySafeDiagnostic: getBaseSafeDiagnostic, normalizeSmsProvider } = require('../shared/envHelper');
 
-const BUILD_IDENTIFIER = '20261024-sms-v4';
+const BUILD_IDENTIFIER = '20261024-sms-v5';
+let lastSmsDispatch = null;
+
+function getSmsGatewaySafeDiagnostic() {
+  return {
+    ...getBaseSafeDiagnostic(),
+    lastDispatch: lastSmsDispatch
+  };
+}
 
 /**
  * Returns configuration status of external authentication providers.
@@ -508,15 +516,16 @@ async function sendPhoneOtp(req, res) {
         const apiRes = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData,
+          body: formData.toString(),
           signal: controller.signal
         });
 
         if (!apiRes.ok) {
           try { db.prepare(`DELETE FROM phone_otps WHERE id = ?`).run(otpId); } catch (_) {}
+          lastSmsDispatch = { outcome: 'http_error', httpStatus: apiRes.status, timestamp: new Date().toISOString() };
           console.error(`[SMS GATEWAY] BulkSMSBD returned HTTP status ${apiRes.status}`);
           return res.status(502).json({
-            error: 'SMS gateway service returned an error status. Please try again or use password sign-in.'
+            error: `SMS gateway service returned HTTP status ${apiRes.status}. Please try again or use password sign-in.`
           });
         }
 
@@ -533,21 +542,38 @@ async function sendPhoneOtp(req, res) {
 
         if (!isSuccess) {
           try { db.prepare(`DELETE FROM phone_otps WHERE id = ?`).run(otpId); } catch (_) {}
+          lastSmsDispatch = {
+            outcome: 'rejected',
+            responseCode: responseCode || 'unknown',
+            timestamp: new Date().toISOString()
+          };
           console.warn(`[SMS GATEWAY REJECTED] BulkSMSBD rejected SMS dispatch. Response code: ${responseCode || 'unknown'}`);
-          let clientErrMsg = 'Failed to deliver SMS verification code. Please check your phone number or try password sign-in.';
-          if (responseCode === '1002') {
-            clientErrMsg = 'SMS gateway configuration error: Sender ID is not approved or inactive.';
-          } else if (responseCode === '1006' || responseCode === '1007') {
-            clientErrMsg = 'SMS service temporarily unavailable due to gateway balance. Please use password sign-in.';
+          let clientErrMsg = `Failed to deliver SMS verification code (Gateway Code: ${responseCode || 'unknown'}). Please check your phone number or try password sign-in.`;
+          if (responseCode === '1001') {
+            clientErrMsg = 'Invalid mobile phone number rejected by SMS gateway (Code 1001).';
+          } else if (responseCode === '1002') {
+            clientErrMsg = 'SMS gateway configuration error: Sender ID is not approved or inactive (Code 1002).';
           } else if (responseCode === '1003' || responseCode === '1011') {
-            clientErrMsg = 'SMS gateway authentication failed. Please contact the administrator.';
+            clientErrMsg = `SMS gateway authentication failed (Code ${responseCode}). Please contact the administrator.`;
+          } else if (responseCode === '1005') {
+            clientErrMsg = 'SMS gateway internal error or unapproved Sender ID asset (Code 1005).';
+          } else if (responseCode === '1006' || responseCode === '1007') {
+            clientErrMsg = `SMS service temporarily unavailable due to gateway balance (Code ${responseCode}). Please use password sign-in.`;
+          } else if (responseCode === '1012') {
+            clientErrMsg = 'Masking SMS route requires Bengali text or non-masking Sender ID (Code 1012).';
+          } else if (responseCode === '1013' || responseCode === '1014' || responseCode === '1015') {
+            clientErrMsg = `SMS gateway configuration error: Sender ID has no active gateway route for this API key (Code ${responseCode}).`;
+          } else if (responseCode === '1032') {
+            clientErrMsg = 'SMS gateway IP restriction (Code 1032): Server IP is not whitelisted in the BulkSMSBD dashboard (Phone Book -> IP White List).';
           }
           return res.status(502).json({
             error: clientErrMsg,
-            code: 'SMS_GATEWAY_REJECTED'
+            code: 'SMS_GATEWAY_REJECTED',
+            gatewayCode: responseCode
           });
         }
 
+        lastSmsDispatch = { outcome: 'success', responseCode: responseCode || '202', timestamp: new Date().toISOString() };
         console.log(`[SMS GATEWAY SUCCESS] OTP SMS submitted via BulkSMSBD (Code: ${responseCode || 202})`);
       } else if (provider === 'greenweb') {
         const apiRes = await fetch('https://api.greenweb.com.bd/api.php', {
