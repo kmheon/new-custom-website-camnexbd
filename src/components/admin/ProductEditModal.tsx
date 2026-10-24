@@ -710,15 +710,28 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   {/* Barcode & Format */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center gap-1">
-                        <Barcode className="w-3.5 h-3.5" />
-                        <span>Barcode / UPC / EAN</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                          <Barcode className="w-3.5 h-3.5 text-[#F15A24]" />
+                          <span>Barcode / UPC / EAN</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const randomBarcode = `880${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+                            setFormData(prev => ({ ...prev, barcode: randomBarcode, barcodeFormat: prev.barcodeFormat || 'Code 128' }));
+                          }}
+                          className="text-[10px] text-[#F15A24] font-bold hover:underline flex items-center gap-0.5"
+                        >
+                          <Sparkles className="w-2.5 h-2.5" />
+                          <span>Auto-Generate</span>
+                        </button>
+                      </div>
                       <input
                         type="text"
                         value={formData.barcode || ''}
                         onChange={e => setFormData({ ...formData, barcode: e.target.value })}
-                        placeholder="e.g. 6954273612845"
+                        placeholder="e.g. 8801234567890"
                         className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
                       />
                     </div>
@@ -729,7 +742,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         onChange={e => setFormData({ ...formData, barcodeFormat: e.target.value as any })}
                         className="w-full bg-white border border-slate-300 text-xs p-2 rounded"
                       >
-                        <option value="Code 128">Code 128 (Standard)</option>
+                        <option value="Code 128">Code 128 (Standard POS)</option>
                         <option value="EAN-13">EAN-13 (International)</option>
                         <option value="UPC-A">UPC-A (Retail)</option>
                         <option value="QR Code">QR Code</option>
@@ -1073,6 +1086,23 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                       <option value="depot-chittagong">Chittagong Distribution Depot</option>
                       <option value="depot-sylhet">Sylhet Regional Depot</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Shelf Location (Rack / Bin)</label>
+                    <input
+                      type="text"
+                      value={formData.inventory?.shelfLocation || ''}
+                      onChange={e => setFormData({
+                        ...formData,
+                        inventory: {
+                          ...formData.inventory!,
+                          shelfLocation: e.target.value
+                        }
+                      })}
+                      placeholder="e.g. Rack A-02 / Bin 04"
+                      className="w-full bg-white border border-slate-300 text-xs p-2 rounded font-mono"
+                    />
                   </div>
                 </div>
 

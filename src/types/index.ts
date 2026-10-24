@@ -1173,6 +1173,14 @@ export interface BulkTagPayload {
   };
 }
 
+export interface BulkStockAdjustmentPayload {
+  productIds: string[];
+  mode: 'set_fixed' | 'add_stock' | 'reduce_stock' | 'shelf_only';
+  amount?: number;
+  shelfLocation?: string;
+  lowStockThreshold?: number;
+}
+
 export interface BulkOperationResult {
   success: boolean;
   affectedCount: number;

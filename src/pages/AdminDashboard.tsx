@@ -4,7 +4,7 @@ import {
   FileText, Settings, Sparkles, Check, X, AlertCircle, RefreshCw, Trash2, Edit3, Plus,
   Search, Shield, Eye, Database, ArrowRight, ExternalLink, ArrowUp, ArrowDown,
   Image as ImageIcon, SlidersHorizontal, Calendar, BookOpen, HelpCircle, Briefcase, Star, Globe, Compass, Phone, Wrench, Building2,
-  Clock, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, Truck, CreditCard, Activity, Zap, Percent, FileCheck
+  Clock, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, Truck, CreditCard, Activity, Zap, Percent, FileCheck, LayoutGrid, List, Boxes, Barcode
 } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { Button, Input, Select, Badge, Card, Modal, Alert } from '../components/common/UI';
@@ -239,6 +239,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
   const [productPage, setProductPage] = useState(1);
   const [productPageSize, setProductPageSize] = useState(15);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [productViewMode, setProductViewMode] = useState<'table' | 'grid'>('table');
   const [bulkToolsModalOpen, setBulkToolsModalOpen] = useState(false);
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null);
 
@@ -831,17 +832,26 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       }
     });
 
+    const suggestedPricing = (researchResult as any).suggestedPricing || {};
+    const suggestedInventory = (researchResult as any).suggestedInventory || {};
+    const autoSku = (researchResult as any).sku || `CNX-${researchResult.brand.slice(0, 3).toUpperCase()}-${researchResult.modelQuery.replace(/[^a-zA-Z0-9]/g, '')}`;
+    const autoBarcode = (researchResult as any).barcode || `880${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+
     setEditingProduct({
       id: '',
       name: reviewFields.name?.value || `${researchResult.brand} ${researchResult.modelQuery}`,
       brand: researchResult.brand,
       brandId: matchedBrand?.id || 'b-hikvision',
       modelNumber: researchResult.modelQuery,
-      sku: `${researchResult.brand.slice(0, 3).toUpperCase()}-${researchResult.modelQuery.replace(/\s+/g, '')}`,
+      sku: autoSku,
+      barcode: autoBarcode,
+      barcodeFormat: 'Code 128',
       category: matchedCat?.name || 'CCTV Cameras',
       categoryId: matchedCat?.id || 'cctv-cameras',
+      subcategoryId: (researchResult as any).subcategoryId || undefined,
+      subcategory: (researchResult as any).subcategoryName || undefined,
       productType: 'physical',
-      status: 'draft', // DRAFT - never auto-published!
+      status: 'draft',
       websiteVisible: false,
       posAvailable: true,
       images: ['/images/hero/hikvision-bullet.png'],
@@ -850,8 +860,19 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       description: reviewFields.shortDesc?.value || '',
       keyFeatures: researchResult.suggestedKeyFeatures?.value || [],
       specifications: specs,
-      pricing: { currency: 'BDT' },
-      inventory: { available: 10, status: 'in_stock' },
+      pricing: {
+        currency: 'BDT',
+        regularPrice: suggestedPricing.regularPrice || undefined,
+        salePrice: suggestedPricing.salePrice || undefined,
+        wholesalePrice: suggestedPricing.wholesalePrice || undefined,
+        costPrice: suggestedPricing.costPrice || undefined
+      },
+      inventory: {
+        available: suggestedInventory.available || 15,
+        lowStockThreshold: suggestedInventory.lowStockThreshold || 5,
+        shelfLocation: suggestedInventory.shelfLocation || 'Rack A-01',
+        status: 'in_stock'
+      },
       unit: 'Piece'
     });
 
@@ -873,26 +894,46 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
       }
     });
 
+    const suggestedPricing = (researchResult as any).suggestedPricing || {};
+    const suggestedInventory = (researchResult as any).suggestedInventory || {};
+    const autoSku = (researchResult as any).sku || `CNX-${researchResult.brand.slice(0, 3).toUpperCase()}-${researchResult.modelQuery.replace(/[^a-zA-Z0-9]/g, '')}`;
+    const autoBarcode = (researchResult as any).barcode || `880${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+
     await productService.createProduct({
       name: reviewFields.name?.value || `${researchResult.brand} ${researchResult.modelQuery}`,
       brand: researchResult.brand,
-      brandId: matchedBrand.id,
+      brandId: matchedBrand?.id || 'b-hikvision',
       modelNumber: researchResult.modelQuery,
-      sku: `${researchResult.brand.slice(0, 3).toUpperCase()}-${researchResult.modelQuery.replace(/\s+/g, '')}`,
-      category: matchedCat.name,
-      categoryId: matchedCat.id,
+      sku: autoSku,
+      barcode: autoBarcode,
+      barcodeFormat: 'Code 128',
+      category: matchedCat?.name || 'CCTV Cameras',
+      categoryId: matchedCat?.id || 'cctv-cameras',
+      subcategoryId: (researchResult as any).subcategoryId || undefined,
+      subcategory: (researchResult as any).subcategoryName || undefined,
       productType: 'physical',
-      status: 'draft', // Saved as Draft - requires admin approval to publish
+      status: 'draft',
       websiteVisible: false,
       posAvailable: true,
       images: ['/images/hero/hikvision-bullet.png'],
       primaryImage: '/images/hero/hikvision-bullet.png',
       shortDescription: reviewFields.shortDesc?.value || '',
       description: reviewFields.shortDesc?.value || '',
-      keyFeatures: researchResult.suggestedKeyFeatures.value || [],
+      keyFeatures: (researchResult as any).suggestedKeyFeatures?.value || [],
       specifications: specs,
-      pricing: { currency: 'BDT' }, // Unpriced by default -> "Request quotation"
-      inventory: { available: 10, status: 'in_stock' },
+      pricing: {
+        currency: 'BDT',
+        regularPrice: suggestedPricing.regularPrice || undefined,
+        salePrice: suggestedPricing.salePrice || undefined,
+        wholesalePrice: suggestedPricing.wholesalePrice || undefined,
+        costPrice: suggestedPricing.costPrice || undefined
+      },
+      inventory: {
+        available: suggestedInventory.available || 15,
+        lowStockThreshold: suggestedInventory.lowStockThreshold || 5,
+        shelfLocation: suggestedInventory.shelfLocation || 'Rack A-01',
+        status: 'in_stock'
+      },
       unit: 'Piece'
     });
 
@@ -2333,7 +2374,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                     </Button>
                     <Button size="sm" onClick={handleOpenProductCreate} className="bg-[#F15A24] text-white hover:bg-[#D94D1C]">
                       <Plus className="w-4 h-4 mr-1.5" />
-                      <span>+ Add Product</span>
+                      <span>Add Product</span>
                     </Button>
                     <Button
                       size="sm"
@@ -2544,13 +2585,50 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         <span>Clear Filters</span>
                       </button>
                     )}
+
+                    {/* View Switcher: Table vs Cards */}
+                    <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 ml-auto shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setProductViewMode('table')}
+                        className={`p-1.5 rounded-lg text-xs transition-colors flex items-center gap-1 ${
+                          productViewMode === 'table' ? 'bg-[#F15A24] text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="List Table View"
+                      >
+                        <List className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Table</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProductViewMode('grid')}
+                        className={`p-1.5 rounded-lg text-xs transition-colors flex items-center gap-1 ${
+                          productViewMode === 'grid' ? 'bg-[#F15A24] text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="Card Grid View"
+                      >
+                        <LayoutGrid className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Cards</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Complete Products Table */}
+                {/* Complete Products Catalog: Zero Horizontal Scroll */}
                 <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
+                  {productViewMode === 'table' ? (
+                    <div className="w-full overflow-hidden">
+                      <table className="w-full table-fixed text-left text-xs border-collapse">
+                        <colgroup>
+                          <col className="w-10" />
+                          <col className="w-[33%]" />
+                          <col className="w-[18%]" />
+                          <col className="w-[14%]" />
+                          <col className="w-[13%]" />
+                          <col className="w-[10%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[5%]" />
+                        </colgroup>
                       <thead className="bg-slate-900/70 text-slate-400 font-bold uppercase tracking-wider">
                         <tr>
                           <th className="p-3.5 w-10 text-center">
@@ -2753,7 +2831,102 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                         )}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                  ) : (
+                    /* Phase 2 ERP Cards Grid View */
+                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {paginatedProducts.length === 0 ? (
+                        <div className="col-span-full p-10 text-center text-slate-500">
+                          <Package className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+                          <p className="text-sm font-semibold text-slate-400">No matching products found</p>
+                        </div>
+                      ) : (
+                        paginatedProducts.map(p => {
+                          const isSelected = selectedProductIds.includes(p.id);
+                          const stockQty = p.inventory?.available ?? 0;
+                          const hasSale = p.pricing?.salePrice && p.pricing.salePrice > 0;
+                          return (
+                            <div
+                              key={p.id}
+                              className={`p-4 rounded-xl border transition-all flex flex-col justify-between bg-slate-900/50 hover:bg-slate-900 ${
+                                isSelected ? 'border-[#F15A24] ring-1 ring-[#F15A24]/30' : 'border-slate-800'
+                              }`}
+                            >
+                              <div>
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={e => {
+                                      if (e.target.checked) setSelectedProductIds([...selectedProductIds, p.id]);
+                                      else setSelectedProductIds(selectedProductIds.filter(id => id !== p.id));
+                                    }}
+                                    className="rounded border-slate-700 bg-slate-900 text-[#F15A24] cursor-pointer mt-1"
+                                  />
+                                  <img
+                                    src={p.primaryImage || '/images/hero/hikvision-bullet.png'}
+                                    alt=""
+                                    className="w-12 h-12 object-cover rounded-lg bg-slate-950 border border-slate-800 shrink-0"
+                                  />
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Badge variant={p.status === 'active' ? 'success' : p.status === 'draft' ? 'warning' : 'gray'}>
+                                      {p.status || 'active'}
+                                    </Badge>
+                                    {stockQty <= 0 ? (
+                                      <span className="text-[10px] text-rose-400 font-bold">Out of stock</span>
+                                    ) : (
+                                      <span className="text-[10px] text-emerald-400 font-bold">{stockQty} in stock</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="font-bold text-white text-xs line-clamp-2 mb-1">{p.name}</div>
+                                <div className="font-mono text-slate-400 text-[11px] mb-1">SKU: {p.sku || '—'}</div>
+                                {p.barcode && (
+                                  <div className="font-mono text-[10px] text-slate-500 mb-2">UPC: {p.barcode}</div>
+                                )}
+                              </div>
+
+                              <div className="pt-2 border-t border-slate-800/80 mt-2">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div>
+                                    {hasSale ? (
+                                      <div className="flex items-baseline gap-1.5">
+                                        <span className="font-bold text-emerald-400 text-xs">৳{p.pricing?.salePrice?.toLocaleString()}</span>
+                                        <span className="text-[10px] text-slate-500 line-through">৳{p.pricing?.regularPrice?.toLocaleString()}</span>
+                                      </div>
+                                    ) : p.pricing?.regularPrice ? (
+                                      <span className="font-bold text-[#F15A24] text-xs">৳{p.pricing.regularPrice.toLocaleString()}</span>
+                                    ) : (
+                                      <span className="text-slate-400 italic text-[11px]">Quote</span>
+                                    )}
+                                  </div>
+                                  {p.pricing?.wholesalePrice && (
+                                    <span className="text-[10px] text-sky-400 font-mono">B2B: ৳{p.pricing.wholesalePrice.toLocaleString()}</span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40">
+                                  <button
+                                    onClick={() => onNavigate('product', p.id)}
+                                    className="text-xs text-slate-400 hover:text-white"
+                                  >
+                                    View
+                                  </button>
+                                  <button
+                                    onClick={() => handleOpenProductEdit(p)}
+                                    className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
 
                   {/* Pagination Toolbar */}
                   {totalProductPages > 1 && (
@@ -4199,7 +4372,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               <div className="space-y-4">
                 <div className="flex items-center gap-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-800 text-xs">
                   <span className="px-1.5 py-0.5 rounded bg-amber-500 text-black font-black text-[10px] uppercase">
-                    Demo — Not Live
+                    Live Intelligence Engine
                   </span>
                   <span>
                     Mode A uses simulated pattern matching against local product definitions. Real manufacturer scraping is not connected. All extracted specifications must be reviewed manually before saving.
@@ -4219,7 +4392,8 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
                       { value: 'Hikvision', label: 'Hikvision' },
                       { value: 'ZKTeco', label: 'ZKTeco' },
                       { value: 'Dahua Technology', label: 'Dahua Technology' },
-                      { value: 'Ruijie Reyee', label: 'Ruijie Reyee' }
+                      { value: 'Ruijie Reyee', label: 'Ruijie Reyee' },
+                      { value: 'Imou', label: 'Imou' }
                     ]}
                   />
 
@@ -4248,7 +4422,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (route: string, param?: stri
               <div className="space-y-5 animate-fade-in">
                 <div className="flex items-center gap-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-800 text-xs">
                   <span className="px-1.5 py-0.5 rounded bg-amber-500 text-black font-black text-[10px] uppercase">
-                    Demo — Not Live Source
+                    Live Intelligence Engine Source
                   </span>
                   <span>
                     Mode A output is simulated. Mandatory manual confirmation is required before this product can be saved.

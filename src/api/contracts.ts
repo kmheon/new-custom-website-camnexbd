@@ -68,6 +68,7 @@ export interface IProductService {
   archiveProduct?(id: string): Promise<any>;
   restoreProduct?(id: string): Promise<any>;
   bulkAdjustPrices?(payload: import('../types').BulkPriceAdjustmentPayload): Promise<import('../types').BulkOperationResult>;
+  bulkAdjustStock?(payload: import('../types').BulkStockAdjustmentPayload): Promise<import('../types').BulkOperationResult>;
   bulkMoveCategory?(payload: import('../types').BulkCategoryMovePayload): Promise<import('../types').BulkOperationResult>;
   bulkUpdateVisibility?(payload: import('../types').BulkVisibilityPayload): Promise<import('../types').BulkOperationResult>;
   bulkUpdateTags?(payload: import('../types').BulkTagPayload): Promise<import('../types').BulkOperationResult>;

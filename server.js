@@ -2229,6 +2229,80 @@ app.post('/api/admin/products/bulk/prices', requireAdmin, (req, res) => {
   }
 });
 
+// Phase 2: Bulk Stock & Inventory Adjustment Endpoint
+app.post('/api/admin/products/bulk/stock', requireAdmin, (req, res) => {
+  try {
+    const { productIds, mode = 'set_fixed', amount, shelfLocation, lowStockThreshold } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ error: 'No product IDs provided' });
+    }
+    const amt = parseInt(amount, 10);
+    if (isNaN(amt) && mode !== 'shelf_only') {
+      return res.status(400).json({ error: 'Invalid stock adjustment amount' });
+    }
+
+    const opId = `bulk-stock-${Date.now()}`;
+    let affected = 0;
+    const updateStmt = db.prepare('UPDATE products SET data_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+
+    const tx = db.transaction(() => {
+      for (const id of productIds) {
+        const row = db.prepare('SELECT data_json FROM products WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data_json);
+        if (!data.inventory) data.inventory = { available: 0, status: 'in_stock' };
+
+        const curStock = Number(data.inventory.available ?? 0);
+        let nextStock = curStock;
+
+        if (mode === 'set_fixed') {
+          nextStock = Math.max(0, amt);
+        } else if (mode === 'add_stock') {
+          nextStock = Math.max(0, curStock + amt);
+        } else if (mode === 'reduce_stock') {
+          nextStock = Math.max(0, curStock - amt);
+        }
+
+        const threshold = lowStockThreshold !== undefined ? Number(lowStockThreshold) : Number(data.inventory.lowStockThreshold ?? 5);
+
+        data.inventory.available = nextStock;
+        data.inventory.lowStockThreshold = threshold;
+        if (shelfLocation !== undefined && shelfLocation !== null && String(shelfLocation).trim()) {
+          data.inventory.shelfLocation = String(shelfLocation).trim();
+        }
+
+        if (nextStock <= 0) {
+          data.inventory.status = 'out_of_stock';
+        } else if (nextStock <= threshold) {
+          data.inventory.status = 'low_stock';
+        } else {
+          data.inventory.status = 'in_stock';
+        }
+
+        data.updatedAt = new Date().toISOString();
+        updateStmt.run(JSON.stringify(data), id);
+        affected++;
+      }
+    });
+
+    tx();
+
+    logAudit({
+      entity: 'product',
+      entityId: opId,
+      action: 'bulk_stock_adjustment',
+      actorId: req.user?.id,
+      actorName: req.user?.name,
+      surface: 'admin',
+      after: { affectedCount: affected, mode, amount: amt, shelfLocation, lowStockThreshold }
+    });
+
+    res.json({ success: true, affectedCount: affected, operationId: opId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/products/bulk/category', requireAdmin, (req, res) => {
   try {
     const { productIds, categoryId, categoryName, subcategoryId, subcategoryName } = req.body;
@@ -2414,7 +2488,7 @@ app.get('/api/admin/products/export', requireAdmin, (req, res) => {
     });
 
     if (format === 'csv') {
-      const headers = ['ID', 'Name', 'SKU', 'Model', 'Brand', 'Category', 'Regular Price (BDT)', 'Sale Price (BDT)', 'Cost Price', 'Stock', 'Status', 'Barcode'];
+      const headers = ['ID', 'Name', 'SKU', 'Model', 'Brand', 'Category', 'Regular Price (BDT)', 'Sale Price (BDT)', 'Wholesale Price (BDT)', 'Cost Price', 'Stock', 'Shelf Location', 'Status', 'Barcode'];
       const csvRows = [headers.join(',')];
 
       for (const p of products) {
@@ -2433,8 +2507,10 @@ app.get('/api/admin/products/export', requireAdmin, (req, res) => {
           escape(p.category),
           escape(p.pricing?.regularPrice ?? ''),
           escape(p.pricing?.salePrice ?? ''),
+          escape(p.pricing?.wholesalePrice ?? ''),
           escape(p.costPrice ?? p.pricing?.costPrice ?? ''),
           escape(p.inventory?.available ?? 0),
+          escape(p.inventory?.shelfLocation ?? ''),
           escape(p.status || 'active'),
           escape(p.barcode || '')
         ].join(','));
@@ -5293,54 +5369,13 @@ app.get('/api/research', (req, res) => {
   const { brand = 'Hikvision', model } = req.query;
   if (!model) return res.status(400).json({ error: 'Model number is required' });
 
-  const m = model.toLowerCase();
-  const b = brand.toLowerCase();
-
-  let result = {
-    jobId: `job-${Date.now()}`,
-    brand: brand,
-    modelQuery: model,
-    suggestedName: { value: `${brand} ${model}`, sourceUrl: 'Official Manufacturer Index', confidence: 'medium', status: 'pending' },
-    suggestedCategory: { value: 'cctv-cameras', sourceUrl: 'Product Specification Index', confidence: 'medium', status: 'pending' },
-    suggestedShortDesc: { value: `${brand} ${model} high performance hardware asset.`, sourceUrl: 'Official Catalog Overview', confidence: 'medium', status: 'pending' },
-    suggestedKeyFeatures: {
-      value: ['Official manufacturer build warranty', 'Engineered for commercial security deployments'],
-      sourceUrl: 'Technical Documentation',
-      confidence: 'medium',
-      status: 'pending'
-    },
-    suggestedSpecs: {
-      resolution: { value: '2MP (1080p)', sourceUrl: 'Datasheet Specification', confidence: 'high', status: 'pending' },
-      form_factor: { value: 'Bullet', sourceUrl: 'Datasheet Mechanical Diagram', confidence: 'high', status: 'pending' }
-    },
-    suggestedDocuments: {
-      value: [{ title: `${brand} ${model} Datasheet (PDF)`, url: `https://example.com/datasheet-${model}.pdf`, type: 'datasheet' }],
-      sourceUrl: 'Manufacturer Technical Portal',
-      confidence: 'high',
-      status: 'pending'
-    }
-  };
-
-  if (m.includes('irpf') || m.includes('bullet') || m.includes('2ce1')) {
-    result.suggestedName.value = 'Hikvision 2MP Outdoor Bullet Camera';
-    result.suggestedCategory.value = 'cctv-cameras';
-    result.suggestedShortDesc.value = '2 MP high performance CMOS sensor with 20m infrared Smart IR.';
-    result.suggestedKeyFeatures.value = [
-      '2 MP high performance CMOS sensor (1920 × 1080)',
-      'Smart IR: up to 20 m infrared night vision distance',
-      '4 in 1 video output (switchable TVI/AHD/CVI/CVBS)',
-      'IP67 dust and water resistance'
-    ];
-    result.suggestedSpecs = {
-      resolution: { value: '2MP (1080p)', sourceUrl: 'Hikvision Official Datasheet', confidence: 'high', status: 'pending' },
-      form_factor: { value: 'Bullet', sourceUrl: 'Hikvision Official Datasheet', confidence: 'high', status: 'pending' },
-      night_vision: { value: 'IR Night Vision (up to 20m)', sourceUrl: 'Hikvision Official Datasheet', confidence: 'high', status: 'pending' },
-      lens: { value: '3.6mm (Standard)', sourceUrl: 'Hikvision Official Datasheet', confidence: 'high', status: 'pending' },
-      ip_rating: { value: 'IP67 Weatherproof', sourceUrl: 'Hikvision Official Datasheet', confidence: 'high', status: 'pending' }
-    };
+  try {
+    const { analyzeHardwareModel } = require('./server/modules/research/hardwareIntelligence');
+    const result = analyzeHardwareModel(brand, model);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  res.json(result);
 });
 
 // ============================================================================

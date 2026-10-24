@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   SlidersHorizontal, ArrowRight, Percent, DollarSign, FolderTree, Tag,
   Eye, EyeOff, Trash2, Archive, Check, AlertTriangle, FileSpreadsheet,
-  Download, Upload, RefreshCw, X, AlertCircle
+  Download, Upload, RefreshCw, X, AlertCircle, Boxes, Warehouse, Barcode
 } from 'lucide-react';
 import { Button, Modal, Badge } from '../common/UI';
 import { productService } from '../../services';
@@ -25,7 +25,7 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   categories,
   onSuccess
 }) => {
-  const [activeTab, setActiveTab] = useState<'prices' | 'category' | 'visibility' | 'tags' | 'impexp'>('prices');
+  const [activeTab, setActiveTab] = useState<'prices' | 'stock' | 'category' | 'visibility' | 'tags' | 'impexp'>('prices');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -35,6 +35,12 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
   const [priceAmount, setPriceAmount] = useState<number>(5);
   const [targetField, setTargetField] = useState<'regularPrice' | 'salePrice' | 'wholesalePrice'>('regularPrice');
   const [roundToNearest, setRoundToNearest] = useState<number>(50);
+
+  // Bulk Stock & Inventory state (Phase 2 ERP/POS)
+  const [stockMode, setStockMode] = useState<'set_fixed' | 'add_stock' | 'reduce_stock'>('add_stock');
+  const [stockAmount, setStockAmount] = useState<number>(10);
+  const [shelfLocationInput, setShelfLocationInput] = useState<string>('');
+  const [lowStockThresholdInput, setLowStockThresholdInput] = useState<number>(5);
 
   // Bulk Category Move state
   const [targetCategory, setTargetCategory] = useState<string>('');
@@ -72,6 +78,16 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
     return { name: p.name, sku: p.sku, oldVal: cur, newVal: next };
   });
 
+  // Compute live stock preview on first 3 products
+  const previewStockProducts = selectedProducts.slice(0, 3).map(p => {
+    const cur = p.inventory?.available ?? 0;
+    let next = cur;
+    if (stockMode === 'set_fixed') next = Math.max(0, stockAmount);
+    else if (stockMode === 'add_stock') next = Math.max(0, cur + stockAmount);
+    else if (stockMode === 'reduce_stock') next = Math.max(0, cur - stockAmount);
+    return { name: p.name, sku: p.sku, oldVal: cur, newVal: next, shelf: p.inventory?.shelfLocation || '—' };
+  });
+
   const handleApplyPrice = async () => {
     if (selectedProductIds.length === 0) {
       setErrorMsg('No products selected');
@@ -96,6 +112,35 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
       }
     } catch (e: any) {
       setErrorMsg(e.message || 'Bulk price update failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyStock = async () => {
+    if (selectedProductIds.length === 0) {
+      setErrorMsg('No products selected');
+      return;
+    }
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      if (productService.bulkAdjustStock) {
+        await productService.bulkAdjustStock({
+          productIds: selectedProductIds,
+          mode: stockMode,
+          amount: stockAmount,
+          shelfLocation: shelfLocationInput.trim() ? shelfLocationInput.trim() : undefined,
+          lowStockThreshold: lowStockThresholdInput
+        });
+        setSuccessMsg(`Successfully updated inventory & shelf tracking for ${selectedProductIds.length} products`);
+        setTimeout(() => {
+          onSuccess();
+          onClose();
+        }, 1200);
+      }
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Bulk stock update failed');
     } finally {
       setLoading(false);
     }
@@ -183,8 +228,47 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
     }
   };
 
-  const handleExportCsv = () => {
-    window.open('/api/admin/products/export?format=csv', '_blank');
+  // Client-side Instant POS CSV Export with Barcodes & Multi-tier Pricing
+  const handleExportCustomCsv = (onlySelected: boolean) => {
+    const targetProducts = onlySelected && selectedProducts.length > 0 ? selectedProducts : products;
+    const headers = [
+      'ID', 'Name', 'SKU', 'Model', 'Brand', 'Category',
+      'Regular Price (BDT)', 'Sale Price (BDT)', 'Wholesale Price (BDT)', 'Cost Price (BDT)',
+      'Stock Available', 'Shelf Location', 'Status', 'POS Barcode'
+    ];
+    const escape = (val: any) => {
+      if (val == null) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = [headers.join(',')];
+    for (const p of targetProducts) {
+      rows.push([
+        escape(p.id),
+        escape(p.name),
+        escape(p.sku),
+        escape(p.modelNumber || ''),
+        escape(p.brand || ''),
+        escape(p.category || ''),
+        escape(p.pricing?.regularPrice ?? ''),
+        escape(p.pricing?.salePrice ?? ''),
+        escape(p.pricing?.wholesalePrice ?? ''),
+        escape(p.costPrice ?? p.pricing?.costPrice ?? ''),
+        escape(p.inventory?.available ?? 0),
+        escape(p.inventory?.shelfLocation ?? ''),
+        escape(p.status || 'active'),
+        escape(p.barcode || '')
+      ].join(','));
+    }
+
+    const blob = new Blob([rows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `camnex_pos_inventory_${onlySelected ? 'selected_' : 'full_catalog_'}${Date.now()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleImportDryRun = async () => {
@@ -232,12 +316,12 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Bulk Catalog Operations & CSV Importer/Exporter"
-      maxWidth="max-w-3xl"
+      title="Bulk Catalog Operations & Phase 2 POS/ERP Tools"
+      maxWidth="max-w-4xl"
     >
-      <div className="flex flex-col h-[70vh]">
+      <div className="flex flex-col h-[75vh]">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 border-b border-slate-200 pb-3 mb-4 text-xs font-bold text-slate-600">
+        <div className="flex items-center gap-1.5 border-b border-slate-200 pb-3 mb-4 text-xs font-bold text-slate-600 flex-wrap">
           <button
             type="button"
             onClick={() => setActiveTab('prices')}
@@ -246,7 +330,18 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
             }`}
           >
             <Percent className="w-3.5 h-3.5" />
-            <span>Bulk Price Adjust</span>
+            <span>Price & Margin</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('stock')}
+            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+              activeTab === 'stock' ? 'bg-[#F15A24] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
+            }`}
+          >
+            <Boxes className="w-3.5 h-3.5" />
+            <span>Stock & Shelf (ERP)</span>
           </button>
 
           <button
@@ -290,7 +385,7 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
             }`}
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>CSV / JSON Tools</span>
+            <span>POS Barcode & CSV</span>
           </button>
         </div>
 
@@ -360,7 +455,7 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
                   >
                     <option value="regularPrice">Regular Price (Storefront)</option>
                     <option value="salePrice">Sale / Promotional Price</option>
-                    <option value="wholesalePrice">B2B Wholesale Price</option>
+                    <option value="wholesalePrice">B2B Wholesale / Dealer Price</option>
                   </select>
                 </div>
               </div>
@@ -411,7 +506,94 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
             </div>
           )}
 
-          {/* TAB 2: BULK CATEGORY MOVE */}
+          {/* TAB 2: BULK STOCK & SHELF LOCATION (PHASE 2 ERP/POS) */}
+          {activeTab === 'stock' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Stock Adjustment Mode</label>
+                  <select
+                    value={stockMode}
+                    onChange={(e) => setStockMode(e.target.value as any)}
+                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-bold"
+                  >
+                    <option value="add_stock">+ Add to Existing Stock (+X Units)</option>
+                    <option value="set_fixed">Set Exact Stock Quantity (X Units)</option>
+                    <option value="reduce_stock">- Deduct from Stock (-X Units)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Quantity (Units)</label>
+                  <input
+                    type="number"
+                    value={stockAmount}
+                    onChange={(e) => setStockAmount(parseInt(e.target.value, 10) || 0)}
+                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-bold text-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Low Stock Warning Threshold</label>
+                  <input
+                    type="number"
+                    value={lowStockThresholdInput}
+                    onChange={(e) => setLowStockThresholdInput(parseInt(e.target.value, 10) || 5)}
+                    className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Assign Warehouse Shelf Location (Optional)</label>
+                <input
+                  type="text"
+                  value={shelfLocationInput}
+                  onChange={(e) => setShelfLocationInput(e.target.value)}
+                  placeholder="e.g. Rack A-01 / Bin 03 (Leave blank to keep current location)"
+                  className="w-full sm:w-2/3 bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono"
+                />
+              </div>
+
+              {/* Stock Live Preview */}
+              {previewStockProducts.length > 0 && (
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Live Stock Preview (First {previewStockProducts.length} items):
+                  </span>
+                  <div className="space-y-1.5">
+                    {previewStockProducts.map((p, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 last:border-0">
+                        <span className="font-medium text-slate-800 truncate max-w-xs">{p.name} ({p.sku})</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400">{p.oldVal} in stock</span>
+                          <ArrowRight className="w-3 h-3 text-slate-400" />
+                          <strong className="text-emerald-600">{p.newVal} in stock</strong>
+                          {shelfLocationInput && (
+                            <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[10px]">
+                              {shelfLocationInput}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Button
+                size="md"
+                onClick={handleApplyStock}
+                disabled={loading || selectedProductIds.length === 0}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <Boxes className="w-4 h-4 mr-1.5" />
+                <span>Apply Inventory Adjustment ({selectedProductIds.length} items)</span>
+              </Button>
+            </div>
+          )}
+
+          {/* TAB 3: BULK CATEGORY MOVE */}
           {activeTab === 'category' && (
             <div className="space-y-4">
               <div>
@@ -443,50 +625,62 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: VISIBILITY & STATUS */}
+          {/* TAB 4: VISIBILITY & STATUS */}
           {activeTab === 'visibility' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   type="button"
                   onClick={() => setVisibilityOption('publish')}
-                  className={`p-3 rounded-xl border text-left transition-colors ${
+                  className={`p-3.5 rounded-xl border text-left transition-all ${
                     visibilityOption === 'publish'
-                      ? 'border-[#F15A24] bg-orange-50 text-slate-900'
-                      : 'border-slate-200 bg-white hover:bg-slate-50'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-950 font-bold'
+                      : 'bg-white border-slate-200 text-slate-700'
                   }`}
                 >
-                  <Eye className="w-4 h-4 text-emerald-600 mb-1" />
-                  <div className="text-xs font-bold">Publish to Website</div>
-                  <div className="text-[10px] text-slate-500">Active and visible to all visitors</div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold mb-1 text-emerald-700">
+                    <Eye className="w-4 h-4" />
+                    <span>Publish (Active)</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 font-normal">
+                    Visible on live website catalog and POS terminals.
+                  </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setVisibilityOption('hide')}
-                  className={`p-3 rounded-xl border text-left transition-colors ${
+                  className={`p-3.5 rounded-xl border text-left transition-all ${
                     visibilityOption === 'hide'
-                      ? 'border-[#F15A24] bg-orange-50 text-slate-900'
-                      : 'border-slate-200 bg-white hover:bg-slate-50'
+                      ? 'bg-amber-50 border-amber-500 text-amber-950 font-bold'
+                      : 'bg-white border-slate-200 text-slate-700'
                   }`}
                 >
-                  <EyeOff className="w-4 h-4 text-amber-600 mb-1" />
-                  <div className="text-xs font-bold">Unpublish / Draft</div>
-                  <div className="text-[10px] text-slate-500">Hidden from storefront search & catalog</div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold mb-1 text-amber-700">
+                    <EyeOff className="w-4 h-4" />
+                    <span>Draft / Hidden</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 font-normal">
+                    Hidden from storefront customers. Preserved in database.
+                  </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setVisibilityOption('pos_only')}
-                  className={`p-3 rounded-xl border text-left transition-colors ${
+                  className={`p-3.5 rounded-xl border text-left transition-all ${
                     visibilityOption === 'pos_only'
-                      ? 'border-[#F15A24] bg-orange-50 text-slate-900'
-                      : 'border-slate-200 bg-white hover:bg-slate-50'
+                      ? 'bg-sky-50 border-sky-500 text-sky-950 font-bold'
+                      : 'bg-white border-slate-200 text-slate-700'
                   }`}
                 >
-                  <DollarSign className="w-4 h-4 text-blue-600 mb-1" />
-                  <div className="text-xs font-bold">POS / ERP Only</div>
-                  <div className="text-[10px] text-slate-500">Internal retail counter checkout only</div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold mb-1 text-sky-700">
+                    <Warehouse className="w-4 h-4" />
+                    <span>POS / In-Store Only</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 font-normal">
+                    Hidden from public web, accessible only on physical POS registers.
+                  </div>
                 </button>
               </div>
 
@@ -496,12 +690,12 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
                 disabled={loading || selectedProductIds.length === 0}
               >
                 <Check className="w-4 h-4 mr-1.5" />
-                <span>Apply Visibility State</span>
+                <span>Apply Visibility Status ({selectedProductIds.length} items)</span>
               </Button>
             </div>
           )}
 
-          {/* TAB 4: BADGES & FLAGS */}
+          {/* TAB 5: BADGES & FLAGS */}
           {activeTab === 'tags' && (
             <div className="space-y-4">
               <span className="text-xs text-slate-600 block">
@@ -561,20 +755,43 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
             </div>
           )}
 
-          {/* TAB 5: CSV / JSON EXPORT & IMPORT */}
+          {/* TAB 6: POS BARCODE & CSV SPREADSHEETS */}
           {activeTab === 'impexp' && (
             <div className="space-y-4">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800">Export Catalog to CSV Spreadsheet</h4>
-                  <p className="text-[11px] text-slate-500">
-                    Exports SKU, Model, Category, Regular Price, Cost Price, Stock & Barcode.
-                  </p>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Barcode className="w-4 h-4 text-[#F15A24]" />
+                      <span>Export POS Scanner & Inventory CSV</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Includes Barcode (UPC/EAN), SKU, Name, Model, Category, Regular Price, B2B Wholesale Price, Stock & Shelf Location.
+                    </p>
+                  </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={handleExportCsv}>
-                  <Download className="w-3.5 h-3.5 mr-1" />
-                  <span>Download CSV</span>
-                </Button>
+
+                <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-200">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleExportCustomCsv(true)}
+                    disabled={selectedProductIds.length === 0}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-100"
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1" />
+                    <span>Download Selected ({selectedProductIds.length} items)</span>
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    onClick={() => handleExportCustomCsv(false)}
+                    className="bg-[#0F172A] text-white hover:bg-slate-800"
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1" />
+                    <span>Download Full Catalog ({products.length} items)</span>
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -586,29 +803,30 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
                       setImportJsonText(JSON.stringify([
                         {
                           name: "Hikvision DS-2CD2047G2-LU 4MP ColorVu",
-                          sku: "prod-hik-4mp-colorvu",
+                          sku: "CNX-HIK-2CD2047",
                           modelNumber: "DS-2CD2047G2-LU",
                           brand: "Hikvision",
-                          category: "IP Cameras",
+                          category: "CCTV Cameras",
                           regularPrice: 8500,
                           salePrice: 7990,
+                          wholesalePrice: 6800,
                           availableStock: 15,
-                          barcode: "8801234567890"
+                          barcode: "8801234567890",
+                          shelfLocation: "Rack H-01"
                         }
                       ], null, 2));
                     }}
                     className="text-[10px] text-[#F15A24] font-bold hover:underline"
                   >
-                    Paste Sample Template
+                    Load Sample Template
                   </button>
                 </div>
 
                 <textarea
-                  rows={5}
                   value={importJsonText}
                   onChange={(e) => setImportJsonText(e.target.value)}
                   placeholder="Paste JSON array of products here..."
-                  className="w-full bg-white border border-slate-300 text-xs p-2 rounded-lg font-mono text-slate-800"
+                  className="w-full h-32 p-2.5 font-mono text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#F15A24]"
                 />
 
                 <div className="flex items-center gap-2">
@@ -618,38 +836,27 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
                     onClick={handleImportDryRun}
                     disabled={!importJsonText.trim()}
                   >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                    <span>Dry-Run Validation Preview</span>
+                    Preview Import
                   </Button>
 
-                  {importPreview && importPreview.validRows > 0 && (
+                  {importPreview && (
                     <Button
                       size="sm"
                       onClick={handleExecuteImport}
                       disabled={loading}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
-                      <Upload className="w-3.5 h-3.5 mr-1" />
-                      <span>Execute Import ({importPreview.validRows} Valid Rows)</span>
+                      Commit {importPreview.validRows?.length || 0} Products
                     </Button>
                   )}
                 </div>
 
-                {/* Import preview report */}
                 {importPreview && (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-slate-700">Total: {importPreview.totalRows}</span>
-                      <span className="text-emerald-600 font-bold">Valid: {importPreview.validRows}</span>
-                      {importPreview.invalidRows > 0 && (
-                        <span className="text-red-600 font-bold">Invalid: {importPreview.invalidRows}</span>
-                      )}
-                    </div>
-                    {importPreview.errors?.length > 0 && (
-                      <div className="text-red-600 text-[11px] space-y-1">
-                        {importPreview.errors.map((err: any, idx: number) => (
-                          <div key={idx}>Row #{err.row}: {err.error} ({err.field})</div>
-                        ))}
-                      </div>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
+                    <div className="font-bold text-slate-700">Import Validation Summary:</div>
+                    <div className="text-emerald-700">Valid Products: {importPreview.validRows?.length || 0}</div>
+                    {importPreview.invalidRows?.length > 0 && (
+                      <div className="text-rose-600">Errors: {importPreview.invalidRows.length} rows failed validation.</div>
                     )}
                   </div>
                 )}
@@ -657,14 +864,7 @@ export const BulkToolsModal: React.FC<BulkToolsModalProps> = ({
             </div>
           )}
         </div>
-
-        <div className="pt-3 border-t border-slate-200 flex justify-end">
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Close
-          </Button>
-        </div>
       </div>
     </Modal>
   );
 };
-

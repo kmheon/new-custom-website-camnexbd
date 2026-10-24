@@ -164,6 +164,13 @@ export class RestProductService implements IProductService {
     });
   }
 
+  async bulkAdjustStock(payload: import('../types').BulkStockAdjustmentPayload): Promise<import('../types').BulkOperationResult> {
+    return request<import('../types').BulkOperationResult>('/admin/products/bulk/stock', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
   async bulkMoveCategory(payload: import('../types').BulkCategoryMovePayload): Promise<import('../types').BulkOperationResult> {
     return request<import('../types').BulkOperationResult>('/admin/products/bulk/category', {
       method: 'POST',

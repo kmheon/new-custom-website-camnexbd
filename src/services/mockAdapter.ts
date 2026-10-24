@@ -311,6 +311,30 @@ export class MockProductService implements IProductService {
     return { success: true, affectedCount: count, operationId: `mock-op-${Date.now()}` };
   }
 
+  async bulkAdjustStock(payload: import('../types').BulkStockAdjustmentPayload): Promise<import('../types').BulkOperationResult> {
+    const list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    let count = 0;
+    list.forEach(p => {
+      if (payload.productIds.includes(p.id)) {
+        if (!p.inventory) p.inventory = { available: 0, status: 'in_stock' };
+        const cur = p.inventory.available ?? 0;
+        let next = cur;
+        const amt = payload.amount ?? 0;
+        if (payload.mode === 'set_fixed') next = Math.max(0, amt);
+        else if (payload.mode === 'add_stock') next = Math.max(0, cur + amt);
+        else if (payload.mode === 'reduce_stock') next = Math.max(0, cur - amt);
+
+        p.inventory.available = next;
+        if (payload.lowStockThreshold !== undefined) p.inventory.lowStockThreshold = payload.lowStockThreshold;
+        if (payload.shelfLocation !== undefined) p.inventory.shelfLocation = payload.shelfLocation;
+        p.inventory.status = next <= 0 ? 'out_of_stock' : next <= (p.inventory.lowStockThreshold || 5) ? 'low_stock' : 'in_stock';
+        count++;
+      }
+    });
+    setStorage(STORAGE_KEYS.PRODUCTS, list);
+    return { success: true, affectedCount: count, operationId: `mock-stock-${Date.now()}` };
+  }
+
   async bulkMoveCategory(payload: import('../types').BulkCategoryMovePayload): Promise<import('../types').BulkOperationResult> {
     const list = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
     let count = 0;
